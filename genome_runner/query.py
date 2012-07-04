@@ -48,7 +48,7 @@ def enrichment(a, b, name=None, score=None, strand=None, n=10):
 	if not nA or not nB:
 		return Enrichment(a,b,nA,nB,0,0,1)
 	A.set_chromsizes("hg19")
-	obs = len(A.intersect(B))
+	obs = len(A.intersect(B, u=True))
 	dist = monte_carlo(B, A)
 	exp = numpy.mean(dist)
 	p_value = len([x for x in dist if x > obs]) / float(len(dist))
