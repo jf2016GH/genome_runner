@@ -1,0 +1,48 @@
+<html>
+	<head>
+		<style type="text/css" title="currentStyle">
+			@import "static/css/demo_page.css";
+			@import "static/css/jquery.dataTables.css";
+			@import "static/css/demo_table.css";
+		</style>
+		<script type="text/javascript" 
+			language="javascript" src="static/js/jquery.js"></script>
+		<script type="text/javascript" language="javascript"
+			src="static/js/jquery.dataTables.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			$(document).ready(function() {
+				$('#tbl').dataTable();
+			} );
+		</script>
+	</head>
+	<body>
+		<table id="tbl" class="display" cellpadding="0"
+			cellspacing="0" border="0">
+			<thead>
+				<tr>
+					<th>GF Name</th>
+					<th>#Genomic Features</th>
+					<th>#Overlaps (observed)</th>
+					<th>#Overlaps (expected)</th>
+					<th>P-value</th>
+				</tr>
+			</thead>
+			<tbody>
+				% for i,e in enumerate(enrichments):
+					% if i % 2 == 0:
+						<tr class="even ${e.category()}">
+					% else:
+						<tr class="odd ${e.category()}">
+					% endif
+						<td>${e.B}</td>
+						<td>${e.nB}</td>
+						<td>${e.observed}</td>
+						<td>${e.expected}</td>
+						<td>${e.p_value}</td>
+					</tr>
+				% endfor
+			</tbody>
+		</table>
+	</body>
+</html>
+
