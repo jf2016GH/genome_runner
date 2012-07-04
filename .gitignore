@@ -8,3 +8,4 @@ Makefile
 bin
 *.hi
 *.o
+bedfiles

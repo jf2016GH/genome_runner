@@ -4,6 +4,48 @@ from mako.template import Template
 from mako.lookup import TemplateLookup
 lookup = TemplateLookup(directories=["templates"])
 
+import fnmatch
+from collections import defaultdict
+
+class PathNode(defaultdict):
+	def __init__(self):
+		defaultdict.__init__(self, PathNode)
+	
+	def traverse(self, base):
+		for base, dirs, files in os.walk(base):
+			prefix = base.split("/")
+			node = self
+			while prefix:
+				p = prefix.pop()
+				if prefix:
+					node = node[p]
+					node.name = p
+				else:
+					fs = list(fnmatch.filter(files, "*.bed"))
+					if fs:
+						node[p] = fs
+
+	def _li(self, k):
+		return """\t<li><input name="%s" type="checkbox">
+			<label>%s</label>\n""" % (k,k)
+
+	def as_html(self, id=None):
+		s = '<ul '
+		if id:
+			s += 'id="%s"' % str(id)
+		s += '>'
+		if not self.name == "Root":
+			s += self._li(self.name)
+		for k, child in self.items():			
+			if type(child) == list: #terminal
+				s += "<ul>"
+				for c in child:
+					s += self._li(c)
+				s += "</ul>"
+			elif child:
+				s += child.as_html()
+		return s + "</ul>"
+
 class FieldStorageUL(cgi.FieldStorage):
 	def make_file(self, binary=None):
 		return tempfile.NamedTemporaryFile()
@@ -17,30 +59,27 @@ cherrypy.tools.no_body_process = \
 class WebUI(object):
 	@cherrypy.expose
 	def index(self):
+		paths = PathNode()
+		paths.name = "Root"
+		paths.traverse("data")
 		tmpl = lookup.get_template("index.html")
-		return tmpl.render()
+		return tmpl.render(paths=paths)
 
 	@cherrypy.expose
-	@cherrypy.tools.no_body_process()
-	def query(self, bed_file=None, niter=10):
+	#@cherrypy.tools.no_body_process()
+	def query(self, bed_file=None, niter=10, **kwargs):
 		try:
 			niter = int(niter)
 		except:
 			niter = 10
 
-		#Lots of voodoo here to handle file uploads.
-		#See: http://tools.cherrypy.org/wiki/DirectToDiskFileUpload
-		lcHDRS = {}
-		for k,v in cherrypy.request.headers.iteritems():
-			lcHDRS[k.lower()] = v
-		fields = FieldStorageUL(fp=cherrypy.request.rfile,
-				headers=lcHDRS,
-				environ={"REQUEST_METHOD":"POST"},
-				keep_blank_values=True)
-		bed_file = fields["bed_file"]
 		f = os.path.join("/tmp/", bed_file.filename)
-		if not os.path.exists(f):
-			os.link(bed_file.file.name, f)
+		with open(f, "w") as out:
+			while True:
+				data = bed_file.file.read(8192)
+				if not data:
+					break
+				out.write(data)
 
 		if os.path.exists(f):
 			gfeatures = ["wgrna", "rand"]

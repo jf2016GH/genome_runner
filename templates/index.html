@@ -1,12 +1,40 @@
 <html>
 	<head>
-	</head>	
+    <script type="text/javascript" src="static/js/jquery.js"></script>
+    <script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
+    <link rel="stylesheet" type="text/css"
+          href="static/jui/jquery-ui-1.8.12.custom/css/smoothness/jquery-ui-1.8.12.custom.css"/>
+    <script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
+    <link rel="stylesheet" type="text/css" href="static/css/jquery.checkboxtree.css"/>
+    <script type="text/javascript">
+        $(document).ready(function() {
+				$('#ucsc').checkboxTree({
+					initializeChecked: 'collapsed',
+					initializeUnchecked: 'collapsed'
+				});
+        });
+    </script>
+</head>
 	<body>
-		<h1>Run a GenomeRunner query:</h1>
+		<h1>GenomeRunner</h1>
 		<form action="query" method="post" enctype="multipart/form-data">
-			BED file:<input type="file" name="bed_file" /><br />
-			# Monte-Carlo iterations: <input id="niter"
-				type="text" name="niter" value="10"/> <br />
+			<h3>1. Upload a BED file</h3>
+			File:<input type="file" name="bed_file" /><br />
+			<h3>2. Choose tracks of interest:</h3>
+			${paths.as_html(id="ucsc")}
+			<h3>3. Advanced (optional):</h3>
+			<b># MC iters:</b>
+				<input id="niter"
+					type="text" name="niter" value="10"/> <br />
+			<b>Score cutoff:</b>
+				<input type="text" name="score" /> <br />
+			<b>Strand:</b>
+				<input checked="yes" 
+					type="radio" name="strand" value="" />Any
+				<input type="radio" name="strand" value="+" />+
+				<input type="radio" name="strand" value="-" />-
+			<br />
+			<h3>4. Run query!</h3> 
 			<input type="submit" / >
 		</form>
 	</body>

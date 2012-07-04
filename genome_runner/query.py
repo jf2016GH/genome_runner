@@ -24,7 +24,7 @@ def make_filter(name, score, strand):
 	def filter(interval):
 		if name and name != interval.name:
 			return False
-		if score and score > interval.score:
+		if score and score > int(interval.score):
 			return False
 		if strand and strand != interval.strand:
 			return False
