@@ -7,6 +7,9 @@ lookup = TemplateLookup(directories=["templates"])
 import fnmatch
 from collections import defaultdict
 
+from operator import attrgetter
+from util import basename
+
 class PathNode(defaultdict):
 	def __init__(self):
 		defaultdict.__init__(self, PathNode)
@@ -21,13 +24,19 @@ class PathNode(defaultdict):
 					node = node[p]
 					node.name = p
 				else:
-					fs = list(fnmatch.filter(files, "*.bed"))
+					fs = ["file:"+os.path.join(base, f) for f 
+						in list(fnmatch.filter(files, "*.bed"))]
 					if fs:
 						node[p] = fs
 
 	def _li(self, k):
+		if k.startswith("file:"):
+			label = basename(k)
+			name = k
+		else:
+			label = name = k
 		return """\t<li><input name="%s" type="checkbox">
-			<label>%s</label>\n""" % (k,k)
+			<label>%s</label>\n""" % (name,label)
 
 	def as_html(self, id=None):
 		s = '<ul '
@@ -36,7 +45,7 @@ class PathNode(defaultdict):
 		s += '>'
 		if not self.name == "Root":
 			s += self._li(self.name)
-		for k, child in self.items():			
+		for k, child in sorted(self.items()):	
 			if type(child) == list: #terminal
 				s += "<ul>"
 				for c in child:
@@ -45,16 +54,6 @@ class PathNode(defaultdict):
 			elif child:
 				s += child.as_html()
 		return s + "</ul>"
-
-class FieldStorageUL(cgi.FieldStorage):
-	def make_file(self, binary=None):
-		return tempfile.NamedTemporaryFile()
-
-def no_body_process():
-	cherrypy.request.process_request_body = False
-cherrypy.tools.no_body_process = \
-		cherrypy.Tool("before_request_body", no_body_process)
-
 
 class WebUI(object):
 	@cherrypy.expose
@@ -66,32 +65,37 @@ class WebUI(object):
 		return tmpl.render(paths=paths)
 
 	@cherrypy.expose
-	#@cherrypy.tools.no_body_process()
 	def query(self, bed_file=None, niter=10, **kwargs):
 		try:
 			niter = int(niter)
 		except:
 			niter = 10
 
-		f = os.path.join("/tmp/", bed_file.filename)
-		with open(f, "w") as out:
-			while True:
-				data = bed_file.file.read(8192)
-				if not data:
-					break
-				out.write(data)
+		try:
+			f = os.path.join("/tmp/", bed_file.filename)
+			if not os.path.exists(f):
 
-		if os.path.exists(f):
-			gfeatures = ["wgrna", "rand"]
-			enrichments = []
-			for gf in gfeatures:
-				gf = "data/" + gf + ".bed"
-				e = gquery.enrichment(f,gf,n=niter)
-				enrichments.append(e)
-			tmpl = lookup.get_template("enrichment.html")
-			return tmpl.render(enrichments=enrichments)
-		else:
-			return "file not found"
+				with open(f, "w") as out:
+					while True:
+						data = bed_file.file.read(8192)
+						if not data:
+							break
+						out.write(data)
+		except:
+			return "upload a file please"
+
+		gfeatures = [k[5:] for k,v in kwargs.items()
+			if k.startswith("file:") and v=="on"]
+		enrichments = []
+		for gf in gfeatures:
+			print f, gf
+			e = gquery.enrichment(f,gf,n=niter)
+			enrichments.append(e)
+		enrichments.sort(key=attrgetter("p_value"))
+		tmpl = lookup.get_template("enrichment.html")
+		result = tmpl.render(enrichments=enrichments)
+		os.unlink(f)
+		return result
 
 if __name__ == "__main__":
 	cherrypy.server.max_request_body_size = 0

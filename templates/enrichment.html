@@ -4,14 +4,25 @@
 			@import "static/css/demo_page.css";
 			@import "static/css/jquery.dataTables.css";
 			@import "static/css/demo_table.css";
+			@import "static/css/TableTools.css";
+			@import "static/css/TableTools_JUI.css";
 		</style>
 		<script type="text/javascript" 
 			language="javascript" src="static/js/jquery.js"></script>
 		<script type="text/javascript" language="javascript"
 			src="static/js/jquery.dataTables.js"></script>
+		<script type="text/javascript" language="javascript"
+			src="static/js/TableTools.js"></script>
+		<script type="text/javascript" language="javascript"
+			src="static/js/ZeroClipboard.js"></script>
 		<script type="text/javascript" charset="utf-8">
 			$(document).ready(function() {
-				$('#tbl').dataTable();
+				$('#tbl').dataTable({
+					"sDom": 'T<"clear">lfrtip',
+					"oTableTools": {
+						"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
+					}
+				});
 			} );
 		</script>
 	</head>
