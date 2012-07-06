@@ -12,3 +12,5 @@ bin
 *.o
 bedfiles
 *~
+uploads
+results

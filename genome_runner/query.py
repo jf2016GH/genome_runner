@@ -4,17 +4,18 @@ from pybedtools import BedTool
 from collections import namedtuple
 from util import basename
 
-Enrichment = namedtuple("Enrichment",
+	
+_Enrichment = namedtuple("Enrichment",
 		["A","B","nA","nB","observed","expected","p_value"])
-def enrichment_category(self):
-	if self.expected == 0 or self.p_value > 0.05:
-		return "nonsig"
-	elif self.observed < self.expected:
-		return "under"
-	else:
-		return "over"
 
-Enrichment.category = enrichment_category
+class Enrichment(_Enrichment):
+	def category(self):
+		if self.expected == 0 or self.p_value > 0.05:
+			return "nonsig"
+		elif self.observed < self.expected:
+			return "under"
+		else:
+			return "over"
 
 def make_filter(name, score, strand):
 	def filter(interval):
@@ -28,13 +29,13 @@ def make_filter(name, score, strand):
 	return filter
 
 def enrichment(a, b, name=None, score=None, strand=None, n=10):
-	"""Perform enrichment analysis between two FeatureSets.
+	"""Perform enrichment analysis between two BED files.
 
-	a - Feature of Interest BedTool object
-	b - Genomic Feature BedTool object
+	a - path to Feature of Interest BED file
+	b - path to Genomic Feature BED file
 	"""
 	flt = make_filter(name,score,strand)
-	A = BedTool(str(a)).filter(flt).saveas()
+	A = BedTool(str(a))
 	B = BedTool(str(b)).filter(flt).saveas()
 	nA = len(A)
 	nB = len(B)

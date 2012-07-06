@@ -1,5 +1,5 @@
 import cherrypy, os, cgi, tempfile
-import query as gquery
+import query
 from mako.template import Template
 from mako.lookup import TemplateLookup
 lookup = TemplateLookup(directories=["templates"])
@@ -12,6 +12,9 @@ import sqlite3
 
 from operator import attrgetter
 from util import basename
+
+from multiprocessing import Process
+import cPickle
 
 #This class finds files recursively in the data/ directory
 # so they can be represented as a treeview
@@ -57,19 +60,37 @@ class PathNode(defaultdict):
 			s += child.as_html()
 		return s + "</ul>"
 
+def run_enrichments(id, f, gfeatures, niter):
+	enrichments = []
+	for gf in gfeatures:
+		enrichments.append(query.enrichment(f,gf,n=niter))
+	path = os.path.join("results", str(id))
+	with open(path, "w") as strm:
+		cPickle.dump(enrichments, strm)
+
 # Each function in this class is a web page
 class WebUI(object):
+	def __init__(self):
+		lst = map(int, os.listdir("results"))
+		if not lst:
+			self.id = 1
+		else:
+			self.id = max(lst)+1
+		self._index_html = None
+
 	@cherrypy.expose
 	def index(self):
 		#Ultimately this HTML page will only need 
 		# to be made once on startup
 		#For testing this is nice because it 
 		# instantly reflects new BED files added
-		paths = PathNode()
-		paths.name = "Root"
-		paths.traverse("data")
-		tmpl = lookup.get_template("index.html")
-		return tmpl.render(paths=paths)
+		if not self._index_html:
+			paths = PathNode()
+			paths.name = "Root"
+			paths.traverse("data")
+			tmpl = lookup.get_template("index.html")
+			self._index_html = tmpl.render(paths=paths)
+		return self._index_html
 
 	@cherrypy.expose
 	def meta(self, tbl):
@@ -99,7 +120,7 @@ class WebUI(object):
 			niter = 10
 
 		try:
-			f = os.path.join("/tmp/", bed_file.filename)
+			f = os.path.join("uploads", bed_file.filename)
 			if not os.path.exists(f):
 
 				with open(f, "w") as out:
@@ -117,10 +138,22 @@ class WebUI(object):
 		# have been checked.
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
-		enrichments = []
-		for gf in gfeatures:
-			e = gquery.enrichment(f,gf,n=niter)
-			enrichments.append(e)
+		# This lacks the thread safety
+		id = self.id
+		self.id += 1
+		p = Process(target=run_enrichments,
+				args=(id,f,gfeatures,niter))
+		p.start()
+		raise cherrypy.HTTPRedirect("result?id=%d" % id)
+
+	@cherrypy.expose
+	def result(self, id):
+		path = os.path.join("results", id)
+		if not os.path.exists(path):
+			tmpl = lookup.get_template("enrichment_not_ready.html")
+			return tmpl.render(id=id)
+		with open(path) as strm:
+			enrichments = cPickle.load(strm)
 		enrichments.sort(key=attrgetter("p_value"))
 		tmpl = lookup.get_template("enrichment.html")
 		result = tmpl.render(enrichments=enrichments)
