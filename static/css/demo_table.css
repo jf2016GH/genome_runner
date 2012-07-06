@@ -211,11 +211,11 @@ th:active {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * DataTables row classes
  */
-table.display tr.odd.over {
+table.display tr.odd.under {
 	background-color: #ddffdd;
 }
 
-table.display tr.even.over {
+table.display tr.even.under {
 	background-color: #eeffee;
 }
 
@@ -227,11 +227,11 @@ table.display tr.even.notsig {
 	background-color: #eeeeff;
 }
 
-table.display tr.odd.under {
+table.display tr.odd.over {
 	background-color: #ffdddd;
 }
 
-table.display tr.even.under {
+table.display tr.even.over {
 	background-color: #ffeeee;
 }
 

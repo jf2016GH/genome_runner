@@ -32,6 +32,7 @@
 			<thead>
 				<tr>
 					<th>GF Name</th>
+					<th>#FOIs</th>
 					<th>#Genomic Features</th>
 					<th>#Overlaps (observed)</th>
 					<th>#Overlaps (expected)</th>
@@ -40,12 +41,9 @@
 			</thead>
 			<tbody>
 				% for i,e in enumerate(enrichments):
-					% if i % 2 == 0:
-						<tr class="even ${e.category()}">
-					% else:
-						<tr class="odd ${e.category()}">
-					% endif
+					<tr class="${e.category()}">
 						<td>${e.B}</td>
+						<td>${e.nA}</td>
 						<td>${e.nB}</td>
 						<td>${e.observed}</td>
 						<td>${e.expected}</td>
@@ -54,6 +52,7 @@
 				% endfor
 			</tbody>
 		</table>
+		<h2><a href="/gr">GO BACK</a></h2>
 	</body>
 </html>
 

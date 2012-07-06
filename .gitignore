@@ -1,4 +1,6 @@
 *.swp
+nohup.out
+*.swo
 *.os
 *.pyc
 lib
@@ -9,3 +11,4 @@ bin
 *.hi
 *.o
 bedfiles
+*~
