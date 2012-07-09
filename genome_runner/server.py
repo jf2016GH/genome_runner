@@ -12,6 +12,7 @@ import query
 from path import PathNode
 
 lookup = TemplateLookup(directories=["templates"])
+DEBUG_MODE = True
 
 # Each function in this class is a web page
 class WebUI(object):
@@ -26,7 +27,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def index(self):
-		if not self._index_html:
+		if DEBUG_MODE or not self._index_html:
 			paths = PathNode()
 			paths.name = "Root"
 			paths.traverse("data")

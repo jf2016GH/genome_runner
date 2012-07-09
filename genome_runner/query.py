@@ -68,4 +68,3 @@ def run_enrichments(id, f, gfeatures, niter, name, score, strand):
 	with open(path, "w") as strm:
 		cPickle.dump(enrichments, strm)
 
-

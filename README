@@ -24,4 +24,4 @@ Navigate to the project directory (the same one that this README is in).
 Run
 	python -m genome_runner.server [optional port#]
 
-By default the server is run on port 8081.
+By default the server is run on port 8081..
