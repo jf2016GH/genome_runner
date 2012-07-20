@@ -7,9 +7,10 @@ import sqlite3
 from operator import attrgetter
 from multiprocessing import Process
 import cPickle
-
+import bedfilecreator as uscsreader
 import query
 from path import PathNode
+from operator import itemgetter
 
 lookup = TemplateLookup(directories=["templates"])
 DEBUG_MODE = True
@@ -23,33 +24,41 @@ class WebUI(object):
 			while self.next_id() < last_id:
 				pass
 
-		self._index_html = None
+		self._index_html = {}
 
 	@cherrypy.expose
-	def index(self):
-		if DEBUG_MODE or not self._index_html:
-			paths = PathNode()
+	def index(self, organism="hg19"):
+		if DEBUG_MODE or not organism in self._index_html:
+			paths = PathNode(organism)
 			paths.name = "Root"
-			paths.traverse("data")
+			paths.organisms = self.get_org() 
+			paths.traverse("data/{}".format(organism))
 			tmpl = lookup.get_template("index.html")
-			self._index_html = tmpl.render(paths=paths)
-		return self._index_html
+			self._index_html[organism] = tmpl.render(paths=paths)
+		return self._index_html[organism]
+
+	def get_org(self):
+		organisms = []
+		files = os.listdir("./data")
+		for f in files:
+			if f.find(".") == -1:
+				organisms.append(f)
+		return organisms
+
+
 
 	@cherrypy.expose
-	def meta(self, tbl):
-		dbpath = "data/trackdb.db"
-		with closing(sqlite3.connect(dbpath)) as conn:
-			with closing(conn.cursor()) as c:
-				c.execute("""select html from trackDb where
-					tableName='%s'""" % tbl)
-				try:
-					s = str([h for (h,) in c][0])
-					if not s:
-						s = "<h3>(No data found).</h3>"
-					return s
-				except Exception, e:
-					print e
-					return "<h3>ERROR: table not found</h3>"
+	def meta(self, tbl,organism="hg19"):
+		try:
+			trackdb = uscsreader.load_tabledata_dumpfiles("data/{}/trackDb".format(organism))
+			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
+		except Exception, e:
+			print e
+			return "<h3>ERROR: table not found</h3>"
+		if html=='':
+			return "<h3>(no data found).</h3>"
+		else:
+			return html
 
 	@cherrypy.expose
 	def query(self, bed_file=None, niter=10, name="", score="", strand="", **kwargs):

@@ -14,3 +14,9 @@ bedfiles
 *~
 uploads
 results
+download
+downloads
+*.sql
+*.gz
+*.temp
+*tags

@@ -12,6 +12,10 @@
 					initializeChecked: 'collapsed',
 					initializeUnchecked: 'collapsed'
 				});
+				$('#org').change(function() {
+					var $org = $('select#org').val();
+						
+				})
         });
     </script>
 </head>
@@ -21,7 +25,11 @@
 			<h3>1. Upload a BED file</h3>
 			File:<input type="file" name="bed_file" /><br />
 			<h3>2. Choose tracks of interest:</h3>
+			<b>Organism</b>
+			${paths.org_as_html(id="org")}
+			<div style="border:1px solid black;min-height:100px" class="grf">
 			${paths.as_html(id="ucsc")}
+			</div>
 			<h3>3. Advanced (optional):</h3>
 			<b># MC iters:</b>
 				<input id="niter"

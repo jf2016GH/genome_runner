@@ -30,7 +30,7 @@ def make_filter(name, score, strand):
 			return False
 		return True
 	return filter
-
+# TODO make organism specific!
 def enrichment(a, b, name=None, score=None, strand=None, n=10):
 	"""Perform enrichment analysis between two BED files.
 
@@ -49,7 +49,7 @@ def enrichment(a, b, name=None, score=None, strand=None, n=10):
 	B.set_chromsizes("hg19")
 	obs = len(A.intersect(B, u=True))
 	# This is the Monte-Carlo step
-	dist = [len(A.shuffle(g="data/hg19.genome").intersect(B, u=True)) for i in range(n)]
+	dist = [len(A.shuffle(genome="hg19").intersect(B, u=True)) for i in range(n)]
 	exp = numpy.mean(dist)
 	p_value = len([x for x in dist if x > obs]) / float(len(dist))
 	p_value = min(p_value, 1 - p_value)
