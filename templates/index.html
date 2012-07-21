@@ -12,9 +12,11 @@
 					initializeChecked: 'collapsed',
 					initializeUnchecked: 'collapsed'
 				});
-				$('#org').change(function() {
-					var $org = $('select#org').val();
-						
+				$('#org').change(function() {;
+					var $org = document.getElementById("org").value 
+					console.log("changeorganisms" + $org);
+					var $url="index?organism=" + $org;
+					window.location = $url;
 				})
         });
     </script>

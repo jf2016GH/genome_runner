@@ -75,9 +75,11 @@ class WebUI(object):
 			f = os.path.join("uploads", str(id)+".bed")
 			if not os.path.exists(f):
 
+				# TODO fix carriage return error!
 				with open(f, "w") as out:
 					while True:
 						data = bed_file.file.read(8192)
+						data = data.strip("\r")
 						if not data:
 							break
 						out.write(data)
@@ -112,6 +114,7 @@ class WebUI(object):
 		enrichments.sort(key=attrgetter("p_value"))
 		tmpl = lookup.get_template("enrichment.html")
 		return tmpl.render(enrichments=enrichments)
+
 
 if __name__ == "__main__":
 	if not os.path.exists("results"):

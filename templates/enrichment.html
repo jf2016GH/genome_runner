@@ -41,6 +41,8 @@
 					<th>#Overlaps (observed)</th>
 					<th>#Overlaps (expected)</th>
 					<th>P-value</th>
+					<th>Proximety to GF (observed)</th>
+					<th>Proximety to GF (expected)</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -54,6 +56,8 @@
 						<td class=obsoverlap>${e.observed}</td>
 						<td class=expoverlap>${e.expected}</td>
 						<td class=pvalue>${e.p_value}</td>
+						<td class=obsprox>${e.obsprox}</td>
+						<td class=expprox>${e.expprox}</td>
 					</tr>
 				% endfor
 			</tbody>

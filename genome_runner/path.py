@@ -61,7 +61,7 @@ class PathNode(defaultdict):
 	def org_as_html(self,id=None):
 		s = "<select "
 		if id:
-			s += "id=%s'" % str(id)
+			s += "id='%s'" % str(id)
 		s += '>'
 		for org in self.organisms:
 			s += "<option>%s</option>" % str(org)

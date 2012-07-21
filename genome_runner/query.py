@@ -10,7 +10,7 @@ from path import basename
 # Lists of Enrichment objects are serialized to a Python Pickle
 # file when an analysis is complete	
 _Enrichment = namedtuple("Enrichment",
-		["A","B","nA","nB","observed","expected","p_value"])
+		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox"])
 class Enrichment(_Enrichment):
 	def category(self):
 		if self.expected == 0 or self.p_value > 0.05:
@@ -53,7 +53,35 @@ def enrichment(a, b, name=None, score=None, strand=None, n=10):
 	exp = numpy.mean(dist)
 	p_value = len([x for x in dist if x > obs]) / float(len(dist))
 	p_value = min(p_value, 1 - p_value)
-	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value)
+	# proximety analysis
+	# for expected
+
+		#stores the means of the distances for the MC
+	expall =[]
+	for i in range(n):
+		# run proximety analysis
+		tmp = A.shuffle(genome="hg19").closest(B,d=True)
+		# get the distances
+		for t in tmp:
+			expall.append(t[-1])
+	# calculate the overal expected distance
+	expall.append(numpy.mean(numpy.array(expall,float)))
+	print "{} expected distances".format(i) 
+	print expall
+	# calculate the expected mean for all of the runs
+	expprox = numpy.mean(numpy.array(expall,float))	
+	# proximety analysis for observed
+	tmp = A.closest(B,d=True)
+	obsall = []
+	for t in tmp:
+		obsall.append(t[-1])
+	print "observed distances " 
+	print obsall
+	obsprox = numpy.mean(numpy.array(obsall,float))
+	print "observed mean distance: " 
+	print obsprox
+
+	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox)
 
 def run_enrichments(id, f, gfeatures, niter, name, score, strand):
 	"""

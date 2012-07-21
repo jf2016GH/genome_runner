@@ -147,7 +147,7 @@ def download_bedfiles(trackdbpath,organism):
 			# DEBUG this line limits the number of GRF to download
 			for d in numdownloaded.values():
 				print d
-			if numdownloaded[row["type"]] <= 10:
+			if numdownloaded[row["type"]] <=500000 and row["tableName"] != 'snp128':
 				sqlpath = download_uscs_file(organism,row["tableName"] + ".sql","downloads")
 				download_uscs_file(organism,row["tableName"] + ".txt.gz","downloads")
 				if sqlpath != '':
