@@ -44,7 +44,7 @@ def enrichment(a, b, name=None, score=None, strand=None, n=10):
 	nA = len(A)
 	nB = len(B)
 	if not nA or not nB:
-		return Enrichment(a,basename(b),nA,nB,0,0,1)
+		return Enrichment(a,basename(b),nA,nB,0,0,1,0,0)
 	A.set_chromsizes("hg19")
 	B.set_chromsizes("hg19")
 	obs = len(A.intersect(B, u=True))

@@ -20,3 +20,5 @@ downloads
 *.gz
 *.temp
 *tags
+genome_runner_live
+templates_live

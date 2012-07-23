@@ -6,6 +6,10 @@
           href="static/jui/jquery-ui-1.8.12.custom/css/smoothness/jquery-ui-1.8.12.custom.css"/>
     <script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
     <link rel="stylesheet" type="text/css" href="static/css/jquery.checkboxtree.css"/>
+
+    <link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
+    <script src="static/js/fcbkcomplete.min.js" type="text/javascript" charset="utf-8"></script>    
+ 
     <script type="text/javascript">
         $(document).ready(function() {
 				$('#ucsc').checkboxTree({
@@ -18,7 +22,8 @@
 					var $url="index?organism=" + $org;
 					window.location = $url;
 				})
-        });
+		$.facebooklist('#gfs', '#preadded', '#facebook-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:0});
+         });
     </script>
 </head>
 	<body>
@@ -29,6 +34,21 @@
 			<h3>2. Choose tracks of interest:</h3>
 			<b>Organism</b>
 			${paths.org_as_html(id="org")}
+		  <div >
+				<ol>        
+					<li id="facebook-list" class="input-text">
+					  <input type="text" value="" id="gfs" class"grf"/>
+					  <ul id="preadded" style="display:none">
+					  </ul>
+					  <div id="facebook-auto">
+						<div class="default">Type the names of the GenomeRunner features to run</div> 
+						<ul id="feed">
+						</ul>
+					  </div>
+					</li>
+				  </ol>   
+			  </div>
+
 			<div style="border:1px solid black;min-height:100px" class="grf">
 			${paths.as_html(id="ucsc")}
 			</div>
@@ -47,5 +67,6 @@
 			<h3>4. Run query!</h3> 
 			<input type="submit" / >
 		</form>
+	      
 	</body>
 </html>

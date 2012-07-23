@@ -1,7 +1,8 @@
-import os, fnmatch
+import os, fnmatch,json
 
 from collections import defaultdict
 from collections import Set
+from collections import namedtuple
 def basename(k):
 	return os.path.basename(os.path.splitext(k)[0])
 
@@ -19,6 +20,10 @@ class PathNode(defaultdict):
 		self.organisms = []
 	
 	def traverse(self, base):
+
+		# used to generate a json list of gfs
+		gfs = []
+
 		for base, dirs, files in os.walk(base):
 			prefix = base.split("/")[2:]
 			node = self
@@ -31,6 +36,12 @@ class PathNode(defaultdict):
 				node.name = p
 			node.files = ["file:"+os.path.join(base, f) for f 
 				in list(fnmatch.filter(files, ("*.gz")))]
+			for f in node.files:
+				gfs.append({"caption": str(basename(os.path.splitext(f)[0])),"value":f})
+		f = open("static/gfs.php","wb")
+		f.write(json.dumps(gfs))
+		f.close()
+
 
 	def _li(self, k):
 		if k.startswith("file:"):
