@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys, operator, os, numpy
 from pybedtools import BedTool
+import pybedtools
 from collections import namedtuple
 import cPickle
 
