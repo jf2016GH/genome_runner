@@ -27,6 +27,12 @@
 						"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
 					}
 				});
+				var columns = $('#tbl thead th').map(function(){
+					return $(this).attr('value');
+					});
+				var tableObject = $('#tbl tbody tr').map(function(i) {
+					var row = {};
+					$(this).find('td')`
 			} );
 		</script>
 	</head>
@@ -35,14 +41,17 @@
 			cellspacing="0" border="0">
 			<thead>
 				<tr>
-					<th>GF Name</th>
-					<th>#FOIs</th>
-					<th>#Genomic Features</th>
-					<th>#Overlaps (observed)</th>
-					<th>#Overlaps (expected)</th>
-					<th>P-value</th>
-					<th>Proximety to GF (observed)</th>
-					<th>Proximety to GF (expected)</th>
+					<th value="gfname">GF Name</th>
+					<th value="numfoi">#FOIs</th>
+					<th value="numgf">#Genomic Features</th>
+					<th value="obsoverlap">#Overlaps (observed)</th>
+					<th value="expoverlap">#Overlaps (expected)</th>
+					<th value="pybed_expoverlap">#overlaps (PyBed expected)</th>
+					<th value="pvalue">P-value</th>
+					<th value="pybed_p_value">PyBed P-value</th>
+					<th value="obsprox">Proximety to GF (observed)</th>
+					<th value="expprox">Proximety to GF (expected)</th>
+					
 				</tr>
 			</thead>
 			<tbody>
@@ -50,14 +59,16 @@
 				% for i,e in enumerate(enrichments):
 					
 					<tr class="${e.category()}">
-						<td class=gfname>${e.B}</td>
-						<td class=numfoi>${e.nA}</td>
-						<td class=numgf>${e.nB}</td>
-						<td class=obsoverlap>${e.observed}</td>
-						<td class=expoverlap>${e.expected}</td>
-						<td class=pvalue>${e.p_value}</td>
-						<td class=obsprox>${e.obsprox}</td>
-						<td class=expprox>${e.expprox}</td>
+						<td>${e.B}</td>
+						<td>${e.nA}</td>
+						<td>${e.nB}</td>
+						<td>${e.observed}</td>
+						<td>${e.expected}</td>
+						<td>${e.pybed_expected}</td>
+						<td>${e.p_value}</td>
+						<td>${e.pybed_p_value}</td>
+						<td>${e.obsprox}</td>
+						<td>${e.expprox}</td>
 					</tr>
 				% endfor
 			</tbody>

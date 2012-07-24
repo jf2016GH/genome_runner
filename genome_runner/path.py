@@ -64,17 +64,19 @@ class PathNode(defaultdict):
 		if not self.name == "Root":
 			s += self._li(self.name)
 		for f in sorted(self.files):	
-			s += "<ul>" + self._li(f) + "</ul>"
+			# ensure that trackDb is not listed
+			if "trackDb" not in f:
+				s += "<ul>" + self._li(f) + "</ul>"
 		for _,child in sorted(self.items()):
 			s += child.as_html()
 		return s + "</ul>"
 
 	def org_as_html(self,id=None):
-		s = "<select "
+		s = "<select name='organism' "
 		if id:
-			s += "id='%s'" % str(id)
+			s += "id='%s'" % str (id)
 		s += '>'
 		for org in self.organisms:
-			s += "<option>%s</option>" % str(org)
+			s += "<option value='organism:{}'>{}</option>".format(org,org)
 		return s + "</select>"
 

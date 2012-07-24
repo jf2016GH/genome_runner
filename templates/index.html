@@ -7,22 +7,38 @@
     <script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
     <link rel="stylesheet" type="text/css" href="static/css/jquery.checkboxtree.css"/>
 
-    <link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
     <script src="static/js/fcbkcomplete.min.js" type="text/javascript" charset="utf-8"></script>    
+    <link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
  
     <script type="text/javascript">
+		function getQueryVariable(variable) { 
+			    var query = window.location.search.substring(1); 
+				    var vars = query.split("&"); 
+					    for (var i = 0; i < vars.length; i++) { 
+					        var pair = vars[i].split("="); 
+				        if (pair[0] == variable) { 
+					            return pair[1]; 
+									        } 
+									    } 
+						    return null; 
+		} 
+
         $(document).ready(function() {
 				$('#ucsc').checkboxTree({
 					initializeChecked: 'collapsed',
 					initializeUnchecked: 'collapsed'
 				});
-				$('#org').change(function() {;
-					var $org = document.getElementById("org").value 
-					console.log("changeorganisms" + $org);
-					var $url="index?organism=" + $org;
-					window.location = $url;
+
+			
+		$('#org').val("organism:" + getQueryVariable('organism'));
+		$('#org').change(function() {;
+			var org = document.getElementById("org").value;
+			var temp = org.split(":");
+			var $url="index?organism=" + temp[1];
+			window.location = $url;
 				})
 		$.facebooklist('#gfs', '#preadded', '#facebook-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:0});
+
          });
     </script>
 </head>
@@ -34,7 +50,7 @@
 			<h3>2. Choose tracks of interest:</h3>
 			<b>Organism</b>
 			${paths.org_as_html(id="org")}
-		  <div >
+			<div id="grfdroplist">
 				<ol>        
 					<li id="facebook-list" class="input-text">
 					  <input type="text" value="" id="gfs" class"grf"/>
@@ -47,9 +63,7 @@
 					  </div>
 					</li>
 				  </ol>   
-			  </div>
-
-			<div style="border:1px solid black;min-height:100px" class="grf">
+			</div>
 			${paths.as_html(id="ucsc")}
 			</div>
 			<h3>3. Advanced (optional):</h3>
