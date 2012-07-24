@@ -45,10 +45,13 @@
 					<th value="numfoi">#FOIs</th>
 					<th value="numgf">#Genomic Features</th>
 					<th value="obsoverlap">#Overlaps (observed)</th>
+					<th value="jaccard_observed">#Overlaps (Jaccard observed)</th>
 					<th value="expoverlap">#Overlaps (expected)</th>
 					<th value="pybed_expoverlap">#overlaps (PyBed expected)</th>
+					<th value="jaccard_expoverlap">#overlas (Jaccard expected)</th>
 					<th value="pvalue">P-value</th>
 					<th value="pybed_p_value">PyBed P-value</th>
+					<th value="jaccard_p_value">Jaccard P-value</th>
 					<th value="obsprox">Proximety to GF (observed)</th>
 					<th value="expprox">Proximety to GF (expected)</th>
 					
@@ -63,10 +66,13 @@
 						<td>${e.nA}</td>
 						<td>${e.nB}</td>
 						<td>${e.observed}</td>
+						<td>${e.jaccard_observed}</td>
 						<td>${e.expected}</td>
 						<td>${e.pybed_expected}</td>
+						<td>${e.jaccard_expected}</td>
 						<td>${e.p_value}</td>
 						<td>${e.pybed_p_value}</td>
+						<td>${e.jaccard_p_value}</td>
 						<td>${e.obsprox}</td>
 						<td>${e.expprox}</td>
 					</tr>

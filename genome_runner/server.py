@@ -79,7 +79,7 @@ class WebUI(object):
 				with open(f, "w") as out:
 					while True:
 						data = bed_file.file.read(8192)
-						data = data.strip("\r")
+						#data = data.strip("\r")
 						data = os.linesep.join([s for s in data.splitlines() if s])
 						if not data:
 							break

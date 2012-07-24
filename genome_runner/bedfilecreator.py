@@ -77,54 +77,39 @@ def download_trackdb(organism):
 
 def extract_bed6(outputpath,tabledata):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score','strand']
-	data = []
-	for r in tabledata:
-		row = []
-		for col in colstoextract:
-			row.append(r[col])
-		data.append(row)
+	with gzip.open(outputpath,'ab') as bed:
+		for r in tabledata:
+			row = []
+			for col in colstoextract:
+				row.append(r[col]) 
+			bed.write("\t".join(map(str,row))+"\n")
 
-	write_bed(outputpath,data)
 
 def extract_bed3(outputpath,tabledata):
 	colstoextract = ['chrom','chromStart','chromEnd']
-	data = []
-	for r in tabledata:
-		row = []
-		for col in colstoextract:
-			row.append(r[col])
-		data.append(row)
-
-	write_bed(outputpath,data)
+	with gzip.open(outputpath,"wb") as bed:
+		for r in tabledata:
+			row.append(r["chrom"],r["chromStart"],r["chromEnd"],".",".",".")
+			bed.write("\t".join(map(str,row))+"\n")
 
 def extract_genepred(outputpath,tabledata):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
-	genedata = []
-	exondata = []
-	for r in tabledata:
-		# extract the gene data inserts a blank for score
-		genedata.append((r['chrom'],r['txStart'],r['txEnd'],r['name'],'.',r['strand']))
-		# extract the exon data
-		for (s,e) in zip(r["exonStarts"].split(","),r["exonStarts"].split(",")):
-			if s != '':
-				exondata.append((r['chrom'],s,e,r['name'],'.',r['strand']))
-	
-	write_bed(outputpath,genedata)
-	# write the exon data
-	write_bed(outputpath.split(".")[0] + "_exon.gz",exondata)
+	exonpath = outputpath.split(".")[0]+"_exon.gz"
+	with gzip.open(outputpath,"wb") as bed:
+		with gzip.open(exonpath+".temp","wb") as exonbed:
+			for r in tabledata:
+				# extract the gene data inserts a blank for score
+				row = [r['chrom'],r['txStart'],r['txEnd'],r['name'],'.',r['strand']]
+				bed.write("\t".join(map(str,row))+"\n")
+				# extract the exon data
+				for (s,e) in zip(r["exonStarts"].split(","),r["exonStarts"].split(",")):
+					if s != '':
+						rowexon = [r['chrom'],s,e,r['name'],'.',r['strand']]
+						exonbed.write("\t".join(map(str,rowexon))+"\n")
+	# remove the .temp extension from the exon file 
+	os.rename(exonpath+".temp",exonpath)
 
-# writes the formated bed file to a .gz.temp.  After the write is complete, it is renamed to .gz
-def write_bed(outputpathgz,data):
-	''' writes the data to a .gz bed data file
-	'''
-	print 'writting the data to {}'.format(outputpathgz)
-	if os.path.exists(os.path.dirname(outputpathgz)) != True:
-		os.makedirs(os.path.dirname(outputpathgz))	
 	
-	with gzip.open(outputpathgz + ".temp",'wb') as bed:
-		for row in data:
-			bed.write("\t".join(map(str,row))+"\n")
-	os.rename(outputpathgz+".temp",outputpathgz)
 
 def get_column_names(sqlfilepath):
 	''' extracts the column names from the .sql file and returns them
@@ -147,16 +132,25 @@ def download_bedfiles(trackdbpath,organism):
 			# DEBUG this line limits the number of GRF to download
 			for d in numdownloaded.values():
 				print d
-			if numdownloaded[row["type"]] <=500000 and row["tableName"] != 'snp128':
+			if numdownloaded[row["type"]] <=5000000:
 				sqlpath = download_uscs_file(organism,row["tableName"] + ".sql","downloads")
 				download_uscs_file(organism,row["tableName"] + ".txt.gz","downloads")
 				if sqlpath != '':
-					data = load_tabledata_dumpfiles(os.path.splitext(sqlpath)[0])
 					print "converting",row['tableName'], " into proper bed format"
 					try:
 						outpath = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"]+".gz")
+						if not os.path.exists(os.path.dirname(outpath)):
+							os.makedirs(os.path.dirname(outpath))
 						if os.path.exists(outpath) == False:
-							preparebed[row["type"]](outpath,data)
+							data = load_tabledata_dumpfiles(os.path.splitext(sqlpath)[0])
+							# removes the .temp file, to prevent duplicate data from being written
+							if os.path.exists(outpath+".temp"):
+								os.remove(outpath+".temp")
+							# converts the uscs data into propery bed format
+							print "Converting into proper bed format"
+							preparebed[row["type"]](outpath+".temp",data)
+							# remove the .temp file extension to activate the GF
+							os.rename(outpath+".temp",outpath)
 						else:
 							print "{} already exists, skipping extraction".format(outpath)
 						numdownloaded[row["type"]] += 1

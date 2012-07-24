@@ -10,7 +10,7 @@ from path import basename
 # Lists of Enrichment objects are serialized to a Python Pickle
 # file when an analysis is complete	
 _Enrichment = namedtuple("Enrichment",
-		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value","pybed_expected"])
+		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value","pybed_expected","jaccard_observed","jaccard_p_value","jaccard_expected"])
 class Enrichment(_Enrichment):
 	def category(self):
 		if self.expected == 0 or self.p_value > 0.05:
@@ -46,28 +46,44 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	nA = len(A)
 	nB = len(B)
 	if not nA or not nB:
-		return Enrichment(a,basename(b),nA,nB,0,0,1,0,0,1,0)
+		return Enrichment(a,basename(b),nA,nB,0,0,1,0,0,1,0,0,1,0)
 	A.set_chromsizes(organism)
 	B.set_chromsizes(organism)
 	obs = len(A.intersect(B, u=True))
 	# This is the Monte-Carlo step
 	dist = [len(A.shuffle(genome=organism,chrom=True).intersect(B, u=True)) for i in range(n)]
 	exp = numpy.mean(dist)
-	p_value = len([x for x in dist if x > obs]) / float(len(dist))
-	p_value = min(p_value, 1 - p_value)
-	# expected calulated using pybed method
+	# gave p_value a value here so that it doesn't go out of scope, is this needed?
+	p_value = 'NA'
+	if exp == obs or (exp == 0 and obs == 0):
+		p_value =1
+	else:
+		p_value = len([x for x in dist if x > obs]) / float(len(dist))
+		p_value = min(p_value, 1 - p_value)
+	
+	# expected caluclated using pybed method
 	pybeddist = A.randomintersection(B,iterations=n,shuffle_kwargs={'chrom': True})
 	pybeddist = list(pybeddist)
 	pybed_exp = numpy.mean(pybeddist)
-	pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(dist))
-	pybedp_value = min(pybedp_value,1-pybedp_value)
-	# expected calculated using pybed IntersectionMatrix
-	#bed = [a]
-	#im = IntersectionMatrix(beds,genome,iterations=n)
-	#matrix = im.create_matrix(verbose=True)
-	
-	# proximety analysis
-	# for expected
+	pybedp_value = 'NA'
+	if pybed_exp == obs or (pybed_exp == 0 and obs == 0):
+		pybedp_value =1
+	else:
+		pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(pybeddist))
+		pybedp_value = min(pybedp_value,1-pybedp_value)
+	# epected calculated using jaccard method
+	chrom = pybedtools.get_chromsizes_from_ucsc(organism)
+	chrom_fn = pybedtools.chromsizes_to_file(chrom)
+	resjaccard = A.naive_jaccard(B,genome_fn=chrom_fn,iterations=n,shuffle_kwargs={'chrom':True})
+	jaccard_dist = resjaccard[1]
+	jaccard_obs = resjaccard[0]
+	jaccard_exp = numpy.mean(resjaccard[1])
+	jaccardp_value = 'NA'
+	if jaccard_exp == jaccard_obs or (jaccard_exp  == 0 and jaccard_obs == 0):
+		jaccardp_value =1
+	else:
+		jaccardp_value = len([x for x in jaccard_dist if x > obs]) / float(len(jaccard_dist))
+		jaccardp_value = min(pybedp_value,1-pybedp_value)
 
 		#stores the means of the distances for the MC
 	expall =[]
@@ -88,7 +104,7 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 		obsall.append(t[-1])
 	obsprox = numpy.mean(numpy.array(obsall,float))
 
-	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp)
+	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp)
 
 def run_enrichments(id, f, gfeatures, niter, name, score, strand,organism):
 	"""

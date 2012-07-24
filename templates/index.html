@@ -28,15 +28,20 @@
 					initializeChecked: 'collapsed',
 					initializeUnchecked: 'collapsed'
 				});
-
-			
-		$('#org').val("organism:" + getQueryVariable('organism'));
+	
 		$('#org').change(function() {;
 			var org = document.getElementById("org").value;
 			var temp = org.split(":");
 			var $url="index?organism=" + temp[1];
 			window.location = $url;
 				})
+		if (getQueryVariable('organism') != null){
+				$('#org').val("organism:" + getQueryVariable('organism'));
+			}
+			else{
+				$('#org').val("organism:hg19");
+			}
+
 		$.facebooklist('#gfs', '#preadded', '#facebook-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:0});
 
          });
