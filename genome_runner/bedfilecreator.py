@@ -68,44 +68,59 @@ def download_trackdb(organism):
 	' replace all of the \\\n characters in the html column with <br />'
 	text = gzip.open(dataoutpath).read()
 	with gzip.open(dataoutpath,'wb') as sw:
-		sw.write(text.replace('\\\n','<br />'))
-
+		sw.write(text.replace('\\\n','<br />').replace('\\\t','     '))
 	return sqloutputpath
 	
 
 
 
-def extract_bed6(outputpath,tabledata):
+def extract_bed6(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score','strand']
-	with gzip.open(outputpath,'ab') as bed:
-		for r in tabledata:
-			row = []
-			for col in colstoextract:
-				row.append(r[col]) 
-			bed.write("\t".join(map(str,row))+"\n")
+	print "Outpath is: {}".format(outputpath)
+	with gzip.open(datapath) as dr:
+		with gzip.open(outputpath,"wb") as bed:
+			while True:
+				line = dr.readline()
+				if line == "":
+					break
+				r  = dict(zip(colnames,line.split('\t')))
+				row = []
+				for col in colnames:
+					row.append(r[col]) 
+				bed.write("\t".join(map(str,row))+"\n")
 
 
-def extract_bed3(outputpath,tabledata):
+def extract_bed3(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd']
 	with gzip.open(outputpath,"wb") as bed:
-		for r in tabledata:
-			row.append(r["chrom"],r["chromStart"],r["chromEnd"],".",".",".")
-			bed.write("\t".join(map(str,row))+"\n")
+		with gzip.open(datapath) as dr:
+			while True:
+				line = dr.readline()
+				if line == "":
+					break
+				r  = dict(zip(colnames,line.split('\t')))
+				row = [r["chrom"],r["chromStart"],r["chromEnd"],".",".","."]
+				bed.write("\t".join(map(str,row))+"\n")
 
-def extract_genepred(outputpath,tabledata):
+def extract_genepred(outputpath,datapath,colnames):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
 	exonpath = outputpath.split(".")[0]+"_exon.gz"
-	with gzip.open(outputpath,"wb") as bed:
-		with gzip.open(exonpath+".temp","wb") as exonbed:
-			for r in tabledata:
-				# extract the gene data inserts a blank for score
-				row = [r['chrom'],r['txStart'],r['txEnd'],r['name'],'.',r['strand']]
-				bed.write("\t".join(map(str,row))+"\n")
-				# extract the exon data
-				for (s,e) in zip(r["exonStarts"].split(","),r["exonStarts"].split(",")):
-					if s != '':
-						rowexon = [r['chrom'],s,e,r['name'],'.',r['strand']]
-						exonbed.write("\t".join(map(str,rowexon))+"\n")
+	with gzip.open(datapath) as dr:
+		with gzip.open(outputpath,"wb") as bed:
+			with gzip.open(exonpath+".temp","wb") as exonbed:
+				while True:
+					line = dr.readline()
+					if line == "":
+						break
+					r = dict(zip(colnames,line.split('\t')))
+					# extract the gene data inserts a blank for score
+					row = [r['chrom'],r['txStart'],r['txEnd'],r['name'],'.',r['strand']]
+					bed.write("\t".join(map(str,row))+"\n")
+					# extract the exon data
+					for (s,e) in zip(r["exonStarts"].split(","),r["exonStarts"].split(",")):
+						if s != '':
+							rowexon = [r['chrom'],s,e,r['name'],'.',r['strand']]
+							exonbed.write("\t".join(map(str,rowexon))+"\n")
 	# remove the .temp extension from the exon file 
 	os.rename(exonpath+".temp",exonpath)
 
@@ -142,13 +157,12 @@ def download_bedfiles(trackdbpath,organism):
 						if not os.path.exists(os.path.dirname(outpath)):
 							os.makedirs(os.path.dirname(outpath))
 						if os.path.exists(outpath) == False:
-							data = load_tabledata_dumpfiles(os.path.splitext(sqlpath)[0])
 							# removes the .temp file, to prevent duplicate data from being written
 							if os.path.exists(outpath+".temp"):
 								os.remove(outpath+".temp")
 							# converts the uscs data into propery bed format
-							print "Converting into proper bed format"
-							preparebed[row["type"]](outpath+".temp",data)
+							print "Converting into proper bed format. {}".format(os.path.splitext(sqlpath)[0] + ".txt.gz")
+							preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
 							# remove the .temp file extension to activate the GF
 							os.rename(outpath+".temp",outpath)
 						else:
