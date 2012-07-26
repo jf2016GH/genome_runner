@@ -7,6 +7,8 @@ import cPickle
 
 from path import basename
 
+PROFILE_MODE = True
+
 # This class represents an Enrichment analysis result
 # Lists of Enrichment objects are serialized to a Python Pickle
 # file when an analysis is complete	
@@ -44,6 +46,8 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	flt = make_filter(name,score,strand)
 	A = BedTool(str(a))
 	B = BedTool(str(b)).filter(flt).saveas()
+	print A.count()
+	print B.count()
 	nA = len(A)
 	nB = len(B)
 	if not nA or not nB:
@@ -52,6 +56,7 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	B.set_chromsizes(organism)
 	obs = len(A.intersect(B, u=True))
 	# This is the Monte-Carlo step
+	print "RUNNING MONTE CARLO"
 	dist = [len(A.shuffle(genome=organism,chrom=True).intersect(B, u=True)) for i in range(n)]
 	exp = numpy.mean(dist)
 	# gave p_value a value here so that it doesn't go out of scope, is this needed?
@@ -62,20 +67,28 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 		p_value = len([x for x in dist if x > obs]) / float(len(dist))
 		p_value = min(p_value, 1 - p_value)
 	
+	print "MC pvalue: {}".format(p_value)
 	# expected caluclated using pybed method
+	print "RUNNING RANDOM INTERSECTIONS"
 	pybeddist = A.randomintersection(B,iterations=n,shuffle_kwargs={'chrom': True})
 	pybeddist = list(pybeddist)
+	print pybeddist
+	print "calculating mean"
 	pybed_exp = numpy.mean(pybeddist)
 	pybedp_value = 'NA'
 	if pybed_exp == obs or (pybed_exp == 0 and obs == 0):
 		pybedp_value =1
 	else:
+		print "calculating pvalue"
 		pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(pybeddist))
 		pybedp_value = min(pybedp_value,1-pybedp_value)
 	# epected calculated using jaccard method
 	chrom = pybedtools.get_chromsizes_from_ucsc(organism)
 	chrom_fn = pybedtools.chromsizes_to_file(chrom)
-	resjaccard = A.naive_jaccard(B,genome_fn=chrom_fn,iterations=n,shuffle_kwargs={'chrom':True})
+	A2 = A.cut([0,1,2])
+	B2 = B.cut([0,1,2])
+	print "RUNNING JACCARD"
+	resjaccard = A2.naive_jaccard(B2,genome_fn=chrom_fn,iterations=n,shuffle_kwargs={'chrom':True})
 	jaccard_dist = resjaccard[1]
 	jaccard_obs = resjaccard[0]
 	jaccard_exp = numpy.mean(resjaccard[1])
@@ -85,6 +98,7 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	else:
 		jaccardp_value = len([x for x in jaccard_dist if x > obs]) / float(len(jaccard_dist))
 		jaccardp_value = min(pybedp_value,1-pybedp_value)
+	print "JACCARD PVALUE: {}".format(jaccardp_value)
 
 		#stores the means of the distances for the MC
 	expall =[]
@@ -119,4 +133,6 @@ def run_enrichments(id, f, gfeatures, niter, name, score, strand,organism):
 	path = os.path.join("results", str(id))
 	with open(path, "w") as strm:
 		cPickle.dump(enrichments, strm)
+	
+	
 

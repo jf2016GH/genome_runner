@@ -61,32 +61,39 @@ class WebUI(object):
 			return html
 
 	@cherrypy.expose
-	def query(self, bed_file=None, niter=10, name="", score="", strand="", **kwargs):
+	def query(self, bed_file=None,bed_data=None, niter=10, name="", score="", strand="", **kwargs):
 		cherrypy.response.timeout = 3600
 		try:
 			niter = int(niter)
 		except ValueError:
 			niter = 10
 
+			
+		data = ""
 		try:
-			_ = bed_file.filename #hackish way of testing if a file was uploaded
 			id = self.next_id()
-		
 			f = os.path.join("uploads", str(id)+".bed")
 			if not os.path.exists(f):
-
-				# TODO fix carriage return error!
-				with open(f, "w") as out:
-					while True:
-						data = bed_file.file.read(8192)
-						#data = data.strip("\r")
+				with open(f, "wb") as out:
+					if bed_file != None and bed_file.filename != "":
+						while True:
+							data = bed_file.file.read(8192)
+							data = data.strip("\r")
+							data = os.linesep.join([s for s in data.splitlines() if s])
+							if not data:
+								break
+							out.write(data)			
+					elif bed_data!="":
+						data = bed_data
 						data = os.linesep.join([s for s in data.splitlines() if s])
-						if not data:
-							break
-						out.write(data)
-		except:
-			return "upload a file please"
+						out.write(data)			
+					else:
+						return "upload a file please"
 
+		except Exception, e:
+			print e
+			return "ERROR: upload a file please"
+		print "### LOADED DATA####"
 		# "kwargs" (Keyword Arguments) stands for all the other
 		# fields from the HTML form besides bed_file, niter, name, score, and strand
 		# These other fields are all the tables whose boxes might
@@ -97,14 +104,16 @@ class WebUI(object):
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		for k,v in kwargs.items():
-			print k
-			print v
-		for k,v in kwargs.items():
 			if v.startswith("organism:"):
 				print "organism is: " + k 
 				organism = v.split(":")[-1]
 				print organism
 
+		# Reserve a spot in the results folder
+		path = os.path.join("results", str(id))
+		results = open(path,'wb') 
+		results.close()
+		
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.

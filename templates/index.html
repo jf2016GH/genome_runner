@@ -42,26 +42,65 @@
 				$('#org').val("organism:hg19");
 			}
 
-		$.facebooklist('#gfs', '#preadded', '#facebook-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:0});
+		$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:0});
 
          });
+
+		function switchinput(checked){
+			if (checked == "bedfile"){
+				document.getElementById("inputbedfile").disabled=false;
+				document.getElementById("inputbeddata").disabled=true;
+				document.getElementById("inputbeddata").text = ""
+				document.getElementById("inputbeddata").value = ""
+			}
+			else {
+				document.getElementById("inputbedfile").disabled=true;
+				document.getElementById("inputbeddata").disabled=false;
+				document.getElementById("inputbeddata").text = ""
+				document.getElementById("inputbeddata").value = ""
+			}
+		}
+
+		//prevents user from submitting form by accidentally pressing the enter key
+		function stopRKey(evt) { 
+			  var evt = (evt) ? evt : ((event) ? event : null); 
+				var node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null); 
+				  if ((evt.keyCode == 13) && (node.type=="text"))  {return false;} 
+		} 
+
+		document.onkeypress = stopRKey; 
+
     </script>
 </head>
 	<body>
 		<h1>GenomeRunner</h1>
 		<form action="query" method="post" enctype="multipart/form-data">
 			<h3>1. Upload a BED file</h3>
-			File:<input type="file" name="bed_file" /><br />
+			<ul class='list-input'>
+				<li id="list-bed">
+				<input type="radio" name="rdbed"  checked="checked" style="margin:5px" value="bedfile" onclick="switchinput(this.value)"/>
+					File:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" />
+				</li>
+				<li id="list-bed">
+				<span style="margin-right:5px; float: left">
+
+				<input name="rdbed" type="radio" id="bedchoicedata" style="margin:5px" value="beddata" onclick="switchinput(this.value)"/>	
+			</span>
+				<span style="margin-right:5px; float: left">Bed Data:</span>
+						<textarea id="inputbeddata" rows=5 cols=100 style="margin:5px" name="bed_data" disabled>
+						</textarea>
+				</li>
+			</ul>
 			<h3>2. Choose tracks of interest:</h3>
 			<b>Organism</b>
 			${paths.org_as_html(id="org")}
 			<div id="grfdroplist">
 				<ol>        
-					<li id="facebook-list" class="input-text">
+					<li id="grf-list" class="input-text">
 					  <input type="text" value="" id="gfs" class"grf"/>
 					  <ul id="preadded" style="display:none">
 					  </ul>
-					  <div id="facebook-auto">
+					  <div id="grfs-auto">
 						<div class="default">Type the names of the GenomeRunner features to run</div> 
 						<ul id="feed">
 						</ul>

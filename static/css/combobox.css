@@ -28,13 +28,13 @@ ul.holder li.bit-box-focus a.closebutton, ul.holder li.bit-box-focus a.closebutt
 
 /* Autocompleter */
 
-#facebook-auto { display: none; position: absolute; width: 512px; background: #eee; z-index:50}
-#facebook-auto .default { padding: 5px 7px; border: 1px solid #ccc; border-width: 0 1px 1px; }
-#facebook-auto ul { display: none; margin: 0; padding: 0; overflow: auto; }
-#facebook-auto ul li { padding: 5px 12px; z-index: 1000; cursor: pointer; margin: 0; list-style-type: none; border: 1px solid #ccc; border-width: 0 1px 1px; font: 11px "Lucida Grande", "Verdana"; }
-#facebook-auto ul li em { font-weight: bold; font-style: normal; background: #ccc; }
-#facebook-auto ul li.auto-focus { background: #4173CC; color: #fff; }
-#facebook-auto ul li.auto-focus em { background: none; }
+#grfs-auto { display: none; position: absolute; width: 512px; background: #eee; z-index:50}
+#grfs-auto .default { padding: 5px 7px; border: 1px solid #ccc; border-width: 0 1px 1px; }
+#grfs-auto ul { display: none; margin: 0; padding: 0; overflow: auto; }
+#grfs-auto ul li { padding: 5px 12px; z-index: 1000; cursor: pointer; margin: 0; list-style-type: none; border: 1px solid #ccc; border-width: 0 1px 1px; font: 11px "Lucida Grande", "Verdana"; }
+#grfs-auto ul li em { font-weight: bold; font-style: normal; background: #ccc; }
+#grfs-auto ul li.auto-focus { background: #4173CC; color: #fff; }
+#grfs-auto ul li.auto-focus em { background: none; }
 
 #demo ul.holder li.bit-input input { padding: 2px 0 1px; border: 1px solid #999; }
 #add a { color: #666; }
