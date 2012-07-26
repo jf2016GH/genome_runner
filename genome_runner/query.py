@@ -4,7 +4,7 @@ from pybedtools import BedTool
 import pybedtools
 from collections import namedtuple
 import cPickle
-
+import cProfile
 from path import basename
 
 PROFILE_MODE = True
@@ -88,7 +88,8 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	A2 = A.cut([0,1,2])
 	B2 = B.cut([0,1,2])
 	print "RUNNING JACCARD"
-	resjaccard = A2.naive_jaccard(B2,genome_fn=chrom_fn,iterations=n,shuffle_kwargs={'chrom':True})
+	resjaccard = A2.naive_jaccard(B2,genome_fn=chrom_fn,iterations=n,
+			shuffle_kwargs={'chrom':True})
 	jaccard_dist = resjaccard[1]
 	jaccard_obs = resjaccard[0]
 	jaccard_exp = numpy.mean(resjaccard[1])
@@ -119,13 +120,29 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 		obsall.append(t[-1])
 	obsprox = numpy.mean(numpy.array(obsall,float))
 
-	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp)
+	return Enrichment(a, basename(b), nA, nB, obs, exp, 
+			p_value,obsprox,expprox,pybedp_value,pybed_exp,
+			jaccard_obs,jaccardp_value,jaccard_exp)
 
 def run_enrichments(id, f, gfeatures, niter, name, score, strand,organism):
 	"""
 	Run one FOI file (f) against multiple GFs, then 
 	save the result to the "results" directory.
 	"""
+	if self.PROFILE_MODE == True:
+		print "running profile mode"
+		cProfile.run("profile(id,f,gfeatures,niter,name,score,strand,organism)",
+				get_profile_path())
+	else:
+		enrichments = []
+		for gf in gfeatures:
+			e = enrichment(f,gf,organism,name,score,strand,niter)
+			enrichments.append(e)
+		path = os.path.join("results", str(id))
+		with open(path, "w") as strm:
+			cPickle.dump(enrichments, strm)
+
+def profile(id, f, gfeatures, niter, name, score, strand,organism):
 	enrichments = []
 	for gf in gfeatures:
 		e = enrichment(f,gf,organism,name,score,strand,niter)
@@ -133,6 +150,11 @@ def run_enrichments(id, f, gfeatures, niter, name, score, strand,organism):
 	path = os.path.join("results", str(id))
 	with open(path, "w") as strm:
 		cPickle.dump(enrichments, strm)
-	
-	
 
+def get_profile_path():
+	n = 0
+	outputpath = os.path.join("profiles","{}.profile".format(n))
+	while file.exists(outputpath): 
+		n+=1
+		os.exists(os.path.join(outputdir,n + ".profile"))
+	return outputpath
