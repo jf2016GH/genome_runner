@@ -85,8 +85,8 @@
 		<div id="rect-demo"></div>
 		<div id="demo">
 			<select onchange="updategraph()" id="coltograph">
-				<option value="obsoverlap">observedoverlap</option>
 				<option value="pvalue">pvalue</option>
+				<option value="obsoverlap">observedoverlap</option>
 			</select>
 			
 		</div>
@@ -101,7 +101,7 @@
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.0000000000000000000000000000000000000008, obsoverlap: 100, expoverlap: 155},
+					{gfname: "wefkjlgf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4f4gf4", pvalue: 0.0000000000000000000000000000000000000008, obsoverlap: 100, expoverlap: 155},
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
 					{gfname: "wefkjl;jdsaklf;jdskal;fjkldsa;jfkhqwefkl;dsjkafl;djsaklf;jewlkjedsk", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
@@ -135,16 +135,19 @@
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
 					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
 					{gfname: "gf5", pvalue: 0.08, obsoverlap: 100, expoverlap: 155}]
+				function neglog10(val) {
+					return -1 * Math.log(val)/Math.log(10);
+				}
 			// performs log10 on the pvalue data
 			jQuery.each(td,function(i,d) {
-				d[curData] = neglog10(d.pvalue);
+				d.pvalue = neglog10(d.pvalue);
 				if (d.obsoverlap > d.expoverlap){
-					d[curData] = -1 * d.pvalue;
+					d.pvalue = -1 * d.pvalue;
 				}
 			});				
 
 			// the name of the column to graph
-
+		
 
 			var curData = $('#coltograph').val()
 			var margin = {top: 20, right: 100, bottom: 5, left: 5};
@@ -154,19 +157,35 @@
 			var barPadding = 3;
 			var height = td.length * barPadding*4;
 			var curColor = ""
+			
+			var x = d3.scale.linear().domain([
+			pvmin,pvmax])
+			.rangeRound([20,width]).nice();
+			var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom")
+			.ticks(5).tickSize(6,3,3);
+
 			function updatescales(){
 				 margin = {top: 20, right: 100, bottom: 5, left: 5};
 				width = 500; 
 				pvmin = d3.min(td,function(d) { return d[curData];});
+				console.log("pvmin"+pvmin)
 				pvmax = d3.max(td,function(d) { return d[curData]});
+				console.log("pvmax" + pvmax)
 				barPadding = 3;
 				height = td.length * barPadding*4;
 				curColor = ""
-			}
-			var x = d3.scale.linear().domain([
-			pvmin,pvmax])
-			.rangeRound([20,width]).nice();
+				x = d3.scale.linear().domain([
+				pvmin,pvmax])
+				.rangeRound([20,width]).nice();
 
+				xAxis = d3.svg.axis()
+				.scale(x)
+				.orient("bottom")
+				.ticks(5).tickSize(6,3,3);
+
+			}
 
 
 			function recfill(pvalue){
@@ -182,9 +201,7 @@
 				return ((a<b) ? -1:((a > b) ? 1 : 0));
 			}
 			td.sort(sortlist);
-			function neglog10(val) {
-				return -1 * Math.log(val)/Math.log(10);
-			}
+			
 
 			
 
@@ -204,6 +221,7 @@
 			.data(td)
 			.enter()
 			.append("text")
+			.attr("class","lblgfname")
 			.text(function(d) {
 				return d.gfname;
 			})
@@ -212,11 +230,7 @@
 			.attr("text-anchor","left")
 			.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
 			// draw axis 
-			var xAxis = d3.svg.axis()
-			.scale(x)
-			.orient("bottom")
-			.ticks(5).tickSize(6,3,3);
-
+			
 
 			bargraph2.append("g")
 			.attr("class","xaxis")
@@ -226,6 +240,7 @@
 			.call(xAxis);
 			
 			bargraph2.append("svg:line")
+			.attr("class","yaxis")
 			.attr("x1",x(0))
 			.attr("x2",x(0))
 			.attr("y1", 20)
@@ -235,8 +250,8 @@
 			
 			// animates the graph during	
 			function updategraph(){
-				updatescales();
 				 curData = $('#coltograph').val()
+				updatescales();
 				bargraph2.selectAll("rect").
 				data(td)
 				.transition()
@@ -245,13 +260,9 @@
 				.attr("y",function(d,i) {return i*(height/td.length) + margin.top;})
 				.attr("height", height/td.length - barPadding) 
 				.attr("width", function(d) { return Math.abs(x(d[curData]) - x(0));})
-				bargraph2.selectAll(".xaxis")
-				.data(td)
-				.transition()
-				.ease("linear")
-				.call(xAxis);
+				.attr("fill",function(d,i) {return recfill(d[curData]);})
 
-				bargraph2.selectAll("svg:line")
+				bargraph2.selectAll(".yaxis")
 				.transition()
 				.ease("linear")
 				.attr("x1",x(0))
@@ -260,15 +271,23 @@
 				.attr("y2",height)
 				.attr("stroke","grey")
 				.attr("stroke-width",1);
-			bargraph2.selectAll("text")
-			.data(td)
-			.text(function(d) {
-				return d.gfname;
-			})
-			.transition()
-			.ease("linear")
-			.attr("x",function(d) { return x(math.min(0,d[curdata])) + math.abs(x(d[curdata]) - x(0)) + 10;})
-			.attr("y",function(d,i) {return i*(height/td.length) + margin.top + 7;})
+
+				bargraph2.selectAll(".xaxis")
+				.transition()
+				.ease("cubic-in-out")
+				.attr("wdith",width)
+				.call(xAxis);
+				
+
+				bargraph2.selectAll(".lblgfname")
+				.data(td)
+				.text(function(d) {
+					return d.gfname;
+				})
+				.transition()
+				.ease("linear")
+				.attr("x",function(d) { return x(Math.min(0,d[curData])) + Math.abs(x(d[curData]) - x(0)) + 10;})
+				.attr("y",function(d,i) {return i*(height/td.length) + margin.top + 7;});
 
 
 			}
