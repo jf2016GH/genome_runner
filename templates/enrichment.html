@@ -6,10 +6,10 @@
 			@import "static/css/demo_table.css";
 			@import "static/css/TableTools.css";
 			@import "static/css/TableTools_JUI.css";
-			.chart rect {
-					stroke: white;
-					fill: steelblue;
-				}
+			.axis path, .axis line{
+				fill: none;
+				stroke: gray;
+				stroke-width: 1px;
 		</style>
 		<script type="text/javascript" 
 			language="javascript" src="static/js/jquery.js"></script>
@@ -32,7 +32,7 @@
 					});
 				var tableObject = $('#tbl tbody tr').map(function(i) {
 					var row = {};
-					$(this).find('td')`
+					$(this).find('td')
 			} );
 		</script>
 	</head>
@@ -82,47 +82,148 @@
 				<h2><a href="/gr">GO BACK</a></h2>
 		<h2>Data Visulization</h2>
 		<div id="rect-demo"></div>
+		<div id="demo">
+			
+		</div>
+
 		<script src="static/js/d3.js"></script>
 		<script>
 			var td = [{gfname: "gf1",pvalue: 0.01, obsoverlap: 100, expoverlap: 150},
 					{gfname: "gf2", pvalue: 0.003, obsoverlap: 100, expoverlap: 10},
 					{gfname: "gf3", pvalue: 0.06, obsoverlap: 100, expoverlap: 120},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155}];
-				
-			var barWidth = 40
-			var width = (barWidth + 10) * td.length;
-			var height = 200;
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "wefkjl;jdsaklf;jdskal;fjkldsa;jfkhqwefkl;dsjkafl;djsaklf;jewlkjedsk", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.000008, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.00008, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.00004338, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.0003928, obsoverlap: 300, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 3400, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 500, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
+					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155}]
+
+			function sortlist(a,b){
+				return ((a<b) ? -1:((a > b) ? 1 : 0));
+			}
+			td.sort(sortlist);
+			function neglog10(val) {
+				return -1 * Math.log(val)/Math.log(10);
+			}
+			jQuery.each(td,function(i,d) {
+				d.pvalue = neglog10(d.pvalue);
+				if (d.obsoverlap > d.expoverlap){
+					d.pvalue = -1 * d.pvalue;
+				}
+			});				
+
+			var margin = {top: 50, right: 100, bottom: 5, left: 5};
+
+			
+			var width = 500 + margin.left + margin.right; 
 			var pvmin = d3.min(td,function(d) { return d.pvalue;});
 			var pvmax = d3.max(td,function(d) { return d.pvalue});
-			var fillover  = d3.scale.ordinal()
-			.domain([pvmin,pvmax])
-			.range(["#000000","#FFDD89","957244","F26223"])
-			
-			var fillunder  = d3.scale.ordinal()
-			.domain([pvmin,pvmax])
-			.range(["#000000","#FFDD89","957244","F26223"])
+			var barPadding = 5;
+			var height = td.length * barPadding * 3 + margin.top + margin.bottom;
 
 				
-			var barDemo  = d3.select("#rect-demo").
+			
+			var bargraph2 = d3.select("#demo").
 			append("svg:svg")
-			.attr("width",width)
+			.attr("wdith",width)
 			.attr("height",height);
 
-			var x = d3.scale.linear().domain([0, td.length]).range([0,width]);
-			var y = d3.scale.linear().domain([0,d3.max(td, function(d) { return d.pvalue;})])
-			.rangeRound([0,height]);
+			console.log(td.length)
+
+			var x = d3.scale.linear().domain([
+			pvmin,pvmax])
+			.rangeRound([0,width]).nice();
+			// draw the quares
+			bargraph2.selectAll("rect").
+			data(td).
+			enter().
+			append("svg:rect").
+			attr("x",function(d,i) {return x(Math.min(0,d.pvalue));})
+			.attr("y",function(d,i) {return i*(height/td.length);})
+			.attr("fill","DeepSkyBlue")
+			.attr("height", height/td.length - barPadding) 
+			.attr("width", function(d) { return Math.abs(x(d.pvalue) - x(0));})
+			.on("mouseover",function(){d3.select(this).style("fill","blue");})
+			.on("mouseout",function() {d3.select(this).style("fill","DeepSkyBlue");})
+			.attr("transform", "translate(0," + margin.top + ")");
+			// draw genomic feature names	
+			bargraph2.selectAll("text")
+			.data(td)
+			.enter()
+			.append("text")
+			.text(function(d) {
+				return d.gfname;
+			})
+			.attr("x",function(d) { return x(Math.min(0,d.pvalue)) + Math.abs(x(d.pvalue) - x(0)) + 10;})
+			.attr("y",function(d,i) {return i*(height/td.length) + 10;})
+			.attr("text-anchor","left")
+			.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
+			.attr("transform", "translate(0," + margin.top + ")");
+			// draw axis 
+			var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom")
+			.ticks(5).tickSize(6,3,3);
+
+
+			bargraph2.append("g")
+			.attr("class","x axis")
+			.attr("transform","translate(0,0)")
+			.call(xAxis);
 			
-			barDemo.selectAll("rect").
-				data(td).
-				enter().
-				append("svg:rect").
-				attr("x", function(d,i) {return x(i); })
-				.attr("y", function(d,i) {return height - y(d.pvalue);})
-				.attr("height", function(d) { return y(d.pvalue);})
-				.attr("width", barWidth)
-				.attr("fill", function(d) { return d.expoverlap < d.obsoverlap ?  d.fillover(d.pvalue) : d.fillunder(d.pvalue);});
+			bargraph2.append("svg:line")
+			.attr("x1",x(0))
+			.attr("x2",x(0))
+			.attr("y1", 20)
+			.attr("y2",height)
+			.attr("stroke","grey")
+			.attr("fill",none)
+			.attr("stroke-width",1);
+			
+		
 
+		</script>
+		<script text="text/javascript" src="text/javascript">
+			var sampleSVG = d3.select("#demo")
+				.append("svg")
+				.attr("width",100)
+				.attr("height",100);
 
+			sampleSVG.append("circle")
+				.style("stroke","gray"
 		</script>
 
 	</body>

@@ -125,7 +125,7 @@ class WebUI(object):
 	@cherrypy.expose
 	def result(self, id):
 		path = os.path.join("results", id)
-		if not os.path.exists(path):
+		if not os.path.exists(path) or not os.stat(path).st_size: #If file is empty...
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)
 		with open(path) as strm:

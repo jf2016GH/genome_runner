@@ -4,10 +4,10 @@ from pybedtools import BedTool
 import pybedtools
 from collections import namedtuple
 import cPickle
-import cProfile
-from path import basename
 
-PROFILE_MODE = True
+
+
+from path import basename
 
 # This class represents an Enrichment analysis result
 # Lists of Enrichment objects are serialized to a Python Pickle
@@ -88,8 +88,7 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	A2 = A.cut([0,1,2])
 	B2 = B.cut([0,1,2])
 	print "RUNNING JACCARD"
-	resjaccard = A2.naive_jaccard(B2,genome_fn=chrom_fn,iterations=n,
-			shuffle_kwargs={'chrom':True})
+	resjaccard = A2.naive_jaccard(B2,genome_fn=chrom_fn,iterations=n,shuffle_kwargs={'chrom':True})
 	jaccard_dist = resjaccard[1]
 	jaccard_obs = resjaccard[0]
 	jaccard_exp = numpy.mean(resjaccard[1])
@@ -101,48 +100,39 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 		jaccardp_value = min(pybedp_value,1-pybedp_value)
 	print "JACCARD PVALUE: {}".format(jaccardp_value)
 
-		#stores the means of the distances for the MC
-	expall =[]
-	for i in range(n):
-		# run proximety analysis
-		tmp = A.shuffle(genome=organism).closest(B,d=True)
-		# get the distances
+	# run proximety analysis
+	if True:
+		print "RUNNING PROXIMITY"
+			#stores the means of the distances for the MC
+		expall =[]
+		for i in range(n):
+			tmp = A.shuffle(genome=organism).closest(B,d=True)
+			# get the distances
+			for t in tmp:
+				expall.append(t[-1])
+		# calculate the overal expected distance
+		expall.append(numpy.mean(numpy.array(expall,float)))
+		# calculate the expected mean for all of the runs
+		expprox = numpy.mean(numpy.array(expall,float))	
+		# proximety analysis for observed
+		tmp = A.closest(B,d=True)
+		obsall = []
 		for t in tmp:
-			expall.append(t[-1])
-	# calculate the overal expected distance
-	expall.append(numpy.mean(numpy.array(expall,float)))
-	# calculate the expected mean for all of the runs
-	expprox = numpy.mean(numpy.array(expall,float))	
-	# proximety analysis for observed
-	tmp = A.closest(B,d=True)
-	obsall = []
-	for t in tmp:
-		obsall.append(t[-1])
-	obsprox = numpy.mean(numpy.array(obsall,float))
+			obsall.append(t[-1])
+		obsprox = numpy.mean(numpy.array(obsall,float))
+	else:
+		print "SKIPPING PROXIMITY"
+		obsprox = -1
+		expprox = -1
+	print "FINISHED"
 
-	return Enrichment(a, basename(b), nA, nB, obs, exp, 
-			p_value,obsprox,expprox,pybedp_value,pybed_exp,
-			jaccard_obs,jaccardp_value,jaccard_exp)
+	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp)
 
 def run_enrichments(id, f, gfeatures, niter, name, score, strand,organism):
 	"""
 	Run one FOI file (f) against multiple GFs, then 
 	save the result to the "results" directory.
 	"""
-	if self.PROFILE_MODE == True:
-		print "running profile mode"
-		cProfile.run("profile(id,f,gfeatures,niter,name,score,strand,organism)",
-				get_profile_path())
-	else:
-		enrichments = []
-		for gf in gfeatures:
-			e = enrichment(f,gf,organism,name,score,strand,niter)
-			enrichments.append(e)
-		path = os.path.join("results", str(id))
-		with open(path, "w") as strm:
-			cPickle.dump(enrichments, strm)
-
-def profile(id, f, gfeatures, niter, name, score, strand,organism):
 	enrichments = []
 	for gf in gfeatures:
 		e = enrichment(f,gf,organism,name,score,strand,niter)
@@ -151,10 +141,3 @@ def profile(id, f, gfeatures, niter, name, score, strand,organism):
 	with open(path, "w") as strm:
 		cPickle.dump(enrichments, strm)
 
-def get_profile_path():
-	n = 0
-	outputpath = os.path.join("profiles","{}.profile".format(n))
-	while file.exists(outputpath): 
-		n+=1
-		os.exists(os.path.join(outputdir,n + ".profile"))
-	return outputpath
