@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys, operator, os, numpy
+from numpy import random as rand
 from pybedtools import BedTool
 import pybedtools
 from collections import namedtuple
@@ -43,7 +44,7 @@ def make_filter(name, score, strand):
 			return False
 		return True
 	return filter
-# TODO make organism specific!
+
 def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10):
 	"""Perform enrichment analysis between two BED files.
 
@@ -51,21 +52,12 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	b - path to Genomic Feature BED file
 	n - number of Monte-Carlo iterations
 	"""
-	if (background != ""):
-		logger.info("Using background file(id={})".format(id))
-		tools = generate_background(a,b,background)
-		A = tools["foi"]
-		B = tools["gf"]
-		genome = tools["background"]
-		genome_fn = pybedtools.chromsizes_to_file(genome)
 
-	else:
-		logger.info("Using genome as background (id={})".format(id))
-		A = BedTool(str(a))
-		B = BedTool(str(b))
-		genome = pybedtools.get_chromsizes_from_ucsc(organism)
-		genome_fn = pybedtools.chromsizes_to_file(genome)
-	
+	A = BedTool(str(a))
+	B = BedTool(str(b))
+	genome = pybedtools.get_chromsizes_from_ucsc(organism)
+	genome_fn = pybedtools.chromsizes_to_file(genome)
+
 
 	organism = str(organism)
 	flt = make_filter(name,score,strand)
@@ -74,14 +66,14 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	nB = len(B)
 	if not nA or not nB:
 		return Enrichment(a,basename(b),nA,nB,0,0,1,0,0,1,0,0,1,0)
-	print genome
+
 	A.set_chromsizes(genome)
 	B.set_chromsizes(genome)
 	obs = len(A.intersect(B, u=True))
-	# This is the Monte-Carlo step
+	# This is the Monte-Carlo step.  If custom background present, it is used
 	logger.info("RUNNING MONTE CARLO ({}): (id={})".format(b,id))
 	write_progress(id, "Running Monte Carlo {}".format(b))
-	dist = [len(A.shuffle(genome=organism,chrom=True).intersect(B, u=True)) for i in range(n)]
+	dist = [len(shuffle(a,background,organism).intersect(B, u=True)) for i in range(n)]
 	exp = numpy.mean(dist)
 	# gave p_value a value here so that it doesn't go out of scope, is this needed?
 	p_value = 'NA'
@@ -91,7 +83,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 		p_value = len([x for x in dist if x > obs]) / float(len(dist))
 		p_value = min(p_value, 1 - p_value)
 	
-	# expected caluclated using pybed method
+	# expected caluclated using pybed method CANNOT use custom background
 	logger.info("RUNNING RANDOM INTERSECTIONS ({}): (id={})".format(b,id))
 	write_progress(id, "Running Random Intersections: {0}".format(b))
 	pybeddist = A.randomintersection(B,iterations=n,shuffle_kwargs={'chrom': True})
@@ -126,7 +118,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 		#stores the means of the distances for the MC
 		expall =[]
 		for i in range(n):
-			tmp = A.shuffle(genome=organism).closest(B,d=True)
+			tmp = shuffle(a,background,organism).closest(B,d=True)
 			# get the distances
 			for t in tmp:
 				expall.append(t[-1])
@@ -146,6 +138,37 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 		expprox = -1
 
 	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp)
+
+def shuffle(bed_file, background_bed,organism):
+	""" Accepts a file path to a bed file and a background file
+	Random intervals are generate from the intervals in the background
+	file.  An attempt is made to make the new random intervals the same size
+	as the original intervals. One new interval is generated per interval in the
+	bed file.
+
+	If no background is provided, The pybedtool internal shuffle function is called
+	and the entire genome is used as background
+	"""
+	A =  BedTool(bed_file)
+	if background_bed != "":
+		B = BedTool(background_bed)
+		rand_a = ""
+		for a in A:
+			a_len = a.length
+			r = rand.random_integers(0,len(B)-1)
+			# if cur A length is greater than random background inteval
+			# the new randA is set to be same size as background inteval
+			if  a_len > B[r].length:
+				rand_a += "\t".join(B[r][:4]) +"\t" + "\t".join(a[4:])+"\n"
+			else:
+				randstart = rand.random_integers(B[r].start,B[r].end - a_len)
+				rand_a += "\t".join([B[r].chrom,str(randstart),str(randstart+a_len),
+					B[r].name,
+					"\t".join(a[4:])]) + "\n"	
+		rand_A = BedTool(rand_a,from_string=True)
+		return rand_A
+	else:
+		return A.shuffle(genome=organism,chrom=True)
 
 def generate_background(foipath,gfpath,background):
 	"""accepts a background filepath
@@ -194,6 +217,8 @@ def generate_background(foipath,gfpath,background):
 	return {"foi": foi,"gf":gf,"background":background}
 
 
+	
+
 def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,organism):
 	"""
 	Run one FOI file (f) against multiple GFs, then 
@@ -206,7 +231,7 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 		enrichments.append(e)
 		path = os.path.join("results", str(id))
 		print "writing output"
-		with open(path, "a") as strm:
+		with open(path, "wb") as strm:
 			cPickle.dump(enrichments, strm)
 	write_progress(id, "FINISHED")
 
