@@ -19,7 +19,7 @@
 			src="static/js/TableTools.js"></script>
 		<script type="text/javascript" language="javascript"
 			src="static/js/ZeroClipboard.js"></script>
-		<script type="text/javascript" charset="utf-8">
+			<script type="text/javascript" charset="utf-8">
 			$(document).ready(function() {
 				$('#tbl').dataTable({
 					"sDom": 'T<"clear">lfrtip',
@@ -27,13 +27,19 @@
 						"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
 					}
 				});
-				var columns = $('#tbl thead th').map(function(){
-					return $(this).attr('value');
-					});
-				var tableObject = $('#tbl tbody tr').map(function(i) {
-					var row = {};
-					$(this).find('td')
+		//		setTimout(ReloadPage(),1000);
+			// this refreshes the page.  It is dependent on the content of the progress label
+		function ReloadPage(){
+				if ($("#progress").val !== "Progress: FINISHED"){
+				console.log("reload!");
+				location.reload();
+				}
+			}
 			} );
+
+
+			
+			
 			
 		</script>
 	</head>
@@ -80,6 +86,9 @@
 				% endfor
 			</tbody>
 		</table>
+		<div id="progress" class=".boxed"><b>Progress: </b>${progress}</div>
+		<h3>
+
 				<h2><a href="/gr">GO BACK</a></h2>
 		<h2>Data Visulization</h2>
 		<div id="rect-demo"></div>

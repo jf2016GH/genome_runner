@@ -23,3 +23,6 @@ downloads
 genome_runner_live
 templates_live
 Notes.txt
+*.log
+logGRrun.txt
+test.txt

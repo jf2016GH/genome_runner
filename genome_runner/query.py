@@ -4,10 +4,20 @@ from pybedtools import BedTool
 import pybedtools
 from collections import namedtuple
 import cPickle
-
-
-
+import logging
+from logging import FileHandler,StreamHandler
 from path import basename
+
+logger = logging.getLogger('genomerunner.query')
+hdlr = logging.FileHandler('genomerunner_server.log')
+hdlr_std = StreamHandler()
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.addHandler(hdlr_std)
+logger.setLevel(logging.INFO)
+
+
 
 # This class represents an Enrichment analysis result
 # Lists of Enrichment objects are serialized to a Python Pickle
@@ -34,29 +44,43 @@ def make_filter(name, score, strand):
 		return True
 	return filter
 # TODO make organism specific!
-def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
+def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10):
 	"""Perform enrichment analysis between two BED files.
 
 	a - path to Feature of Interest BED file
 	b - path to Genomic Feature BED file
 	n - number of Monte-Carlo iterations
 	"""
+	if (background != ""):
+		logger.info("Using background file(id={})".format(id))
+		tools = generate_background(a,b,background)
+		A = tools["foi"]
+		B = tools["gf"]
+		genome = tools["background"]
+		genome_fn = pybedtools.chromsizes_to_file(genome)
+
+	else:
+		logger.info("Using genome as background (id={})".format(id))
+		A = BedTool(str(a))
+		B = BedTool(str(b))
+		genome = pybedtools.get_chromsizes_from_ucsc(organism)
+		genome_fn = pybedtools.chromsizes_to_file(genome)
+	
+
 	organism = str(organism)
-	print "Enrichment analysis organism is: {}".format(organism)
 	flt = make_filter(name,score,strand)
-	A = BedTool(str(a))
-	B = BedTool(str(b)).filter(flt).saveas()
-	print A.count()
-	print B.count()
+	B.filter(flt).saveas()
 	nA = len(A)
 	nB = len(B)
 	if not nA or not nB:
 		return Enrichment(a,basename(b),nA,nB,0,0,1,0,0,1,0,0,1,0)
-	A.set_chromsizes(organism)
-	B.set_chromsizes(organism)
+	print genome
+	A.set_chromsizes(genome)
+	B.set_chromsizes(genome)
 	obs = len(A.intersect(B, u=True))
 	# This is the Monte-Carlo step
-	print "RUNNING MONTE CARLO"
+	logger.info("RUNNING MONTE CARLO ({}): (id={})".format(b,id))
+	write_progress(id, "Running Monte Carlo {}".format(b))
 	dist = [len(A.shuffle(genome=organism,chrom=True).intersect(B, u=True)) for i in range(n)]
 	exp = numpy.mean(dist)
 	# gave p_value a value here so that it doesn't go out of scope, is this needed?
@@ -67,28 +91,25 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 		p_value = len([x for x in dist if x > obs]) / float(len(dist))
 		p_value = min(p_value, 1 - p_value)
 	
-	print "MC pvalue: {}".format(p_value)
 	# expected caluclated using pybed method
-	print "RUNNING RANDOM INTERSECTIONS"
+	logger.info("RUNNING RANDOM INTERSECTIONS ({}): (id={})".format(b,id))
+	write_progress(id, "Running Random Intersections: {0}".format(b))
 	pybeddist = A.randomintersection(B,iterations=n,shuffle_kwargs={'chrom': True})
 	pybeddist = list(pybeddist)
-	print pybeddist
-	print "calculating mean"
 	pybed_exp = numpy.mean(pybeddist)
 	pybedp_value = 'NA'
 	if pybed_exp == obs or (pybed_exp == 0 and obs == 0):
 		pybedp_value =1
 	else:
-		print "calculating pvalue"
 		pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(pybeddist))
 		pybedp_value = min(pybedp_value,1-pybedp_value)
 	# epected calculated using jaccard method
-	chrom = pybedtools.get_chromsizes_from_ucsc(organism)
-	chrom_fn = pybedtools.chromsizes_to_file(chrom)
 	A2 = A.cut([0,1,2])
 	B2 = B.cut([0,1,2])
-	print "RUNNING JACCARD"
-	resjaccard = A2.naive_jaccard(B2,genome_fn=chrom_fn,iterations=n,shuffle_kwargs={'chrom':True})
+	logger.info("Running Jaccard ({}): (id={})".format(b,id))
+	write_progress(id, "Running Jaccard {}".format(b))
+
+	resjaccard = A2.naive_jaccard(B2,genome_fn=genome_fn,iterations=n,shuffle_kwargs={'chrom':True})
 	jaccard_dist = resjaccard[1]
 	jaccard_obs = resjaccard[0]
 	jaccard_exp = numpy.mean(resjaccard[1])
@@ -98,12 +119,11 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 	else:
 		jaccardp_value = len([x for x in jaccard_dist if x > obs]) / float(len(jaccard_dist))
 		jaccardp_value = min(pybedp_value,1-pybedp_value)
-	print "JACCARD PVALUE: {}".format(jaccardp_value)
 
 	# run proximety analysis
 	if True:
-		print "RUNNING PROXIMITY"
-			#stores the means of the distances for the MC
+		logger.info("Running proximety {} (id={})".format(b,id))
+		#stores the means of the distances for the MC
 		expall =[]
 		for i in range(n):
 			tmp = A.shuffle(genome=organism).closest(B,d=True)
@@ -121,23 +141,91 @@ def enrichment(a, b,organism, name=None, score=None, strand=None, n=10):
 			obsall.append(t[-1])
 		obsprox = numpy.mean(numpy.array(obsall,float))
 	else:
-		print "SKIPPING PROXIMITY"
+		print "Skipping Proximity"
 		obsprox = -1
 		expprox = -1
-	print "FINISHED"
 
 	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp)
 
-def run_enrichments(id, f, gfeatures, niter, name, score, strand,organism):
+def generate_background(foipath,gfpath,background):
+	"""accepts a background filepath
+	generate a background and returns as a pybedtool.
+	Replaces the chrom fields of the foi and the gf with the interval
+	id from the background.
+	"""
+	bckg = BedTool(str(background))
+	bckgnamed = "" 
+	interval = 0 
+
+	#inserts a unique interval id into the backgrounds name field
+	for b in bckg:
+		bckgnamed +=  "\t".join(b[:3])+'\t{}\t'.format(interval) + "\t".join(b[4:]) + "\n"
+		interval += 1
+	bckg = BedTool(bckgnamed,from_string=True)
+	foi = BedTool(str(foipath))
+	gf = BedTool(str(gfpath))
+	# get the interval names from the background that the gf intersects with
+	gf = bckg.intersect(gf)
+	gfnamed = ""
+
+	# insert the interval id into the chrom field of the gf and creates a new bedtool
+	for g in gf:
+		gfnamed += '{}\t'.format(g.name) + "\t".join(g[1:]) + "\n"
+		#print "GFNAMED: " + str(g)
+	gf = BedTool(gfnamed,from_string=True)
+	#print "GFBEDTOOL: " + str(g)
+
+	# inserts the interval id into the chrom column of the foi and creates a new bedtool
+	foi = bckg.intersect(foi)
+	foinamed = ""
+	for f in foi:
+		foinamed += '{}\t'.format(f.name) + "\t".join(f[1:])+"\n" 
+		#print "FOINAMED: " + str(f)
+	foi = BedTool(foinamed,from_string=True)
+
+	#print "FOIBEDTOOL: " + str(f)
+	bckgnamed = ""
+	for b in bckg:
+		bckgnamed += '{}\t'.format(b.name) + "\t".join(b[1:])+"\n"
+	bckg = BedTool(bckgnamed,from_string=True)
+	# converts the background to a genome dictionary
+	chrstartend = [(g.start,g.end) for g in bckg]
+	background = dict(zip([g.chrom for g in bckg],chrstartend))
+	return {"foi": foi,"gf":gf,"background":background}
+
+
+def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,organism):
 	"""
 	Run one FOI file (f) against multiple GFs, then 
 	save the result to the "results" directory.
 	"""
 	enrichments = []
 	for gf in gfeatures:
-		e = enrichment(f,gf,organism,name,score,strand,niter)
+		write_progress(id, "RUNNING ENRICHMENT ANALYSIS FOR: {}".format(gf))
+		e = enrichment(id,f,gf,background,organism,name,score,strand,niter)
 		enrichments.append(e)
-	path = os.path.join("results", str(id))
-	with open(path, "w") as strm:
-		cPickle.dump(enrichments, strm)
+		path = os.path.join("results", str(id))
+		print "writing output"
+		with open(path, "a") as strm:
+			cPickle.dump(enrichments, strm)
+	write_progress(id, "FINISHED")
+
+def write_progress(id,line):
+	"""Saves the current progress to the progress file
+	"""
+
+	path = os.path.join("results",str(id)+".prog")
+	with open(path,"wb") as progfile:
+		progfile.write(line)
+
+		
+def get_progress(id):
+	"""returns the progress from the progress file
+	"""
+
+	path = os.path.join("results",str(id) + ".prog")
+	if os.path.exists(path):
+		return open(path).read()
+	else:
+		return ""
 

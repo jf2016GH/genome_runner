@@ -80,7 +80,7 @@ def extract_bed6(outputpath,datapath,colnames):
 	with gzip.open(datapath) as dr:
 		with gzip.open(outputpath,"wb") as bed:
 			while True:
-				line = dr.readline()
+				line = dr.readline().strip()
 				if line == "":
 					break
 				r  = dict(zip(colnames,line.split('\t')))
@@ -95,7 +95,7 @@ def extract_bed3(outputpath,datapath,colnames):
 	with gzip.open(outputpath,"wb") as bed:
 		with gzip.open(datapath) as dr:
 			while True:
-				line = dr.readline()
+				line = dr.readline().strip()
 				if line == "":
 					break
 				r  = dict(zip(colnames,line.split('\t')))
@@ -107,9 +107,10 @@ def extract_genepred(outputpath,datapath,colnames):
 	exonpath = outputpath.split(".")[0]+"_exon.gz"
 	with gzip.open(datapath) as dr:
 		with gzip.open(outputpath,"wb") as bed:
+			from path import basename
 			with gzip.open(exonpath+".temp","wb") as exonbed:
 				while True:
-					line = dr.readline()
+					line = dr.readline().strip()
 					if line == "":
 						break
 					r = dict(zip(colnames,line.split('\t')))

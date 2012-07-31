@@ -8,19 +8,30 @@ from operator import attrgetter
 from multiprocessing import Process
 import cPickle
 import bedfilecreator as uscsreader
-import query
+import query as grquery
 from path import PathNode
 from operator import itemgetter
-
+from path import basename
+import logging
+from logging import FileHandler,StreamHandler
 lookup = TemplateLookup(directories=["templates"])
 DEBUG_MODE = True
+
+logger = logging.getLogger('genomerunner.server')
+hdlr = logging.FileHandler('genomerunner_server.log')
+hdlr_std = StreamHandler()
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.addHandler(hdlr_std)
+logger.setLevel(logging.INFO)
 
 # Each function in this class is a web page
 class WebUI(object):
 	def __init__(self):
 		self.next_id = itertools.count().next # This creates a threadsafe counter
 		if os.listdir("results"):
-			last_id = max(map(int, os.listdir("results")))
+			last_id = max(map(int, [basename(file) for file in os.listdir("results")]))
 			while self.next_id() < last_id:
 				pass
 
@@ -61,7 +72,7 @@ class WebUI(object):
 			return html
 
 	@cherrypy.expose
-	def query(self, bed_file=None,bed_data=None, niter=10, name="", score="", strand="", **kwargs):
+	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, niter=10, name="", score="", strand="", **kwargs):
 		cherrypy.response.timeout = 3600
 		try:
 			niter = int(niter)
@@ -69,6 +80,7 @@ class WebUI(object):
 			niter = 10
 
 			
+		# load the FOI data
 		data = ""
 		try:
 			id = self.next_id()
@@ -76,6 +88,7 @@ class WebUI(object):
 			if not os.path.exists(f):
 				with open(f, "wb") as out:
 					if bed_file != None and bed_file.filename != "":
+						logger.info('Received uploaded FOI file (id={})'.format(id))
 						while True:
 							data = bed_file.file.read(8192)
 							data = data.strip("\r")
@@ -84,6 +97,7 @@ class WebUI(object):
 								break
 							out.write(data)			
 					elif bed_data!="":
+						logger.info('Received raw text  FOI data (id={})'.format(id))
 						data = bed_data
 						data = os.linesep.join([s for s in data.splitlines() if s])
 						out.write(data)			
@@ -91,9 +105,35 @@ class WebUI(object):
 						return "upload a file please"
 
 		except Exception, e:
-			print e
+			logger.error("id={}".format(id) + str(e))
 			return "ERROR: upload a file please"
-		print "### LOADED DATA####"
+
+		# load the background data if uploaded
+		try:
+			b = os.path.join("uploads",str(id) + ".background")
+			if background_file != None and background_file.filename != "":
+				logger.info('Received uploaded background file (id={})'.format(id))
+				with open(b, "wb") as out:
+					while True:
+						data = background_file.file.read(8192)
+						data = data.strip("\r")
+						data = os.linesep.join([s for s in data.splitlines() if s])
+						if not data:
+							break
+						out.write(data)			
+			elif background_data != None and background_data != "":
+				print "BACKGROUND_DATA: " + background_data
+				with open(b, "wb") as out:
+					logger.info('Received raw text background data (id={})'.format(id))
+					data = background_file
+					data = os.linesep.join([s for s in data.splitlines() if s])
+					out.write(data)
+			else:
+				b = ""
+		except Exception, e:
+			logger.error("id={}".format(id) + str(e))
+			return "ERROR: unable to upload background"
+
 		# "kwargs" (Keyword Arguments) stands for all the other
 		# fields from the HTML form besides bed_file, niter, name, score, and strand
 		# These other fields are all the tables whose boxes might
@@ -105,9 +145,8 @@ class WebUI(object):
 			if k.startswith("file:") and v=="on"]
 		for k,v in kwargs.items():
 			if v.startswith("organism:"):
-				print "organism is: " + k 
 				organism = v.split(":")[-1]
-				print organism
+
 
 		# Reserve a spot in the results folder
 		path = os.path.join("results", str(id))
@@ -117,22 +156,29 @@ class WebUI(object):
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
-		p = Process(target=query.run_enrichments,
-				args=(id,f,gfeatures,niter,name,score,strand,organism))
+		p = Process(target=grquery.run_enrichments,
+				args=(id,f,gfeatures,b,niter,name,score,strand,organism))
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
 
 	@cherrypy.expose
 	def result(self, id):
 		path = os.path.join("results", id)
-		if not os.path.exists(path) or not os.stat(path).st_size: #If file is empty...
+		if not os.path.exists(path):  #If file is empty...
+
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)
-		with open(path) as strm:
-			enrichments = cPickle.load(strm)
-		enrichments.sort(key=attrgetter("p_value"))
+		if os.stat(path).st_size:
+			with open(path) as strm:
+				enrichments = cPickle.load(strm)
+			enrichments.sort(key=attrgetter("p_value"))
+		else:
+			enrichments = []
 		tmpl = lookup.get_template("enrichment.html")
-		return tmpl.render(enrichments=enrichments)
+		progress = grquery.get_progress(id)
+		return tmpl.render(enrichments=enrichments,progress=progress)
+
+
 
 
 if __name__ == "__main__":

@@ -61,6 +61,21 @@
 			}
 		}
 
+		function switchbackgroundinput(checked){
+			if (checked == "backgroundfile"){
+				document.getElementById("inputbackgroundfile").disabled=false;
+				document.getElementById("inputbackgrounddata").disabled=true;
+				document.getElementById("inputbackgrounddata").text = ""
+				document.getElementById("inputbackgrounddata").value = ""
+			}
+			else {
+				document.getElementById("inputbackgroundfile").disabled=true;
+				document.getElementById("inputbackgrounddata").disabled=false;
+				document.getElementById("inputbackgrounddata").text = ""
+				document.getElementById("inputbackgrounddata").value = ""
+			}
+		}
+
 		//prevents user from submitting form by accidentally pressing the enter key
 		function stopRKey(evt) { 
 			  var evt = (evt) ? evt : ((event) ? event : null); 
@@ -88,6 +103,22 @@
 			</span>
 				<span style="margin-right:5px; float: left">Bed Data:</span>
 						<textarea id="inputbeddata" rows=5 cols=100 style="margin:5px" name="bed_data" disabled>
+						</textarea>
+				</li>
+			</ul>
+			<h3>1.a Upload a BED background file (optional)
+			<ul class='liist-input'>
+				<li id="list-bedbackground">
+				<input type="radio" name="rdbackground"  checked="checked" style="margin:5px" value="backgroundfile" onclick="switchbackgroundinput(this.value)"/>
+					File:<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />
+				</li>
+				<li id="list-background">
+				<span style="margin-right:5px; float: left">
+
+				<input name="rdbackground" type="radio" id="bedchoicedata" style="margin:5px" value="backgrounddata" onclick="switchbackgroundinput(this.value)"/>	
+			</span>
+				<span style="margin-right:5px; float: left">background Data:</span>
+						<textarea id="inputbackgrounddata" rows=5 cols=100 style="margin:5px" name="background_data" disabled>
 						</textarea>
 				</li>
 			</ul>
