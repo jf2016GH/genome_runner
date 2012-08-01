@@ -95,6 +95,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	else:
 		pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(pybeddist))
 		pybedp_value = min(pybedp_value,1-pybedp_value)
+		print type(pybedp_value)
 	# epected calculated using jaccard method
 	A2 = A.cut([0,1,2])
 	B2 = B.cut([0,1,2])

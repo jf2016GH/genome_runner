@@ -35,6 +35,8 @@
 				location.reload();
 				}
 			}
+
+			
 			} );
 
 
@@ -91,84 +93,87 @@
 
 				<h2><a href="/gr">GO BACK</a></h2>
 		<h2>Data Visulization</h2>
-		<div id="rect-demo"></div>
+		<select onchange="updategraph()" id="coltograph">
+			<option value="pvalue">pvalue</option>
+			<option value="jaccard_p_value">Jaccard P-value</option>
+			<option value="pybed_p_value">PyBed P-value</option>
+		</select>
 		<div id="demo">
-			<select onchange="updategraph()" id="coltograph">
-				<option value="pvalue">pvalue</option>
-				<option value="obsoverlap">observedoverlap</option>
-			</select>
 			
 		</div>
 
 		<script src="static/js/d3.js"></script>
 		<script>
-			var td = [{gfname: "gf1",pvalue: 0.01, obsoverlap: 100, expoverlap: 150},
-					{gfname: "gf2", pvalue: 0.003, obsoverlap: 100, expoverlap: 10},
-					{gfname: "gf3", pvalue: 0.06, obsoverlap: 100, expoverlap: 120},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "wefkjlgf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4gf4f4gf4", pvalue: 0.0000000000000000000000000000000000000008, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "wefkjl;jdsaklf;jdskal;fjkldsa;jfkhqwefkl;dsjkafl;djsaklf;jewlkjedsk", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.000008, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.00008, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.00004338, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.0003928, obsoverlap: 300, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 3400, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 500, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf4", pvalue: 0.08, obsoverlap: 100, expoverlap: 155},
-					{gfname: "gf5", pvalue: 0.08, obsoverlap: 100, expoverlap: 155}]
+
+			var columns = $('#tbl thead th').map(function() {
+				//gets the column names from the table
+				//assums that the value field does not contain spaces
+				return $(this).attr('value');
+			});
+
+			var td = $('#tbl tbody tr').map(function(i){
+				var row = {};
+
+				//find the table cells in the current row
+				$(this).find('td').each(function(i) {
+					//determin the cell column name
+					var rowName = columns[i];
+					
+					row[rowName] = $(this).text();
+
+				});
+				// return the row as an object
+
+				return row;}).get();
+
 				function neglog10(val) {
-					return -1 * Math.log(val)/Math.log(10);
+					if (val == 0.0){
+						return 10
+					}
+					else {
+					var logval = -1 * Math.log(parseFloat(val))/Math.log(10);
+					console.log(logval)
+					return logval 
+					}
 				}
-			// performs log10 on the pvalue data
-			jQuery.each(td,function(i,d) {
-				d.pvalue = neglog10(d.pvalue);
-				if (d.obsoverlap > d.expoverlap){
-					d.pvalue = -1 * d.pvalue;
-				}
-			});				
+
+			// performs - log10 on the pvalue data and makes the value
+			// negative if the FOI is underrepresented
+			function formatlog(d){
+				d = neglog10(d);
+				if (d['obsoverlap'] > d['expoverlap']){
+					d = -1 * d;
+				}	
+				return d;
+			}
 
 			// the name of the column to graph
+			var curColumn  =$('#coltograph').val();
+
+			var curData = [];
+
+			jQuery.each(td,function(i,d) {
+				curData.push(formatlog(d[curColumn]));
+			});
+				
+
 		
 
-			var curData = $('#coltograph').val()
+
+
 			var margin = {top: 20, right: 100, bottom: 5, left: 5};
 			var width = 500; 
-			var pvmin = d3.min(td,function(d) { return d[curData];});
-			var pvmax = d3.max(td,function(d) { return d[curData]});
+			var pvmin = d3.min(curData,function(d) { return d;});
+			var pvmax = d3.max(curData,function(d) { return d;});
 			var barPadding = 3;
-			var height = td.length * barPadding*4;
+			var height = curData.length * barPadding*4;
 			var curColor = ""
-			
+			var abmin = Math.abs(pvmin);
+			var abmax = Math.abs(pvmax);
 			var x = d3.scale.linear().domain([
-			pvmin,pvmax])
+			-1 * d3.max([abmin,abmax])
+			,d3.max([abmin,abmax])
+			])
 			.rangeRound([20,width]).nice();
 			var xAxis = d3.svg.axis()
 			.scale(x)
@@ -176,23 +181,32 @@
 			.ticks(5).tickSize(6,3,3);
 
 			function updatescales(){
+				curColumn  =$('#coltograph').val();
+				curData = [];
+				jQuery.each(td,function(i,d) {
+					curData.push(formatlog(d[curColumn]));
+				});
 				 margin = {top: 20, right: 100, bottom: 5, left: 5};
 				width = 500; 
-				pvmin = d3.min(td,function(d) { return d[curData];});
-				console.log("pvmin"+pvmin)
-				pvmax = d3.max(td,function(d) { return d[curData]});
-				console.log("pvmax" + pvmax)
+				pvmin = d3.min(curData,function(d) { return d;});
+				pvmax = d3.max(curData,function(d) { return d;});
 				barPadding = 3;
 				height = td.length * barPadding*4;
 				curColor = ""
+				abmin = Math.abs(pvmin);
+				abmax = Math.abs(pvmax);
+
 				x = d3.scale.linear().domain([
-				pvmin,pvmax])
+				-1 * d3.max([abmin,abmax])
+				,d3.max([abmin,abmax])
+				])
 				.rangeRound([20,width]).nice();
 
 				xAxis = d3.svg.axis()
 				.scale(x)
 				.orient("bottom")
 				.ticks(5).tickSize(6,3,3);
+
 
 			}
 
@@ -214,16 +228,16 @@
 
 			
 
-					// draw the quares
+			// draw the bars
 			bargraph2.selectAll("rect").
-			data(td).
+			data(curData).
 			enter().
 			append("svg:rect")
-			.attr("x",function(d,i) {return x(Math.min(0,d[curData]));})
-			.attr("y",function(d,i) {return i*(height/td.length) + margin.top;})
-			.attr("fill",function(d,i) {return recfill(d[curData]);})
+			.attr("x",function(d,i) {return x(Math.min(0,d));})
+			.attr("y",function(d,i) {return i*(height/curData.length) + margin.top;})
+			.attr("fill",function(d,i) {return recfill(d);})
 			.attr("height", height/td.length - barPadding) 
-			.attr("width", function(d) { return Math.abs(x(d[curData]) - x(0));})
+			.attr("width", function(d) { return Math.abs(x(d) - x(0));})
 
 			// draw genomic feature names	
 			bargraph2.selectAll("text")
@@ -234,8 +248,8 @@
 			.text(function(d) {
 				return d.gfname;
 			})
-			.attr("x",function(d) { return x(Math.min(0,d[curData])) + Math.abs(x(d[curData]) - x(0)) + 10;})
-			.attr("y",function(d,i) {return i*(height/td.length) + margin.top + 7;})
+			.attr("x",function(d,i) { return x(Math.min(0,curData[i])) + Math.abs(x(curData[i]) - x(0)) + 10;})
+			.attr("y",function(d,i) {return i*(height/curData.length) + margin.top + 7;})
 			.attr("text-anchor","left")
 			.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
 			// draw axis 
@@ -259,17 +273,17 @@
 			
 			// animates the graph during	
 			function updategraph(){
-				 curData = $('#coltograph').val()
+				curColumn = $('#coltograph').val()
 				updatescales();
 				bargraph2.selectAll("rect").
-				data(td)
+				data(curData)
 				.transition()
 				.ease("linear")
-				.attr("x",function(d,i) {return x(Math.min(0,d[curData]));})
-				.attr("y",function(d,i) {return i*(height/td.length) + margin.top;})
-				.attr("height", height/td.length - barPadding) 
-				.attr("width", function(d) { return Math.abs(x(d[curData]) - x(0));})
-				.attr("fill",function(d,i) {return recfill(d[curData]);})
+				.attr("x",function(d,i) {return x(Math.min(0,d));})
+				.attr("y",function(d,i) {return i*(height/curData.length) + margin.top;})
+				.attr("height", height/curData.length - barPadding) 
+				.attr("width", function(d) { return Math.abs(x(d) - x(0));})
+				.attr("fill",function(d,i) {return recfill(d);})
 
 				bargraph2.selectAll(".yaxis")
 				.transition()
@@ -295,8 +309,8 @@
 				})
 				.transition()
 				.ease("linear")
-				.attr("x",function(d) { return x(Math.min(0,d[curData])) + Math.abs(x(d[curData]) - x(0)) + 10;})
-				.attr("y",function(d,i) {return i*(height/td.length) + margin.top + 7;});
+				.attr("x",function(d,i) { return x(Math.min(0,curData[i])) + Math.abs(x(curData[i]) - x(0)) + 10;})
+				.attr("y",function(d,i) {return i*(height/curData.length) + margin.top + 7;});
 
 
 			}
