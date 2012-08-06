@@ -8,6 +8,7 @@ import cPickle
 import logging
 from logging import FileHandler,StreamHandler
 from path import basename
+import json
 
 logger = logging.getLogger('genomerunner.query')
 hdlr = logging.FileHandler('genomerunner_server.log')
@@ -95,7 +96,6 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	else:
 		pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(pybeddist))
 		pybedp_value = min(pybedp_value,1-pybedp_value)
-		print type(pybedp_value)
 	# epected calculated using jaccard method
 	A2 = A.cut([0,1,2])
 	B2 = B.cut([0,1,2])
@@ -111,7 +111,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 		jaccardp_value =1
 	else:
 		jaccardp_value = len([x for x in jaccard_dist if x > obs]) / float(len(jaccard_dist))
-		jaccardp_value = min(pybedp_value,1-pybedp_value)
+		jaccardp_value = min(jaccardp_value,1-jaccardp_value)
 
 	# run proximety analysis
 	if True:
@@ -226,6 +226,11 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 	save the result to the "results" directory.
 	"""
 	enrichments = []
+	# these are progress values that are written to the progress file
+	global curprog 
+	curprog = 0
+	global progmax
+	progmax =len(gfeatures)
 	for gf in gfeatures:
 		write_progress(id, "RUNNING ENRICHMENT ANALYSIS FOR: {}".format(gf))
 		e = enrichment(id,f,gf,background,organism,name,score,strand,niter)
@@ -234,6 +239,7 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 		print "writing output"
 		with open(path, "wb") as strm:
 			cPickle.dump(enrichments, strm)
+		curprog += 1
 	write_progress(id, "FINISHED")
 
 def write_progress(id,line):
@@ -241,8 +247,9 @@ def write_progress(id,line):
 	"""
 
 	path = os.path.join("results",str(id)+".prog")
+	progress = {"status": line, "curprog": curprog,"progmax": progmax}
 	with open(path,"wb") as progfile:
-		progfile.write(line)
+		progfile.write(json.dumps(progress))
 
 		
 def get_progress(id):

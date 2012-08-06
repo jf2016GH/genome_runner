@@ -5,24 +5,28 @@
 			@import "static/css/jquery.dataTables.css";
 			@import "static/css/demo_table.css";
 			@import "static/css/TableTools.css";
-			@import "static/css/TableTools_JUI.css";
 			.xaxis path, .xaxis line{
 				fill: none;
 				stroke: gray;
 				stroke-width: 1px;
 		</style>
-		<script type="text/javascript" 
-			language="javascript" src="static/js/jquery.js"></script>
+	<link type="text/css" href="static/css/jquery.dataTables_themeroller.css" rel="stylesheet" />
+	<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
+    <script type="text/javascript" src="static/js/jquery.js"></script>
+    <script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
 		<script type="text/javascript" language="javascript"
 			src="static/js/jquery.dataTables.js"></script>
+
 		<script type="text/javascript" language="javascript"
 			src="static/js/TableTools.js"></script>
+
 		<script type="text/javascript" language="javascript"
 			src="static/js/ZeroClipboard.js"></script>
-			<script type="text/javascript" charset="utf-8">
+		<script type="text/javascript" charset="utf-8">
 			$(document).ready(function() {
 				$('#tbl').dataTable({
 					"sDom": 'T<"clear">lfrtip',
+					"bJQueryUI": true,
 					"oTableTools": {
 						"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
 					}
@@ -36,8 +40,13 @@
 				}
 			}
 
-			
-			} );
+
+			$('#xrangeslider').slider("option","max",7);
+			$("#progressbar").progressbar({
+				value: ${curprog},
+				max: ${progmax}
+				});
+			});
 
 
 			
@@ -46,6 +55,8 @@
 		</script>
 	</head>
 	<body>
+		<h1>Enrichment results for ${foi}</h1>
+		<div>
 		<table id="tbl" class="display" cellpadding="0"
 			cellspacing="0" border="0">
 			<thead>
@@ -88,16 +99,34 @@
 				% endfor
 			</tbody>
 		</table>
-		<div id="progress" class=".boxed"><b>Progress: </b>${progress}</div>
+		</div>
+		<br>
+		<div id="progressbar"></div>
+		<div id="progress" class=".boxed"><b>Progress: </b>${status}</div>
+		<br>
+		<div id="runsettings">
+			<ul>
+				<li><b>Background:</b> ${background}</li>
+				<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
+				<li><b>Filters:</b></li>
+				<ul>
+					<b>Score:</b> ${score}
+					<br>
+					<b>Name: </b> ${name}
+					<br>
+					<b>Strand: </b> ${strand}
+				</ul>
+			</ul>
+		</div>
 		<h3>
 
 				<h2><a href="/gr">GO BACK</a></h2>
-		<h2>Data Visulization</h2>
 		<select onchange="updategraph()" id="coltograph">
 			<option value="pvalue">pvalue</option>
 			<option value="jaccard_p_value">Jaccard P-value</option>
 			<option value="pybed_p_value">PyBed P-value</option>
 		</select>
+		<div id='xrangeslider' class="ui-slider"></div>
 		<div id="demo">
 			
 		</div>
@@ -139,9 +168,9 @@
 
 			// performs - log10 on the pvalue data and makes the value
 			// negative if the FOI is underrepresented
-			function formatlog(d){
+			function formatlog(i,d){
 				d = neglog10(d);
-				if (d['obsoverlap'] > d['expoverlap']){
+				if (td[i]["obsoverlap"] < td[i]["expoverlap"]){
 					d = -1 * d;
 				}	
 				return d;
@@ -153,7 +182,7 @@
 			var curData = [];
 
 			jQuery.each(td,function(i,d) {
-				curData.push(formatlog(d[curColumn]));
+				curData.push(formatlog(i,d[curColumn]));
 			});
 				
 
@@ -184,7 +213,7 @@
 				curColumn  =$('#coltograph').val();
 				curData = [];
 				jQuery.each(td,function(i,d) {
-					curData.push(formatlog(d[curColumn]));
+					curData.push(formatlog(i,d[curColumn]));
 				});
 				 margin = {top: 20, right: 100, bottom: 5, left: 5};
 				width = 500; 

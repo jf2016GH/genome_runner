@@ -14,6 +14,7 @@ from operator import itemgetter
 from path import basename
 import logging
 from logging import FileHandler,StreamHandler
+import json
 lookup = TemplateLookup(directories=["templates"])
 DEBUG_MODE = True
 
@@ -73,14 +74,25 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, niter=10, name="", score="", strand="", **kwargs):
+		runset = {}
 		cherrypy.response.timeout = 3600
+		runset['filters'] = {"name": name,"score": score,"strand": strand}
 		try:
 			niter = int(niter)
 		except ValueError:
 			niter = 10
+		runset["niter"] = niter
+
+		try:
+			jobname = kwargs["jobname"]
+		except Exception, e:
+			jobname = ""
+			logger.error("id={}".format(id) + str(e))
+		runset['jobname'] = jobname
 
 			
 		# load the FOI data
+		bed_filename = ""
 		data = ""
 		try:
 			id = self.next_id()
@@ -88,6 +100,7 @@ class WebUI(object):
 			if not os.path.exists(f):
 				with open(f, "wb") as out:
 					if bed_file != None and bed_file.filename != "":
+						bed_filename = bed_file.filename
 						logger.info('Received uploaded FOI file (id={})'.format(id))
 						while True:
 							data = bed_file.file.read(8192)
@@ -97,22 +110,25 @@ class WebUI(object):
 								break
 							out.write(data)			
 					elif bed_data!="":
+						bed_filename = "Custom bed"
 						logger.info('Received raw text  FOI data (id={})'.format(id))
 						data = bed_data
 						data = os.linesep.join([s for s in data.splitlines() if s])
 						out.write(data)			
 					else:
 						return "upload a file please"
-
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: upload a file please"
+		runset["fois"] = bed_filename
 
 		# load the background data if uploaded
+		background_name = ""
 		try:
 			b = os.path.join("uploads",str(id) + ".background")
 			if background_file != None and background_file.filename != "":
 				logger.info('Received uploaded background file (id={})'.format(id))
+				background_name = background_file.filename
 				with open(b, "wb") as out:
 					while True:
 						data = background_file.file.read(8192)
@@ -122,17 +138,19 @@ class WebUI(object):
 							break
 						out.write(data)			
 			elif background_data != None and background_data != "":
-				print "BACKGROUND_DATA: " + background_data
+				background_name = "Custom bed"
 				with open(b, "wb") as out:
 					logger.info('Received raw text background data (id={})'.format(id))
 					data = background_file
 					data = os.linesep.join([s for s in data.splitlines() if s])
 					out.write(data)
 			else:
+				background_name = "Genome"
 				b = ""
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
+		runset['background'] = background_name
 
 		# "kwargs" (Keyword Arguments) stands for all the other
 		# fields from the HTML form besides bed_file, niter, name, score, and strand
@@ -143,16 +161,24 @@ class WebUI(object):
 		organism = ""
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
+		runset['gfs'] = gfeatures
 		for k,v in kwargs.items():
 			if v.startswith("organism:"):
 				organism = v.split(":")[-1]
+		runset['organism']= organism	
+
+		# write the enrichment settings.
+		path = os.path.join("results",str(id) + ".settings")
+		settings = open(path,'wb')
+		settings.write(json.dumps(runset))
+		settings.close()
 
 
 		# Reserve a spot in the results folder
 		path = os.path.join("results", str(id))
 		results = open(path,'wb') 
 		results.close()
-		
+
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
@@ -176,7 +202,45 @@ class WebUI(object):
 			enrichments = []
 		tmpl = lookup.get_template("enrichment.html")
 		progress = grquery.get_progress(id)
-		return tmpl.render(enrichments=enrichments,progress=progress)
+		# Loads the settings of the run if they exist
+		if os.path.exists(path + ".settings"):
+			settings = open(path + ".settings")
+			s = json.loads(settings.read())
+			settings.close()
+			f = s['filters']
+			# fills in default values for blank filter settings
+			if f['name'] == "": name = "None"
+			else: name = f['name']
+			if f['score'] == "": score = "None"
+			else: score = f['score']
+			if f['strand'] == "": strand = "None"
+			else: strand = f['strand']
+			# gets the run settings
+			foi = s['fois']
+			background = s['background']
+			niter = s['niter']
+		else:
+			background = "NA"
+			name = "NA"
+			niter = "NA"
+			score= "NA"
+			strand = "NA"
+			foi = "NA"
+		# Loads the progress file if it exists
+		p = {"status":"","curprog":0,"progmax":0}
+		if os.path.exists(path+".prog"):
+			with open(path+".prog") as f:
+				p = json.loads(f.read() )
+
+		return tmpl.render(enrichments=enrichments,foi=foi,background=background,
+				name = name,
+				score = score,
+				strand= strand,
+				niter= niter,
+				status = p["status"],
+				curprog = p["curprog"],
+				progmax = p["progmax"]
+				)
 
 
 
