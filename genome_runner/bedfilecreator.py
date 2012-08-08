@@ -13,7 +13,7 @@ import re
 import collections
 import copy
 import traceback  as trace
-# connection information for the uscs ftp server
+# connection information for the ucsc ftp server
 server = 'hgdownload.cse.ucsc.edu'
 directory = '/goldenPath/{}/database'
 username = 'anonymous'
@@ -28,9 +28,9 @@ logger.addHandler(hdlr)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 			
-# downloads the specified file from uscs.  Saves it with a .temp extension untill the download is complete.
-def download_uscs_file(organism,filename,downloaddir):
-	''' Downloads the filename from the USCS ftp server and saves it
+# downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
+def download_ucsc_file(organism,filename,downloaddir):
+	''' Downloads the filename from the UCSC ftp server and saves it
 	in a folder with the same name as the organism.
 	'''
 	outputpath = ''
@@ -51,13 +51,13 @@ def download_uscs_file(organism,filename,downloaddir):
 		outputpath = os.path.join(outputdir,filename)
 		if not os.path.exists(outputpath):
 			with open(outputpath + ".temp",'wb') as fhandle:  
-				logger.info( 'Downloading {} from USCS'.format(filename))
+				logger.info( 'Downloading {} from UCSC'.format(filename))
 				ftp = ftplib.FTP(server)
 				ftp.login(username,password)
 				ftp.cwd(directory.format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(filename),fhandle.write)
 				os.rename(outputpath+".temp",outputpath)
-				logger.info( 'Finished downloading {} from USCS'.format(filename))
+				logger.info( 'Finished downloading {} from UCSC'.format(filename))
 		else:
 			logger.info( '{} already exists, skipping download'.format(outputpath))
 	except Exception, e:
@@ -69,11 +69,11 @@ def download_uscs_file(organism,filename,downloaddir):
 
 
 def download_trackdb(organism,outputdir):
-	''' Downloads the trackdb.sql and trackDb.txt.gz from the USCS ftp server and saves it in a folder with the same name as the organism.
+	''' Downloads the trackdb.sql and trackDb.txt.gz from the UCSC ftp server and saves it in a folder with the same name as the organism.
 		Returns the path of the downloaded .sql file
 	'''
-	sqloutputpath = download_uscs_file(organism,"trackDb.sql",outputdir)
-	dataoutpath = download_uscs_file(organism,"trackDb.txt.gz",outputdir)
+	sqloutputpath = download_ucsc_file(organism,"trackDb.sql",outputdir)
+	dataoutpath = download_ucsc_file(organism,"trackDb.txt.gz",outputdir)
 	' replace all of the \\\n characters in the html column with <br />'
 	text = gzip.open(dataoutpath).read()
 	with gzip.open(dataoutpath,'wb') as sw:
@@ -210,8 +210,8 @@ def download_bedfiles(trackdbpath,organism):
 		if row['type'] in preparebed:
 			# DEBUG this line limits the number of GRF to download
 			if numdownloaded[row["type"]] <=5000000:
-				sqlpath = download_uscs_file(organism,row["tableName"] + ".sql","downloads")
-				download_uscs_file(organism,row["tableName"] + ".txt.gz","downloads")
+				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql","downloads")
+				download_ucsc_file(organism,row["tableName"] + ".txt.gz","downloads")
 				if sqlpath != '':
 					logger.info( "converting"+row['tableName']+ " into proper bed format")
 					try:
@@ -222,7 +222,7 @@ def download_bedfiles(trackdbpath,organism):
 							# removes the .temp file, to prevent duplicate data from being written
 							if os.path.exists(outpath+".temp"):
 								os.remove(outpath+".temp")
-							# converts the uscs data into propery bed format
+							# converts the ucsc data into propery bed format
 							logger.info( "Converting into proper bed format. {}".format(os.path.splitext(sqlpath)[0] + ".txt.gz"))
 							preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
 							# remove the .temp file extension to activate the GF
@@ -265,21 +265,15 @@ def load_tabledata_dumpfiles(datapath):
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Create the GenomeRunner Database')
-	parser.add_argument('--output','-o', help='The folder to download the data files to')
-	parser.add_argument('--organism','-g', help='The USCS code of the organism to be downloaded (example: hg19 (human))')
+	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in /Downloads.  Converted files are placed in /Released')
+	parser.add_argument('--organism','-g', help='The UCSC code of the organism to be downloaded (example: hg19 (human))')
 	parser.add_argument('--filename','-f', help='The name of the specific file to download (example: trackDb.sql). If provided, only this file will be downloaded')
 	args = vars(parser.parse_args())
 	outputdir='released'
-	if args['output'] is not None:
-		outputdir = args['output']
 	if args['organism'] is not None and args['filename'] is not None:
-		download_uscs_file(args['organism'],args['filename'],outputdir)
+		download_ucsc_file(args['organism'],args['filename'],outputdir)
 	elif args['organism'] is not None and args['filename'] is None:
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		download_bedfiles(trackdbpath,args['organism'])
 	else:
-		trackdbpath = download_trackdb('hg19',outputdir)
-		logger.info( trackdbpath)
-		download_bedfiles(trackdbpath,'hg19')
-
+		print "Requires UCSC organism code.  Use --help for more information"
