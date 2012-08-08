@@ -44,7 +44,7 @@ def download_ucsc_file(organism,filename,downloaddir):
 			os.makedirs(outputdir)
 	except Exception, e:
 		logger.warning( e)
-		logger.warning("ERROR: could not create folder at {} for {}".format(outputdir,filename))
+		logger.warning("Could not create folder at {} for {}".format(outputdir,filename))
 		return '' 
 	
 	try:
@@ -62,7 +62,7 @@ def download_ucsc_file(organism,filename,downloaddir):
 			logger.info( '{} already exists, skipping download'.format(outputpath))
 	except Exception, e:
 		logger.warning( e)
-		logger.warning("ERROR: could not download the {} sql file. Names ARE case sensitive.".format(filename))
+		logger.warning("Could not download the {} sql file. Names ARE case sensitive.".format(filename))
 		return '' 
 
 	return outputpath 
@@ -231,9 +231,9 @@ def download_bedfiles(trackdbpath,organism):
 							logger.info( "{} already exists, skipping extraction".format(outpath))
 						numdownloaded[row["type"]] += 1
 					except Exception, e:
-						trace.print_exc(file=sys.stdout)
-						logger.warning( "ERROR unable to convert {} into bed".format(row["tableName"]))
-						logger.warning( e)
+						exc = trace.format_exc()
+						logger.warning( "Unable to convert {} into bed".format(row["tableName"]))
+						logger.warning(exc)
 						continue
 		else:
 			if 'big' not in row['type']:
