@@ -81,22 +81,35 @@ def download_trackdb(organism,outputdir):
 	return sqloutputpath
 	
 
+def _check_cols(colnames,colstoextract):
+	'''checks if all the columns to extract
+	actually exist in the ucsc table
+	'''
+	for c in colstoextract:
+		if not c in colnames:
+			return False
+	return True
 
 
 def extract_bed6(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score','strand']
-	logger.info( "Outpath is: {}".format(outputpath))
-	with gzip.open(datapath) as dr:
-		with gzip.open(outputpath,"wb") as bed:
-			while True:
-					line = dr.readline().strip('\r').rstrip('\n')
-					if line == "":
-						break
-					r  = dict(zip(colnames,line.split('\t')))
-					row = []
-					for col in colstoextract:
-						row.append(r[col]) 
-					bed.write("\t".join(map(str,row))+"\n")
+	# Checks if all of the columns exist in the table.  If not extract_bed5 is tried instead
+	if _check_cols(colnames,colstoextract):
+
+		logger.info( "Outpath is: {}".format(outputpath))
+		with gzip.open(datapath) as dr:
+			with gzip.open(outputpath,"wb") as bed:
+				while True:
+						line = dr.readline().strip('\r').rstrip('\n')
+						if line == "":
+							break
+						r  = dict(zip(colnames,line.split('\t')))
+						row = []
+						for col in colstoextract:
+							row.append(r[col]) 
+						bed.write("\t".join(map(str,row))+"\n")
+	else:
+		extract_bed5(outputpath,datapath,colnames)
 
 
 def extract_bed3(outputpath,datapath,colnames):
@@ -112,26 +125,35 @@ def extract_bed3(outputpath,datapath,colnames):
 				bed.write("\t".join(map(str,row))+"\n")
 
 def extract_bed5(outputpath,datapath,colnames):
-	with gzip.open(outputpath,"wb") as bed:
-		with gzip.open(datapath) as dr:
-			while True:
-				line = dr.readline().rstrip('\r').rstrip('\n')
-				if line == "":
-					break
-				r  = dict(zip(colnames,line.split('\t')))
-				row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"],"."]
-				bed.write("\t".join(map(str,row))+"\n")
+	colstoextract = ['chrom','chromStart','chromEnd','name','score']
+	if _check_cols(colnames,colstoextract):
+		with gzip.open(outputpath,"wb") as bed:
+			with gzip.open(datapath) as dr:
+				while True:
+					line = dr.readline().rstrip('\r').rstrip('\n')
+					if line == "":
+						break
+					r  = dict(zip(colnames,line.split('\t')))
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"],"."]
+					bed.write("\t".join(map(str,row))+"\n")
+	else:
+		extract_bed4(outputpath,datapath,colnames)
+	
 
 def extract_bed4(outputpath,datapath,colnames):
-	with gzip.open(outputpath,"wb") as bed:
-		with gzip.open(datapath) as dr:
-			while True:
-				line = dr.readline().rstrip('\r').rstrip('\n')
-				if line == "":
-					break
-				r  = dict(zip(colnames,line.split('\t')))
-				row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],".","."]
-				bed.write("\t".join(map(str,row))+"\n")
+	colstoextract = ['chrom','chromStart','chromEnd','name']
+	if _check_cols(colnames,colstoextract):
+		with gzip.open(outputpath,"wb") as bed:
+			with gzip.open(datapath) as dr:
+				while True:
+					line = dr.readline().rstrip('\r').rstrip('\n')
+					if line == "":
+						break
+					r  = dict(zip(colnames,line.split('\t')))
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],".","."]
+					bed.write("\t".join(map(str,row))+"\n")
+	else:
+		extract_bed3(outputpath,datapath,colnames)
 
 def extract_genepred(outputpath,datapath,colnames):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
