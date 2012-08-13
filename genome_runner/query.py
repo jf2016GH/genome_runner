@@ -2,6 +2,7 @@
 import sys, operator, os, numpy
 from numpy import random as rand
 from pybedtools import BedTool
+from pybedtools.featurefuncs import midpoint as pb_midpoint
 import pybedtools
 from collections import namedtuple
 import cPickle
@@ -9,14 +10,16 @@ import logging
 from logging import FileHandler,StreamHandler
 from path import basename
 import json
+import copy
+import traceback  as trace
 
 logger = logging.getLogger('genomerunner.query')
 hdlr = logging.FileHandler('genomerunner_server.log')
 hdlr_std = StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.addHandler(hdlr_std)
+# This line outputs logging info to the console
+#logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
 
@@ -25,7 +28,7 @@ logger.setLevel(logging.INFO)
 # Lists of Enrichment objects are serialized to a Python Pickle
 # file when an analysis is complete	
 _Enrichment = namedtuple("Enrichment",
-		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value","pybed_expected","jaccard_observed","jaccard_p_value","jaccard_expected"])
+		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value","pybed_expected","jaccard_observed","jaccard_p_value","jaccard_expected","proximity_p_value"])
 class Enrichment(_Enrichment):
 	def category(self):
 		if self.expected == 0 or self.p_value > 0.05:
@@ -46,6 +49,7 @@ def make_filter(name, score, strand):
 		return True
 	return filter
 
+# TODO implement remove_invalid and report results to user.  
 def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10):
 	"""Perform enrichment analysis between two BED files.
 
@@ -110,12 +114,13 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if jaccard_exp == jaccard_obs or (jaccard_exp  == 0 and jaccard_obs == 0):
 		jaccardp_value =1
 	else:
-		jaccardp_value = len([x for x in jaccard_dist if x > obs]) / float(len(jaccard_dist))
+		jaccardp_value = len([x for x in jaccard_dist if x > jaccard_obs]) / float(len(jaccard_dist))
 		jaccardp_value = min(jaccardp_value,1-jaccardp_value)
 
-	# run proximety analysis
+	
+	# run proximity analysis
 	if True:
-		logger.info("Running proximety {} (id={})".format(b,id))
+		logger.info("Running proximity {} (id={})".format(b,id))
 		#stores the means of the distances for the MC
 		expall =[]
 		for i in range(n):
@@ -125,6 +130,8 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 				expall.append(t[-1])
 		# calculate the overal expected distance
 		expall.append(numpy.mean(numpy.array(expall,float)))
+		print expall
+		print "There are {}:".format(len(expall))
 		# calculate the expected mean for all of the runs
 		expprox = numpy.mean(numpy.array(expall,float))	
 		# proximety analysis for observed
@@ -133,12 +140,15 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 		for t in tmp:
 			obsall.append(t[-1])
 		obsprox = numpy.mean(numpy.array(obsall,float))
+		proximityp_value = len([x for x in expall if x > obsprox]) / float(len(expall))
+		print "proximity pvalue" + str(proximityp_value)
+		proximityp_value = min(proximityp_value,1-proximityp_value)
 	else:
 		print "Skipping Proximity"
 		obsprox = -1
 		expprox = -1
 
-	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp)
+	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,jaccard_exp,proximityp_value)
 
 def shuffle(bed_file, background_bed,organism):
 	""" Accepts a file path to a bed file and a background file
@@ -170,6 +180,96 @@ def shuffle(bed_file, background_bed,organism):
 		return rand_A
 	else:
 		return A.shuffle(genome=organism,chrom=True)
+
+def genome_tri_corr(A_bedtool, B_bedtool,genome):
+	''' Based on Genometric Correlation algorithm at http://genometricorr.sourceforge.net/
+		Genome file is a dictionary of chroms and chrom lengths.  Can be retrieved from ucsc
+		by calling pybedtool.get_chromsizes_from_ucsc('hg19'). Where hg19 is the 
+		assembly name
+	'''
+	# generate the midpoint intervals
+	midpoint_A = A_bedtool.each(_midpoint)
+	stitched_B = stitch_midpoints(B_bedtool,genome)
+	d_i_all = []
+	for a in midpoint_A:
+		# get the B intervals that overlap a.
+		inter_b = stitched_B(a)
+		shortest_b = 'a'
+		# gets the shortest returned interval
+		for x in inter_b:
+			if len(x) < shortest_b:
+				shortest_b = x
+		print "Shortest overlap interval: " 
+		print shortest_b
+		# calculates the numorator of the d_i equation
+		d_i = min(a-shortest_b.start,b-shortest_b.end - a)
+		print "d_i numerator: "
+		print d_i
+		# calculates d_i
+		d_i = d_i/len(shortest_b)
+		print "d_i"
+		print d_i
+		d_i_all.append(d_i)
+
+
+
+
+def stitch_midpoints(B_bedtool,genome):
+	''' Gets the midpoints of the intervals and creates a new set of connected intervals from the midpoints.
+	One set of intervals is created per strand
+	'''
+	strands = ["+","-",["","."," "]]
+	midpoints = [] 
+	B_bedtool = B_bedtool.sort()
+	# cycles through each strand for each chrom
+	B_bedtool = B_bedtool.each(pb_midpoint)
+	for chrom in genome.keys():
+		chrom_B = B_bedtool.filter(lambda x: x.chrom =="chr1").saveas()
+		chrom_B.saveas()
+		print chrom_B
+		if len(chrom_B) == 0:
+			continue
+		for s in strands:
+			strand_chrom_B = chrom_B.filter(lambda x: x.strand in "+").saveas()
+			strand_chrom_B.saveas()
+			# set the endpoint equal to the start of upstream interval start
+			if len(strand_chrom_B) == 0:
+				continue
+			for i in range(1,len(strand_chrom_B)-1):
+				print "BEFORE{}".format(strand_chrom_B[i].end)
+				strand_chrom_B[i].end = strand_chrom_B[i+1].start	
+				print "AFTER{}".format(strand_chrom_B[i].end)
+			#print strand_chrom_B
+			#extends the first interval to the start of chromosome
+			# extends the last interval to the end of the chromosome
+			#strand_chrom_B[len(strand_chrom_b)-1].end = genome[chrom][1]
+			print "ADDING!"
+			print strand_chrom_B
+			midpoints.append(strand_chrom_B)
+	
+	#concat all the interval sets from different chroms together
+		#TODO can a bed tool be declared ahead of time? Then the 0 index doesn't have to be accessed before 
+	midpoints_B = midpoints[0]
+	for i in range(1,len(midpoints)-1):
+		midpoints_B.cat(midpoints[i],post_merge=False)
+
+	return midpoints_B
+
+
+def _midpoint(interval):
+	''' Uses pybedtools midpoint function to calculate the midpoint of the interval
+	Sets the endpoint to start + 1 to conformt to the bed format standard.
+	'''
+	
+
+	#print "before midpoint: " + str(interval)
+	i = pb_midpoint(interval)
+	#print "after  midpoint: " + str(i)
+	i.end = i.start + 1
+	#print "after endpoint +1" + str(i)
+	return i
+
+	
 
 def generate_background(foipath,gfpath,background):
 	"""accepts a background filepath
@@ -225,22 +325,32 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 	Run one FOI file (f) against multiple GFs, then 
 	save the result to the "results" directory.
 	"""
-	enrichments = []
-	# these are progress values that are written to the progress file
-	global curprog 
-	curprog = 0
-	global progmax
-	progmax =len(gfeatures)
-	for gf in gfeatures:
-		write_progress(id, "RUNNING ENRICHMENT ANALYSIS FOR: {}".format(gf))
-		e = enrichment(id,f,gf,background,organism,name,score,strand,niter)
-		enrichments.append(e)
-		path = os.path.join("results", str(id))
-		print "writing output"
-		with open(path, "wb") as strm:
-			cPickle.dump(enrichments, strm)
-		curprog += 1
-	write_progress(id, "FINISHED")
+	# sets up logging for the run
+	hdlr_id_file = logging.FileHandler(os.path.join("results",str(id)+".log"))
+	logger.addHandler(hdlr_id_file)
+
+	try:
+		enrichments = []
+		# these are progress values that are written to the progress file
+		global curprog 
+		curprog = 0
+		global progmax
+		progmax =len(gfeatures)
+		for gf in gfeatures:
+			write_progress(id, "RUNNING ENRICHMENT ANALYSIS FOR: {}".format(gf))
+			e = enrichment(id,f,gf,background,organism,name,score,strand,niter)
+			enrichments.append(e)
+			path = os.path.join("results", str(id))
+			print "writing output"
+			with open(path, "wb") as strm:
+				cPickle.dump(enrichments, strm)
+			curprog += 1
+		write_progress(id, "FINISHED")
+	except Exception, e:
+		logger.error(e)
+		logger.error(trace.format_exc())
+		write_progress(id,"ERROR: The run crashed: {}".format(e))
+
 
 def write_progress(id,line):
 	"""Saves the current progress to the progress file

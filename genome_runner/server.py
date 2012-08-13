@@ -4,6 +4,7 @@ from mako.lookup import TemplateLookup
 
 from contextlib import closing
 import sqlite3
+import re
 from operator import attrgetter
 from multiprocessing import Process
 import cPickle
@@ -77,6 +78,8 @@ class WebUI(object):
 		runset = {}
 		cherrypy.response.timeout = 3600
 		runset['filters'] = {"name": name,"score": score,"strand": strand}
+		for k in kwargs:
+			print "KWARGS: " +  k
 		try:
 			niter = int(niter)
 		except ValueError:
@@ -104,8 +107,12 @@ class WebUI(object):
 						logger.info('Received uploaded FOI file (id={})'.format(id))
 						while True:
 							data = bed_file.file.read(8192)
-							data = data.strip("\r")
-							data = os.linesep.join([s for s in data.splitlines() if s])
+							# TODO find empty lines
+							#data = os.linesep.join([s for s in data.splitlines() if s ])
+
+							# strips out new lines not compatible with bed tools
+							#data = data.replace("\r\n","\n").replace("\r","\n")
+							data = data.replace("\r","")
 							if not data:
 								break
 							out.write(data)			
@@ -132,8 +139,11 @@ class WebUI(object):
 				with open(b, "wb") as out:
 					while True:
 						data = background_file.file.read(8192)
-						data = data.strip("\r")
-						data = os.linesep.join([s for s in data.splitlines() if s])
+						# TODO find empty lines
+						#data = os.linesep.join([s for s in data.splitlines() if not s.isspace() ])
+
+						# strips out new lines not compatible with bed tools
+						data = data.replace("\r","")
 						if not data:
 							break
 						out.write(data)			
@@ -162,8 +172,10 @@ class WebUI(object):
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		runset['gfs'] = gfeatures
+
 		for k,v in kwargs.items():
-			if v.startswith("organism:"):
+			if "organism:" in v:
+				print "@!!!@#!#!@#" + str(v)
 				organism = v.split(":")[-1]
 		runset['organism']= organism	
 
@@ -206,6 +218,7 @@ class WebUI(object):
 		if os.path.exists(path + ".settings"):
 			settings = open(path + ".settings")
 			s = json.loads(settings.read())
+			print s
 			settings.close()
 			f = s['filters']
 			# fills in default values for blank filter settings
@@ -215,6 +228,8 @@ class WebUI(object):
 			else: score = f['score']
 			if f['strand'] == "": strand = "None"
 			else: strand = f['strand']
+			if s['jobname'] == "": jobname = "None"
+			else: jobname = s['jobname']
 			# gets the run settings
 			foi = s['fois']
 			background = s['background']
@@ -226,6 +241,7 @@ class WebUI(object):
 			score= "NA"
 			strand = "NA"
 			foi = "NA"
+			jobname= "NA"
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
 		if os.path.exists(path+".prog"):
@@ -237,6 +253,7 @@ class WebUI(object):
 				score = score,
 				strand= strand,
 				niter= niter,
+				jobname= jobname,
 				status = p["status"],
 				curprog = p["curprog"],
 				progmax = p["progmax"]

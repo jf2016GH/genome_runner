@@ -1,20 +1,22 @@
 #page-wrap {
-	background: white;
+	background: #F8F8F8;
 	min-width: 780px;
 	max-width: 1260px;
 	margin: 10px auto;
 	border-radius: 15px;
+	
 }
 #page-wrap #inside {
 	margin: 10px 10px					0px 10px;
 	padding-top: 10px;
 	padding-bottom: 10px;
+	background: #F8F8F8;
 }
 
 #main-content {
-	background: url(images/left-sidebar.gif) repeat-y white;
 	padding-left: 230px;
 	padding-top: 20px;
+	background: #F8F8F8;
 }
 
 #header {
@@ -22,9 +24,6 @@
 	text-align: middle-left;
 	height: 80px;
 	border-radius: 15px;
-	-moz-box-shadow: -5px -5px 5px #888;
-	-webkit-box-shadow: -5px -5px 5px #888;
-	box-shadow: -5px -5px 5px #888;
 }
 
 #left-sidebar {
@@ -42,4 +41,5 @@
 	border-collapse:or: white;
 }
 ul { list-style-type: none }
+body { background: #1C1C1C;}
 img { padding: 10px; border-radius: 15px;} 

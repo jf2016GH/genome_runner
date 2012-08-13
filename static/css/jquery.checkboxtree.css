@@ -1,6 +1,7 @@
 .ui-widget-daredevel-checkboxTree li {
     list-style-type: none;
     position: relative;
+	list-style-type: none
 }
 
 .ui-widget-daredevel-checkboxTree li span {
@@ -8,4 +9,5 @@
     position: absolute;
     top: 1px;
     left: -16px;
+	 list-style-type: none 
 }

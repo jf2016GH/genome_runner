@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<style type="text/css" title="currentStyle">
 			@import "static/css/demo_page.css";
@@ -9,101 +10,160 @@
 				fill: none;
 				stroke: gray;
 				stroke-width: 1px;
-		</style>
-	<link type="text/css" href="static/css/jquery.dataTables_themeroller.css" rel="stylesheet" />
-	<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.22.custom.css" rel="stylesheet" />
-    <script type="text/javascript" src="static/js/jquery.js"></script>
-    <script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
-		<script type="text/javascript" language="javascript"
-			src="static/js/jquery.dataTables.js"></script>
-
-		<script type="text/javascript" language="javascript"
-			src="static/js/TableTools.js"></script>
-
-		<script type="text/javascript" language="javascript"
-			src="static/js/ZeroClipboard.js"></script>
-		<script type="text/javascript" charset="utf-8">
-			$(document).ready(function() {
-				$('#tbl').dataTable({
-					"sDom": 'T<"clear">lfrtip',
-					"bJQueryUI": true,
-					"oTableTools": {
-						"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
-					}
-				});
-		//		setTimout(ReloadPage(),1000);
-			// this refreshes the page.  It is dependent on the content of the progress label
-		function ReloadPage(){
-				if ($("#progress").val !== "Progress: FINISHED"){
-				console.log("reload!");
-				location.reload();
+			</style>
+			<style>
+				body {
+					padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
 				}
-			}
+				/* allows the check box tree to be rendered correctly*/
+				.ui-icon {float: left;}
+			</style>
+
+			<!-- For IE6-8 support of HTML5 elements -->
+			<!--[if lt IE 9]>
+			<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+			<![endif]-->
+
+			<link type="text/css" href="static/css/jquery.dataTables_themeroller.css" rel="stylesheet" />
+			<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+			<link href="static/css/bootstrap.css" rel="stylesheet">
+			<script type="text/javascript" src="static/js/jquery.js"></script>
+			<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
+			<script src="static/js/bootstrap.js"></script>
+			<script type="text/javascript" language="javascript"
+				src="static/js/jquery.dataTables.js"></script>
+
+			<script type="text/javascript" language="javascript"
+				src="static/js/TableTools.js"></script>
+				<script type="textjavascript" language="javascript"
+					src="static/js/bootstrap-tooltip.js"></script>
+
+			<script type="text/javascript" language="javascript"
+				src="static/js/ZeroClipboard.js"></script>
+			<script type="text/javascript" charset="utf-8">
+				$(document).ready(function() {
+						$('#tbl').dataTable({
+							"sDom": 'T<"clear">lfrtip',
+							"bJQueryUI": true,
+							"oTableTools": {
+							"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
+							}
+							});
+						//		setTimout(ReloadPage(),1000);
+						// this refreshes the page.  It is dependent on the content of the progress label
+						function ReloadPage(){
+						if ($("#progress").val !== "Progress: FINISHED"){
+							location.reload();
+						}
+						}
+
+						$("#progressbar").progressbar({
+						value: ${curprog},
+						max: ${progmax}
+});
+						$("#x_slider").slider({min:1,max:308,change:updategraph});
+						$("#gfname").popover({content: "test", placement: "top"});
+						$("#numfoi").popover({content: "test", placement: "top"});
+						$("#numgf").popover({content: "test", placement: "top"});
+						$("#obsoverlap").popover({content: "test", placement: "top"});
+						$("#expoverlap").popover({content: "test", placement: "top"});
+						$("#pvalue").popover({content: "test", placement: "top"});
+						$("#pybed_expoverlap").popover({content: "test", placement: "top"});
+						$("#pybed_p_value").popover({content: "test", placement: "top"});
+						$("#jaccard_observed").popover({content: "test", placement: "top"});
+						$("#jaccard_exporverlap").popover({content: "test", placement: "top"});
+						$("#jaccard_p_value").popover({content: "test", placement: "top"});
+						$("#obsprox").popover({content: "test", placement: "top"});
+						$("#exprox").popover({content: "test", placement: "top"});
+						$("#proximity_p_value").popover({content: "test", placement: "top"});
+						$("#x_slider").popover({content: "test", placement: "top"});
+						$("#coltograph").popover({content: "test", placement: "top"});
 
 
-			$('#xrangeslider').slider("option","max",7);
-			$("#progressbar").progressbar({
-				value: ${curprog},
-				max: ${progmax}
-				});
-			});
 
 
-			
-			
-			
-		</script>
+
+});
+
+
+
+
+
+</script>
 	</head>
 	<body>
-		<h1>Enrichment results for ${foi}</h1>
-		<div>
-		<table id="tbl" class="display" cellpadding="0"
-			cellspacing="0" border="0">
-			<thead>
-				<tr>
-					<th value="gfname">GF Name</th>
-					<th value="numfoi">#FOIs</th>
-					<th value="numgf">#Genomic Features</th>
-					<th value="obsoverlap">#Overlaps (observed)</th>
-					<th value="jaccard_observed">#Overlaps (Jaccard observed)</th>
-					<th value="expoverlap">#Overlaps (expected)</th>
-					<th value="pybed_expoverlap">#overlaps (PyBed expected)</th>
-					<th value="jaccard_expoverlap">#overlaps(Jaccard expected)</th>
-					<th value="pvalue">P-value</th>
-					<th value="pybed_p_value">PyBed P-value</th>
-					<th value="jaccard_p_value">Jaccard P-value</th>
-					<th value="obsprox">Proximity to GF (observed)</th>
-					<th value="expprox">Proximity to GF (expected)</th>
-					
-				</tr>
-			</thead>
-			<tbody>
-
-				% for i,e in enumerate(enrichments):
-					
-					<tr class="${e.category()}">
-						<td>${e.B}</td>
-						<td>${e.nA}</td>
-						<td>${e.nB}</td>
-						<td>${e.observed}</td>
-						<td>${e.jaccard_observed}</td>
-						<td>${e.expected}</td>
-						<td>${e.pybed_expected}</td>
-						<td>${e.jaccard_expected}</td>
-						<td>${e.p_value}</td>
-						<td>${e.pybed_p_value}</td>
-						<td>${e.jaccard_p_value}</td>
-						<td>${e.obsprox}</td>
-						<td>${e.expprox}</td>
-					</tr>
-				% endfor
-			</tbody>
-		</table>
+		<div class="topbar">
+			<div class="topbar-inner">
+				<div class="container-fluid">
+					<a class="brand" href="./" style="font-family:Futura,'Helvetica Neue', Arial">
+						<img width="120px" src="static/images/GRLogo.png" />
+					</a>
+					<ul class="pull-right">
+						<li><a href="#overview">Overview</a></li>
+						<li><a href="#news">News</a></li>
+						<li><a href="#UseGenomeRunner">Use GenomeRunner</a></li>
+						<li><a href="#demo">Demo</a></li>
+						<li><a href="#howtocite">How to Cite</a></li>
+					</ul>
+				</div>
+			</div>
 		</div>
-		<br>
-		<div id="progressbar"></div>
-		<div id="progress" class=".boxed"><b>Progress: </b>${status}</div>
-		<br>
+		<br/>
+			<h2 style="margin-top: 60px;">Enrichment results for ${foi}</h2>
+		<div class="well" >
+				<table id="tbl" class="display" cellpadding="0"
+					cellspacing="0" border="0">
+					<thead>
+						<tr>
+							<th id="gfname" rel="popover" data-content="This is a test" value="gfname">GF Name</th>
+							<th id="numfoi" value="numfoi" data-content="This is a test">#FOIs</th>
+							<th id="numgf" value="numgf" data-content="This is a test">#Genomic Features</th>
+							<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>
+							<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>
+							<th id="pvalue" value="pvalue" data-content="This is a test">P-value</th>
+							<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>
+							<th id="pybed_p_value" value="pybed_p_value" data-content="This is a test">PyBed P-value</th>
+							<th id="jaccard_observed" value="jaccard_observed" data-content="This is a test">#Overlaps (Jaccard observed)</th>
+							<th id="jaccard_exporverlap"  value="jaccard_expoverlap" data-content="This is a test">#Overlaps(Jaccard expected)</th>
+							<th id="jaccard_p_value" value="jaccard_p_value" data-content="This is a test">Jaccard P-value</th>
+							<th id="obsprox" value="obsprox" data-content="This is a test">Proximity to GF (observed)</th>
+							<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
+							<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
+
+						</tr>
+					</thead>
+					<tbody>
+
+						% for i,e in enumerate(enrichments):
+
+						<tr class="${e.category()}">
+							<td>${e.B}</td>
+							<td>${e.nA}</td>
+							<td>${e.nB}</td>
+							<td>${e.observed}</td>
+							<td>${e.expected}</td>
+							<td>${e.p_value}</td>
+							<td>${e.pybed_expected}</td>
+							<td>${e.pybed_p_value}</td>
+							<td>${e.jaccard_observed}</td>
+							<td>${e.jaccard_expected}</td>
+							<td>${e.jaccard_p_value}</td>
+							<td>${e.obsprox}</td>
+							<td>${e.expprox}</td>
+							<td>${e.proximity_p_value}</td>
+						</tr>
+						% endfor
+					</tbody>
+				</table>
+		</div>
+		<div style="margin: 10px;">
+			<div id="progressbar" ></div>
+			<div class="ui-widget" style="marginr:0px;">
+				<div class="ui-state-highlight ui-corner-all">
+					<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span> ${status}</p>
+				</div>
+			</div>
+		</div>
 		<div id="runsettings">
 			<ul>
 				<li><b>Background:</b> ${background}</li>
@@ -119,19 +179,28 @@
 				</ul>
 			</ul>
 		</div>
-		<h3>
+		<div class="well">
+			<div class="row">
 
-				<h2><a href="/gr">GO BACK</a></h2>
-		<select onchange="updategraph()" id="coltograph">
-			<option value="pvalue">pvalue</option>
-			<option value="jaccard_p_value">Jaccard P-value</option>
-			<option value="pybed_p_value">PyBed P-value</option>
-		</select>
-		<div id='xrangeslider' class="ui-slider"></div>
-		<div id="demo">
-			
+				<div style="margin:5px;" class="span5">
+					<label  style="float: left;"><h3>Plot the value of:</h3>
+					</label>
+						<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
+							<option value="pvalue">pvalue</option>
+							<option value="jaccard_p_value">Jaccard P-value</option>
+							<option value="pybed_p_value">PyBed P-value</option>
+							<option value="proximity_p_value">Proximity P-value</option>
+						</select>
+				</div>
+				<div class="span7">
+
+			<div style="width: 40em !important;"  role="popover" data-content="Adjustment of P-value range" id='x_slider'></div>
+			<div id="demo">
+
+			</div>
+			</div>
+				</div>
 		</div>
-
 		<script src="static/js/d3.js"></script>
 		<script>
 
@@ -148,7 +217,7 @@
 				$(this).find('td').each(function(i) {
 					//determin the cell column name
 					var rowName = columns[i];
-					
+
 					row[rowName] = $(this).text();
 
 				});
@@ -156,16 +225,15 @@
 
 				return row;}).get();
 
-				function neglog10(val) {
-					if (val == 0.0){
-						return 10
-					}
-					else {
-					var logval = -1 * Math.log(parseFloat(val))/Math.log(10);
-					console.log(logval)
-					return logval 
-					}
+			function neglog10(val) {
+				if (val == 0.0){
+					return 10
 				}
+				else {
+					var logval = -1 * Math.log(parseFloat(val))/Math.log(10);
+					return logval 
+				}
+			}
 
 			// performs - log10 on the pvalue data and makes the value
 			// negative if the FOI is underrepresented
@@ -185,9 +253,9 @@
 			jQuery.each(td,function(i,d) {
 				curData.push(formatlog(i,d[curColumn]));
 			});
-				
 
-		
+
+
 
 
 
@@ -200,11 +268,14 @@
 			var curColor = ""
 			var abmin = Math.abs(pvmin);
 			var abmax = Math.abs(pvmax);
+			// Set the default cuttoff for the x axis
+			var cur_slider = 10 
 			var x = d3.scale.linear().domain([
-			-1 * d3.max([abmin,abmax])
-			,d3.max([abmin,abmax])
+			-1 * cur_slider 
+			, cur_slider
 			])
 			.rangeRound([20,width]).nice();
+
 			var xAxis = d3.svg.axis()
 			.scale(x)
 			.orient("bottom")
@@ -216,7 +287,7 @@
 				jQuery.each(td,function(i,d) {
 					curData.push(formatlog(i,d[curColumn]));
 				});
-				 margin = {top: 20, right: 100, bottom: 5, left: 5};
+				margin = {top: 20, right: 100, bottom: 5, left: 5};
 				width = 500; 
 				pvmin = d3.min(curData,function(d) { return d;});
 				pvmax = d3.max(curData,function(d) { return d;});
@@ -226,9 +297,10 @@
 				abmin = Math.abs(pvmin);
 				abmax = Math.abs(pvmax);
 
+
 				x = d3.scale.linear().domain([
-				-1 * d3.max([abmin,abmax])
-				,d3.max([abmin,abmax])
+				-1 * cur_slider 
+				, cur_slider
 				])
 				.rangeRound([20,width]).nice();
 
@@ -245,79 +317,55 @@
 				if (pvalue < 0){return "#519E12";}
 				if (pvalue > 0){return "#9E2012";}
 			}	
-			
+
 			var bargraph2 = d3.select("#demo").
 			append("svg:svg")
 			.attr("wdith",width + margin.left + margin.right)
 			.attr("height",height +margin.top + margin.bottom);
 			function sortlist(a,b){
 				return ((a<b) ? -1:((a > b) ? 1 : 0));
-			}
-			td.sort(sortlist);
-			
+				}
+				td.sort(sortlist);
 
-			
 
-			// draw the bars
-			bargraph2.selectAll("rect").
-			data(curData).
-			enter().
-			append("svg:rect")
-			.attr("x",function(d,i) {return x(Math.min(0,d));})
-			.attr("y",function(d,i) {return i*(height/curData.length) + margin.top;})
-			.attr("fill",function(d,i) {return recfill(d);})
-			.attr("height", height/td.length - barPadding) 
-			.attr("width", function(d) { return Math.abs(x(d) - x(0));})
 
-			// draw genomic feature names	
-			bargraph2.selectAll("text")
-			.data(td)
-			.enter()
-			.append("text")
-			.attr("class","lblgfname")
-			.text(function(d) {
-				return d.gfname;
-			})
-			.attr("x",function(d,i) { return x(Math.min(0,curData[i])) + Math.abs(x(curData[i]) - x(0)) + 10;})
-			.attr("y",function(d,i) {return i*(height/curData.length) + margin.top + 7;})
-			.attr("text-anchor","left")
-			.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
-			// draw axis 
-			
 
-			bargraph2.append("g")
-			.attr("class","xaxis")
-			.attr("transform","translate(0,0)")
-			.attr("width",width)
-			.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
-			.call(xAxis);
-			
-			bargraph2.append("svg:line")
-			.attr("class","yaxis")
-			.attr("x1",x(0))
-			.attr("x2",x(0))
-			.attr("y1", 20)
-			.attr("y2",height)
-			.attr("stroke","grey")
-			.attr("stroke-width",1);
-			
-			// animates the graph during	
-			function updategraph(){
-				curColumn = $('#coltograph').val()
-				updatescales();
+				// draw the bars
 				bargraph2.selectAll("rect").
-				data(curData)
-				.transition()
-				.ease("linear")
+				data(curData).
+				enter().
+				append("svg:rect")
 				.attr("x",function(d,i) {return x(Math.min(0,d));})
 				.attr("y",function(d,i) {return i*(height/curData.length) + margin.top;})
-				.attr("height", height/curData.length - barPadding) 
-				.attr("width", function(d) { return Math.abs(x(d) - x(0));})
 				.attr("fill",function(d,i) {return recfill(d);})
+				.attr("height", height/td.length - barPadding) 
+				.attr("width", function(d) { return Math.abs(x(d) - x(0));})
 
-				bargraph2.selectAll(".yaxis")
-				.transition()
-				.ease("linear")
+				// draw genomic feature names	
+				bargraph2.selectAll("text")
+				.data(td)
+				.enter()
+				.append("text")
+				.attr("class","lblgfname")
+				.text(function(d) {
+					return d.gfname;
+				})
+				.attr("x",function(d,i) { return x(Math.min(0,curData[i])) + Math.abs(x(curData[i]) - x(0)) + 10;})
+				.attr("y",function(d,i) {return i*(height/curData.length) + margin.top + 7;})
+				.attr("text-anchor","left")
+				.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
+				// draw axis 
+
+
+				bargraph2.append("g")
+				.attr("class","xaxis")
+				.attr("transform","translate(0,0)")
+				.attr("width",width)
+				.attr("style", "font-size: 12; font-family: Helvetica, sans-serif")
+				.call(xAxis);
+
+				bargraph2.append("svg:line")
+				.attr("class","yaxis")
 				.attr("x1",x(0))
 				.attr("x2",x(0))
 				.attr("y1", 20)
@@ -325,37 +373,64 @@
 				.attr("stroke","grey")
 				.attr("stroke-width",1);
 
-				bargraph2.selectAll(".xaxis")
-				.transition()
-				.ease("cubic-in-out")
-				.attr("wdith",width)
-				.call(xAxis);
-				
+				// animates the graph during	
+				function updategraph(){
+					cur_slider = jQuery("#x_slider").slider("value");
+					console.log(cur_slider);
 
-				bargraph2.selectAll(".lblgfname")
-				.data(td)
-				.text(function(d) {
-					return d.gfname;
-				})
-				.transition()
-				.ease("linear")
-				.attr("x",function(d,i) { return x(Math.min(0,curData[i])) + Math.abs(x(curData[i]) - x(0)) + 10;})
-				.attr("y",function(d,i) {return i*(height/curData.length) + margin.top + 7;});
+					curColumn = $('#coltograph').val()
+					updatescales();
+					bargraph2.selectAll("rect").
+					data(curData)
+					.transition()
+					.ease("linear")
+					.attr("x",function(d,i) {return x(Math.min(0,d));})
+					.attr("y",function(d,i) {return i*(height/curData.length) + margin.top;})
+					.attr("height", height/curData.length - barPadding) 
+					.attr("width", function(d) { return Math.abs(x(d) - x(0));})
+					.attr("fill",function(d,i) {return recfill(d);})
+
+					bargraph2.selectAll(".yaxis")
+					.transition()
+					.ease("linear")
+					.attr("x1",x(0))
+					.attr("x2",x(0))
+					.attr("y1", 20)
+					.attr("y2",height)
+					.attr("stroke","grey")
+					.attr("stroke-width",1);
+
+					bargraph2.selectAll(".xaxis")
+					.transition()
+					.ease("cubic-in-out")
+					.attr("wdith",width)
+					.call(xAxis);
 
 
-			}
-	
-		</script>
-		<script text="text/javascript" src="text/javascript">
-			var sampleSVG = d3.select("#demo")
+					bargraph2.selectAll(".lblgfname")
+					.data(td)
+					.text(function(d) {
+						return d.gfname;
+					})
+					.transition()
+					.ease("linear")
+					.attr("x",function(d,i) { return x(Math.min(0,curData[i])) + Math.abs(x(curData[i]) - x(0)) + 10;})
+					.attr("y",function(d,i) {return i*(height/curData.length) + margin.top + 7;});
+
+
+				}
+
+			</script>
+			<script text="text/javascript" src="text/javascript">
+				var sampleSVG = d3.select("#demo")
 				.append("svg")
 				.attr("width",100)
 				.attr("height",100);
 
-			sampleSVG.append("circle")
+				sampleSVG.append("circle")
 				.style("stroke","gray"
-		</script>
+			</script>
 
-	</body>
-</html>
+		</body>
+	</html>
 
