@@ -85,6 +85,8 @@ def _check_cols(colnames,colstoextract):
 	'''checks if all the columns to extract
 	actually exist in the ucsc table
 	'''
+	print "COLNAMES{}".format(colnames)
+	print "colstoextract".format(colstoextract)
 	for c in colstoextract:
 		if not c in colnames:
 			return False
@@ -109,6 +111,7 @@ def extract_bed6(outputpath,datapath,colnames):
 							row.append(r[col]) 
 						bed.write("\t".join(map(str,row))+"\n")
 	else:
+		logger.warning("Nonstandard bed6, attempting extraction as bed5")
 		extract_bed5(outputpath,datapath,colnames)
 
 
@@ -137,6 +140,7 @@ def extract_bed5(outputpath,datapath,colnames):
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"],"."]
 					bed.write("\t".join(map(str,row))+"\n")
 	else:
+		logger.warning("Nonstandard bed5, attempting extraction as bed4")
 		extract_bed4(outputpath,datapath,colnames)
 	
 
@@ -153,6 +157,7 @@ def extract_bed4(outputpath,datapath,colnames):
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],".","."]
 					bed.write("\t".join(map(str,row))+"\n")
 	else:
+		logger.warning("Nonstandard bed4, attempting extraction as bed3")
 		extract_bed3(outputpath,datapath,colnames)
 
 def extract_genepred(outputpath,datapath,colnames):
@@ -185,7 +190,8 @@ def get_column_names(sqlfilepath):
 	'''
 	tdbsql = open(sqlfilepath).read()
 	# creates a tuple containing the column names
-	tbdcolumns = re.findall("\n\s+`(.+?)`", tdbsql, re.DOTALL)
+	tbdcolumns = re.findall("\n\s\s`*(.+?)`*\s", tdbsql, re.DOTALL)
+	tbdcolumns = [c for c in tbdcolumns if not c=="KEY"]
 	return tbdcolumns	
 preparebed = {"bed 6" : extract_bed6, 
 				"bed 6 +" : extract_bed6,
@@ -222,7 +228,7 @@ preparebed = {"bed 6" : extract_bed6,
 numdownloaded = {"bed 6" : 0, "bed 6 +" : 0, "bed 3" : 0, "genePred" : 0,"bed 9 +": 0,"bed 12 +": 0, "bed 12 .": 0, "bed 12": 0, "bed 10": 0, "bed 9 +": 0, "bed 9 .": 0, "bed 9": 0, "bed 8 +": 0, "bed 8 .": 0, "bed 6 .": 0, "bed 5 +": 0, "bed 5 .": 0, "bed 5": 0, "bed 4 +": 0, "bed 4 .": 0, "bed 4": 0, "bed 3 +": 0, "bed 3 .": 0, "genePred xenoRefPep xenoRefMrna": 0, "genePred vegaPep": 0, "genePred sgpPep": 0, "genePred refPep refMrna": 0, "genePred nscanPep": 0, "genePred knownGenePep knownGeneMrna": 0, "genePred genscanPep": 0, "genePred geneidPep": 0, "genePred ensPep": 0, "genePred acemblyPep acemblyMrn": 0}
 
 
-def download_bedfiles(trackdbpath,organism):
+def create_feature_set(trackdbpath,organism):
 	outputdir = os.path.dirname(trackdbpath)
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
 	prog, num = 0,len(trackdb) 
@@ -267,8 +273,58 @@ def download_bedfiles(trackdbpath,organism):
 		logger.info( k + ":" + str(d))
 	return "created database"
 	
+def create_single_feature(trackdbpath,organism,feature):
+	''' Downloads a single feature and adds it to the genomerunner flat file database'''
 
+	outputdir = os.path.dirname(trackdbpath)
+	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
+	f_type = _gettype(feature,trackdb)
+	f_info = _get_info(feature,trackdb)
+	# is the feature in trackDb
+	if f_info != False:
+		# is the feature type supported by the dbcreator
+		if  f_type in preparebed:
+			sqlpath = download_ucsc_file(organism,f_info["tableName"] + ".sql","downloads")
+			download_ucsc_file(organism,f_info["tableName"] + ".txt.gz","downloads")
+			if sqlpath != '':
+				logger.info( "converting"+f_info['tableName']+ " into proper bed format")
+				try:
+					outpath = os.path.join(outputdir,f_info["grp"],'Tier' + f_info["visibility"],f_info["tableName"]+".gz")
+					if not os.path.exists(os.path.dirname(outpath)):
+						os.makedirs(os.path.dirname(outpath))
+					if os.path.exists(outpath) == False:
+						# removes the .temp file, to prevent duplicate data from being written
+						if os.path.exists(outpath+".temp"):
+							os.remove(outpath+".temp")
+						# converts the ucsc data into propery bed format
+						logger.info( "Converting into proper bed format. {}".format(os.path.splitext(sqlpath)[0] + ".txt.gz"))
+						preparebed[f_info["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
+						# remove the .temp file extension to activate the GF
+						os.rename(outpath+".temp",outpath)
+					else:
+						logger.info( "{} already exists, skipping extraction".format(outpath))
+					numdownloaded[f_info["type"]] += 1
+				except Exception, e:
+					exc = trace.format_exc()
+					logger.warning( "Unable to convert {} into bed".format(f_info["tableName"]))
+					logger.warning(exc)
+		else:
+			logger.warning("{} is a type {}, which is not supported".format(feature,f_type))
+	else:
+		logger.warning( "Could not find {} in trackDb".format(feature))
 
+def _gettype(feature,trackdb):
+	'''Returns the type of feature from the trackdb'''
+	for x in trackdb:
+		if x['tableName'] == feature:
+			return x['type']
+
+def _get_info(feature,trackdb):
+	''' Returns the row in trackdb that contains the feature information'''
+	for t in trackdb:
+		if feature == t['tableName']:
+			return t
+	return False
 
 def load_tabledata_dumpfiles(datapath):
 	''' Loads the table data into memory from the sql file and the .txt.gz file
@@ -289,13 +345,16 @@ def load_tabledata_dumpfiles(datapath):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in /Downloads.  Converted files are placed in /Released')
 	parser.add_argument('--organism','-g', help='The UCSC code of the organism to be downloaded (example: hg19 (human))')
-	parser.add_argument('--filename','-f', help='The name of the specific file to download (example: trackDb.sql). If provided, only this file will be downloaded')
+	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
 	args = vars(parser.parse_args())
 	outputdir='released'
-	if args['organism'] is not None and args['filename'] is not None:
-		download_ucsc_file(args['organism'],args['filename'],outputdir)
-	elif args['organism'] is not None and args['filename'] is None:
+	if args['organism'] is not None and args['featurename'] is None:
 		trackdbpath = download_trackdb(args['organism'],outputdir)
-		download_bedfiles(trackdbpath,args['organism'])
+		create_feature_set(trackdbpath,args['organism'])
+	elif args['organism'] is not None and args['featurename'] is not None:
+		trackdbpath = download_trackdb(args['organism'],outputdir)
+		create_single_feature(trackdbpath,args['organism'],args['featurename'])
+	elif args['organism'] is None and args['featurename'] is not None:
+		print "To add a specific feature to the local database, please supply an organism assembly name"
 	else:
 		print "Requires UCSC organism code.  Use --help for more information"
