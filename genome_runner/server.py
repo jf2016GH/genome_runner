@@ -78,8 +78,6 @@ class WebUI(object):
 		runset = {}
 		cherrypy.response.timeout = 3600
 		runset['filters'] = {"name": name,"score": score,"strand": strand}
-		for k in kwargs:
-			print "KWARGS: " +  k
 		try:
 			niter = int(niter)
 		except ValueError:
@@ -169,15 +167,22 @@ class WebUI(object):
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
 		organism = ""
+		tr = {"run_pvalue":False, "run_pybedtool": False, "run_jaccard": False,"run_proximity":False, "run_kolmogorov": False}
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		runset['gfs'] = gfeatures
 
+
 		for k,v in kwargs.items():
 			if "organism:" in v:
-				print "@!!!@#!#!@#" + str(v)
 				organism = v.split(":")[-1]
+			if "run:" in k and v=="on":
+				print "change {}".format(k.split(":")[-1])
+				tr["run_" + k.split(":")[-1]] = True
+
+		print organism
 		runset['organism']= organism	
+		print "run {}".format(tr)
 
 		# write the enrichment settings.
 		path = os.path.join("results",str(id) + ".settings")
@@ -195,7 +200,9 @@ class WebUI(object):
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
 		p = Process(target=grquery.run_enrichments,
-				args=(id,f,gfeatures,b,niter,name,score,strand,organism))
+				args=(id,f,gfeatures,b,niter,name,score,strand,organism,tr["run_pvalue"],
+			tr["run_pybedtool"],tr["run_jaccard"],tr["run_proximity"],tr["run_kolmogorov"]))
+				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
 
@@ -218,7 +225,6 @@ class WebUI(object):
 		if os.path.exists(path + ".settings"):
 			settings = open(path + ".settings")
 			s = json.loads(settings.read())
-			print s
 			settings.close()
 			f = s['filters']
 			# fills in default values for blank filter settings
@@ -256,10 +262,15 @@ class WebUI(object):
 				jobname= jobname,
 				status = p["status"],
 				curprog = p["curprog"],
-				progmax = p["progmax"]
+				progmax = p["progmax"],
+				run_id = id
 				)
-
-
+	
+	@cherrypy.expose
+	def enrichment_log(self, id):
+		with open(os.path.join("results",id+".log")) as sr:
+			x = sr.read()
+			return "<p>{}</p>".format(x.replace("\n","<br/>"))
 
 
 if __name__ == "__main__":

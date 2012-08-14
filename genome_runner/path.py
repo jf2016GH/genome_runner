@@ -54,6 +54,12 @@ class PathNode(defaultdict):
 		if k.startswith("file:"):
 			s = """<a target="_blank" href="meta?tbl=%s">%s</a>""" % \
 				(label, s)
+
+		s = """\t<li><input name="%s" type="checkbox">
+			<label>%s</label>\n""" % (name,label)
+		if k.startswith("file:"):
+			s = """<a target="_blank" href="meta?tbl=%s">%s</a>""" % \
+				(label, s)
 		return s
 
 	def as_html(self, id=None,):
