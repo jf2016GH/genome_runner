@@ -16,8 +16,8 @@
 		<![endif]-->
 		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
 		<link type="text/css" href="static/css/main.css"/>
-		<script type="text/javascript" src="static/js/jquery-1.7.2.min.js"></script>
 		<script type="text/javascript" src="static/js/jquery.js"></script>
+		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
 		<script type="text/javascript" src="static/js/jquery-ui-1.8.22.custom.min.js"></script>
 		<script type="text/javascript" src="static/js/jquery.ui.widget.js"></script>
 		<script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
@@ -117,7 +117,7 @@ document.onkeypress = stopRKey;
 		<div class="topbar-inner">
 			<div class="container-fluid">
 				<a class="brand" href="./" style="font-family:Futura,'Helvetica Neue', Arial">
-					<img width="120px" src="static/images/GRLogo.png" />
+					<img width="200px" src="static/images/GRLogo.png" />
 				</a>
 				<ul class="pull-right">
 					<li><a href="#overview">Overview</a></li>
@@ -203,17 +203,59 @@ document.onkeypress = stopRKey;
 			<br />
 		</div>
 		<div class="well">
-			<h3>5. Run query!</h3> 
+			<table class="table table-bordered table-striped">
+				<h3>5. Select Tests</h3> 
+				<tbody>
+					<tr>
+						<td>Calculates the P-Value using Monte Carlo and the PyBedTools intersect. Can use custom background</td>
+						<td>
+							<input type="checkbox" id="chk_pvalue"  name="run:pvalue" checked="checked"/><label for="chk_pvalue">Standard P-Value</label>
+						</td>
+					</tr>
+					<tr>
+						<td>Calculates the P-Value using PyBedTools. Ignores custom background</td>
+						<td>
+							<input type="checkbox" id="chk_pybed"  name="run:pybed" /><label for="chk_pybed">BedTools P-Value</label>
+						</td>
+					</tr>
+					<tr>
+						<td>Calculates the P-Value using the Jaccard statistical test. Ignores custom background</td>
+						<td>
+							<input type="checkbox" id="chk_jaccard" name="run:jaccard" /><label for="chk_jaccard">Jaccard P-Value</label>
+						</td>
+					</tr>
+					<tr>
+						<td>Runs a proximity analysis. TEST: currently uses background, are the results as expected? Also calculates a P-Value</td>
+						<td>
+							<input type="checkbox" id="chk_proximity"  name="run:proximity" /><label for="chk_proximity">Proximity</label>
+						</td>
+					</tr>
+					<tr>
+						<td>Calculates a P-Value using the Kolmogorov-Smornov statistical test. Ignores custom background</td>
+						<td>
+							<input type="checkbox" id="chk_kolmogorov"  name="run:kolmogorov" /><label for="chk_kolmogorov">Kolmogorov-Smornov P-Value</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="well">
+			<h3>6. Run query!</h3> 
 			<ul>
 				<li>
 				<input id="jobname" name="jobname" type="text" value=""/>
+				<label style="float:left; margin: 5px;">Enter a job name (optional):</label>
 				</li>
 				<li>
-				<label>Enter a job name (optional):</label>
+				<input class="btn btn-primary" type="submit" / >
 				</li>
 			</ul>
 			<br>
-			<input class="btn btn-primary" type="submit" / >
+			<div class="ui-state-highlight ui-corner-all">
+				<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
+				</span>GenomeRunner works best in Chrome or Internet Explorer 9+</p>
+			</div>
+
 		</div>
 	</form>
 </body>
