@@ -1,0 +1,98 @@
+download/hg19/trackDb.sql already exists, skipping download
+download/hg19/trackDb.txt.gz already exists, skipping download
+Processing files 0 of 9
+downloads/hg19/snp131.sql already exists, skipping download
+downloads/hg19/snp131.txt.gz already exists, skipping download
+converting snp131  into proper bed format
+download/hg19/varRep/Tier0/snp131.gz already exists, skipping extraction
+Processing files 1 of 9
+downloads/hg19/snp132.sql already exists, skipping download
+downloads/hg19/snp132.txt.gz already exists, skipping download
+converting snp132  into proper bed format
+Converting into proper bed format. downloads/hg19/snp132.txt.gz Type:bed 6 + 
+Outpath is: download/hg19/varRep/Tier0/snp132.gz.temp
+ERROR unable to convert snp132 into bed
+'alleles'
+Processing files 1 of 9
+downloads/hg19/snp132Common.sql already exists, skipping download
+downloads/hg19/snp132Common.txt.gz already exists, skipping download
+converting snp132Common  into proper bed format
+Converting into proper bed format. downloads/hg19/snp132Common.txt.gz Type:bed 6 + 
+Outpath is: download/hg19/varRep/Tier0/snp132Common.gz.temp
+ERROR unable to convert snp132Common into bed
+'bitfields'
+Processing files 1 of 9
+downloads/hg19/snp132Flagged.sql already exists, skipping download
+downloads/hg19/snp132Flagged.txt.gz already exists, skipping download
+converting snp132Flagged  into proper bed format
+download/hg19/varRep/Tier0/snp132Flagged.gz already exists, skipping extraction
+Processing files 2 of 9
+downloads/hg19/snp132Mult.sql already exists, skipping download
+downloads/hg19/snp132Mult.txt.gz already exists, skipping download
+converting snp132Mult  into proper bed format
+Converting into proper bed format. downloads/hg19/snp132Mult.txt.gz Type:bed 6 + 
+Outpath is: download/hg19/varRep/Tier0/snp132Mult.gz.temp
+ERROR unable to convert snp132Mult into bed
+'alleles'
+Processing files 2 of 9
+downloads/hg19/snp135.sql already exists, skipping download
+downloads/hg19/snp135.txt.gz already exists, skipping download
+converting snp135  into proper bed format
+Converting into proper bed format. downloads/hg19/snp135.txt.gz Type:bed 6 + 
+Outpath is: download/hg19/varRep/Tier0/snp135.gz.temp
+ERROR unable to convert snp135 into bed
+'alleles'
+Processing files 2 of 9
+downloads/hg19/snp135Common.sql already exists, skipping download
+downloads/hg19/snp135Common.txt.gz already exists, skipping download
+converting snp135Common  into proper bed format
+Converting into proper bed format. downloads/hg19/snp135Common.txt.gz Type:bed 6 + 
+Outpath is: download/hg19/varRep/Tier1/snp135Common.gz.temp
+ERROR unable to convert snp135Common into bed
+'bitfields'
+Processing files 2 of 9
+downloads/hg19/snp135Flagged.sql already exists, skipping download
+downloads/hg19/snp135Flagged.txt.gz already exists, skipping download
+converting snp135Flagged  into proper bed format
+download/hg19/varRep/Tier0/snp135Flagged.gz already exists, skipping extraction
+Processing files 3 of 9
+downloads/hg19/snp135Mult.sql already exists, skipping download
+downloads/hg19/snp135Mult.txt.gz already exists, skipping download
+converting snp135Mult  into proper bed format
+Converting into proper bed format. downloads/hg19/snp135Mult.txt.gz Type:bed 6 + 
+Outpath is: download/hg19/varRep/Tier0/snp135Mult.gz.temp
+ERROR unable to convert snp135Mult into bed
+'alleles'
+The following types are not supported (includes all 'big' file types): set([])
+bed 4 .:0
+genePred vegaPep:0
+genePred:0
+bed 3:0
+bed 4:0
+bed 5:0
+bed 6:0
+genePred genscanPep:0
+bed 9:0
+genePred acemblyPep acemblyMrn:0
+genePred nscanPep:0
+bed 5 +:0
+genePred xenoRefPep xenoRefMrna:0
+bed 6 .:0
+genePred geneidPep:0
+bed 6 +:3
+bed 3 +:0
+bed 4 +:0
+bed 9 +:0
+bed 9 .:0
+bed 12 .:0
+genePred knownGenePep knownGeneMrna:0
+genePred refPep refMrna:0
+genePred sgpPep:0
+bed 12 +:0
+genePred ensPep:0
+bed 5 .:0
+bed 12:0
+bed 8 +:0
+bed 10:0
+bed 8 .:0
+bed 3 .:0
