@@ -180,7 +180,6 @@ class WebUI(object):
 				print "change {}".format(k.split(":")[-1])
 				tr["run_" + k.split(":")[-1]] = True
 
-		print organism
 		runset['organism']= organism	
 		print "run {}".format(tr)
 

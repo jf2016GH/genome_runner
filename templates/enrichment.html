@@ -38,8 +38,8 @@
 
 			<script type="text/javascript" language="javascript"
 				src="static/js/TableTools.js"></script>
-				<script type="textjavascript" language="javascript"
-					src="static/js/bootstrap-tooltip.js"></script>
+			<script type="textjavascript" language="javascript"
+				src="static/js/bootstrap-tooltip.js"></script>
 
 			<script type="text/javascript" language="javascript"
 				src="static/js/ZeroClipboard.js"></script>
@@ -56,49 +56,49 @@
 						// this refreshes the page.  It is dependent on the content of the progress label
 						function ReloadPage(){
 						if ($("#progress").val !== "Progress: FINISHED"){
-							location.reload();
+						location.reload();
 						}
 						}
 
 						$("#progressbar").progressbar({
-						value: ${curprog},
-						max: ${progmax}
+value: ${curprog},
+max: ${progmax}
 });
 						$("#x_slider").slider({min:1,max:308,change:updategraph});
-						$("#gfname").popover({content: "test", placement: "top"});
-						$("#numfoi").popover({content: "test", placement: "top"});
-						$("#numgf").popover({content: "test", placement: "top"});
-						$("#obsoverlap").popover({content: "test", placement: "top"});
-						$("#expoverlap").popover({content: "test", placement: "top"});
-						$("#pvalue").popover({content: "test", placement: "top"});
-						$("#pybed_expoverlap").popover({content: "test", placement: "top"});
-						$("#pybed_p_value").popover({content: "test", placement: "top"});
-						$("#jaccard_observed").popover({content: "test", placement: "top"});
-						$("#jaccard_exporverlap").popover({content: "test", placement: "top"});
-						$("#jaccard_p_value").popover({content: "test", placement: "top"});
-						$("#obsprox").popover({content: "test", placement: "top"});
-						$("#exprox").popover({content: "test", placement: "top"});
-						$("#proximity_p_value").popover({content: "test", placement: "top"});
-						$("#x_slider").popover({content: "test", placement: "top"});
-						$("#coltograph").popover({content: "test", placement: "top"});
+				$("#gfname").popover({content: "test", placement: "top"});
+				$("#numfoi").popover({content: "test", placement: "top"});
+				$("#numgf").popover({content: "test", placement: "top"});
+				$("#obsoverlap").popover({content: "test", placement: "top"});
+				$("#expoverlap").popover({content: "test", placement: "top"});
+				$("#pvalue").popover({content: "test", placement: "top"});
+				$("#pybed_expoverlap").popover({content: "test", placement: "top"});
+				$("#pybed_p_value").popover({content: "test", placement: "top"});
+				$("#jaccard_observed").popover({content: "test", placement: "top"});
+				$("#jaccard_exporverlap").popover({content: "test", placement: "top"});
+				$("#jaccard_p_value").popover({content: "test", placement: "top"});
+				$("#obsprox").popover({content: "test", placement: "top"});
+				$("#exprox").popover({content: "test", placement: "top"});
+				$("#proximity_p_value").popover({content: "test", placement: "top"});
+				$("#x_slider").popover({content: "test", placement: "top"});
+				$("#coltograph").popover({content: "test", placement: "top"});
 
 
 
 
 
-});
+				});
 
 function getQueryVariable(variable) { 
-				var query = window.location.search.substring(1); 
-				var vars = query.split("&"); 
-				for (var i = 0; i < vars.length; i++) { 
-					var pair = vars[i].split("="); 
-					if (pair[0] == variable) { 
-						return pair[1]; 
-					} 
-				} 
-				return null; 
-			}
+	var query = window.location.search.substring(1); 
+	var vars = query.split("&"); 
+	for (var i = 0; i < vars.length; i++) { 
+		var pair = vars[i].split("="); 
+		if (pair[0] == variable) { 
+			return pair[1]; 
+		} 
+	} 
+	return null; 
+}
 
 
 
@@ -122,54 +122,120 @@ function getQueryVariable(variable) {
 			</div>
 		</div>
 		<br/>
-			<h2 style="margin-top: 60px;">Enrichment results for ${foi}</h2>
+		<h2 style="margin-top: 60px;">Enrichment results for ${foi}</h2>
 		<div class="well" >
-				<table id="tbl" class="display" cellpadding="0"
-					cellspacing="0" border="0">
-					<thead>
-						<tr>
-							<th id="gfname" rel="popover" data-content="This is a test" value="gfname">GF Name</th>
-							<th id="numfoi" value="numfoi" data-content="This is a test">#FOIs</th>
-							<th id="numgf" value="numgf" data-content="This is a test">#Genomic Features</th>
-							<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>
-							<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>
-							<th id="pvalue" value="pvalue" data-content="This is a test">P-value</th>
-							<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>
-							<th id="pybed_p_value" value="pybed_p_value" data-content="This is a test">PyBed P-value</th>
-							<th id="jaccard_observed" value="jaccard_observed" data-content="This is a test">#Overlaps (Jaccard observed)</th>
-							<th id="jaccard_exporverlap"  value="jaccard_expoverlap" data-content="This is a test">#Overlaps(Jaccard expected)</th>
-							<th id="jaccard_p_value" value="jaccard_p_value" data-content="This is a test">Jaccard P-value</th>
-							<th id="obsprox" value="obsprox" data-content="This is a test">Proximity to GF (observed)</th>
-							<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
-							<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
-							<th id="kolmogorov_p_value" value="kolmogorov_p_value" data-content="This is a test">Kolmogorov-Smornov</th>
+			<table id="tbl" class="display" cellpadding="0"
+				cellspacing="0" border="0">
+				<thead>
+					<tr>
+						<th id="gfname" rel="popover" data-content="This is a test" value="gfname">GF Name</th>
+						<th id="numfoi" value="numfoi" data-content="This is a test">#FOIs</th>
+						<th id="numgf" value="numgf" data-content="This is a test">#Genomic Features</th>
+						<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>
+						<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>
+						<th id="pvalue" value="pvalue" data-content="This is a test">P-value</th>
+						<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>
+						<th id="pybed_p_value" value="pybed_p_value" data-content="This is a test">PyBed P-value</th>
+						<th id="jaccard_observed" value="jaccard_observed" data-content="This is a test">#Overlaps (Jaccard observed)</th>
+						<th id="jaccard_exporverlap"  value="jaccard_expoverlap" data-content="This is a test">#Overlaps(Jaccard expected)</th>
+						<th id="jaccard_p_value" value="jaccard_p_value" data-content="This is a test">Jaccard P-value</th>
+						<th id="obsprox" value="obsprox" data-content="This is a test">Proximity to GF (observed)</th>
+						<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
+						<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
+						<th id="kolmogorov_p_value" value="kolmogorov_p_value" data-content="This is a test">Kolmogorov-Smornov</th>
 
-						</tr>
-					</thead>
-					<tbody>
+					</tr>
+				</thead>
+				<tbody>
 
-						% for i,e in enumerate(enrichments):
+					% for i,e in enumerate(enrichments):
 
-						<tr class="${e.category()}">
-							<td>${e.B}</td>
-							<td>${e.nA}</td>
-							<td>${e.nB}</td>
-							<td>${e.observed}</td>
-							<td>${e.expected}</td>
-							<td>${e.p_value}</td>
-							<td>${e.pybed_expected}</td>
-							<td>${e.pybed_p_value}</td>
-							<td>${e.jaccard_observed}</td>
-							<td>${e.jaccard_expected}</td>
-							<td>${e.jaccard_p_value}</td>
-							<td>${e.obsprox}</td>
-							<td>${e.expprox}</td>
-							<td>${e.proximity_p_value}</td>
-							<td>${e.kolmogorov_p_value}</td>
-						</tr>
-						% endfor
-					</tbody>
-				</table>
+					<tr class="${e.category()}">
+						<td>${e.B}</td>
+						<td>${e.nA}</td>
+						<td>${e.nB}</td>
+						<td>${e.observed}</td>
+						<td>
+							% if e.expected != "NA":
+							${'%.2f' % round(e.expected)}
+							% else:
+							${e.expected}
+							% endif
+						</td>
+						<td>
+							% if e.p_value != "NA":
+							${'{:.2E}'.format(e.p_value)}
+							% else:
+							${e.p_value}
+							% endif
+						</td>
+						<td>
+							% if e.pybed_expected != "NA":
+							${'%.2f' % round(e.pybed_expected)}
+							% else:
+							${e.pybed_expected}
+							% endif
+						</td>
+						<td>
+							% if e.pybed_p_value != "NA":
+							${'{:.2E}'.format(e.pybed_p_value)}
+							% else:
+							${e.pybed_p_value}
+							% endif
+						</td>
+						<td>
+							% if e.jaccard_observed != "NA":
+							${'%.2f' % round(e.jaccard_observed)}
+							% else:
+							${e.jaccard_observed}
+							% endif
+						</td>
+						<td>
+							% if e.jaccard_expected != "NA":
+							${'%.2f' % round(e.jaccard_expected)}
+							% else:
+							${e.jaccard_expected}
+							% endif
+						</td>
+						<td>
+							% if e.jaccard_p_value != "NA":
+							${'{:.2E}'.format(e.jaccard_p_value)}
+							% else:
+							${e.jaccard_p_value}
+							% endif
+						</td>
+						<td>
+							% if e.obsprox != "NA":
+							${'%.0f' % round(e.obsprox)}
+							% else:
+							${e.obsprox}
+							% endif
+						</td>
+						<td>
+							% if e.expprox != "NA":
+							${'%.2f' % round(e.expprox)}
+							% else:
+							${e.expprox}
+							% endif
+						</td>
+						<td>
+							% if e.proximity_p_value != "NA":
+							${'{:.2E}'.format(e.proximity_p_value)}
+							% else:
+							${e.proximity_p_value}
+							% endif
+						</td>
+						<td>
+							% if e.kolmogorov_p_value != "NA":
+							${'{:.2E}'.format(e.kolmogorov_p_value)}
+							% else:
+							${e.kolmogorov_p_value}
+							% endif
+						</td>
+					</tr>
+					% endfor
+				</tbody>
+			</table>
 		</div>
 		<div style="margin: 10px;">
 			<div id="progressbar" ></div>
@@ -181,45 +247,45 @@ function getQueryVariable(variable) {
 		</div>
 		<a class="btn btn-success" style="margin: 10px;" href="enrichment_log?id=${run_id}">Download Log File</a>
 		<div class="well">
-		<h3>Run Details</h3>
-		<div id="runsettings">
-			<ul>
-				<li><b>Background:</b> ${background}</li>
-				<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
-				<li><b>Job Name:</b> ${jobname}</li>
-				<li><b>Filters:</b></li>
+			<h3>Run Details</h3>
+			<div id="runsettings">
 				<ul>
-					<b>Score:</b> ${score}
-					<br>
-					<b>Name: </b> ${name}
-					<br>
-					<b>Strand: </b> ${strand}
+					<li><b>Background:</b> ${background}</li>
+					<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
+					<li><b>Job Name:</b> ${jobname}</li>
+					<li><b>Filters:</b></li>
+					<ul>
+						<b>Score:</b> ${score}
+						<br>
+						<b>Name: </b> ${name}
+						<br>
+						<b>Strand: </b> ${strand}
+					</ul>
 				</ul>
-			</ul>
+			</div>
 		</div>
-	</div>
 		<div class="well">
 			<div class="row">
 
 				<div style="margin:5px;" class="span5">
 					<label  style="float: left;"><h3>Plot the value of:</h3>
 					</label>
-						<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
-							<option value="pvalue">pvalue</option>
-							<option value="jaccard_p_value">Jaccard P-value</option>
-							<option value="pybed_p_value">PyBed P-value</option>
-							<option value="proximity_p_value">Proximity P-value</option>
-							<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
-						</select>
+					<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
+						<option value="pvalue">pvalue</option>
+						<option value="jaccard_p_value">Jaccard P-value</option>
+						<option value="pybed_p_value">PyBed P-value</option>
+						<option value="proximity_p_value">Proximity P-value</option>
+						<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
+					</select>
 				</div>
 				<div class="span7">
 
-			<div style="width: 40em !important;"  role="popover" data-content="Adjustment of P-value range" id='x_slider'></div>
-			<div id="demo">
+					<div style="width: 40em !important;"  role="popover" data-content="Adjustment of P-value range" id='x_slider'></div>
+					<div id="demo">
 
-			</div>
-			</div>
+					</div>
 				</div>
+			</div>
 		</div>
 		<script src="static/js/d3.js"></script>
 		<script>
@@ -268,20 +334,20 @@ function getQueryVariable(variable) {
 					return d
 				}
 
-				if(curColumn == "p_value"){
+				if(curColumn == "pvalue"){
 					if (td[i]["obsoverlap"] < td[i]["expoverlap"]){
 						d = -1 * d;
 					}	
 					return d
 				}
 				if (curColumn == "pybed_p_value"){
-					if (td[i]["obsoverlap"] < td[i]["pybed_expected"]){
+					if (td[i]["obsoverlap"] < td[i]["pybed_expoverlap"]){
 						d = -1 * d;
 					}	
 					return d
 				}
 				if (curColumn == "jaccard_p_value"){
-					if (td[i]["jaccard_observed"] < td[i]["jaccard_expected"]){
+					if (td[i]["jaccard_observed"] < td[i]["jaccard_expoverlap"]){
 						d = -1 * d;
 					}	
 					return d

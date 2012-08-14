@@ -241,11 +241,13 @@ def genome_tri_corr(A_bedtool, B_bedtool,genome):
 	D = []
 	# calculates the D for each foi in A 
 	map(lambda n,d: D.append(float(n)/float(d)), d_numor_A,d_denom_A)
-	# performs the kolmogorov-smornov test
-	rv=uniform(low=0, high=1, scale=0.5)
-	results = kstest(D,rv.cdf)
-	print "RESULTS{}".format(results)
-	return results[1] 
+	if len(D) != 0:
+		# performs the kolmogorov-smornov test
+		rv=uniform(low=0, high=1, scale=0.5)
+		results = kstest(D,rv.cdf)
+		return results[1] 
+	else:
+		return "NA"
 			
 
 
