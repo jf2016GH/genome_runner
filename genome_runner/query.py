@@ -23,7 +23,7 @@ hdlr.setFormatter(formatter)
 # This line outputs logging info to the console
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
-
+res_path = "results"
 
 
 # This class represents an Enrichment analysis result
@@ -31,6 +31,7 @@ logger.setLevel(logging.INFO)
 # file when an analysis is complete	
 _Enrichment = namedtuple("Enrichment",
 		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value","pybed_expected","jaccard_observed","jaccard_p_value","jaccard_expected","proximity_p_value","kolmogorov_p_value"])
+_Enrichment_Par = namedtuple("Enrichment_Par","a b A B background n flt genome genome_fn organism obs")
 class Enrichment(_Enrichment):
 	def category(self):
 		if self.expected == 0 or self.p_value > 0.05:
@@ -51,134 +52,158 @@ def make_filter(name, score, strand):
 		return True
 	return filter
 
+
 # TODO implement remove_invalid and report results to user.  
-def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10,run_pvalue=False,run_pybedtool=False,run_jaccard=False,run_proximity=False,run_kolmogorov=False):
+def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10, run=[]):
 	"""Perform enrichment analysis between two BED files.
 
 	a - path to Feature of Interest BED file
 	b - path to Genomic Feature BED file
 	n - number of Monte-Carlo iterations
 	"""
+	r = {}
+	
+	e = _Enrichment_Par
+	e.a,e.b,e.organism,e.n,e.background = a,b,organism,n,background
+	e.A = BedTool(str(e.a))
+	e.B = BedTool(str(e.b))
+	e.genome = pybedtools.get_chromsizes_from_ucsc(e.organism)
+	e.genome_fn = pybedtools.chromsizes_to_file(e.genome)
 
-	A = BedTool(str(a))
-	B = BedTool(str(b))
-	genome = pybedtools.get_chromsizes_from_ucsc(organism)
-	genome_fn = pybedtools.chromsizes_to_file(genome)
 
-
-	organism = str(organism)
+	e.organism = str(e.organism)
 	flt = make_filter(name,score,strand)
-	B.filter(flt).saveas()
-	nA = len(A)
-	nB = len(B)
-	if not nA or not nB:
-		return Enrichment(a,basename(b),nA,nB,0,0,1,0,0,1,0,0,1,0)
+	e.B.filter(flt).saveas()
+	e.nA = len(e.A)
+	e.nB = len(e.B)
+	if not e.nA or not e.nB:
+		return Enrichment(e.a,basename(e.b),e.nA,e.nB,0,0,1,0,0,1,0,0,1,0)
 
-	A.set_chromsizes(genome)
-	B.set_chromsizes(genome)
-	obs = len(A.intersect(B, u=True))
+	e.A.set_chromsizes(e.genome)
+	e.B.set_chromsizes(e.genome)
+	e.obs = len(e.A.intersect(e.B, u=True))
 	# This is the Monte-Carlo step.  If custom background present, it is used
-	if run_pvalue:
+	if 'pvalue' in run:
 		logger.info("Running Monte Carlo ({}): (id={})".format(b,id))
 		write_progress(id, "Running Monte Carlo {}".format(b))
-		dist = [len(shuffle(a,background,organism).intersect(B, u=True)) for i in range(n)]
-		exp = numpy.mean(dist)
-		# gave p_value a value here so that it doesn't go out of scope, is this needed?
-		p_value = 'NA'
-		if exp == obs or (exp == 0 and obs == 0):
-			p_value =1
-		else:
-			p_value = len([x for x in dist if x > obs]) / float(len(dist))
-			p_value = min(p_value, 1 - p_value)
+		r.update(run_montecarlo(_Enrichment_Par))
 	else:
-		p_value = "NA"
-		exp = "NA"
+		r['p_value'], r['epx'] = "NA","NA"
 		logger.info("Skipping Monte Carlo ({}): (id={})".format(b,id))
 	
 	# expected caluclated using pybed method CANNOT use custom background
-	if run_pybedtool:
+	if 'pybedtool' in run:
 		logger.info("Running Random Intersections ({}): (id={})".format(b,id))
 		write_progress(id, "Running Random Intersections: {0}".format(b))
-		pybeddist = A.randomintersection(B,iterations=n,shuffle_kwargs={'chrom': True})
-		pybeddist = list(pybeddist)
-		pybed_exp = numpy.mean(pybeddist)
-		pybedp_value = 'NA'
-		if pybed_exp == obs or (pybed_exp == 0 and obs == 0):
-			pybedp_value =1
-		else:
-			pybedp_value = len([x for x in pybeddist if x > obs]) / float(len(pybeddist))
-			pybedp_value = min(pybedp_value,1-pybedp_value)
+		r.update( run_pybedtool(_Enrichment_Par))
 	else:
-		pybedp_value = "NA"
-		pybed_exp = "NA"
+		r['pybedp_value'], r['pybed_exp'] = "NA","NA"
 		logger.info("Skipping Random Intersections")
 
 	# epected calculated using jaccard method
-	if run_jaccard:
-		A2 = A.cut([0,1,2])
-		B2 = B.cut([0,1,2])
-		logger.info("Running Jaccard ({}): (id={})".format(b,id))
-		write_progress(id, "Running Jaccard {}".format(b))
-
-		resjaccard = A2.naive_jaccard(B2,genome_fn=genome_fn,iterations=n,
-				shuffle_kwargs={'chrom':True})
-		jaccard_dist = resjaccard[1]
-		jaccard_obs = resjaccard[0]
-		jaccard_exp = numpy.mean(resjaccard[1])
-		jaccardp_value = 'NA'
-		if jaccard_exp == jaccard_obs or (jaccard_exp  == 0 and jaccard_obs == 0):
-			jaccardp_value =1
-		else:
-			jaccardp_value = len([x for x in jaccard_dist if x > jaccard_obs]) / float(len(jaccard_dist))
-			jaccardp_value = min(jaccardp_value,1-jaccardp_value)
+	if 'jaccard' in run:
+		logger.info("Running Jaccard ({}): (id={})".format(e.b,id))
+		write_progress(id, "Running Jaccard {}".format(e.b))
+		r.update( run_jaccard(_Enrichment_Par))
 	else:
-		jaccardp_value = "NA"
-		jaccard_obs = "NA"
-		jaccard_exp = "NA" 
+		r['jaccardp_value'], r['jaccard_obs'],r['jaccard_exp'] = "NA","NA","NA"
 		logger.info("Skipping Jaccard ({}): (id={})".format(b,id))
-
 	
 	# run kolmogorov-smornov test
-	if run_kolmogorov:
+	if 'kolmogorov' in run:
 		logger.info("Running Kolmogorov-Smornov {} (id={})".format(b,id))
 		write_progress(id, "Running Kolmogorov-Smornov{}".format(b))
-		kol_smor_p_value = genome_tri_corr(A,B,genome)
+		r.update( run_kolmogorov(_Enrichment_Par))
 	else:
-		kol_smor_p_value = "NA"
+		r['kol_smor_p_value'] = "NA"
 		logger.info("Skipping Kolmogorov-Smornov {} (id={})".format(b,id))
 	
 	# run proximity analysis
-	if run_proximity:
+	if 'proximity' in run:
 		logger.info("Running proximity {} (id={})".format(b,id))
-		#stores the means of the distances for the MC
-		expall =[]
-		for i in range(n):
-			tmp = shuffle(a,background,organism).closest(B,d=True)
-			# get the distances
-			for t in tmp:
-				expall.append(t[-1])
-		# calculate the overal expected distance
-		expall.append(numpy.mean(numpy.array(expall,float)))
-		# calculate the expected mean for all of the runs
-		expprox = numpy.mean(numpy.array(expall,float))	
-		# proximety analysis for observed
-		tmp = A.closest(B,d=True)
-		obsall = []
-		for t in tmp:
-			obsall.append(t[-1])
-		obsprox = numpy.mean(numpy.array(obsall,float))
-		proximityp_value = len([x for x in expall if x > obsprox]) / float(len(expall))
-		proximityp_value = min(proximityp_value,1-proximityp_value)
+		r.update( run_proximity(_Enrichment_Par))
 	else:
 		logger.info( "Skipping Proximity")
-		obsprox = "NA" 
-		expprox = "NA" 
-		proximityp_value = "NA"
+		r['obsprox'],r['expprox'],r['proximityp_value']="NA","NA", "NA" 
 
+	print "TEST " 
+	print r
 	# the order of these arguments IS IMPORTANT
-	return Enrichment(a, basename(b), nA, nB, obs, exp, p_value,obsprox,\
-			expprox,pybedp_value,pybed_exp,jaccard_obs,jaccardp_value,\
-			jaccard_exp,proximityp_value,kol_smor_p_value)
+	return Enrichment(e.a, basename(e.b), e.nA, e.nB, e.obs, r['exp'], r['p_value'],r['obsprox'],\
+			r['expprox'],r['pybedp_value'],r['pybed_exp'],r['jaccard_obs'],r['jaccardp_value'],\
+			r['jaccard_exp'],r['proximityp_value'],r['kol_smor_p_value'])
+
+def run_montecarlo(Enrichment_Par):
+	e = Enrichment_Par
+	dist = [len(shuffle(e.a,e.background,e.organism).intersect(e.B, u=True)) for i in range(e.n)]
+	exp = numpy.mean(dist)
+	# gave p_value a value here so that it doesn't go out of scope, is this needed?
+	p_value = 'NA'
+	if exp == e.obs or (exp == 0 and e.obs == 0):
+		p_value =1
+	else:
+		p_value = len([x for x in dist if x > e.obs]) / float(len(dist))
+		p_value = min(p_value, 1 - p_value)
+	return {"exp": exp,"p_value": p_value}
+
+def run_pybedtool(Enrichment_Par):
+	e = Enrichment_Par
+	pybeddist = e.A.randomintersection(e.B,iterations=e.n,shuffle_kwargs={'chrom': True})
+	pybeddist = list(pybeddist)
+	pybed_exp = numpy.mean(pybeddist)
+	pybedp_value = 'NA'
+	if pybed_exp == e.obs or (pybed_exp == 0 and e.obs == 0):
+		pybedp_value =1
+	else:
+		pybedp_value = len([x for x in pybeddist if x > e.obs]) / float(len(pybeddist))
+		pybedp_value = min(pybedp_value,1-pybedp_value)
+	return { "pybedp_value":pybedp_value, "pybed_exp": pybed_exp} 
+
+def run_jaccard(Enrichment_Par):
+	e = Enrichment_Par
+	A2 = e.A.cut([0,1,2])
+	B2 = e.B.cut([0,1,2])	   
+	genome_fn = pybedtools.chromsizes_to_file(e.genome)
+	resjaccard = A2.naive_jaccard(B2,genome_fn=genome_fn,iterations=e.n,
+			shuffle_kwargs={'chrom':True})
+	jaccard_dist = resjaccard[1]
+	jaccard_obs = resjaccard[0]
+	jaccard_exp = numpy.mean(resjaccard[1])
+	jaccardp_value = 'NA'
+	if jaccard_exp == jaccard_obs or (jaccard_exp  == 0 and jaccard_obs == 0):
+		jaccardp_value =1
+	else:
+		jaccardp_value = len([x for x in jaccard_dist if x > jaccard_obs]) / float(len(jaccard_dist))
+		jaccardp_value = min(jaccardp_value,1-jaccardp_value)
+	return {"jaccardp_value": jaccardp_value, "jaccard_obs": jaccard_obs, "jaccard_exp": jaccard_exp} 
+
+def run_kolmogorov(Enrichment_Par):
+	Enrichment_Par = e
+	return {"kol_smor_p_value": genome_tri_corr(e.A,e.B,e.genome)}
+
+
+def run_proximity(Enrichment_Par):
+	#stores the means of the distances for the MC
+	e = Enrichment_Par 
+	expall =[]
+	for i in range(e.n):
+		tmp = shuffle(e.a,e.background,e.organism).closest(e.B,d=True)
+		# get the distances
+		for t in tmp:
+			expall.append(t[-1])
+	# calculate the overal expected distance
+	expall.append(numpy.mean(numpy.array(expall,float)))
+	# calculate the expected mean for all of the runs
+	expprox = numpy.mean(numpy.array(expall,float))	
+	# proximety analysis for observed
+	tmp = e.A.closest(e.B,d=True)
+	obsall = []
+	for t in tmp:
+		obsall.append(t[-1])
+	obsprox = numpy.mean(numpy.array(obsall,float))
+	proximityp_value = len([x for x in expall if x > obsprox]) / float(len(expall))
+	proximityp_value = min(proximityp_value,1-proximityp_value)
+	return {"expprox": expprox, "proximityp_value": proximityp_value,"obsprox":obsprox}
 
 def shuffle(bed_file, background_bed,organism):
 	""" Accepts a file path to a bed file and a background file
@@ -191,7 +216,7 @@ def shuffle(bed_file, background_bed,organism):
 	and the entire genome is used as background
 	"""
 	A =  BedTool(bed_file)
-	if background_bed != "":
+	if background_bed != "" and background_bed != None:
 		B = BedTool(background_bed)
 		rand_a = ""
 		for a in A:
@@ -343,18 +368,17 @@ def generate_background(foipath,gfpath,background):
 
 	
 
-
-def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,organism,
-		run_pvalue=False,run_pybedtool=False,run_jaccard=False,run_proximity=False,run_kolmogorov=False):
+	run_pvalue=False,run_pybedtool=False,run_jaccard=False,run_proximity=False,run_kolmogorov=False
+def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,organism,run):
 	"""
 	Run one FOI file (f) against multiple GFs, then 
 	save the result to the "results" directory.
 	"""
 	# sets up logging for the run
-	hdlr_id_file = logging.FileHandler(os.path.join("results",str(id)+".log"))
+	if not os.path.exists(res_path): os.makedirs(res_path)
+	hdlr_id_file = logging.FileHandler(os.path.join(res_path,str(id)+".log"))
 	logger.addHandler(hdlr_id_file)
-	print "RUJ".format(run_pvalue)
-
+	print "working"
 	try:
 		enrichments = []
 		# these are progress values that are written to the progress file
@@ -364,10 +388,9 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 		progmax =len(gfeatures)
 		for gf in gfeatures:
 			write_progress(id, "RUNNING ENRICHMENT ANALYSIS FOR: {}".format(gf))
-			e = enrichment(id,f,gf,background,organism,name,score,strand,niter,run_pvalue, \
-					run_pybedtool,run_jaccard,run_proximity,run_kolmogorov)
+			e = enrichment(id,f,gf,background,organism,name,score,strand,niter,run)
 			enrichments.append(e)
-			path = os.path.join("results", str(id))
+			path = os.path.join(res_path, str(id))
 			print "writing output"
 			with open(path, "wb") as strm:
 				cPickle.dump(enrichments, strm)
@@ -382,8 +405,9 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 def write_progress(id,line):
 	"""Saves the current progress to the progress file
 	"""
-
-	path = os.path.join("results",str(id)+".prog")
+	global curprog
+	global progmax
+	path = os.path.join(res_path,str(id)+".prog")
 	progress = {"status": line, "curprog": curprog,"progmax": progmax}
 	with open(path,"wb") as progfile:
 		progfile.write(json.dumps(progress))
@@ -393,7 +417,7 @@ def get_progress(id):
 	"""returns the progress from the progress file
 	"""
 
-	path = os.path.join("results",str(id) + ".prog")
+	path = os.path.join(res_path,str(id) + ".prog")
 	if os.path.exists(path):
 		return open(path).read()
 	else:

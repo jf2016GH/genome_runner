@@ -193,7 +193,8 @@ def get_column_names(sqlfilepath):
 	tbdcolumns = re.findall("\n\s\s`*(.+?)`*\s", tdbsql, re.DOTALL)
 	tbdcolumns = [c for c in tbdcolumns if not c=="KEY"]
 	return tbdcolumns	
-preparebed = {"bed 6" : extract_bed6, 
+preparebed = {"bed 6" : extract_bed6,
+				"broadPeak": extract_bed6,
 				"bed 6 +" : extract_bed6,
 				"bed 12 +": extract_bed6,
 				"bed 12 .": extract_bed6,
@@ -225,7 +226,7 @@ preparebed = {"bed 6" : extract_bed6,
 				"genePred ensPep": extract_genepred,
 				"genePred acemblyPep acemblyMrn": extract_genepred,
 				"genePred" : extract_genepred}
-numdownloaded = {"bed 6" : 0, "bed 6 +" : 0, "bed 3" : 0, "genePred" : 0,"bed 9 +": 0,"bed 12 +": 0, "bed 12 .": 0, "bed 12": 0, "bed 10": 0, "bed 9 +": 0, "bed 9 .": 0, "bed 9": 0, "bed 8 +": 0, "bed 8 .": 0, "bed 6 .": 0, "bed 5 +": 0, "bed 5 .": 0, "bed 5": 0, "bed 4 +": 0, "bed 4 .": 0, "bed 4": 0, "bed 3 +": 0, "bed 3 .": 0, "genePred xenoRefPep xenoRefMrna": 0, "genePred vegaPep": 0, "genePred sgpPep": 0, "genePred refPep refMrna": 0, "genePred nscanPep": 0, "genePred knownGenePep knownGeneMrna": 0, "genePred genscanPep": 0, "genePred geneidPep": 0, "genePred ensPep": 0, "genePred acemblyPep acemblyMrn": 0}
+numdownloaded = {"bed 6" : 0, "broadPeak" : 0, "bed 6 +" : 0, "bed 3" : 0, "genePred" : 0,"bed 9 +": 0,"bed 12 +": 0, "bed 12 .": 0, "bed 12": 0, "bed 10": 0, "bed 9 +": 0, "bed 9 .": 0, "bed 9": 0, "bed 8 +": 0, "bed 8 .": 0, "bed 6 .": 0, "bed 5 +": 0, "bed 5 .": 0, "bed 5": 0, "bed 4 +": 0, "bed 4 .": 0, "bed 4": 0, "bed 3 +": 0, "bed 3 .": 0, "genePred xenoRefPep xenoRefMrna": 0, "genePred vegaPep": 0, "genePred sgpPep": 0, "genePred refPep refMrna": 0, "genePred nscanPep": 0, "genePred knownGenePep knownGeneMrna": 0, "genePred genscanPep": 0, "genePred geneidPep": 0, "genePred ensPep": 0, "genePred acemblyPep acemblyMrn": 0}
 
 
 def create_feature_set(trackdbpath,organism):

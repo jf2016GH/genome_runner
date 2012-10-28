@@ -75,6 +75,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, niter=10, name="", score="", strand="", **kwargs):
+		id = self.next_id()
 		runset = {}
 		cherrypy.response.timeout = 3600
 		runset['filters'] = {"name": name,"score": score,"strand": strand}
@@ -96,7 +97,6 @@ class WebUI(object):
 		bed_filename = ""
 		data = ""
 		try:
-			id = self.next_id()
 			f = os.path.join("uploads", str(id)+".bed")
 			if not os.path.exists(f):
 				with open(f, "wb") as out:
@@ -166,22 +166,23 @@ class WebUI(object):
 		# have been checked.
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
-		organism = ""
-		tr = {"run_pvalue":False, "run_pybedtool": False, "run_jaccard": False,"run_proximity":False, "run_kolmogorov": False}
+		organism,run = "",[]
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		runset['gfs'] = gfeatures
 
 
 		for k,v in kwargs.items():
+			# organism to use
 			if "organism:" in v:
 				organism = v.split(":")[-1]
+			# which tests to run
 			if "run:" in k and v=="on":
 				print "change {}".format(k.split(":")[-1])
-				tr["run_" + k.split(":")[-1]] = True
+				run.append(k.split(":")[-1])
 
 		runset['organism']= organism	
-		print "run {}".format(tr)
+		print "run {}".format(run)
 
 		# write the enrichment settings.
 		path = os.path.join("results",str(id) + ".settings")
@@ -199,8 +200,7 @@ class WebUI(object):
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
 		p = Process(target=grquery.run_enrichments,
-				args=(id,f,gfeatures,b,niter,name,score,strand,organism,tr["run_pvalue"],
-			tr["run_pybedtool"],tr["run_jaccard"],tr["run_proximity"],tr["run_kolmogorov"]))
+				args=(id,f,gfeatures,b,niter,name,score,strand,organism,run))
 				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
