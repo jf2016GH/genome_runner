@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys, operator, os, numpy
+import datetime
 from numpy import random as rand
 from pybedtools import BedTool
 from pybedtools.featurefuncs import midpoint as pb_midpoint
@@ -12,7 +13,8 @@ from path import basename
 import json
 import copy
 import traceback  as trace
-from scipy.stats import uniform,kstest
+from scipy.stats import uniform,kstest,hypergeom
+import pprint
 
 
 logger = logging.getLogger('genomerunner.query')
@@ -24,13 +26,16 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 res_path = "results"
+DEBUG = True
 
 
 # This class represents an Enrichment analysis result
 # Lists of Enrichment objects are serialized to a Python Pickle
 # file when an analysis is complete	
 _Enrichment = namedtuple("Enrichment",
-		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value","pybed_expected","jaccard_observed","jaccard_p_value","jaccard_expected","proximity_p_value","kolmogorov_p_value"])
+		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value",
+		"pybed_expected","jaccard_observed","jaccard_p_value",
+		"jaccard_expected","proximity_p_value","kolmogorov_p_value","hypergeometric_p_value"])
 _Enrichment_Par = namedtuple("Enrichment_Par","a b A B background n flt genome genome_fn organism obs")
 class Enrichment(_Enrichment):
 	def category(self):
@@ -61,6 +66,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	b - path to Genomic Feature BED file
 	n - number of Monte-Carlo iterations
 	"""
+	write_debug("START",True)
 	r = {}
 	
 	e = _Enrichment_Par
@@ -90,6 +96,9 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	else:
 		r['p_value'], r['epx'] = "NA","NA"
 		logger.info("Skipping Monte Carlo ({}): (id={})".format(b,id))
+	## Uncomment to print global parameters in debug file
+	#write_debug("Global parameters",a = e.a,b=e.b,A= e.A,B=e.B,background = e.background,
+	#			n=e.n,flt = e.flt,genome = e.genome,genome_fn = e.genome_fn,organism = e.organism,obs = e.obs)
 	
 	# expected caluclated using pybed method CANNOT use custom background
 	if 'pybedtool' in run:
@@ -121,17 +130,32 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	# run proximity analysis
 	if 'proximity' in run:
 		logger.info("Running proximity {} (id={})".format(b,id))
+		write_progress(id, "Running proximity analysis{}".format(b))
 		r.update( run_proximity(_Enrichment_Par))
 	else:
 		logger.info( "Skipping Proximity")
 		r['obsprox'],r['expprox'],r['proximityp_value']="NA","NA", "NA" 
 
-	print "TEST " 
-	print r
+	# run hypergeometric distrubtion analysis
+	if 'hypergeometric' in run:
+		write_progress(id,"Running")
+		logger.info("Running hypergeometric analysis {} (id={})".format(b,id))
+		r.update(run_hypgeometric(_Enrichment_Par))
+	else:
+		logger.info("Skipping hypergeometric")
+		r['hypergeometric_p_value'] = "NA"
+	## Uncomment to print global parameters in debug file
+	#write_debug("Global parameters",a = e.a,b=e.b,A= e.A,B=e.B,background = e.background,
+	#		n=e.n,flt = e.flt,genome = e.genome,genome_fn = e.genome_fn,organism = e.organism,obs = e.obs)
 	# the order of these arguments IS IMPORTANT
 	return Enrichment(e.a, basename(e.b), e.nA, e.nB, e.obs, r['exp'], r['p_value'],r['obsprox'],\
 			r['expprox'],r['pybedp_value'],r['pybed_exp'],r['jaccard_obs'],r['jaccardp_value'],\
-			r['jaccard_exp'],r['proximityp_value'],r['kol_smor_p_value'])
+			r['jaccard_exp'],r['proximityp_value'],r['kol_smor_p_value'],r['hypergeometric_p_value'])
+
+
+
+
+	return {"hypergeometric_p_value": 1}
 
 def run_montecarlo(Enrichment_Par):
 	e = Enrichment_Par
@@ -144,6 +168,8 @@ def run_montecarlo(Enrichment_Par):
 	else:
 		p_value = len([x for x in dist if x > e.obs]) / float(len(dist))
 		p_value = min(p_value, 1 - p_value)
+
+	write_debug(run_montecarlo.__name__,False,Enrichment_Par= str(e),p_value= p_value, observed = e.obs, expected =exp)
 	return {"exp": exp,"p_value": p_value}
 
 def run_pybedtool(Enrichment_Par):
@@ -178,7 +204,7 @@ def run_jaccard(Enrichment_Par):
 	return {"jaccardp_value": jaccardp_value, "jaccard_obs": jaccard_obs, "jaccard_exp": jaccard_exp} 
 
 def run_kolmogorov(Enrichment_Par):
-	Enrichment_Par = e
+	e = Enrichment_Par
 	return {"kol_smor_p_value": genome_tri_corr(e.A,e.B,e.genome)}
 
 
@@ -204,6 +230,24 @@ def run_proximity(Enrichment_Par):
 	proximityp_value = len([x for x in expall if x > obsprox]) / float(len(expall))
 	proximityp_value = min(proximityp_value,1-proximityp_value)
 	return {"expprox": expprox, "proximityp_value": proximityp_value,"obsprox":obsprox}
+
+def run_hypgeometric(Enrichment_Par):
+	e = Enrichment_Par
+	if e.background != "":
+		back = BedTool(str(e.background))
+		# get number of genomic features that intersect background
+		back_gf_length = len(e.B.intersect(back))
+		with open("Debug.log","a") as w:
+			if DEBUG:
+				w.write(pprint.pformat(locals()))
+		hypergeomp_value = hypergeom.cdf(e.obs,len(back),back_gf_length,len(e.A))
+		hypergeomp_value = min(hypergeomp_value, 1-hypergeomp_value)
+		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(back),
+					back_gf_length = back_gf_length, foi_length = len(e.A), p_value= hypergeomp_value)
+		return {"hypergeometric_p_value": hypergeomp_value}
+	else: 
+		return {"hypergeometric_p_value": "NA"}
+
 
 def shuffle(bed_file, background_bed,organism):
 	""" Accepts a file path to a bed file and a background file
@@ -412,6 +456,7 @@ def write_progress(id,line):
 	with open(path,"wb") as progfile:
 		progfile.write(json.dumps(progress))
 
+
 		
 def get_progress(id):
 	"""returns the progress from the progress file
@@ -423,3 +468,14 @@ def get_progress(id):
 	else:
 		return ""
 
+
+def write_debug(fun_name,header = False,**kwargs):
+	if DEBUG:
+		with open("Debug.log","a") as w:
+			if header:
+				curtime = "\nDEBUG\t" + str(datetime.datetime.now().strftime("%y-%m-%d %H:%M")) + "\n"
+				w.write(curtime)
+			else:
+				w.write("Variable values for\t %s \n" % fun_name)
+				for key, value in kwargs.iteritems():
+					w.write("%s =\t %s\n" % (key,value))

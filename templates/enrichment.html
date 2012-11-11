@@ -55,7 +55,7 @@
 						//		setTimout(ReloadPage(),1000);
 						// this refreshes the page.  It is dependent on the content of the progress label
 						function ReloadPage(){
-						if ($("#progress").val !== "Progress: FINISHED"){
+						if ($("#progress").val !== "Progress: FINISHED" && $("#progress").val.indexOf("ERROR:") != -1){
 						location.reload();
 						}
 						}
@@ -143,6 +143,7 @@ function getQueryVariable(variable) {
 						<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
 						<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
 						<th id="kolmogorov_p_value" value="kolmogorov_p_value" data-content="This is a test">Kolmogorov-Smornov</th>
+						<th id="hypergeometric_p_value" value="hypergeometric_p_value" data-content="This is a test">Hypergeometric Distribution</th>
 
 					</tr>
 				</thead>
@@ -232,6 +233,13 @@ function getQueryVariable(variable) {
 							${e.kolmogorov_p_value}
 							% endif
 						</td>
+						<td>
+							% if e.hypergeometric_p_value != "NA":
+							${'{:.2E}'.format(e.hypergeometric_p_value)}
+							% else:
+							${e.hypergeometric_p_value}
+							% endif
+						</td>
 					</tr>
 					% endfor
 				</tbody>
@@ -276,6 +284,7 @@ function getQueryVariable(variable) {
 						<option value="pybed_p_value">PyBed P-value</option>
 						<option value="proximity_p_value">Proximity P-value</option>
 						<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
+						<option value="hypergeometric_p_value">hypergeometric P-value</option>
 					</select>
 				</div>
 				<div class="span7">

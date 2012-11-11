@@ -6,7 +6,7 @@ import argparse
 
 def runprofile(fois,gfs):
 	for f in fois:
-		query.run_enrichments(1000000,f,gfs,"",3,None,None,None,'hg19',['pvalue'])
+		query.run_enrichments(1000000,f,gfs,"",3,None,None,None,'hg19',['pvalue','pybedtool','jaccard','proximity'])
 
 def get_profile_outpath():
 	n = 0
