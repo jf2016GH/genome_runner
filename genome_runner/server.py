@@ -1,7 +1,7 @@
 import cherrypy, os, cgi, tempfile, sys, itertools
 from mako.template import Template
 from mako.lookup import TemplateLookup
-
+from mako.exceptions import RichTraceback as MakoTraceback
 from contextlib import closing
 import sqlite3
 import re
@@ -182,7 +182,7 @@ class WebUI(object):
 				run.append(k.split(":")[-1])
 
 		runset['organism']= organism	
-		print "run {}".format(run)
+		runset['run'] = run
 
 		# write the enrichment settings.
 		path = os.path.join("results",str(id) + ".settings")
@@ -208,6 +208,8 @@ class WebUI(object):
 	@cherrypy.expose
 	def result(self, id):
 		path = os.path.join("results", id)
+		params = {}
+		params["run_id"] = id
 		if not os.path.exists(path):  #If file is empty...
 
 			tmpl = lookup.get_template("enrichment_not_ready.html")
@@ -218,6 +220,7 @@ class WebUI(object):
 			enrichments.sort(key=attrgetter("p_value"))
 		else:
 			enrichments = []
+		params["enrichments"] = enrichments
 		tmpl = lookup.get_template("enrichment.html")
 		progress = grquery.get_progress(id)
 		# Loads the settings of the run if they exist
@@ -227,49 +230,69 @@ class WebUI(object):
 			settings.close()
 			f = s['filters']
 			# fills in default values for blank filter settings
-			if f['name'] == "": name = "None"
-			else: name = f['name']
-			if f['score'] == "": score = "None"
-			else: score = f['score']
-			if f['strand'] == "": strand = "None"
-			else: strand = f['strand']
-			if s['jobname'] == "": jobname = "None"
-			else: jobname = s['jobname']
-			# gets the run settings
-			foi = s['fois']
-			background = s['background']
-			niter = s['niter']
+			for key, value in s.iteritems():
+				if value == "": s[key] = "None"
+			for key, value in f.iteritems():
+				if value == "": f[key] = "None"
+			# merge all settings into one dictionary to pass to template
+			params.update(s)
+			params.update(f)
+			print params
 		else:
-			background = "NA"
-			name = "NA"
-			niter = "NA"
-			score= "NA"
-			strand = "NA"
-			foi = "NA"
-			jobname= "NA"
+			params["background"] = "NA"
+			params["name"] = "NA"
+			params["niter"] = "NA"
+			params["score"]= "NA"
+			params["strand"] = "NA"
+			params["foi"] = "NA"
+			params["jobname"]= "NA"
+		
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
 		if os.path.exists(path+".prog"):
 			with open(path+".prog") as f:
 				p = json.loads(f.read() )
 
-		return tmpl.render(enrichments=enrichments,foi=foi,background=background,
-				name = name,
-				score = score,
-				strand= strand,
-				niter= niter,
-				jobname= jobname,
-				status = p["status"],
-				curprog = p["curprog"],
-				progmax = p["progmax"],
-				run_id = id
-				)
-	
+		params.update(p)
+		try:
+			rend_template = tmpl.render(**params)
+		except Exception, e:
+			traceback = MakoTraceback()
+			str_error = ""
+			for (filename, lineno, function, line) in traceback.traceback:
+				str_error +=  "File %s, line %s, in %s" % (os.path.split(filename)[-1], lineno, function)
+				str_error += "\n"
+				str_error += line + "\n"
+				str_error += "%s: %s" % (str(traceback.error.__class__.__name__), traceback.error)
+			print str_error
+			rend_template = str_error
+		return rend_template
+
 	@cherrypy.expose
 	def enrichment_log(self, id):
 		with open(os.path.join("results",id+".log")) as sr:
 			x = sr.read()
 			return "<p>{}</p>".format(x.replace("\n","<br/>"))
+
+	@cherrypy.expose
+	def cite(self):
+		tmpl = lookup.get_template("cite.html")
+		return tmpl.render()
+
+	@cherrypy.expose
+	def news(self):
+		tmpl = lookup.get_template("news.html")
+		return tmpl.render()
+
+	@cherrypy.expose
+	def overview(self):
+		tmpl = lookup.get_template("overview.html")
+		return tmpl.render()
+
+	@cherrypy.expose
+	def demo(self):
+		tmpl = lookup.get_template("demo.html")
+		return tmpl.render()
 
 
 if __name__ == "__main__":

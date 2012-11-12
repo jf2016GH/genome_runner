@@ -29,10 +29,10 @@
 
 			<link type="text/css" href="static/css/jquery.dataTables_themeroller.css" rel="stylesheet" />
 			<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
-			<link href="static/css/bootstrap.css" rel="stylesheet">
+			<link href="static/css/bootstrap.min.css" rel="stylesheet">
 			<script type="text/javascript" src="static/js/jquery.js"></script>
 			<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
-			<script src="static/js/bootstrap.js"></script>
+			<script src="static/js/bootstrap.min.js"></script>
 			<script type="text/javascript" language="javascript"
 				src="static/js/jquery.dataTables.js"></script>
 
@@ -64,7 +64,7 @@
 value: ${curprog},
 max: ${progmax}
 });
-						$("#x_slider").slider({min:1,max:308,change:updategraph});
+				$("#x_slider").slider({min:1,max:308,change:updategraph});
 				$("#gfname").popover({content: "test", placement: "top"});
 				$("#numfoi").popover({content: "test", placement: "top"});
 				$("#numgf").popover({content: "test", placement: "top"});
@@ -112,135 +112,163 @@ function getQueryVariable(variable) {
 						<img width="120px" src="static/images/GRLogo.png" />
 					</a>
 					<ul class="pull-right">
-						<li><a href="#overview">Overview</a></li>
-						<li><a href="#news">News</a></li>
-						<li><a href="#UseGenomeRunner">Use GenomeRunner</a></li>
-						<li><a href="#demo">Demo</a></li>
-						<li><a href="#howtocite">How to Cite</a></li>
+						<li><a href="./overview">Overview</a></li>
+						<li><a href="./news">News</a></li>
+						<li><a href="./">Use GenomeRunner</a></li>
+						<li><a href="./demo">Demo</a></li>
+						<li><a href="./cite">How to Cite</a></li>
 					</ul>
 				</div>
 			</div>
 		</div>
 		<br/>
-		<h2 style="margin-top: 60px;">Enrichment results for ${foi}</h2>
+		<h2 style="margin-top: 60px;">Enrichment results for ${fois}</h2>
 		<div class="well" >
 			<table id="tbl" class="display" cellpadding="0"
 				cellspacing="0" border="0">
 				<thead>
+					
 					<tr>
 						<th id="gfname" rel="popover" data-content="This is a test" value="gfname">GF Name</th>
 						<th id="numfoi" value="numfoi" data-content="This is a test">#FOIs</th>
 						<th id="numgf" value="numgf" data-content="This is a test">#Genomic Features</th>
-						<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>
-						<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>
+						<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>						
+						% for i,e in enumerate(run):
+						% if e == "pvalue":
+						<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>						
 						<th id="pvalue" value="pvalue" data-content="This is a test">P-value</th>
-						<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>
+						% endif
+						% if e == "pybedtool":
+						<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>						
 						<th id="pybed_p_value" value="pybed_p_value" data-content="This is a test">PyBed P-value</th>
+						% endif
+						% if e == "jaccard":
 						<th id="jaccard_observed" value="jaccard_observed" data-content="This is a test">#Overlaps (Jaccard observed)</th>
 						<th id="jaccard_exporverlap"  value="jaccard_expoverlap" data-content="This is a test">#Overlaps(Jaccard expected)</th>
 						<th id="jaccard_p_value" value="jaccard_p_value" data-content="This is a test">Jaccard P-value</th>
+						% endif
+						% if e == "proximity":
 						<th id="obsprox" value="obsprox" data-content="This is a test">Proximity to GF (observed)</th>
 						<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
 						<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
+						% endif
+						% if e == "kolmogorov":
 						<th id="kolmogorov_p_value" value="kolmogorov_p_value" data-content="This is a test">Kolmogorov-Smornov</th>
+						% endif
+						% if e == "hypergeometric":
 						<th id="hypergeometric_p_value" value="hypergeometric_p_value" data-content="This is a test">Hypergeometric Distribution</th>
-
+						% endif
+						% endfor
 					</tr>
+				
 				</thead>
 				<tbody>
 
-					% for i,e in enumerate(enrichments):
-
-					<tr class="${e.category()}">
-						<td>${e.B}</td>
-						<td>${e.nA}</td>
-						<td>${e.nB}</td>
-						<td>${e.observed}</td>
-						<td>
-							% if e.expected != "NA":
-							${'%.2f' % round(e.expected)}
-							% else:
-							${e.expected}
+					% for i,e in enumerate(enrichments):					
+						<tr class="${e.category()}">
+							<td>${e.B}</td>
+							<td>${e.nA}</td>
+							<td>${e.nB}</td>
+							<td>${e.observed}</td>
+							% for j,k in enumerate(run):
+							% if k == "pvalue":
+							<td>
+								% if e.expected != "NA":
+								${'%.2f' % round(e.expected)}
+								% else:
+								${e.expected}
+								% endif
+							</td>						
+							<td>
+								% if e.p_value != "NA":
+								${'{:.2E}'.format(e.p_value)}
+								% else:
+								${e.p_value}
+								% endif
+							</td>
 							% endif
-						</td>
-						<td>
-							% if e.p_value != "NA":
-							${'{:.2E}'.format(e.p_value)}
-							% else:
-							${e.p_value}
+							% if k == "pybedtool":
+							<td>
+								% if e.pybed_expected != "NA":
+								${'%.2f' % round(e.pybed_expected)}
+								% else:
+								${e.pybed_expected}
+								% endif
+							</td>
+							<td>
+								% if e.pybed_p_value != "NA":
+								${'{:.2E}'.format(e.pybed_p_value)}
+								% else:
+								${e.pybed_p_value}
+								% endif
+							</td>
 							% endif
-						</td>
-						<td>
-							% if e.pybed_expected != "NA":
-							${'%.2f' % round(e.pybed_expected)}
-							% else:
-							${e.pybed_expected}
+							% if k == "jaccard":
+							<td>
+								% if e.jaccard_observed != "NA":
+								${'%.2f' % round(e.jaccard_observed)}
+								% else:
+								${e.jaccard_observed}
+								% endif
+							</td>
+							<td>
+								% if e.jaccard_expected != "NA":
+								${'%.2f' % round(e.jaccard_expected)}
+								% else:
+								${e.jaccard_expected}
+								% endif
+							</td>
+							<td>
+								% if e.jaccard_p_value != "NA":
+								${'{:.2E}'.format(e.jaccard_p_value)}
+								% else:
+								${e.jaccard_p_value}
+								% endif
+							</td>
 							% endif
-						</td>
-						<td>
-							% if e.pybed_p_value != "NA":
-							${'{:.2E}'.format(e.pybed_p_value)}
-							% else:
-							${e.pybed_p_value}
+							% if k == "proximity":
+							<td>
+								% if e.obsprox != "NA":
+								${'%.0f' % round(e.obsprox)}
+								% else:
+								${e.obsprox}
+								% endif
+							</td>
+							<td>
+								% if e.expprox != "NA":
+								${'%.2f' % round(e.expprox)}
+								% else:
+								${e.expprox}
+								% endif
+							</td>
+							<td>
+								% if e.proximity_p_value != "NA":
+								${'{:.2E}'.format(e.proximity_p_value)}
+								% else:
+								${e.proximity_p_value}
+								% endif
+							</td>
 							% endif
-						</td>
-						<td>
-							% if e.jaccard_observed != "NA":
-							${'%.2f' % round(e.jaccard_observed)}
-							% else:
-							${e.jaccard_observed}
+							% if k == "kolmogorov":
+							<td>
+								% if e.kolmogorov_p_value != "NA":
+								${'{:.2E}'.format(e.kolmogorov_p_value)}
+								% else:
+								${e.kolmogorov_p_value}
+								% endif
+							</td>
 							% endif
-						</td>
-						<td>
-							% if e.jaccard_expected != "NA":
-							${'%.2f' % round(e.jaccard_expected)}
-							% else:
-							${e.jaccard_expected}
+							% if k == "hypergeometric":
+							<td>
+								% if e.hypergeometric_p_value != "NA":
+								${'{:.2E}'.format(e.hypergeometric_p_value)}
+								% else:
+								${e.hypergeometric_p_value}
+								% endif
+							</td>
 							% endif
-						</td>
-						<td>
-							% if e.jaccard_p_value != "NA":
-							${'{:.2E}'.format(e.jaccard_p_value)}
-							% else:
-							${e.jaccard_p_value}
-							% endif
-						</td>
-						<td>
-							% if e.obsprox != "NA":
-							${'%.0f' % round(e.obsprox)}
-							% else:
-							${e.obsprox}
-							% endif
-						</td>
-						<td>
-							% if e.expprox != "NA":
-							${'%.2f' % round(e.expprox)}
-							% else:
-							${e.expprox}
-							% endif
-						</td>
-						<td>
-							% if e.proximity_p_value != "NA":
-							${'{:.2E}'.format(e.proximity_p_value)}
-							% else:
-							${e.proximity_p_value}
-							% endif
-						</td>
-						<td>
-							% if e.kolmogorov_p_value != "NA":
-							${'{:.2E}'.format(e.kolmogorov_p_value)}
-							% else:
-							${e.kolmogorov_p_value}
-							% endif
-						</td>
-						<td>
-							% if e.hypergeometric_p_value != "NA":
-							${'{:.2E}'.format(e.hypergeometric_p_value)}
-							% else:
-							${e.hypergeometric_p_value}
-							% endif
-						</td>
-					</tr>
+							% endfor
+						</tr>					
 					% endfor
 				</tbody>
 			</table>
@@ -279,12 +307,26 @@ function getQueryVariable(variable) {
 					<label  style="float: left;"><h3>Plot the value of:</h3>
 					</label>
 					<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
-						<option value="pvalue">pvalue</option>
-						<option value="jaccard_p_value">Jaccard P-value</option>
-						<option value="pybed_p_value">PyBed P-value</option>
-						<option value="proximity_p_value">Proximity P-value</option>
-						<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
-						<option value="hypergeometric_p_value">hypergeometric P-value</option>
+						% for j,k in enumerate(run):
+							% if k == "pvalue":
+							<option value="pvalue">pvalue</option>
+							% endif
+							% if k == "jaccard":
+							<option value="jaccard_p_value">Jaccard P-value</option>
+							% endif
+							% if k == "pybedtool":
+							<option value="pybed_p_value">PyBed P-value</option>
+							% endif
+							% if k == "proximity":
+							<option value="proximity_p_value">Proximity P-value</option>
+							% endif
+							% if k == "kolmogorov":
+							<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
+							% endif
+							% if k == "hypergeometric":
+							<option value="hypergeometric_p_value">hypergeometric P-value</option>
+							% endif
+						% endfor
 					</select>
 				</div>
 				<div class="span7">

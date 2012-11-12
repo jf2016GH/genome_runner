@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<link href="static/css/bootstrap.css" rel="stylesheet">
+		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<style>
 			body {
 				padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -28,7 +28,7 @@
 		<link type="text/css" href="static/css/jqury.ui.fileinput.css"></link>
 
 		<link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
-		<script src="static/js/bootstrap.js"></script>
+		<script src="static/js/bootstrap.min.js"></script>
 		<script scr="static/js/main.js"></script>
 
 		<script type="text/javascript">
@@ -54,19 +54,15 @@ initializeUnchecked: 'collapsed'
 			var org = document.getElementById("org").value;
 			var temp = org.split(":");
 			var $url="index?organism=" + temp[1];
-			window.location = $url;
-			})
-		if (getQueryVariable('organism') != null){
-		$('#org').val("organism:" + getQueryVariable('organism'));
-		}
-		else{
-		$('#org').val("organism:hg19");
-		}
+			window.location = $url;})
 
+		if (getQueryVariable('organism') != null){
+		$('#org').val("organism:" + getQueryVariable('organism'));}
+
+		else{$('#org').val("organism:hg19");}
 		$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:0});
 
 $('input:submit').button();
-
 
 });
 
@@ -120,11 +116,11 @@ document.onkeypress = stopRKey;
 					<img width="200px" src="static/images/GRLogo.png" />
 				</a>
 				<ul class="pull-right">
-					<li><a href="#overview">Overview</a></li>
-					<li><a href="#news">News</a></li>
-					<li><a href="#UseGenomeRunner">Use GenomeRunner</a></li>
-					<li><a href="#demo">Demo</a></li>
-					<li><a href="#howtocite">How to Cite</a></li>
+					<li><a href="./overview">Overview</a></li>
+					<li><a href="./news">News</a></li>
+					<li><a href="./">Use GenomeRunner</a></li>
+					<li><a href="./demo">Demo</a></li>
+					<li><a href="./cite">How to Cite</a></li>
 				</ul>
 			</div>
 		</div>
@@ -135,7 +131,7 @@ document.onkeypress = stopRKey;
 			${paths.org_as_html(id="org")}
 		</div>
 		<div class="well">
-			<h3>1. Upload Features of Interest</h3>
+			<h3>1. Upload Features of Interest <img source="static/images/help-icon.png" alt="help"/></h3> 
 			<ul>
 				<li>
 				<input type="radio" name="rdbed"  checked="checked"  value="bedfile" onclick="switchinput(this.value)"/>

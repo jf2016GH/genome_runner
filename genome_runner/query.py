@@ -94,7 +94,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 		write_progress(id, "Running Monte Carlo {}".format(b))
 		r.update(run_montecarlo(_Enrichment_Par))
 	else:
-		r['p_value'], r['epx'] = "NA","NA"
+		r['p_value'], r['exp'] = "NA","NA"
 		logger.info("Skipping Monte Carlo ({}): (id={})".format(b,id))
 	## Uncomment to print global parameters in debug file
 	#write_debug("Global parameters",a = e.a,b=e.b,A= e.A,B=e.B,background = e.background,
@@ -187,6 +187,7 @@ def run_pybedtool(Enrichment_Par):
 
 def run_jaccard(Enrichment_Par):
 	e = Enrichment_Par
+	# cuts out chrom,chromStart, and chromEnd
 	A2 = e.A.cut([0,1,2])
 	B2 = e.B.cut([0,1,2])	   
 	genome_fn = pybedtools.chromsizes_to_file(e.genome)
@@ -232,6 +233,8 @@ def run_proximity(Enrichment_Par):
 	return {"expprox": expprox, "proximityp_value": proximityp_value,"obsprox":obsprox}
 
 def run_hypgeometric(Enrichment_Par):
+	''' Runs the hpergeometric test.  Only runs if a background has been supplied.
+	'''
 	e = Enrichment_Par
 	if e.background != "":
 		back = BedTool(str(e.background))

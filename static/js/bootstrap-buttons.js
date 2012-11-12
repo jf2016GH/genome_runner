@@ -31,11 +31,9 @@
 
     $el.html( data[state] || $.fn.button.defaults[state] )
 
-    setTimeout(function () {
-      state == 'loadingText' ?
-        $el.addClass(d).attr(d, d) :
-        $el.removeClass(d).removeAttr(d)
-    }, 0)
+    state == 'loadingText' ?
+      $el.addClass(d).attr(d, d) :
+      $el.removeClass(d).removeAttr(d)
   }
 
   function toggle(el) {
