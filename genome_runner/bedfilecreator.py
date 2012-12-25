@@ -165,7 +165,7 @@ def extract_genepred(outputpath,datapath,colnames):
 	exonpath = outputpath.split(".")[0]+"_exon.gz"
 	with gzip.open(datapath) as dr:
 		with gzip.open(outputpath,"wb") as bed:
-			from path import basename
+			from os.path import basename
 			with gzip.open(exonpath+".temp","wb") as exonbed:
 				while True:
 					line = dr.readline().rstrip('\r').rstrip('\n')

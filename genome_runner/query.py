@@ -15,6 +15,7 @@ import copy
 import traceback  as trace
 from scipy.stats import uniform,kstest,hypergeom
 import pprint
+import pdb
 
 
 logger = logging.getLogger('genomerunner.query')
@@ -239,14 +240,30 @@ def run_hypgeometric(Enrichment_Par):
 	if e.background != "":
 		back = BedTool(str(e.background))
 		# get number of genomic features that intersect background
-		back_gf_length = len(e.B.intersect(back))
+		foi_obs = e.obs # number of FOIs overlapping with a GF
+		bg_obs = len(e.B.intersect(back)) # number of spot bkg overlapping with a GF
+		rnd_obs = (len(e.A)*bg_obs/len(back)) # Mean of hypergeometric distiribution
 		with open("Debug.log","a") as w:
 			if DEBUG:
 				w.write(pprint.pformat(locals()))
-		hypergeomp_value = hypergeom.cdf(e.obs,len(back),back_gf_length,len(e.A))
-		hypergeomp_value = min(hypergeomp_value, 1-hypergeomp_value)
-		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(back),
-					back_gf_length = back_gf_length, foi_length = len(e.A), p_value= hypergeomp_value)
+		if foi_obs == rnd_obs: # No difference
+			hypergeomp_value = 1
+		elif foi_obs < rnd_obs: # Underrepresentation
+			hypergeomp_value = hypergeom.cdf(foi_obs,len(back),bg_obs,len(e.A))
+			if hypergeomp_value <= 0:
+				hypergeomp_value = float(numpy.finfo(numpy.float64).tiny) # If hypergeomp_value is 0, set to min, to avoid log10 error 
+			elif hypergeomp_value >= 1:
+				hypergeomp_value = 1 # Sometimes there may be an overflow in another direction
+		elif foi_obs > rnd_obs:	# Overrepresentation
+			hypergeomp_value = hypergeom.sf(foi_obs,len(back),bg_obs,len(e.A))
+			if hypergeomp_value <= 0:
+				hypergeomp_value = float(numpy.finfo(numpy.float64).tiny) # If hypergeomp_value is 0, set to min, to avoid log10 error 
+			elif hypergeomp_value >= 1:
+				hypergeomp_value = 1 # Sometimes there may be an overflow in another direction
+		else: # No difference
+			hypergeomp_value = 1		
+		
+		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(back), bg_obs = bg_obs, foi_length = len(e.A), p_value= hypergeomp_value, rand_obs = rnd_obs)
 		return {"hypergeometric_p_value": hypergeomp_value}
 	else: 
 		return {"hypergeometric_p_value": "NA"}
