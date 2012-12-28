@@ -114,19 +114,6 @@ def extract_bed6(outputpath,datapath,colnames):
 		logger.warning("Nonstandard bed6, attempting extraction as bed5")
 		extract_bed5(outputpath,datapath,colnames)
 
-
-def extract_bed3(outputpath,datapath,colnames):
-	colstoextract = ['chrom','chromStart','chromEnd']
-	with gzip.open(outputpath,"wb") as bed:
-		with gzip.open(datapath) as dr:
-			while True:
-				line = dr.readline().strip('\r').rstrip('\n')
-				if line == "":
-					break
-				r  = dict(zip(colnames,line.split('\t')))
-				row = [r["chrom"],r["chromStart"],r["chromEnd"],".",".","."]
-				bed.write("\t".join(map(str,row))+"\n")
-
 def extract_bed5(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score']
 	if _check_cols(colnames,colstoextract):
@@ -143,7 +130,6 @@ def extract_bed5(outputpath,datapath,colnames):
 		logger.warning("Nonstandard bed5, attempting extraction as bed4")
 		extract_bed4(outputpath,datapath,colnames)
 	
-
 def extract_bed4(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name']
 	if _check_cols(colnames,colstoextract):
@@ -159,6 +145,18 @@ def extract_bed4(outputpath,datapath,colnames):
 	else:
 		logger.warning("Nonstandard bed4, attempting extraction as bed3")
 		extract_bed3(outputpath,datapath,colnames)
+
+def extract_bed3(outputpath,datapath,colnames):
+	colstoextract = ['chrom','chromStart','chromEnd']
+	with gzip.open(outputpath,"wb") as bed:
+		with gzip.open(datapath) as dr:
+			while True:
+				line = dr.readline().strip('\r').rstrip('\n')
+				if line == "":
+					break
+				r  = dict(zip(colnames,line.split('\t')))
+				row = [r["chrom"],r["chromStart"],r["chromEnd"],".",".","."]
+				bed.write("\t".join(map(str,row))+"\n")
 
 def extract_genepred(outputpath,datapath,colnames):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
@@ -183,8 +181,6 @@ def extract_genepred(outputpath,datapath,colnames):
 	# remove the .temp extension from the exon file 
 	os.rename(exonpath+".temp",exonpath)
 
-	
-
 def get_column_names(sqlfilepath):
 	''' extracts the column names from the .sql file and returns them
 	'''
@@ -193,6 +189,7 @@ def get_column_names(sqlfilepath):
 	tbdcolumns = re.findall("\n\s\s`*(.+?)`*\s", tdbsql, re.DOTALL)
 	tbdcolumns = [c for c in tbdcolumns if not c=="KEY"]
 	return tbdcolumns	
+	
 preparebed = {"bed 6" : extract_bed6,
 				"broadPeak": extract_bed6,
 				"bed 6 +" : extract_bed6,
@@ -349,13 +346,13 @@ if __name__ == "__main__":
 	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
 	args = vars(parser.parse_args())
 	outputdir='released'
-	if args['organism'] is not None and args['featurename'] is None:
+	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		create_feature_set(trackdbpath,args['organism'])
-	elif args['organism'] is not None and args['featurename'] is not None:
+	elif args['organism'] is not None and args['featurename'] is not None: # Both organism and feature name are specified. Download this feature for a given organism
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		create_single_feature(trackdbpath,args['organism'],args['featurename'])
-	elif args['organism'] is None and args['featurename'] is not None:
+	elif args['organism'] is None and args['featurename'] is not None: # Warning in case of only feature name is supplied
 		print "To add a specific feature to the local database, please supply an organism assembly name"
 	else:
 		print "Requires UCSC organism code.  Use --help for more information"
