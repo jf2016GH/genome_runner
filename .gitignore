@@ -29,3 +29,5 @@ test.txt
 *_live 
 *.bed
 profile
+*.tmp
+results_cmd

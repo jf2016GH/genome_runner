@@ -18,7 +18,9 @@ class PathNode(defaultdict):
 		defaultdict.__init__(self, PathNode)
 		self.files = []
 		self.organisms = []
-	
+
+
+	# for the autocomplete text box
 	def traverse(self, base):
 
 		# used to generate a json list of gfs
@@ -77,6 +79,7 @@ class PathNode(defaultdict):
 			s += child.as_html()
 		return s + "</ul>"
 
+	# for the organism combobox
 	def org_as_html(self,id=None):
 		s = "<select name='organism' "
 		if id:

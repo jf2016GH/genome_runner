@@ -14,8 +14,10 @@ import json
 import copy
 import traceback  as trace
 from scipy.stats import uniform,kstest,hypergeom
-import pprint
-import pdb
+import pprint,pdb,argparse
+from mako.template import Template
+from mako.lookup import TemplateLookup
+from mako.exceptions import RichTraceback as MakoTraceback
 
 
 logger = logging.getLogger('genomerunner.query')
@@ -263,7 +265,8 @@ def run_hypgeometric(Enrichment_Par):
 		else: # No difference
 			hypergeomp_value = 1		
 		
-		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(back), bg_obs = bg_obs, foi_length = len(e.A), p_value= hypergeomp_value, rand_obs = rnd_obs)
+		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(back), 
+			bg_obs = bg_obs, foi_length = len(e.A), p_value= hypergeomp_value, rand_obs = rnd_obs)
 		return {"hypergeometric_p_value": hypergeomp_value}
 	else: 
 		return {"hypergeometric_p_value": "NA"}
@@ -436,34 +439,37 @@ def generate_background(foipath,gfpath,background):
 def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,organism,run):
 	"""
 	Run one FOI file (f) against multiple GFs, then 
-	save the result to the "results" directory.
+	save the result to the "results" directory. Returns list of enrichment results.
 	"""
 	# sets up logging for the run
 	if not os.path.exists(res_path): os.makedirs(res_path)
 	hdlr_id_file = logging.FileHandler(os.path.join(res_path,str(id)+".log"))
 	logger.addHandler(hdlr_id_file)
-	print "working"
 	try:
 		enrichments = []
 		# these are progress values that are written to the progress file
 		global curprog 
 		curprog = 0
 		global progmax
-		progmax =len(gfeatures)
+		progmax = len(gfeatures)		
+		header = True
 		for gf in gfeatures:
 			write_progress(id, "RUNNING ENRICHMENT ANALYSIS FOR: {}".format(gf))
 			e = enrichment(id,f,gf,background,organism,name,score,strand,niter,run)
 			enrichments.append(e)
 			path = os.path.join(res_path, str(id))
-			print "writing output"
-			with open(path, "wb") as strm:
+			with open(path, "w") as strm:
 				cPickle.dump(enrichments, strm)
 			curprog += 1
+			write_results_astext(result_id,e,header)
+			header = False
 		write_progress(id, "FINISHED")
 	except Exception, e:
 		logger.error(e)
 		logger.error(trace.format_exc())
 		write_progress(id,"ERROR: The run crashed: {}".format(e))
+	return enrichments
+
 
 
 def write_progress(id,line):
@@ -476,6 +482,31 @@ def write_progress(id,line):
 	with open(path,"wb") as progfile:
 		progfile.write(json.dumps(progress))
 
+# enrichment_results is the namedtuple generated from the enrichment
+def write_results_astext(id,enrichment_results,header=False):
+	"""Writes the results of the enrichment analysis into a plain text file.
+	"""
+	fields = {"A": "FOI_Name","B": "GF_Name","nA": "#FOI","nB": "#GF","observed": "observed",
+		"expected":"observed","p_value":"p_value","obsprox":"obsprox","expprox":"expprox",
+		"pybed_p_value":"pybed_p_value","pybed_expected":"pybed_expected","jaccard_observed":"jaccard_observed"
+		,"jaccard_p_value":"jaccard_p_value","jaccard_expected":"jaccard_expected","proximity_p_value":"proximity_p_value"
+		,"kolmogorov_p_value":"kolmogorov_p_value","hypergeometric_p_value":"hypergeometric_p_value"}
+	
+	outpath =  os.path.join(res_path,str(id)) + ".txt"
+	
+	if header:	
+		with open(outpath,"w") as w:
+			line = ""		
+			for f in _Enrichment._fields:
+				line += fields[f]+"\t" 
+			line = line[:-1]
+			w.write(line+"\n")
+	with open(outpath,"a") as w:
+		line = ""
+		for i in range(len(enrichment_results)):
+			line += str(enrichment_results[i]) + "\t"
+		line = line[:-1]
+		w.write(line + "\n")
 
 		
 def get_progress(id):
@@ -499,3 +530,47 @@ def write_debug(fun_name,header = False,**kwargs):
 				w.write("Variable values for\t %s \n" % fun_name)
 				for key, value in kwargs.iteritems():
 					w.write("%s =\t %s\n" % (key,value))
+
+
+# id, f, gfeatures,background, niter, name, score, strand,organism,run
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='Runs Enrichment analysis in GenomeRunner')
+	parser.add_argument('--jobid','-i',
+		help='The file name to output the results to',default="")
+	parser.add_argument('--foifile','-a', 
+		help='File containing a list of features of interest file paths. Required')
+	parser.add_argument('--gffile','-b', 
+		help='File containing a list of genomic feature file paths. Required')	
+	parser.add_argument('--background','-k', 
+		help='File containging background in bed format.  Uses organism genome as background by default',default = None)
+	parser.add_argument('--organism','-g', 
+		help='The UCSC code of the organism to be downloaded (example: hg19 (human))',default = 'hg19')
+	parser.add_argument('--mcnum','-n', 
+		help='The number of Monte Carlo runs to perform',default = 10)
+	parser.add_argument('--run','-r', dest="run", action='append', 
+		help='Test to run.  Repeat to run multiple test. Available tests: pvalue,pybedtool,jaccard,kolmogorov,proximity,hypergeometric')
+	parser.add_argument('--name','-e', help='Name to filter by.',default = None)
+	parser.add_argument('--strand','-s', help='Strand to filter by',default = None)
+	parser.add_argument('--score','-c', help='Score to filter by',default = None)
+
+
+
+	args = vars(parser.parse_args())
+	global res_path 
+	res_path = "../results_cmd"
+
+	if not os.path.exists(res_path):
+		os.makedirs(res_path)
+	if args['foifile'] is None or args['gffile'] is None:
+		print "foifile and gffile parameters may not be blank.  Use --help for details."
+		sys.exit()
+	gfs = open(args['gffile'],'r').readlines()
+	gfs = [line.strip() for line in gfs]
+	header = True
+	for foi in open(args['foifile'],'r').readlines():
+		foi = foi.strip()
+		result_id = args['jobid']+ "_" + os.path.splitext(os.path.basename(foi))[0]
+
+		results = run_enrichments(result_id,foi,gfs,args['background'],args['mcnum'],args['name'],args['score'],args['strand'],
+						args['organism'],args['run'])
+		header = False
