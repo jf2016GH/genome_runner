@@ -8,35 +8,29 @@
 	}
 	/* allows the check box tree to be rendered correctly*/
 	.ui-icon {float: left;}
-
-			@import "static/css/TableTools.css";
-			@import "static/css/combobox.css";
-			@import "static/css/ui-lightness/jquery-ui-1.8.16.custom.css";
-			@import "static/css/main.css";
-			@import "static/css/main.css";
-
+	.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
 	</style>
 
 	<!-- For IE6-8 support of HTML5 elements -->
 		<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
-		<script type="text/javascript" src="static/js/jquery.js"></script>
-		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
-		<script type="text/javascript" src="static/js/jquery-ui-1.8.22.custom.min.js"></script>
-		<script type="text/javascript" src="static/js/jquery.ui.widget.js"></script>
-		<script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
-		<script src="static/js/fcbkcomplete.js" type="text/javascript" charset="utf-8"></script>
-		<!-- File input -->
-		<script src="static/js/enhance.min.js"i type="text/javascript"></script>
-		<script src="static/js/jquery.fileinput.js" type="text/javascript"></script>
-		<link type="text/css" href="static/css/jqury.ui.fileinput.css"></link>
+	 	<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css " rel="stylesheet" />
+	    <link type="text/css" href="static/css/main.css"/>
+	    <link type="text/css" href="static/css/demo_table.css"/>
+	    <script type="text/javascript" src="static/js/jquery.js"></script>
+	    <script type="text/javascript" src="static/js/jquery-ui-1.8.22.custom.min.js"></script>
+	    <script type="text/javascript" src="static/js/jquery.ui.widget.js"></script>
+	    <script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
+	    <script src="static/js/fcbkcomplete.min.js" type="text/javascript" charset="utf-8"></script>
+	    <!-- File input -->
+	    <script src="static/js/enhance.min.js"i type="text/javascript"></script>
+	    <script src="static/js/jquery.fileinput.js" type="text/javascript"></script>
+	    <link type="text/css" href="static/css/jqury.ui.fileinput.css"></link>
 
-		<script src="static/js/bootstrap.min.js"></script>
-		<script scr="static/js/main.js"></script>
-
-		<script type="textjavascript" language="javascript"
-				src="static/js/bootstrap-tooltip.js"></script>
+	    <link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
+	    <script src="static/js/bootstrap.min.js"></script>
+	    <script scr="static/js/main.js"></script>
 
 		<script type="text/javascript">
 		function getQueryVariable(variable) { 
@@ -81,7 +75,7 @@
 				});
 
 				$("#helpbackground").popover({content: "If no background file is uploaded, then the genome is used as a background.", placement: "top"});
-				$("#helpfeature").popover({content: "Upload a bed formated file containing regions of interest or SNPs to run the enrichment analysis on.", placement: "top"});
+				$("#helpfeature").popover({content: "<p style='text-align: center'>Upload a bed formated file containing regions of interest,SNPs or both <br/> to run the enrichment analysis on.</p>", placement: "top"});
 
 			});
 
