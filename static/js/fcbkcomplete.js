@@ -8,30 +8,30 @@
  - 1.08 some minor bug fixed
  
  - 1.07 case sensetive added
- 		applied filter to non ajax items
- 		filter algorithm changed
- 		cache for ajax request added
- 		up/down with auto scrolling
- 		minor code fixes
+        applied filter to non ajax items
+        filter algorithm changed
+        cache for ajax request added
+        up/down with auto scrolling
+        minor code fixes
  
  - 1.06 auto heigth fix
-		event bind on main element for better user frendly experience
-		filter for items
-		up/down keys supported from now
+        event bind on main element for better user frendly experience
+        filter for items
+        up/down keys supported from now
  
- - 1.05	bindEvents function fixed thanks to idgnarn
+ - 1.05 bindEvents function fixed thanks to idgnarn
  
- - 1.04	IE7 <em> tag replace fixed
+ - 1.04 IE7 <em> tag replace fixed
  
  - 1.03 IE7 & IE6 crash fixed
- 		IE7 css fixed
+        IE7 css fixed
  
  - 1.02 json parsing fixed
- 		remove element fixed
+        remove element fixed
  
  - 1.01 some bugs fixed
  
- - 1.0	migration from prototype
+ - 1.0  migration from prototype
  */
 
 /* Coded by: emposha <admin@emposha.com> */
@@ -47,6 +47,8 @@
  */
 
 jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel){
+    // loads the fuse fuzzy search
+    $("head").append('<script type="text/javascript" src="static/js/fuse.js"></script>');
 
     var addHiddenInput = function(value){
         var input = document.createElement('input');
@@ -104,6 +106,7 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
         feed.hide();
     }
     
+    // Modified to work with the fuzzy search
     var defaultFilter = function(input){
         if (filter.userfilter) {
             var flag;
@@ -139,11 +142,13 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
             feed.css('height', 'auto');
         }
     }
-    
+
+    // Not used in the fuzzy search version
     var feedFilter = function(item, caption, input){
+
         if (filter.userfilter) {
             if (filter.casesensetive) {
-                if (caption.indexOf(input) != -1) {
+                if (caption.indexOf(input) != -1) {                    
                     item.html(caption.replace(input, '<em>' + input + '</em>'));
                     return true;
                 }
@@ -161,7 +166,39 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
         }
     }
     
-    var addItemFeed = function(data, input){
+    // modified to performa fuzzy search
+    var addItemFeed = function(data, input){        
+        feed.children('li[fckb=2]').remove();
+         var options = {
+            keys: ['caption'],    // the keys to search
+        }
+        var f = new Fuse(data,options);
+        var result = f.search(input); // the fuzzy search
+
+        $.each(result,function(i,val){
+            var li = document.createElement('li');
+            $(li).attr({
+                    'rel': val.value,
+                    'fckb': '2'
+                })
+            //$(li).append(val.caption); 
+            var caption = val.caption;
+            var newCaption = "";   
+            for (var k=0; k<caption.length;k++){
+                var curChar = caption[k];
+                for (var j=0;j<input.length;j++){
+                    if (curChar.toLocaleLowerCase() == input[j].toLocaleLowerCase()){
+                        curChar = '<em>' + curChar + '</em>'
+                    }                    
+                }
+                newCaption += curChar;
+            }        
+            $(li).html(newCaption)
+            feed.append(li);
+            counter++;
+        })
+       
+        /*
         feed.children('li[fckb=2]').remove();
         $.each(data, function(i, val){
             if (val.caption) {
@@ -175,10 +212,11 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
                     counter++;
                 }
             }
-        });
+        });*/
         defaultFilter(input);
-    }
+    }    
     
+
     var addTextItemFeed = function(value){
         if (newel) {
             feed.children('li[fckb=1]').remove();
@@ -189,34 +227,34 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
             });
             $(li).html(value);
             feed.prepend(li);
-			counter++;
+            counter++;
         }
     }
-	
-	var removeFeedEvent = function () {
-		feed.children('li').unbind('mouseover');	
-		feed.children('li').unbind('mouseout');
-		feed.mousemove(function () {
-			bindFeedEvent();
-			feed.unbind('mousemove');
-		})	
-	}
-	
-	var bindFeedEvent = function () {
-		feed.children('li').mouseover(function(){
-			feed.children('li').removeClass("auto-focus");
+    
+    var removeFeedEvent = function () {
+        feed.children('li').unbind('mouseover');    
+        feed.children('li').unbind('mouseout');
+        feed.mousemove(function () {
+            bindFeedEvent();
+            feed.unbind('mousemove');
+        })  
+    }
+    
+    var bindFeedEvent = function () {
+        feed.children('li').mouseover(function(){
+            feed.children('li').removeClass("auto-focus");
             $(this).addClass("auto-focus");
             nowFocusOn = $(this);
         });
-		feed.children('li').mouseout( function(){
+        feed.children('li').mouseout( function(){
             $(this).removeClass("auto-focus");
             nowFocusOn = null;
         });
-	}
+    }
     
     var bindEvents = function(){
         var maininput = $('.maininput');
-       	bindFeedEvent();
+        bindFeedEvent();
         feed.children('li').unbind('click');
         feed.children('li').click(function(){
             addItem($(this));
@@ -230,44 +268,46 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
                 event.preventDefault();
             }
             if (event.keyCode == 40) {
-				removeFeedEvent();
+                removeFeedEvent();
                 if (typeof(nowFocusOn) == 'undefined' || nowFocusOn.length == 0) {
                     nowFocusOn = $(feed.children('li:visible:first'));
-					feed.get(0).scrollTop = 0;
+                    feed.get(0).scrollTop = 0;
                 }
                 else {
                     nowFocusOn.removeClass("auto-focus");
                     nowFocusOn = nowFocusOn.nextAll('li:visible:first');
-					var prev = parseInt(nowFocusOn.prevAll('li:visible').length,10);
-					var next = parseInt(nowFocusOn.nextAll('li:visible').length,10);
-					if ((prev > Math.round(height /2) || next <= Math.round(height /2)) && typeof(nowFocusOn.get(0)) != 'undefined') {
-						feed.get(0).scrollTop = parseInt(nowFocusOn.get(0).scrollHeight,10) * (prev - Math.round(height /2));
-					}
+                    var prev = parseInt(nowFocusOn.prevAll('li:visible').length,10);
+                    var next = parseInt(nowFocusOn.nextAll('li:visible').length,10);
+                    if ((prev > Math.round(height /2) || next <= Math.round(height /2)) && typeof(nowFocusOn.get(0)) != 'undefined') {
+                        feed.get(0).scrollTop = parseInt(nowFocusOn.get(0).scrollHeight,10) * (prev - Math.round(height /2));
+                    }
                 }
-				feed.children('li').removeClass("auto-focus");
+                feed.children('li').removeClass("auto-focus");
                 nowFocusOn.addClass("auto-focus");
             }
             if (event.keyCode == 38) {
-				removeFeedEvent();
+                removeFeedEvent();
                 if (typeof(nowFocusOn) == 'undefined' || nowFocusOn.length == 0) {
                     nowFocusOn = $(feed.children('li:visible:last'));
-					feed.get(0).scrollTop = parseInt(nowFocusOn.get(0).scrollHeight,10) * (parseInt(feed.children('li:visible').length,10) - Math.round(height /2));
+                    feed.get(0).scrollTop = parseInt(nowFocusOn.get(0).scrollHeight,10) * (parseInt(feed.children('li:visible').length,10) - Math.round(height /2));
                 }
                 else {
                     nowFocusOn.removeClass("auto-focus");
                     nowFocusOn = nowFocusOn.prevAll('li:visible:first');
-					var prev = parseInt(nowFocusOn.prevAll('li:visible').length,10);
-					var next = parseInt(nowFocusOn.nextAll('li:visible').length,10);
-					if ((next > Math.round(height /2) || prev <= Math.round(height /2)) && typeof(nowFocusOn.get(0)) != 'undefined') {
-						feed.get(0).scrollTop = parseInt(nowFocusOn.get(0).scrollHeight,10) * (prev - Math.round(height /2));
-					}
+                    var prev = parseInt(nowFocusOn.prevAll('li:visible').length,10);
+                    var next = parseInt(nowFocusOn.nextAll('li:visible').length,10);
+                    if ((next > Math.round(height /2) || prev <= Math.round(height /2)) && typeof(nowFocusOn.get(0)) != 'undefined') {
+                        feed.get(0).scrollTop = parseInt(nowFocusOn.get(0).scrollHeight,10) * (prev - Math.round(height /2));
+                    }
                 }
-				feed.children('li').removeClass("auto-focus");
+                feed.children('li').removeClass("auto-focus");
                 nowFocusOn.addClass("auto-focus");
             }
         });
     }
     
+    var inputPause = false;
+
     var addInput = function(){
         var li = document.createElement('li');
         var input = document.createElement('input');
@@ -286,17 +326,19 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
         });
         $(holder).click(function(){
             $(input).focus();
-			if (feed.length && $(input).val().length) {
-				feed.show();
-			}
-			else {
-				feed.children('li[fckb=2]').remove();
-				feed.children('li').addClass('hidden');
-				feed.css('height','0px');
-				$('.default').show();
-			}
+            if (feed.length && $(input).val().length) {
+                feed.show();
+            }
+            else {
+                feed.children('li[fckb=2]').remove();
+                feed.children('li').addClass('hidden');
+                feed.css('height','0px');
+                $('.default').show();
+            }
         });
         $(input).keyup(function(event){
+            inputTime = setTimeout ( function() { inputPause = true; }, 500 );
+            console.log("PREFunction: " + inputPause);
             if (event.keyCode != 40 && event.keyCode != 38) {
                 counter = 0;
                 var etext = $(input).val();
@@ -319,23 +361,25 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
                 }
                 $('.default').hide();
                 feed.show();
+                inputPause = false;
+                console.log("Function: " + inputPause);
             }
         });
     }
     
     if (typeof(elem) != 'object') {
-		elem = $(elem);
-	}
+        elem = $(elem);
+    }
     if (typeof(list) != 'object') {
-		list = $(list);
-	}
+        list = $(list);
+    }
     if (typeof(complete) != 'object') {
-		complete = $(complete);
-	}
+        complete = $(complete);
+    }
     var feed = $('#feed');
     var cache = {};
     var counter = 0;
-	var nowFocusOn;
+    var nowFocusOn;
     var holder = document.createElement('ul');
     elem.css('display', 'none');
     $(holder).attr('class', 'holder');
@@ -345,14 +389,14 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
             addItem($(list.children('li')[i]), 1);
         });
     }
-	
+    
     addInput();
     elem.before(holder);
-	
-	$(document).click(function (event) {
-		if ($(event.target).attr('class') != 'holder' && $(event.target).attr('class') != 'maininput') {
-			$('.default').hide();
-			$(feed).hide();
-		}
-	});
+    
+    $(document).click(function (event) {
+        if ($(event.target).attr('class') != 'holder' && $(event.target).attr('class') != 'maininput') {
+            $('.default').hide();
+            $(feed).hide();
+        }
+    });
 }
