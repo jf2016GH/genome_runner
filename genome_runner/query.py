@@ -9,15 +9,12 @@ from collections import namedtuple
 import cPickle
 import logging
 from logging import FileHandler,StreamHandler
-from path import basename
+from os.path import basename
 import json
 import copy
 import traceback  as trace
 from scipy.stats import uniform,kstest,hypergeom
-import pprint,pdb,argparse
-from mako.template import Template
-from mako.lookup import TemplateLookup
-from mako.exceptions import RichTraceback as MakoTraceback
+import pprint,argparse
 
 
 logger = logging.getLogger('genomerunner.query')
@@ -78,7 +75,6 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	e.B = BedTool(str(e.b))
 	e.genome = pybedtools.get_chromsizes_from_ucsc(e.organism)
 	e.genome_fn = pybedtools.chromsizes_to_file(e.genome)
-
 
 	e.organism = str(e.organism)
 	flt = make_filter(name,score,strand)
@@ -170,7 +166,7 @@ def run_montecarlo(Enrichment_Par):
 		p_value =1
 	else:
 		p_value = len([x for x in dist if x > e.obs]) / float(len(dist))
-		p_value = min(p_value, 1 - p_value)
+		p_value = min(p_value, 1 - p_value)		
 
 	write_debug(run_montecarlo.__name__,False,Enrichment_Par= str(e),p_value= p_value, observed = e.obs, expected =exp)
 	return {"exp": exp,"p_value": p_value}
@@ -194,7 +190,7 @@ def run_jaccard(Enrichment_Par):
 	A2 = e.A.cut([0,1,2])
 	B2 = e.B.cut([0,1,2])	   
 	genome_fn = pybedtools.chromsizes_to_file(e.genome)
-	resjaccard = A2.naive_jaccard(B2,genome_fn=genome_fn,iterations=e.n,
+	resjaccard = A2.random_jaccard(B2,genome_fn=genome_fn,iterations=e.n,
 			shuffle_kwargs={'chrom':True})
 	jaccard_dist = resjaccard[1]
 	jaccard_obs = resjaccard[0]
@@ -461,7 +457,7 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 			with open(path, "w") as strm:
 				cPickle.dump(enrichments, strm)
 			curprog += 1
-			write_results_astext(result_id,e,header)
+			write_results_astext(id,e,header)
 			header = False
 		write_progress(id, "FINISHED")
 	except Exception, e:
@@ -554,9 +550,8 @@ if __name__ == "__main__":
 	parser.add_argument('--score','-c', help='Score to filter by',default = None)
 
 
-
 	args = vars(parser.parse_args())
-	global res_path 
+
 	res_path = "../results_cmd"
 
 	if not os.path.exists(res_path):
@@ -571,6 +566,10 @@ if __name__ == "__main__":
 		foi = foi.strip()
 		result_id = args['jobid']+ "_" + os.path.splitext(os.path.basename(foi))[0]
 
-		results = run_enrichments(result_id,foi,gfs,args['background'],args['mcnum'],args['name'],args['score'],args['strand'],
+		score = args['score']
+		if not score is None:
+			score = int(args['score']) 
+
+		results = run_enrichments(result_id,foi,gfs,args['background'],int(args['mcnum']),args['name'],score,args['strand'],
 						args['organism'],args['run'])
 		header = False
