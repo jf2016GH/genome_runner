@@ -23,6 +23,7 @@
 	<script type="text/javascript" src="static/js/jquery.ui.widget.js"></script>
 	<script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
 	<script src="static/js/fcbkcomplete.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="static/js/jquery.slimScroll.js" type="text/javascript" charset="utf-8"/>
 	<!-- File input -->
 	<script src="static/js/enhance.min.js"i type="text/javascript"></script>
 	<script src="static/js/jquery.fileinput.js" type="text/javascript"></script>
@@ -66,7 +67,6 @@
 			$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:1});
 
 			$('input:submit').button();
-
 			$(function() {
 				$("#accordion").accordion({
 					collapsible: true,
@@ -74,11 +74,33 @@
 				});
 			});
 
+			// The tooltips
 			$("#helpbackground").popover({content: "If no background file is uploaded, then the genome is used as a background.", placement: "top"});
 			$("#helpfeature").popover({content: "<p style='text-align: center'>Upload a bed formated file containing regions of interest,SNPs or both <br/> to run the enrichment analysis on.</p>", placement: "top"});
 
-		});
+			// the viewport for the treeview
+			$(function() {
+			    $("#treeview-inner").slimScroll({
+			    	height: $("#ucsc").height(),
+			    	width: '540px',
+			    	railVisible: true,
+			    	alwaysVisible: true
+			    })
+			});
 
+			
+		});
+		function viewBoxClick(){
+			var minHeight = 300;
+			var maxHeight = 500;			
+			// resize to the expanded treeview as long as it is less than 500
+			if ($("#ucsc").height() <= maxHeight) {
+				$("#treeview-inner").height($("#ucsc").height()+10);
+			}
+			else if ($("#ucsc").height() > maxHeight)
+				{$("#treeview-inner").height(maxHeight);}
+
+		}
 		function switchinput(checked){
 			if (checked == "bedfile"){
 				document.getElementById("inputbedfile").disabled=false;
@@ -115,6 +137,18 @@
 			var node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null); 
 			if ((evt.keyCode == 13) && (node.type=="text"))  {return false;} 
 		} 
+
+		function changeCheckedStateTreeView(checkAll){
+			if (checkAll == true){
+				$('#ucsc').checkboxTree('expandAll');	
+				$("#treeview-inner").height(1000);	
+				$("#treeview-outer").height(1000);			
+			}
+			else {
+				$('#ucsc').checkboxTree('collapseAll');
+				$("#treeview-outer").height($("#ucsc").height());
+			}
+		}
 
 		document.onkeypress = stopRKey; 
 
@@ -192,7 +226,7 @@
 			<h3>3. Choose tracks of interest:</h3>
 			<div id="grfdroplist">
 				<label >Enter track names: </label>
-				<ol style="left: 24px;position: relative;">        
+				<ol style="left: 24px;position: relative; padding-top:10px;padding-bottom:10px;">        
 					<li id="grf-list" class="input-text">
 						<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
 					</li>
@@ -204,9 +238,15 @@
 				</ol>   
 			</div>
 			<label >Select track names: </label>
-			<div style="width: 500px">
-			${paths.as_html(id="ucsc")}
-		</div>
+				<div>
+					<a class="btn" onClick="changeCheckedStateTreeView(true)">Expand All</a>
+					<a class="btn" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
+				</div>
+			<div id="treeview-outer" style="padding-top:10px">
+				<div id="treeview-inner" onClick="viewBoxClick()">
+					${paths.as_html(id="ucsc")}
+				</div>
+			</div>
 		</div>
 		
 		<div id="accordion" style="padding-bottom: 1em;list-style:none;">			
