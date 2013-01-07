@@ -14,7 +14,7 @@ import json
 import copy
 import traceback  as trace
 from scipy.stats import uniform,kstest,hypergeom
-import pprint,argparse
+import pprint,argparse,pdb
 
 
 logger = logging.getLogger('genomerunner.query')
@@ -68,9 +68,14 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	"""
 	write_debug("START",True)
 	r = {}
-	
+	print "background: ", background
+	print "foi: ", a
 	e = _Enrichment_Par
-	e.a,e.b,e.organism,e.n,e.background = a,b,organism,n,background
+	e.a,e.b,e.organism,e.n,e.Background = a,b,organism,n,None
+
+	if not background is None:
+		e.Background = BedTool(background)
+
 	e.A = BedTool(str(e.a))
 	e.B = BedTool(str(e.b))
 	e.genome = pybedtools.get_chromsizes_from_ucsc(e.organism)
@@ -158,7 +163,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 
 def run_montecarlo(Enrichment_Par):
 	e = Enrichment_Par
-	dist = [len(shuffle(e.a,e.background,e.organism).intersect(e.B, u=True)) for i in range(e.n)]
+	dist = [len(shuffle(e.A,e.Background,e.organism).intersect(e.B, u=True)) for i in range(e.n)]
 	exp = numpy.mean(dist)
 	# gave p_value a value here so that it doesn't go out of scope, is this needed?
 	p_value = 'NA'
@@ -213,7 +218,7 @@ def run_proximity(Enrichment_Par):
 	e = Enrichment_Par 
 	expall =[]
 	for i in range(e.n):
-		tmp = shuffle(e.a,e.background,e.organism).closest(e.B,d=True)
+		tmp = shuffle(e.A,e.Background,e.organism).closest(e.B,d=True)
 		# get the distances
 		for t in tmp:
 			expall.append(t[-1])
@@ -235,25 +240,24 @@ def run_hypgeometric(Enrichment_Par):
 	''' Runs the hpergeometric test.  Only runs if a background has been supplied.
 	'''
 	e = Enrichment_Par
-	if e.background != "":
-		back = BedTool(str(e.background))
+	if e.Background is not None:
 		# get number of genomic features that intersect background
 		foi_obs = e.obs # number of FOIs overlapping with a GF
-		bg_obs = len(e.B.intersect(back)) # number of spot bkg overlapping with a GF
-		rnd_obs = (len(e.A)*bg_obs/len(back)) # Mean of hypergeometric distiribution
+		bg_obs = len(e.B.intersect(e.Background)) # number of spot bkg overlapping with a GF
+		rnd_obs = (len(e.A)*bg_obs/len(e.Background)) # Mean of hypergeometric distiribution
 		with open("Debug.log","a") as w:
 			if DEBUG:
 				w.write(pprint.pformat(locals()))
 		if foi_obs == rnd_obs: # No difference
 			hypergeomp_value = 1
 		elif foi_obs < rnd_obs: # Underrepresentation
-			hypergeomp_value = hypergeom.cdf(foi_obs,len(back),bg_obs,len(e.A))
+			hypergeomp_value = hypergeom.cdf(foi_obs,len(e.Background),bg_obs,len(e.A))
 			if hypergeomp_value <= 0:
 				hypergeomp_value = float(numpy.finfo(numpy.float64).tiny) # If hypergeomp_value is 0, set to min, to avoid log10 error 
 			elif hypergeomp_value >= 1:
 				hypergeomp_value = 1 # Sometimes there may be an overflow in another direction
 		elif foi_obs > rnd_obs:	# Overrepresentation
-			hypergeomp_value = hypergeom.sf(foi_obs,len(back),bg_obs,len(e.A))
+			hypergeomp_value = hypergeom.sf(foi_obs,len(e.Background),bg_obs,len(e.A))
 			if hypergeomp_value <= 0:
 				hypergeomp_value = float(numpy.finfo(numpy.float64).tiny) # If hypergeomp_value is 0, set to min, to avoid log10 error 
 			elif hypergeomp_value >= 1:
@@ -261,14 +265,14 @@ def run_hypgeometric(Enrichment_Par):
 		else: # No difference
 			hypergeomp_value = 1		
 		
-		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(back), 
+		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(e.Background), 
 			bg_obs = bg_obs, foi_length = len(e.A), p_value= hypergeomp_value, rand_obs = rnd_obs)
 		return {"hypergeometric_p_value": hypergeomp_value}
 	else: 
 		return {"hypergeometric_p_value": "NA"}
 
 
-def shuffle(bed_file, background_bed,organism):
+def shuffle(bedtool, background,organism):
 	""" Accepts a file path to a bed file and a background file
 	Random intervals are generate from the intervals in the background
 	file.  An attempt is made to make the new random intervals the same size
@@ -278,9 +282,9 @@ def shuffle(bed_file, background_bed,organism):
 	If no background is provided, The pybedtool internal shuffle function is called
 	and the entire genome is used as background
 	"""
-	A =  BedTool(bed_file)
-	if background_bed != "" and background_bed != None:
-		B = BedTool(background_bed)
+	A, B =  bedtool,background
+	print "test "
+	if B is not None:
 		rand_a = ""
 		for a in A:
 			a_len = a.length
@@ -388,7 +392,7 @@ def generate_background(foipath,gfpath,background):
 	Replaces the chrom fields of the foi and the gf with the interval
 	id from the background.
 	"""
-	bckg = BedTool(str(background))
+	bckg = background
 	bckgnamed = "" 
 	interval = 0 
 
