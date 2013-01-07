@@ -79,13 +79,11 @@
 			$("#helpfeature").popover({content: "<p style='text-align: center'>Upload a bed formated file containing regions of interest,SNPs or both <br/> to run the enrichment analysis on.</p>", placement: "top"});
 
 			// the viewport for the treeview
-			$(function() {
-			    $("#treeview-inner").slimScroll({
+			$("#treeview-inner").slimScroll({
 			    	height: $("#ucsc").height(),
 			    	width: '540px',
 			    	railVisible: true,
 			    	alwaysVisible: true
-			    })
 			});
 
 			
@@ -95,10 +93,12 @@
 			var maxHeight = 500;			
 			// resize to the expanded treeview as long as it is less than 500
 			if ($("#ucsc").height() <= maxHeight) {
-				$("#treeview-inner").height($("#ucsc").height()+10);
+				$(".slimScrollDiv").css("height", $('#ucsc').height()+'px');
 			}
-			else if ($("#ucsc").height() > maxHeight)
-				{$("#treeview-inner").height(maxHeight);}
+			else if ($("#ucsc").height() > maxHeight){
+				$("#treeview-inner").height(maxHeight);
+				$(".slimScrollDiv").css("height",maxHeight + 'px');
+			}
 
 		}
 		function switchinput(checked){
@@ -140,13 +140,12 @@
 
 		function changeCheckedStateTreeView(checkAll){
 			if (checkAll == true){
-				$('#ucsc').checkboxTree('expandAll');	
-				$("#treeview-inner").height(1000);	
-				$("#treeview-outer").height(1000);			
+				$('#ucsc').checkboxTree('expandAll');
+				viewBoxClick();
 			}
 			else {
 				$('#ucsc').checkboxTree('collapseAll');
-				$("#treeview-outer").height($("#ucsc").height());
+				viewBoxClick();
 			}
 		}
 

@@ -58,7 +58,7 @@ def make_filter(name, score, strand):
 	return filter
 
 
-# TODO implement remove_invalid and report results to user.  
+# TODO implement remove_invalid and report results to us 10 	er.  
 def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10, run=[]):
 	"""Perform enrichment analysis between two BED files.
 
