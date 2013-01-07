@@ -14,7 +14,7 @@ import json
 import copy
 import traceback  as trace
 from scipy.stats import uniform,kstest,hypergeom
-import pprint,argparse,pdb
+import pprint,argparse,pdb,scipy, math
 
 
 logger = logging.getLogger('genomerunner.query')
@@ -36,7 +36,7 @@ _Enrichment = namedtuple("Enrichment",
 		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value",
 		"pybed_expected","jaccard_observed","jaccard_p_value",
 		"jaccard_expected","proximity_p_value","kolmogorov_p_value","hypergeometric_p_value"])
-_Enrichment_Par = namedtuple("Enrichment_Par","a b A B background n flt genome genome_fn organism obs")
+_Enrichment_Par = namedtuple("Enrichment_Par","a b A B Background n flt genome genome_fn organism obs background")
 class Enrichment(_Enrichment):
 	def category(self):
 		if self.expected == 0 or self.p_value > 0.05:
@@ -68,10 +68,8 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	"""
 	write_debug("START",True)
 	r = {}
-	print "background: ", background
-	print "foi: ", a
 	e = _Enrichment_Par
-	e.a,e.b,e.organism,e.n,e.Background = a,b,organism,n,None
+	e.a,e.b,e.organism,e.n,e.Background, e.background = a,b,organism,n,None,background
 
 	if not background is None:
 		e.Background = BedTool(background)
@@ -144,7 +142,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if 'hypergeometric' in run:
 		write_progress(id,"Running")
 		logger.info("Running hypergeometric analysis {} (id={})".format(b,id))
-		r.update(run_hypgeometric(_Enrichment_Par))
+		r.update(run_hypergeometric(_Enrichment_Par))
 	else:
 		logger.info("Skipping hypergeometric")
 		r['hypergeometric_p_value'] = "NA"
@@ -157,13 +155,13 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 			r['jaccard_exp'],r['proximityp_value'],r['kol_smor_p_value'],r['hypergeometric_p_value'])
 
 
-
-
-	return {"hypergeometric_p_value": 1}
-
 def run_montecarlo(Enrichment_Par):
 	e = Enrichment_Par
-	dist = [len(shuffle(e.A,e.Background,e.organism).intersect(e.B, u=True)) for i in range(e.n)]
+	if e.background is not None:
+		dist = [len(e.A.shuffle(genome=e.organism,chrom=True,incl=e.background).intersect(e.B, u=True)) for i in range(e.n)]
+	else:
+		dist = [len(e.A.shuffle(genome=e.organism,chrom=True).intersect(e.B, u=True)) for i in range(e.n)]
+
 	exp = numpy.mean(dist)
 	# gave p_value a value here so that it doesn't go out of scope, is this needed?
 	p_value = 'NA'
@@ -236,41 +234,30 @@ def run_proximity(Enrichment_Par):
 	proximityp_value = min(proximityp_value,1-proximityp_value)
 	return {"expprox": expprox, "proximityp_value": proximityp_value,"obsprox":obsprox}
 
-def run_hypgeometric(Enrichment_Par):
-	''' Runs the hpergeometric test.  Only runs if a background has been supplied.
-	'''
-	e = Enrichment_Par
-	if e.Background is not None:
-		# get number of genomic features that intersect background
-		foi_obs = e.obs # number of FOIs overlapping with a GF
-		bg_obs = len(e.B.intersect(e.Background)) # number of spot bkg overlapping with a GF
-		rnd_obs = (len(e.A)*bg_obs/len(e.Background)) # Mean of hypergeometric distiribution
-		with open("Debug.log","a") as w:
-			if DEBUG:
-				w.write(pprint.pformat(locals()))
-		if foi_obs == rnd_obs: # No difference
-			hypergeomp_value = 1
-		elif foi_obs < rnd_obs: # Underrepresentation
-			hypergeomp_value = hypergeom.cdf(foi_obs,len(e.Background),bg_obs,len(e.A))
-			if hypergeomp_value <= 0:
-				hypergeomp_value = float(numpy.finfo(numpy.float64).tiny) # If hypergeomp_value is 0, set to min, to avoid log10 error 
-			elif hypergeomp_value >= 1:
-				hypergeomp_value = 1 # Sometimes there may be an overflow in another direction
-		elif foi_obs > rnd_obs:	# Overrepresentation
-			hypergeomp_value = hypergeom.sf(foi_obs,len(e.Background),bg_obs,len(e.A))
-			if hypergeomp_value <= 0:
-				hypergeomp_value = float(numpy.finfo(numpy.float64).tiny) # If hypergeomp_value is 0, set to min, to avoid log10 error 
-			elif hypergeomp_value >= 1:
-				hypergeomp_value = 1 # Sometimes there may be an overflow in another direction
-		else: # No difference
-			hypergeomp_value = 1		
-		
-		write_debug(run_hypgeometric.__name__,False,observed = e.obs,background_length = len(e.Background), 
-			bg_obs = bg_obs, foi_length = len(e.A), p_value= hypergeomp_value, rand_obs = rnd_obs)
-		return {"hypergeometric_p_value": hypergeomp_value}
-	else: 
-		return {"hypergeometric_p_value": "NA"}
 
+def run_hypergeometric(Enrichment_Par):
+	"""  Runs the hypergeometric test.  Requires a background. Returns 'NA' if no background
+	is provided.
+	"""
+	e = Enrichment_Par
+	gf,foi,bg,hypergeomp_value = e.A,e.B,e.Background,"NA"
+	if e.Background is not None:
+		foi_obs = len(foi.intersect(gf, u = True)) # number of FOIs overlapping with a GF
+		bg_obs = len(bg.intersect(gf, u = True)) # number of spot bkg overlapping with a GF
+		rnd_obs = (len(foi)*bg_obs/len(bg)) # Mean of hypergeometric distiribution
+		# pdb.set_trace()
+		if foi_obs == rnd_obs: # No difference
+			hypergeomp_value =  0
+		elif foi_obs < rnd_obs: # Underrepresentation		
+			pval = scipy.stats.fisher_exact([[foi_obs,bg_obs],[len(foi)-foi_obs,len(bg)-bg_obs]],alternative='less')[1]
+			hypergeomp_value = math.log10(pval) # Calculating cdf hypergeometric distribution, not adding "-" to signify underrepresentation
+		elif foi_obs > rnd_obs:	# Overrepresentation		
+			pval = scipy.stats.fisher_exact([[foi_obs,bg_obs],[len(foi)-foi_obs,len(bg)-bg_obs]],alternative='greater')[1]
+			hypergeomp_value = -math.log10(pval) # Calculating sf hypergeometric distribution
+		else: # No difference
+			hypergeomp_value = 0
+			# print "e.obs : %d, rand.obs :			%d, len(back) : %d, back.obs : %d, len(e.A) : %d, hypergeomp_value : %r" % (eobs, randobs, len(back), backobs, len(eA), hypergeomp_value)
+	return {"hypergeometric_p_value": hypergeomp_value}
 
 def shuffle(bedtool, background,organism):
 	""" Accepts a file path to a bed file and a background file
@@ -487,7 +474,7 @@ def write_results_astext(id,enrichment_results,header=False):
 	"""Writes the results of the enrichment analysis into a plain text file.
 	"""
 	fields = {"A": "FOI_Name","B": "GF_Name","nA": "#FOI","nB": "#GF","observed": "observed",
-		"expected":"observed","p_value":"p_value","obsprox":"obsprox","expprox":"expprox",
+		"expected":"expected","p_value":"p_value","obsprox":"obsprox","expprox":"expprox",
 		"pybed_p_value":"pybed_p_value","pybed_expected":"pybed_expected","jaccard_observed":"jaccard_observed"
 		,"jaccard_p_value":"jaccard_p_value","jaccard_expected":"jaccard_expected","proximity_p_value":"proximity_p_value"
 		,"kolmogorov_p_value":"kolmogorov_p_value","hypergeometric_p_value":"hypergeometric_p_value"}
