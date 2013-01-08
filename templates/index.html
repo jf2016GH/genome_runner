@@ -82,7 +82,6 @@
 			$("#treeview-inner").slimScroll({
 			    	height: $("#ucsc").height(),
 			    	width: '540px',
-			    	railVisible: true,
 			    	alwaysVisible: true
 			});
 
@@ -91,13 +90,18 @@
 		function viewBoxClick(){
 			var minHeight = 300;
 			var maxHeight = 500;			
-			// resize to the expanded treeview as long as it is less than 500
+			// resize to the expanded treeview as long as it is less than 500			
 			if ($("#ucsc").height() <= maxHeight) {
-				$(".slimScrollDiv").css("height", $('#ucsc').height()+'px');
+				var oldHeight = $(".slimScrollDiv").height();
+				//$(".slimScrollDiv").css("height", $('#ucsc').height()+'px');
+				$(".slimScrollDiv").height($('#ucsc').height());
+				$("#treeview-inner").height($("#treeview-inner").height() + $(".slimScrollDiv").height() - oldHeight);
+
 			}
 			else if ($("#ucsc").height() > maxHeight){
+				//$(".slimScrollDiv").css("height",maxHeight + 'px');
+				$(".slimScrollDiv").height(maxHeight);
 				$("#treeview-inner").height(maxHeight);
-				$(".slimScrollDiv").css("height",maxHeight + 'px');
 			}
 
 		}

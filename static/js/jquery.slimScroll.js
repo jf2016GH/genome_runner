@@ -263,10 +263,8 @@
           bar.css({ height: barHeight + 'px' });
         }
 
-        $(window).resize(function() {
-         getBarHeight();
-         showBar();
-         });
+        // set up initial height
+        getBarHeight();
 
         function showBar()
         {

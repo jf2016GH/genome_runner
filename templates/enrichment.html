@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		% if status != "FINISHED":
-		<meta http-equiv="refresh" content="10">
-		% endif
-		<style type="text/css" title="currentStyle">
-			@import "static/css/demo_page.css";
-			@import "static/css/jquery.dataTables.css";
-			@import "static/css/demo_table.css";
-			@import "static/css/TableTools.css";
-			.xaxis path, .xaxis line{
-				fill: none;
-				stroke: gray;
-				stroke-width: 1px;
-			</style>
-			<style>
-				body {
-					padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-				}
-				/* allows the check box tree to be rendered correctly*/
-				.ui-icon {float: left;}
-			</style>
+<head>
+	% if status != "FINISHED":
+	<meta http-equiv="refresh" content="10">
+	% endif
+	<style type="text/css" title="currentStyle">
+	@import "static/css/demo_page.css";
+	@import "static/css/jquery.dataTables.css";
+	@import "static/css/demo_table.css";
+	@import "static/css/TableTools.css";
+	.xaxis path, .xaxis line{
+		fill: none;
+		stroke: gray;
+		stroke-width: 1px;
+		</style>
+		<style>
+		body {
+			padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+		}
+		/* allows the check box tree to be rendered correctly*/
+		.ui-icon {float: left;}
+		</style>
 
-			<!-- For IE6-8 support of HTML5 elements -->
+		<!-- For IE6-8 support of HTML5 elements -->
 			<!--[if lt IE 9]>
 			<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 			<![endif]-->
@@ -34,59 +34,59 @@
 			<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
 			<script src="static/js/bootstrap.min.js"></script>
 			<script type="text/javascript" language="javascript"
-				src="static/js/jquery.dataTables.js"></script>
+			src="static/js/jquery.dataTables.js"></script>
 
 			<script type="text/javascript" language="javascript"
-				src="static/js/TableTools.js"></script>
+			src="static/js/TableTools.js"></script>
 			<script type="textjavascript" language="javascript"
-				src="static/js/bootstrap-tooltip.js"></script>
+			src="static/js/bootstrap-tooltip.js"></script>
 
 			<script type="text/javascript" language="javascript"
-				src="static/js/ZeroClipboard.js"></script>
+			src="static/js/ZeroClipboard.js"></script>
 			<script type="text/javascript" charset="utf-8">
-				$(document).ready(function() {
-						$('#tbl').dataTable({
-							"sDom": 'T<"clear">lfrtip',
-							"bJQueryUI": true,
-							"oTableTools": {
-							"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
-							}
-							});
+			$(document).ready(function() {
+				$('#tbl').dataTable({
+					"sDom": 'T<"clear">lfrtip',
+					"bJQueryUI": true,
+					"oTableTools": {
+						"sSwfPath": "static/swf/copy_csv_xls_pdf.swf"
+					}
+				});
 						//		setTimout(ReloadPage(),1000);
 						// this refreshes the page.  It is dependent on the content of the progress label
 						function ReloadPage(){
-						if ($("#progress").val !== "Progress: FINISHED" && $("#progress").val.indexOf("ERROR:") != -1){
-						location.reload();
-						}
+							if ($("#progress").val !== "Progress: FINISHED" && $("#progress").val.indexOf("ERROR:") != -1){
+								location.reload();
+							}
 						}
 
 						$("#progressbar").progressbar({
-value: ${curprog},
-max: ${progmax}
-});
-				$("#x_slider").slider({min:1,max:308,change:updategraph});
-				$("#gfname").popover({content: "test", placement: "top"});
-				$("#numfoi").popover({content: "test", placement: "top"});
-				$("#numgf").popover({content: "test", placement: "top"});
-				$("#obsoverlap").popover({content: "test", placement: "top"});
-				$("#expoverlap").popover({content: "test", placement: "top"});
-				$("#pvalue").popover({content: "test", placement: "top"});
-				$("#pybed_expoverlap").popover({content: "test", placement: "top"});
-				$("#pybed_p_value").popover({content: "test", placement: "top"});
-				$("#jaccard_observed").popover({content: "test", placement: "top"});
-				$("#jaccard_exporverlap").popover({content: "test", placement: "top"});
-				$("#jaccard_p_value").popover({content: "test", placement: "top"});
-				$("#obsprox").popover({content: "test", placement: "top"});
-				$("#exprox").popover({content: "test", placement: "top"});
-				$("#proximity_p_value").popover({content: "test", placement: "top"});
-				$("#x_slider").popover({content: "test", placement: "top"});
-				$("#coltograph").popover({content: "test", placement: "top"});
+							value: ${curprog},
+							max: ${progmax}
+						});
+						$("#x_slider").slider({min:1,max:308,change:updategraph});
+						$("#gfname").popover({content: "test", placement: "top"});
+						$("#numfoi").popover({content: "test", placement: "top"});
+						$("#numgf").popover({content: "test", placement: "top"});
+						$("#obsoverlap").popover({content: "test", placement: "top"});
+						$("#expoverlap").popover({content: "test", placement: "top"});
+						$("#pvalue").popover({content: "test", placement: "top"});
+						$("#pybed_expoverlap").popover({content: "test", placement: "top"});
+						$("#pybed_p_value").popover({content: "test", placement: "top"});
+						$("#jaccard_observed").popover({content: "test", placement: "top"});
+						$("#jaccard_exporverlap").popover({content: "test", placement: "top"});
+						$("#jaccard_p_value").popover({content: "test", placement: "top"});
+						$("#obsprox").popover({content: "test", placement: "top"});
+						$("#exprox").popover({content: "test", placement: "top"});
+						$("#proximity_p_value").popover({content: "test", placement: "top"});
+						$("#x_slider").popover({content: "test", placement: "top"});
+						$("#coltograph").popover({content: "test", placement: "top"});
 
 
 
 
 
-				});
+					});
 
 function getQueryVariable(variable) { 
 	var query = window.location.search.substring(1); 
@@ -103,252 +103,260 @@ function getQueryVariable(variable) {
 
 
 </script>
-	</head>
-	<body>
-		<div class="topbar">
-			<div class="topbar-inner">
-				<div class="container-fluid">
-					<a class="brand" href="./" style="font-family:Futura,'Helvetica Neue', Arial">
-						<img width="120px" src="static/images/GRLogo.png" />
-					</a>
-					<ul class="pull-right">
-						<li><a href="./overview">Overview</a></li>
-						<li><a href="./news">News</a></li>
-						<li><a href="./">Use GenomeRunner</a></li>
-						<li><a href="./demo">Demo</a></li>
-						<li><a href="./cite">How to Cite</a></li>
-					</ul>
-				</div>
-			</div>
-		</div>
-		<br/>
-		<h2 style="margin-top: 60px;">Enrichment results for ${fois}</h2>
-		<div class="well" >
-			<table id="tbl" class="display" cellpadding="0"
-				cellspacing="0" border="0">
-				<thead>
-					
-					<tr>
-						<th id="gfname" rel="popover" data-content="This is a test" value="gfname">GF Name</th>
-						<th id="numfoi" value="numfoi" data-content="This is a test">#FOIs</th>
-						<th id="numgf" value="numgf" data-content="This is a test">#Genomic Features</th>
-						<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>						
-						% for i,e in enumerate(run):
-						% if e == "pvalue":
-						<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>						
-						<th id="pvalue" value="pvalue" data-content="This is a test">P-value</th>
-						% endif
-						% if e == "pybedtool":
-						<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>						
-						<th id="pybed_p_value" value="pybed_p_value" data-content="This is a test">PyBed P-value</th>
-						% endif
-						% if e == "jaccard":
-						<th id="jaccard_observed" value="jaccard_observed" data-content="This is a test">#Overlaps (Jaccard observed)</th>
-						<th id="jaccard_exporverlap"  value="jaccard_expoverlap" data-content="This is a test">#Overlaps(Jaccard expected)</th>
-						<th id="jaccard_p_value" value="jaccard_p_value" data-content="This is a test">Jaccard P-value</th>
-						% endif
-						% if e == "proximity":
-						<th id="obsprox" value="obsprox" data-content="This is a test">Proximity to GF (observed)</th>
-						<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
-						<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
-						% endif
-						% if e == "kolmogorov":
-						<th id="kolmogorov_p_value" value="kolmogorov_p_value" data-content="This is a test">Kolmogorov-Smornov</th>
-						% endif
-						% if e == "hypergeometric":
-						<th id="hypergeometric_p_value" value="hypergeometric_p_value" data-content="This is a test">Hypergeometric Distribution</th>
-						% endif
-						% endfor
-					</tr>
-				
-				</thead>
-				<tbody>
-
-					% for i,e in enumerate(enrichments):					
-						<tr class="${e.category()}">
-							<td>${e.B}</td>
-							<td>${e.nA}</td>
-							<td>${e.nB}</td>
-							<td>${e.observed}</td>
-							% for j,k in enumerate(run):
-							% if k == "pvalue":
-							<td>
-								% if e.expected != "NA":
-								${'%.2f' % round(e.expected)}
-								% else:
-								${e.expected}
-								% endif
-							</td>						
-							<td>
-								% if e.p_value != "NA":
-								${'{:.2E}'.format(e.p_value)}
-								% else:
-								${e.p_value}
-								% endif
-							</td>
-							% endif
-							% if k == "pybedtool":
-							<td>
-								% if e.pybed_expected != "NA":
-								${'%.2f' % round(e.pybed_expected)}
-								% else:
-								${e.pybed_expected}
-								% endif
-							</td>
-							<td>
-								% if e.pybed_p_value != "NA":
-								${'{:.2E}'.format(e.pybed_p_value)}
-								% else:
-								${e.pybed_p_value}
-								% endif
-							</td>
-							% endif
-							% if k == "jaccard":
-							<td>
-								% if e.jaccard_observed != "NA":
-								${'%.2f' % round(e.jaccard_observed)}
-								% else:
-								${e.jaccard_observed}
-								% endif
-							</td>
-							<td>
-								% if e.jaccard_expected != "NA":
-								${'%.2f' % round(e.jaccard_expected)}
-								% else:
-								${e.jaccard_expected}
-								% endif
-							</td>
-							<td>
-								% if e.jaccard_p_value != "NA":
-								${'{:.2E}'.format(e.jaccard_p_value)}
-								% else:
-								${e.jaccard_p_value}
-								% endif
-							</td>
-							% endif
-							% if k == "proximity":
-							<td>
-								% if e.obsprox != "NA":
-								${'%.0f' % round(e.obsprox)}
-								% else:
-								${e.obsprox}
-								% endif
-							</td>
-							<td>
-								% if e.expprox != "NA":
-								${'%.2f' % round(e.expprox)}
-								% else:
-								${e.expprox}
-								% endif
-							</td>
-							<td>
-								% if e.proximity_p_value != "NA":
-								${'{:.2E}'.format(e.proximity_p_value)}
-								% else:
-								${e.proximity_p_value}
-								% endif
-							</td>
-							% endif
-							% if k == "kolmogorov":
-							<td>
-								% if e.kolmogorov_p_value != "NA":
-								${'{:.2E}'.format(e.kolmogorov_p_value)}
-								% else:
-								${e.kolmogorov_p_value}
-								% endif
-							</td>
-							% endif
-							% if k == "hypergeometric":
-							<td>
-								% if e.hypergeometric_p_value != "NA":
-								${'{:.2E}'.format(e.hypergeometric_p_value)}
-								% else:
-								${e.hypergeometric_p_value}
-								% endif
-							</td>
-							% endif
-							% endfor
-						</tr>					
-					% endfor
-				</tbody>
-			</table>
-		</div>
-		<div style="margin: 10px;">
-			<div id="progressbar" ></div>
-			<div class="ui-widget" style="marginr:0px;">
-				<div class="ui-state-highlight ui-corner-all">
-					<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span> ${status}</p>
-				</div>
-			</div>
-		</div>
-		<a class="btn btn-success" style="margin: 10px;" href="enrichment_log?id=${run_id}">Download Log File</a>
-		<div class="well">
-			<h3>Run Details</h3>
-			<div id="runsettings">
-				<ul>
-					<li><b>Background:</b> ${background}</li>
-					<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
-					<li><b>Job Name:</b> ${jobname}</li>
-					<li><b>Filters:</b></li>
-					<ul>
-						<b>Score:</b> ${score}
-						<br>
-						<b>Name: </b> ${name}
-						<br>
-						<b>Strand: </b> ${strand}
-					</ul>
+</head>
+<body>
+	<div class="topbar">
+		<div class="topbar-inner">
+			<div class="container-fluid">
+				<a class="brand" href="./" style="font-family:Futura,'Helvetica Neue', Arial">
+					<img width="120px" src="static/images/GRLogo.png" />
+				</a>
+				<ul class="pull-right">
+					<li><a href="./overview">Overview</a></li>
+					<li><a href="./news">News</a></li>
+					<li><a href="./">Use GenomeRunner</a></li>
+					<li><a href="./demo">Demo</a></li>
+					<li><a href="./cite">How to Cite</a></li>
 				</ul>
 			</div>
 		</div>
-		<div class="well">
-			<div class="row">
+	</div>
+	<br/>
+	<h2 style="margin-top: 60px;">Enrichment results for ${fois}</h2>
+	<div class="well" >
+		<table id="tbl" class="display" cellpadding="0"
+		cellspacing="0" border="0">
+		<thead>
 
-				<div style="margin:5px;" class="span5">
-					<label  style="float: left;"><h3>Plot the value of:</h3>
-					</label>
-					<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
-						% for j,k in enumerate(run):
-							% if k == "pvalue":
-							<option value="pvalue">pvalue</option>
-							% endif
-							% if k == "jaccard":
-							<option value="jaccard_p_value">Jaccard P-value</option>
-							% endif
-							% if k == "pybedtool":
-							<option value="pybed_p_value">PyBed P-value</option>
-							% endif
-							% if k == "proximity":
-							<option value="proximity_p_value">Proximity P-value</option>
-							% endif
-							% if k == "kolmogorov":
-							<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
-							% endif
-							% if k == "hypergeometric":
-							<option value="hypergeometric_p_value">hypergeometric P-value</option>
-							% endif
-						% endfor
-					</select>
+			<tr>
+				<th id="gfname" rel="popover" data-content="This is a test" value="gfname">GF Name</th>
+				<th id="numfoi" value="numfoi" data-content="This is a test">#FOIs</th>
+				<th id="numgf" value="numgf" data-content="This is a test">#Genomic Features</th>
+				<th id="obsoverlap" value="obsoverlap" data-content="This is a test">#Overlaps (observed)</th>						
+				% for i,e in enumerate(run):
+				% if e == "pvalue":
+				<th id="expoverlap" value="expoverlap" data-content="This is a test">#Overlaps (expected)</th>						
+				<th id="pvalue" value="pvalue" data-content="This is a test">P-value</th>
+				% endif
+				% if e == "pybedtool":
+				<th id="pybed_expoverlap" value="pybed_expoverlap" data-content="This is a test">#Overlaps (PyBed expected)</th>						
+				<th id="pybed_p_value" value="pybed_p_value" data-content="This is a test">PyBed P-value</th>
+				% endif
+				% if e == "jaccard":
+				<th id="jaccard_observed" value="jaccard_observed" data-content="This is a test">#Overlaps (Jaccard observed)</th>
+				<th id="jaccard_exporverlap"  value="jaccard_expoverlap" data-content="This is a test">#Overlaps(Jaccard expected)</th>
+				<th id="jaccard_p_value" value="jaccard_p_value" data-content="This is a test">Jaccard P-value</th>
+				% endif
+				% if e == "proximity":
+				<th id="obsprox" value="obsprox" data-content="This is a test">Proximity to GF (observed)</th>
+				<th id="exprox" value="expprox" data-content="This is a test">Proximity to GF (expected)</th>
+				<th id="proximity_p_value" value="proximity_p_value" data-content="This is a test">Proximity P-value</th>
+				% endif
+				% if e == "kolmogorov":
+				<th id="kolmogorov_p_value" value="kolmogorov_p_value" data-content="This is a test">Kolmogorov-Smornov</th>
+				% endif
+				% if e == "hypergeometric":
+				<th id="hypergeometric_p_value" value="hypergeometric_p_value" data-content="This is a test">Hypergeometric Distribution</th>
+				% endif
+				% endfor
+			</tr>
+
+		</thead>
+		<tbody>
+
+			% for i,e in enumerate(enrichments):					
+			<tr class="${e.category()}">
+				<td>${e.B}</td>
+				<td>${e.nA}</td>
+				<td>${e.nB}</td>
+				<td>${e.observed}</td>
+				% for j,k in enumerate(run):
+				% if k == "pvalue":
+				<td>
+					% if e.expected != "NA":
+					${'%.2f' % round(e.expected)}
+					% else:
+					${e.expected}
+					% endif
+				</td>						
+				<td>
+					% if e.p_value != "NA":
+					${'{:.2E}'.format(e.p_value)}
+					% else:
+					${e.p_value}
+					% endif
+				</td>
+				% endif
+				% if k == "pybedtool":
+				<td>
+					% if e.pybed_expected != "NA":
+					${'%.2f' % round(e.pybed_expected)}
+					% else:
+					${e.pybed_expected}
+					% endif
+				</td>
+				<td>
+					% if e.pybed_p_value != "NA":
+					${'{:.2E}'.format(e.pybed_p_value)}
+					% else:
+					${e.pybed_p_value}
+					% endif
+				</td>
+				% endif
+				% if k == "jaccard":
+				<td>
+					% if e.jaccard_observed != "NA":
+					${'%.2f' % round(e.jaccard_observed)}
+					% else:
+					${e.jaccard_observed}
+					% endif
+				</td>
+				<td>
+					% if e.jaccard_expected != "NA":
+					${'%.2f' % round(e.jaccard_expected)}
+					% else:
+					${e.jaccard_expected}
+					% endif
+				</td>
+				<td>
+					% if e.jaccard_p_value != "NA":
+					${'{:.2E}'.format(e.jaccard_p_value)}
+					% else:
+					${e.jaccard_p_value}
+					% endif
+				</td>
+				% endif
+				% if k == "proximity":
+				<td>
+					% if e.obsprox != "NA":
+					${'%.0f' % round(e.obsprox)}
+					% else:
+					${e.obsprox}
+					% endif
+				</td>
+				<td>
+					% if e.expprox != "NA":
+					${'%.2f' % round(e.expprox)}
+					% else:
+					${e.expprox}
+					% endif
+				</td>
+				<td>
+					% if e.proximity_p_value != "NA":
+					${'{:.2E}'.format(e.proximity_p_value)}
+					% else:
+					${e.proximity_p_value}
+					% endif
+				</td>
+				% endif
+				% if k == "kolmogorov":
+				<td>
+					% if e.kolmogorov_p_value != "NA":
+					${'{:.2E}'.format(e.kolmogorov_p_value)}
+					% else:
+					${e.kolmogorov_p_value}
+					% endif
+				</td>
+				% endif
+				% if k == "hypergeometric":
+				<td>
+					% if e.hypergeometric_p_value != "NA":
+					${'{:.2E}'.format(e.hypergeometric_p_value)}
+					% else:
+					${e.hypergeometric_p_value}
+					% endif
+				</td>
+				% endif
+				% endfor
+			</tr>					
+			% endfor
+		</tbody>
+	</table>
+</div>
+<div style="margin: 10px;">
+	<div id="progressbar" ></div>
+	<div class="ui-widget" style="marginr:0px;">
+		<div class="ui-state-highlight ui-corner-all">
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span> ${status}</p>
+		</div>
+	</div>
+</div>
+<a class="btn btn-success" style="margin: 10px;" href="enrichment_log?id=${run_id}">Download Log File</a>
+<div class="well">
+	<h3>Run Details</h3>
+	<div id="runsettings">
+		<ul>
+			<li><b>Background:</b> ${background}</li>
+			<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
+			<li><b>Job Name:</b> ${jobname}</li>
+			<li><b>Filters:</b></li>
+			<ul>
+				<b>Score:</b> ${score}
+				<br>
+				<b>Name: </b> ${name}
+				<br>
+				<b>Strand: </b> ${strand}
+			</ul>
+		</ul>
+	</div>
+</div>
+<div class="well">
+	<div class="row">
+
+		<div style="margin:5px;" class="span5">
+			<div class="well">
+			<label  style="float: left; position: relative;bottom: 6px;"><h3>Plot the value of:</h3>
+			</label>
+			<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
+				% for j,k in enumerate(run):
+				% if k == "pvalue":
+				<option value="pvalue">pvalue</option>
+				% endif
+				% if k == "jaccard":
+				<option value="jaccard_p_value">Jaccard P-value</option>
+				% endif
+				% if k == "pybedtool":
+				<option value="pybed_p_value">PyBed P-value</option>
+				% endif
+				% if k == "proximity":
+				<option value="proximity_p_value">Proximity P-value</option>
+				% endif
+				% if k == "kolmogorov":
+				<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
+				% endif
+				% if k == "hypergeometric":
+				<option value="hypergeometric_p_value">hypergeometric P-value</option>
+				% endif
+				% endfor
+			</select>
+			<br></br>
+				<div id="legendGreen" style="width:20px;height:20px;border:1px solid #000;position: relative;bottom: 5px;background-color: #519E12;">
+					<label style="position: relative;left: 30px;">Underrepresented</label>
 				</div>
-				<div class="span7">
-
-					<div style="width: 40em !important;"  role="popover" data-content="Adjustment of P-value range" id='x_slider'></div>
-					<div id="demo">
-
-					</div>
+				<div id="legendRed" style="width:20px;height:20px;border:1px solid #000;background-color: #9E2012;">
+					<label style="position: relative;left: 30px;">Overrepresented</label>
 				</div>
 			</div>
 		</div>
-		<script src="static/js/d3.js"></script>
-		<script>
+		<div class="span7">
 
-			var columns = $('#tbl thead th').map(function() {
+			<div style="width: 40em !important;"  role="popover" data-content="Adjustment of P-value range" id='x_slider'></div>
+			<div id="graph">
+			</div>
+		</div>
+	</div>
+</div>
+<script src="static/js/d3.js"></script>
+<script>
+
+var columns = $('#tbl thead th').map(function() {
 				//gets the column names from the table
 				//assums that the value field does not contain spaces
 				return $(this).attr('value');
 			});
 
-			var td = $('#tbl tbody tr').map(function(i){
-				var row = {};
+var td = $('#tbl tbody tr').map(function(i){
+	var row = {};
 
 				//find the table cells in the current row
 				$(this).find('td').each(function(i) {
@@ -362,15 +370,15 @@ function getQueryVariable(variable) {
 
 				return row;}).get();
 
-			function neglog10(val) {
-				if (val == 0.0){
-					return 10
-				}
-				else {
-					var logval = -1 * Math.log(parseFloat(val))/Math.log(10);
-					return logval 
-				}
-			}
+function neglog10(val) {
+	if (val == 0.0){
+		return 10
+	}
+	else {
+		var logval = -1 * Math.log(parseFloat(val))/Math.log(10);
+		return logval 
+	}
+}
 
 			// the name of the column to graph
 			var curColumn  =$('#coltograph').val();
@@ -434,9 +442,9 @@ function getQueryVariable(variable) {
 			// Set the default cuttoff for the x axis
 			var cur_slider = 10 
 			var x = d3.scale.linear().domain([
-			-1 * cur_slider 
-			, cur_slider
-			])
+				-1 * cur_slider 
+				, cur_slider
+				])
 			.rangeRound([20,width]).nice();
 
 			var xAxis = d3.svg.axis()
@@ -462,9 +470,9 @@ function getQueryVariable(variable) {
 
 
 				x = d3.scale.linear().domain([
-				-1 * cur_slider 
-				, cur_slider
-				])
+					-1 * cur_slider 
+					, cur_slider
+					])
 				.rangeRound([20,width]).nice();
 
 				xAxis = d3.svg.axis()
@@ -485,14 +493,14 @@ function getQueryVariable(variable) {
 				if (curRow > 0){return "#9E2012";}
 			}	
 
-			var bargraph2 = d3.select("#demo").
+			var bargraph2 = d3.select("#graph").
 			append("svg:svg")
 			.attr("wdith",width + margin.left + margin.right)
 			.attr("height",height +margin.top + margin.bottom);
 			function sortlist(a,b){
 				return ((a<b) ? -1:((a > b) ? 1 : 0));
-				}
-				td.sort(sortlist);
+			}
+			td.sort(sortlist);
 
 
 
@@ -586,17 +594,17 @@ function getQueryVariable(variable) {
 
 				}
 
-			</script>
-			<script text="text/javascript" src="text/javascript">
-				var sampleSVG = d3.select("#demo")
+				</script>
+				<script text="text/javascript" src="text/javascript">
+				var sampleSVG = d3.select("#graph")
 				.append("svg")
 				.attr("width",100)
 				.attr("height",100);
 
 				sampleSVG.append("circle")
 				.style("stroke","gray"
-			</script>
+					</script>
 
-		</body>
-	</html>
+				</body>
+				</html>
 
