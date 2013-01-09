@@ -71,7 +71,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	e = _Enrichment_Par
 	e.a,e.b,e.organism,e.n,e.Background, e.background = a,b,organism,n,None,background
 
-	if not background is None:
+	if os.path.exists(background):
 		e.Background = BedTool(background)
 
 	e.A = BedTool(str(e.a))
@@ -157,7 +157,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 
 def run_montecarlo(Enrichment_Par):
 	e = Enrichment_Par
-	if e.background is not None:
+	if os.path.exists(e.background):
 		dist = [len(e.A.shuffle(genome=e.organism,chrom=True,incl=e.background).intersect(e.B, u=True)) for i in range(e.n)]
 	else:
 		dist = [len(e.A.shuffle(genome=e.organism,chrom=True).intersect(e.B, u=True)) for i in range(e.n)]
@@ -270,7 +270,6 @@ def shuffle(bedtool, background,organism):
 	and the entire genome is used as background
 	"""
 	A, B =  bedtool,background
-	print "test "
 	if B is not None:
 		rand_a = ""
 		for a in A:
@@ -429,7 +428,6 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 	save the result to the "results" directory. Returns list of enrichment results.
 	"""
 	# sets up logging for the run
-	print locals().get('args')
 	if not os.path.exists(res_path): os.makedirs(res_path)
 	hdlr_id_file = logging.FileHandler(os.path.join(res_path,str(id)+".log"))
 	logger.addHandler(hdlr_id_file)
@@ -522,7 +520,6 @@ def write_debug(fun_name,header = False,**kwargs):
 
 # id, f, gfeatures,background, niter, name, score, strand,organism,run
 if __name__ == "__main__":
-	print "USING MAIN"
 	parser = argparse.ArgumentParser(description='Runs Enrichment analysis in GenomeRunner')
 	parser.add_argument('--jobid','-i',
 		help='The file name to output the results to',default="")
