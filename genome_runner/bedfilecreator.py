@@ -85,8 +85,6 @@ def _check_cols(colnames,colstoextract):
 	'''checks if all the columns to extract
 	actually exist in the ucsc table
 	'''
-	print "COLNAMES{}".format(colnames)
-	print "colstoextract".format(colstoextract)
 	for c in colstoextract:
 		if not c in colnames:
 			return False
@@ -230,7 +228,7 @@ def create_feature_set(trackdbpath,organism):
 	outputdir = os.path.dirname(trackdbpath)
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
 	prog, num = 0,len(trackdb) 
-	notsuptypes = set([])
+	notsuptypes, outpath = set([]),""
 	for row in trackdb:	
 		logger.info( 'Processing files {} of {}'.format(prog,num))
 		if row['type'] in preparebed:
@@ -266,6 +264,9 @@ def create_feature_set(trackdbpath,organism):
 				notsuptypes.add(row['type'])
 
 		prog += 1
+		# cleanup the temporary files
+		if os.path.exists(outpath + ".temp"): os.remove(outpath+".temp")
+
 	logger.info( "The following types are not supported (includes all 'big' file types): " + str(notsuptypes))
 	for k,d in numdownloaded.iteritems():
 		logger.info( k + ":" + str(d))

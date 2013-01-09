@@ -16,6 +16,7 @@ from path import basename
 import logging
 from logging import FileHandler,StreamHandler
 import json
+import pdb
 lookup = TemplateLookup(directories=["templates"])
 DEBUG_MODE = True
 
@@ -36,6 +37,7 @@ class WebUI(object):
 			last_id = max(map(int, [basename(file) for file in os.listdir("results")]))
 			while self.next_id() < last_id:
 				pass
+			print last_id
 
 		self._index_html = {}
 
@@ -76,6 +78,7 @@ class WebUI(object):
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, niter=10, name="", score="", strand="", **kwargs):
 		id = self.next_id()
+		print id
 		runset = {}
 		cherrypy.response.timeout = 3600
 		runset['filters'] = {"name": name,"score": score,"strand": strand}
@@ -95,6 +98,7 @@ class WebUI(object):
 			
 		# load the FOI data
 		bed_filename = ""
+
 		data = ""
 		try:
 			f = os.path.join("uploads", str(id)+".bed")
@@ -122,11 +126,13 @@ class WebUI(object):
 						out.write(data)			
 					else:
 						return "upload a file please"
+			else:
+				logger.error("id={} Upload file already exists at {}".format(id,f))
+				return "ERROR: An internal error has occured on the server."		
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: upload a file please"
 		runset["fois"] = bed_filename
-
 		# load the background data if uploaded
 		background_name = ""
 		try:

@@ -600,7 +600,7 @@ function neglog10(val) {
 					gravity: 's',
 					html: true,
 					title: function(){
-						var d = $(this).attr("id"), c = td[d]['pvalue'];
+						var d = $(this).attr("id");
 						return '<p> #observed: ' + td[d]['obsoverlap'] + '<br/>#expected: '
 								+ td[d]['expoverlap'] + '<br/>P-value: '
 								+ td[d]['pvalue'] + '<br/> ' 
