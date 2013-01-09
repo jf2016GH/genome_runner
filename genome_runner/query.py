@@ -58,7 +58,6 @@ def make_filter(name, score, strand):
 	return filter
 
 
-# TODO implement remove_invalid and report results to us 10 	er.  
 def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10, run=[]):
 	"""Perform enrichment analysis between two BED files.
 
@@ -76,6 +75,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 
 	e.A = BedTool(str(e.a))
 	e.B = BedTool(str(e.b))
+	print "A:\n",e.A,"\nB:\n",e.B
 	e.genome = pybedtools.get_chromsizes_from_ucsc(e.organism)
 	e.genome_fn = pybedtools.chromsizes_to_file(e.genome)
 
@@ -90,6 +90,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	e.A.set_chromsizes(e.genome)
 	e.B.set_chromsizes(e.genome)
 	e.obs = len(e.A.intersect(e.B, u=True))
+	print "OBSERVED ",e.obs
 	# This is the Monte-Carlo step.  If custom background present, it is used
 	if 'pvalue' in run:
 		logger.info("Running Monte Carlo ({}): (id={})".format(b,id))
@@ -426,6 +427,8 @@ def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,orga
 	"""
 	Run one FOI file (f) against multiple GFs [list of filenames] (gfeatures), then 
 	save the result to the "results" directory. Returns list of enrichment results.
+	(run) is a list of names of tests to run. The following are available
+	pvalue,pybedtool,jaccard,kolmogorov,proximity,hypergeometric
 	"""
 	# sets up logging for the run
 	if not os.path.exists(res_path): os.makedirs(res_path)

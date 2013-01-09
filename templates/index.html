@@ -6,15 +6,14 @@
 	body {
 		padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
 	}
+	* {
+	  margin: 0;
+	  padding: 0;
+	}
 	/* allows the check box tree to be rendered correctly*/
 	.ui-icon {float: left;}
 	.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
 	</style>
-
-	<!-- For IE6-8 support of HTML5 elements -->
-	<!--[if lt IE 9]>
-	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-	<![endif]-->
 	<link type="text/css" href="static/css/main.css"/>
 	<link type="text/css" href="static/css/demo_table.css"/>
 	<link type="text/css" href="static/css/jquery.tipsy.class"/>
@@ -78,13 +77,13 @@
 			});
 
 			// The tooltips
-			$('.helptooltip').tipsy({
-				gravity: 'w',html: true,
+			/*$('.helptooltip').tipsy({
+				gravity: 'e',html: true,
 				title: function(){
 					var d = $(this).attr("title");
 					return '<p>'+d+'</p>';
 				}				
-			})
+			})*/
 
 			// the viewport for the treeview
 			$("#treeview-inner").slimScroll({
@@ -189,7 +188,7 @@
 			${paths.org_as_html(id="org")}
 		</div>
 		<div class="well">
-			<h3>1. Upload Features of Interest <img class="helptooltip" text="Upload a bed formated file containing regions of interest,SNPs or both <br/> to run the enrichment analysis on." style="position: relative;top: 6px;" 								width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+			<h3>1. Upload Features of Interest <img class="helptooltip" title="Upload a bed formated file containing regions of interest,SNPs or both to run the enrichment analysis on." style="position: relative;top: 6px;" 								width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 			</h3> 
 			<ul>
 				<li id="list-bedfeatures">
@@ -210,7 +209,7 @@
 			</ul>
 		</div>
 		<div class="well">
-			<h3>2. Upload a Background (Optional)<img class="helptooltip" text="If no background file is uploaded, then the genome is used as a background." style="position: relative;top: 6px;"								width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+			<h3>2. Upload a Background (Optional)<img class="helptooltip" title="If no background file is uploaded, then the genome is used as a background." style="position: relative;top: 6px;"								width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 			</h3>
 			<ul>
 				<li id="list-bedbackground">
@@ -270,42 +269,42 @@
 								<td>Calculates the P-Value using Monte Carlo and the PyBedTools intersect. Can use custom background</td>
 								<td>
 									<input type="checkbox" id="chk_pvalue"  name="run:pvalue" checked="checked"/><label for="chk_pvalue">Standard P-Value</label>
-									<img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<a href="#" ><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
 								<td>Calculates the P-Value using PyBedTools. Ignores custom background</td>
 								<td>
 									<input type="checkbox" id="chk_pybedtool"  name="run:pybedtool" /><label for="chk_pybed">BedTools P-Value</label>
-									<img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<a href="#" ><img class="helptooltip" title="INSERT\n CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
 								<td>Calculates the P-Value using the Jaccard statistical test. Ignores custom background</td>
 								<td>
 									<input type="checkbox" id="chk_jaccard" name="run:jaccard" /><label for="chk_jaccard">Jaccard P-Value</label>
-									<img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
 								<td>Runs a proximity analysis. TEST: currently uses background, are the results as expected? Also calculates a P-Value</td>
 								<td>
 									<input type="checkbox" id="chk_proximity"  name="run:proximity" /><label for="chk_proximity">Proximity</label>
-									<img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
 								<td>Calculates a P-Value using the Kolmogorov-Smornov statistical test. Ignores custom background</td>
 								<td>
 									<input type="checkbox" id="chk_kolmogorov"  name="run:kolmogorov" /><label for="chk_kolmogorov">Kolmogorov-Smornov P-Value</label>
-									<img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
 								<td>Calculates a p-value using hypergeometric distribution</td>
 								<td>
 									<input type="checkbox" id="chk_hypergeometric"  name="run:hypergeometric" /><label for="chk_hypergeometric">Hypergeometric Distribution P-Value</label>
-									<img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 						</tbody>
@@ -340,7 +339,7 @@
 			<br>
 			<div class="ui-state-highlight ui-corner-all">
 				<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
-				</span>GenomeRunner works best in Chrome or Internet Explorer 9+</p>
+				</span>GenomeRunner works best in Chrome (Windows) or Internet Explorer 9+ (no compatibility mode). Mac users, use Safari.</p>
 			</div>
 
 		</div>

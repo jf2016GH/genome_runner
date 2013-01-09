@@ -1,17 +1,11 @@
 import textwrap
 
-foi_perfect_match = '''chr1	120	200
-chr1	120	200
-'''
-foi_perfect_match = '''chr1	120	200
-chr1	120	200
-'''
 
 feature_data = {
 'foi_overlap_test': '''chr1	886763	886763	(blank): A single point FOI (Feature of Interest) that lies outside of the GF(Genomic Feature) region
-chr1	886783	886783	(SNPWithin): a SNP that lies inside of the GF region
-chr1	886798	886798	(SNPWithin): a SNP that is equal to the right endpoint of the GF
-chr1	886773	886773	(SNPWithin): a SNP that is equal to the left endpoint of the GF
+chr1	886783	886784	(SNPWithin): a SNP that lies inside of the GF region
+chr1	886798	886799	(SNPWithin): a SNP that is equal to the right endpoint of the GF
+chr1	886773	886774	(SNPWithin): a SNP that is equal to the left endpoint of the GF
 chr1	886773	886798	(Exact): the startpoint and endpoint are equal to the startpoint and endpoint of the GF
 chr1	886763	886790	(Overlap): the startpoint of the FOI is less than the GF startpoint and the FOI endpoint falls between the startpoint and the endpoint of the GF region
 chr1	886783	886808	(Overlap): the startpoint of the FOI is between the endpoint and startpoint of the GF and the endpoint of the FOI is greater than the endpoint of the GF
@@ -37,10 +31,33 @@ chr1	888417	888435	617_0_+_156	156	+
 chr1	1094265	1094313	1087_0_+_62	62	+
 chr1	1109319	1109337	1109_0_+_111	111	+
 chr1	1158458	1158482	1179_1_+_112	112	+''',
+
 'foi_duplicate_test': '''chr1\t100\t200
 chr1\t100\t200
 chr1\t100\t200
-'''
+''',
+
+'diff_chrom_2': '''chr1	100	400	foi1	.
+chr1	70	700	foi2	.
+chr2	100	400	foi3	.
+chr2	50	800	foi4	.
+chr2	1000	1100	foi5	.
+chr1	70	800	foi6	.
+chr1	1000	1100	foi7	.''',
+
+'same_chrom_2': '''chr1	100	400	foi1	.
+chr1	70	700	foi2	.
+chr1	100	400	foi3	.
+chr1	50	800	foi4	.
+chr1	70	800	foi5	.
+chr1	1000	1100	foi5	.''',
+
+'gf_chrom12_2': '''chr1	0	100	gf1	.
+chr2	0	100	gf1	.''',
+
+'gf_chrom2_2': '''chr2	0	1000	gf1	.''',
+
+'gf_chrom1_2': '''chr1	0	1000	gf1	.'''
 }
 
 def get_test_data():
