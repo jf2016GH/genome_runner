@@ -179,6 +179,18 @@ def extract_genepred(outputpath,datapath,colnames):
 	# remove the .temp extension from the exon file 
 	os.rename(exonpath+".temp",exonpath)
 
+def extract_rmsk(outputpath,datapath,colnames):
+	colstoextract = ['genoName','genoStart','genoEnd','repClass', 'strand','swScore']
+	with gzip.open(outputpath,"wb") as bed:
+		with gzip.open(datapath) as dr:
+			while True:
+				line = dr.readline().strip('\r').rstrip('\n')
+				if line == "":
+					break
+				r = dict(zip(colnames,line.split('\t')))
+				row = [r["genoName"],r["genoStart"],r["genoEnd"],r["repClass"],r["strand"],r["swScore"]]
+				bed.write("\t".join(map(str,row))+"\n")
+
 def get_column_names(sqlfilepath):
 	''' extracts the column names from the .sql file and returns them
 	'''
@@ -187,7 +199,10 @@ def get_column_names(sqlfilepath):
 	tbdcolumns = re.findall("\n\s\s`*(.+?)`*\s", tdbsql, re.DOTALL)
 	tbdcolumns = [c for c in tbdcolumns if not c=="KEY"]
 	return tbdcolumns	
-	
+
+# The different file types that can be extracted.
+# To add a new type add a new entry into this dictionary along with 
+# the name of the function that should be used to extract the data.
 preparebed = {"bed 6" : extract_bed6,
 				"broadPeak": extract_bed6,
 				"bed 6 +" : extract_bed6,
@@ -204,6 +219,7 @@ preparebed = {"bed 6" : extract_bed6,
 				"bed 5 +": extract_bed5,
 				"bed 5 .": extract_bed5,
 				"bed 5": extract_bed5,
+				"bed5FloatScore": extract_bed5,
 				"bed 4 +": extract_bed4,
 				"bed 4 .": extract_bed4,
 				"bed 4": extract_bed4,
@@ -220,14 +236,24 @@ preparebed = {"bed 6" : extract_bed6,
 				"genePred geneidPep": extract_genepred,
 				"genePred ensPep": extract_genepred,
 				"genePred acemblyPep acemblyMrn": extract_genepred,
-				"genePred" : extract_genepred}
-numdownloaded = {"bed 6" : 0, "broadPeak" : 0, "bed 6 +" : 0, "bed 3" : 0, "genePred" : 0,"bed 9 +": 0,"bed 12 +": 0, "bed 12 .": 0, "bed 12": 0, "bed 10": 0, "bed 9 +": 0, "bed 9 .": 0, "bed 9": 0, "bed 8 +": 0, "bed 8 .": 0, "bed 6 .": 0, "bed 5 +": 0, "bed 5 .": 0, "bed 5": 0, "bed 4 +": 0, "bed 4 .": 0, "bed 4": 0, "bed 3 +": 0, "bed 3 .": 0, "genePred xenoRefPep xenoRefMrna": 0, "genePred vegaPep": 0, "genePred sgpPep": 0, "genePred refPep refMrna": 0, "genePred nscanPep": 0, "genePred knownGenePep knownGeneMrna": 0, "genePred genscanPep": 0, "genePred geneidPep": 0, "genePred ensPep": 0, "genePred acemblyPep acemblyMrn": 0}
+				"genePred acemblyPep acemblyMrna": extract_genepred,
+				"genePred" : extract_genepred,
+				"rmsk" : extract_rmsk}
+numdownloaded = {"bed 6" : 0, "broadPeak" : 0, "bed 6 +" : 0, "bed 3" : 0, "genePred" : 0,"bed 9 +": 0,
+				"bed 12 +": 0, "bed 12 .": 0, "bed 12": 0, "bed 10": 0, "bed 9 +": 0, "bed 9 .": 0, "bed 9": 0, 
+				"bed 8 +": 0, "bed 8 .": 0, "bed 6 .": 0, "bed 5 +": 0, "bed 5 .": 0, "bed 5": 0, "bed 4 +": 0, 
+				"bed 4 .": 0, "bed 4": 0, "bed 3 +": 0, "bed 3 .": 0, "genePred xenoRefPep xenoRefMrna": 0,
+				 "genePred vegaPep": 0, "genePred sgpPep": 0, "genePred refPep refMrna": 0, "genePred nscanPep": 0,
+				  "genePred knownGenePep knownGeneMrna": 0, "genePred genscanPep": 0, "genePred geneidPep": 0,
+				   "genePred ensPep": 0, "genePred acemblyPep acemblyMrn": 0,"genePred acemblyPep acemblyMrna": 0,
+				   "bed5FloatScore": 0, "rmsk": 0}
 
 
 def create_feature_set(trackdbpath,organism):
 	outputdir = os.path.dirname(trackdbpath)
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
-	prog, num = 0,len(trackdb) 
+	prog, num = 0,len(trackdb)
+	added_features = [] 
 	notsuptypes, outpath = set([]),""
 	for row in trackdb:	
 		logger.info( 'Processing files {} of {}'.format(prog,num))
@@ -251,6 +277,7 @@ def create_feature_set(trackdbpath,organism):
 							preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
 							# remove the .temp file extension to activate the GF
 							os.rename(outpath+".temp",outpath)
+							added_features.append(outpath)
 						else:
 							logger.info( "{} already exists, skipping extraction".format(outpath))
 						numdownloaded[row["type"]] += 1
@@ -267,7 +294,9 @@ def create_feature_set(trackdbpath,organism):
 		# cleanup the temporary files
 		if os.path.exists(outpath + ".temp"): os.remove(outpath+".temp")
 
-	logger.info( "The following types are not supported (includes all 'big' file types): " + str(notsuptypes))
+	logger.info( "The following types are not supported (includes all 'big' file types):\n " + str(notsuptypes))
+	logger.info("The following features were added to the database: \n{}".format(added_features))
+	logger.info("A count of features added by type: ")
 	for k,d in numdownloaded.iteritems():
 		logger.info( k + ":" + str(d))
 	return "created database"
@@ -291,6 +320,7 @@ def create_single_feature(trackdbpath,organism,feature):
 					outpath = os.path.join(outputdir,f_info["grp"],'Tier' + f_info["visibility"],f_info["tableName"]+".gz")
 					if not os.path.exists(os.path.dirname(outpath)):
 						os.makedirs(os.path.dirname(outpath))
+					# if the feature is not in the database, add it
 					if os.path.exists(outpath) == False:
 						# removes the .temp file, to prevent duplicate data from being written
 						if os.path.exists(outpath+".temp"):
