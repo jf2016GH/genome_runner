@@ -32,11 +32,11 @@ chr1	1109325	1158465	"(Overlap,Overlap): The FOI region overlaps two different G
 chr1	1158465	1182285	"(Overlap,Overlap): The FOI region overlaps two different GF regions"
 ''',
 
-'gf_overlap_test': '''591	chr1	886773	886798	608_0_-_96	96	-
-591	chr1	888417	888435	617_0_+_156	156	+
-593	chr1	1094265	1094313	1087_0_+_62	62	+
-593	chr1	1109319	1109337	1109_0_+_111	111	+
-593	chr1	1158458	1158482	1179_1_+_112	112	+''',
+'gf_overlap_test': '''chr1	886773	886798	608_0_-_96	96	-
+chr1	888417	888435	617_0_+_156	156	+
+chr1	1094265	1094313	1087_0_+_62	62	+
+chr1	1109319	1109337	1109_0_+_111	111	+
+chr1	1158458	1158482	1179_1_+_112	112	+''',
 'foi_duplicate_test': '''chr1\t100\t200
 chr1\t100\t200
 chr1\t100\t200

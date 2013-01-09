@@ -21,22 +21,23 @@ def teardown():
 def test_run_enrichments():
     d = data
     results = query.run_enrichments(0,d['foi_duplicate_test'],[d['foi_duplicate_test']],
-                                    None,10,None,None,None,'hg19',['pvalue'])
-    # creates a new namedtuple with the 'correct' values to be compared. 
-    # A: Name of the features of 
+                                    "",10,None,None,None,'hg19',['pvalue'])
+    # creates a new namedtuple with the 'correct' values to be compared.
+    # Values that are not passed into _replace will be assumed to be correct. 
+    # A: Name of the features of interest
+    # B: Nme of the genomic feature
     # nA: the number of Feature of Interest
     # nB: the number of Genomic Features
-    # 
     answers = results[0]._replace(nA = 3,nB=3,p_value=0.0,pybed_expected='NA')
     chk_results(results[0],answers)
 
 @with_setup(setup,teardown)
 def test_overlap_run_enrichments():
     d = data
-    results = query.run_enrichments(0,d['foi_overlap_test'],d['gf_overlap_test'],None
-                                    10,None, None, None, 'hg19',['pvalue','pybedtools'])
-    answers = results[0]._replace(nA = 22,nB=5,observed=19,p_value=0.0,pybed_expected='NA')
-
+    results = query.run_enrichments(0,d['foi_overlap_test'],[d['gf_overlap_test']],"",
+                                    10,None, None, None, 'hg19',['pvalue'])
+    answers = results[0]._replace(nA = 22,nB=5,observed=17,p_value=0.0,pybed_expected='NA')
+    chk_results(results[0],answers)
 
 def chk_results(results,answers):
     '''Takes in two query._Enrichment tuples.  results contains the results from the run.

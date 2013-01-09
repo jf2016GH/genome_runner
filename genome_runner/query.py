@@ -424,7 +424,7 @@ def generate_background(foipath,gfpath,background):
 	run_pvalue=False,run_pybedtool=False,run_jaccard=False,run_proximity=False,run_kolmogorov=False
 def run_enrichments(id, f, gfeatures,background, niter, name, score, strand,organism,run):
 	"""
-	Run one FOI file (f) against multiple GFs (list of filenames), then 
+	Run one FOI file (f) against multiple GFs [list of filenames] (gfeatures), then 
 	save the result to the "results" directory. Returns list of enrichment results.
 	"""
 	# sets up logging for the run
@@ -528,7 +528,7 @@ if __name__ == "__main__":
 	parser.add_argument('--gffile','-b', 
 		help='File containing a list of genomic feature file paths. Required')	
 	parser.add_argument('--background','-k', 
-		help='File containging background in bed format.  Uses organism genome as background by default',default = None)
+		help='File containging background in bed format.  Uses organism genome as background by default',default = "")
 	parser.add_argument('--organism','-g', 
 		help='The UCSC code of the organism to be downloaded (example: hg19 (human))',default = 'hg19')
 	parser.add_argument('--mcnum','-n', 
