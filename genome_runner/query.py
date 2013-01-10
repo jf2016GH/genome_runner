@@ -17,6 +17,7 @@ from scipy.stats import uniform,kstest,hypergeom
 import pprint,argparse,pdb,scipy, math
 
 
+
 logger = logging.getLogger('genomerunner.query')
 hdlr = logging.FileHandler('genomerunner_server.log')
 hdlr_std = StreamHandler()
@@ -75,7 +76,6 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 
 	e.A = BedTool(str(e.a))
 	e.B = BedTool(str(e.b))
-	print "A:\n",e.A,"\nB:\n",e.B
 	e.genome = pybedtools.get_chromsizes_from_ucsc(e.organism)
 	e.genome_fn = pybedtools.chromsizes_to_file(e.genome)
 
@@ -90,7 +90,6 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	e.A.set_chromsizes(e.genome)
 	e.B.set_chromsizes(e.genome)
 	e.obs = len(e.A.intersect(e.B, u=True))
-	print "OBSERVED ",e.obs
 	# This is the Monte-Carlo step.  If custom background present, it is used
 	if 'pvalue' in run:
 		logger.info("Running Monte Carlo ({}): (id={})".format(b,id))
@@ -225,12 +224,24 @@ def run_proximity(Enrichment_Par):
 	expall.append(numpy.mean(numpy.array(expall,float)))
 	# calculate the expected mean for all of the runs
 	expprox = numpy.mean(numpy.array(expall,float))	
+	
 	# proximety analysis for observed
 	tmp = e.A.closest(e.B,d=True)
 	obsall = []
 	for t in tmp:
 		obsall.append(t[-1])
-	obsprox = numpy.mean(numpy.array(obsall,float))
+
+	# filter out -1 values that occurs when no features are found 
+	# on a chromosome
+	num_array = numpy.array(obsall,float)
+	num_array = num_array[num_array != -1]
+
+	obsprox = numpy.mean(num_array)
+
+	# special case when there are no FOI on the same chroms as GF
+	if numpy.isnan(obsprox):
+		return {"expprox": "NA", "proximityp_value": "NA","obsprox":"NA"}
+
 	proximityp_value = len([x for x in expall if x > obsprox]) / float(len(expall))
 	proximityp_value = min(proximityp_value,1-proximityp_value)
 	return {"expprox": expprox, "proximityp_value": proximityp_value,"obsprox":obsprox}
