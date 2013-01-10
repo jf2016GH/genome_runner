@@ -83,7 +83,12 @@
 						$("#x_slider").popover({content: "test", placement: "top"});
 						$("#coltograph").popover({content: "test", placement: "top"});
 
-
+						$(function() {
+							$("#accordion").accordion({
+								collapsible: true,
+								active: false
+							});
+						});
 
 
 
@@ -283,22 +288,26 @@ function getQueryVariable(variable) {
 	</div>
 </div>
 <a class="btn btn-success" style="margin: 10px;" href="enrichment_log?id=${run_id}">Download Log File</a>
-<div class="well">
-	<h3>Run Details</h3>
-	<div id="runsettings">
-		<ul>
-			<li><b>Background:</b> ${background}</li>
-			<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
-			<li><b>Job Name:</b> ${jobname}</li>
-			<li><b>Filters:</b></li>
-			<ul>
-				<b>Score:</b> ${score}
-				<br>
-				<b>Name: </b> ${name}
-				<br>
-				<b>Strand: </b> ${strand}
-			</ul>
-		</ul>
+<div id="accordion" style="padding-bottom: 1em;list-style:none;">			
+	<h3  id="accordionheader"><a href="#" style="font-size:120%">Run Details</a></h3> 
+	<div>
+		<div class="well">
+			<div id="runsettings">
+				<ul>
+					<li><b>Background:</b> ${background}</li>
+					<li><b>Number of Monte Carlo Runs:</b> ${niter}</li>
+					<li><b>Job Name:</b> ${jobname}</li>
+					<li><b>Filters:</b></li>
+					<ul>
+						<b>Score:</b> ${score}
+						<br>
+						<b>Name: </b> ${name}
+						<br>
+						<b>Strand: </b> ${strand}
+					</ul>
+				</ul>
+			</div>
+		</div>
 	</div>
 </div>
 <div class="well">
@@ -306,31 +315,31 @@ function getQueryVariable(variable) {
 
 		<div style="margin:5px;" class="span5">
 			<div class="well">
-			<label  style="float: left; position: relative;bottom: 6px;"><h3>Plot the value of:</h3>
-			</label>
-			<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
-				% for j,k in enumerate(run):
-				% if k == "pvalue":
-				<option value="pvalue">pvalue</option>
-				% endif
-				% if k == "jaccard":
-				<option value="jaccard_p_value">Jaccard P-value</option>
-				% endif
-				% if k == "pybedtool":
-				<option value="pybed_p_value">PyBed P-value</option>
-				% endif
-				% if k == "proximity":
-				<option value="proximity_p_value">Proximity P-value</option>
-				% endif
-				% if k == "kolmogorov":
-				<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
-				% endif
-				% if k == "hypergeometric":
-				<option value="hypergeometric_p_value">hypergeometric P-value</option>
-				% endif
-				% endfor
-			</select>
-			<br></br>
+				<label  style="float: left; position: relative;bottom: 6px;"><h3>Plot the value of:</h3>
+				</label>
+				<select onchange="updategraph()" data-content="-LOG10(pvalue)" role="popover" id="coltograph">
+					% for j,k in enumerate(run):
+					% if k == "pvalue":
+					<option value="pvalue">pvalue</option>
+					% endif
+					% if k == "jaccard":
+					<option value="jaccard_p_value">Jaccard P-value</option>
+					% endif
+					% if k == "pybedtool":
+					<option value="pybed_p_value">PyBed P-value</option>
+					% endif
+					% if k == "proximity":
+					<option value="proximity_p_value">Proximity P-value</option>
+					% endif
+					% if k == "kolmogorov":
+					<option value="kolmogorov_p_value">Kolmogorov-Smornov</option>
+					% endif
+					% if k == "hypergeometric":
+					<option value="hypergeometric_p_value">hypergeometric P-value</option>
+					% endif
+					% endfor
+				</select>
+				<br></br>
 				<div id="legendGreen" style="width:20px;height:20px;border:1px solid #000;position: relative;bottom: 5px;background-color: #519E12;">
 					<label style="position: relative;left: 30px;">Underrepresented</label>
 				</div>
@@ -602,13 +611,13 @@ function neglog10(val) {
 					title: function(){
 						var d = $(this).attr("id");
 						return '<p> #observed: ' + td[d]['obsoverlap'] + '<br/>#expected: '
-								+ td[d]['expoverlap'] + '<br/>P-value: '
-								+ td[d]['pvalue'] + '<br/> ' 
-									'</p>'; 
+						+ td[d]['expoverlap'] + '<br/>P-value: '
+						+ td[d]['pvalue'] + '<br/> ' 
+						'</p>'; 
 					}
 				});
 
 				</script>				
-				</body>
-				</html>
+			</body>
+			</html>
 
