@@ -1,11 +1,12 @@
 import test_data
 from nose.tools import with_setup,eq_
+from nose.tools import assert_almost_equal as almost_eq
 from genome_runner import query
 
 
 #_Enrichment_Par = namedtuple("Enrichment_Par","a b A B Background n flt genome genome_fn organism obs background")
 
-#_Enrichment["A","B","nA","nB","","expected","p_value","obsprox","expprox","pybed_p_value",
+#_Enrichment["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value",
 #"pybed_expected","jaccard_observed","jaccard_p_value",
 #"jaccard_expected","proximity_p_value","kolmogorov_p_value","hypergeometric_p_value"])
 
@@ -21,9 +22,11 @@ def teardown():
 
 @with_setup(setup,teardown)
 def test_runenrichment_foiandgfcount():
+    ''' Tests whether only one hit is returned per FOI
+    '''
     results = query.run_enrichments(0,d['foi_duplicate_test'],[d['foi_duplicate_test']],
                                     "",10,None,None,None,'hg19',['pvalue'])
-    answers = results[0]._replace(nA = 3,nB=3)
+    answers = results[0]._replace(nA = 3,nB=3,observed=3)
 
 @with_setup(setup,teardown)
 def test_runenrichment_sameregions():
@@ -40,22 +43,31 @@ def test_runenrichment_sameregions():
 
 @with_setup(setup,teardown)
 def test_runenrichment_diffchromosome():
-    ''' Tests whether a GFs on diff chrom than FOI are not counted as hits'''
+    ''' Tests whether  a GFs on diff chrom than FOI are not counted as hits'''
     results = query.run_enrichments(0,d['same_chrom_2'],[d['gf_chrom2_2']],"",
                                     10,None, None, None, 'hg19',['pvalue','jaccard','proximity'])
-    answers = results[0]._replace(observed=0,jaccard_observed=0,obsprox=-1.0)
+    answers = results[0]._replace(nA=6,nB=1, observed=0,jaccard_observed=0,obsprox="NA")
     chk_results(results[0],answers)
 
 @with_setup(setup,teardown)
+# TODO test jaccard in this test
 def test_runenrichment_chromspecific():
-    ''' Tests where GF hits are only returned for FOI on the same chromosome'''
-    results = query.run_enrichments(0,d['same_chrom_2'],[d['gf_chrom1_2']],"",
+    ''' Tests where GF hits are only returned for FOI on the same chromosome
+    '''
+    results = query.run_enrichments(0,d['diff_chrom_2'],[d['gf_chrom2_2']],"",
                                     10,None, None, None, 'hg19',['pvalue','jaccard','proximity'])
-    answers = results[0]._replace(nB=1,observed=2,jaccard_observed=2,obsprox=300)
+    answers = results[0]._replace(nA=7, nB=1,observed=1,obsprox=300.666666667)
     chk_results(results[0],answers)
 
-#@with_setupf(setup,teardown)
-#def test_strandspecific_runenrichment:
+@with_setup(setup,teardown)
+def test_runenrichment_strandspecific():
+    ''' Tests strand specific tests '''
+
+    # both strands included
+    results = query.run_enrichments(0,d['foi_strand_3'],[d['gf_strand_3']],"",
+                                    10,None, None, ".", 'hg19',['pvalue','jaccard','proximity'])
+    answers = results[0]._replace(nA=6, nB=3,observed=3,obsprox=50.5)
+    chk_results(results[0],answers)
 
 
 def chk_results(results,answers):
@@ -66,4 +78,15 @@ def chk_results(results,answers):
     r = results
     a = answers
     for i in range(len(results)):
-        eq_(r[i],a[i],"{} should be: {} instead is: {}".format(r._fields[i],a[i],r[i]))
+        if is_number(r[i]) and is_number(a[i]):
+            almost_eq(float(r[i]),float(a[i]),7,"{} should be: {} instead is: {}".format(r._fields[i],a[i],r[i]))
+        else:
+            eq_(r[i],a[i],"{} should be: {} instead is: {}".format(r._fields[i],a[i],r[i]))
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

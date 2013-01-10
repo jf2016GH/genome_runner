@@ -1,4 +1,4 @@
-import textwrap
+import textwrap,os
 
 
 feature_data = {
@@ -55,15 +55,29 @@ chr1	1000	1100	foi5	.''',
 'gf_chrom12_2': '''chr1	0	100	gf1	.
 chr2	0	100	gf1	.''',
 
-'gf_chrom2_2': '''chr2	0	1000	gf1	.''',
+'gf_chrom2_2': '''chr2	0	100	gf1	.
+''',
 
-'gf_chrom1_2': '''chr1	0	1000	gf1	.'''
+'gf_chrom1_2': '''chr1	0	1000	gf1	.
+''',
+
+'gf_strand_3': '''chr1	100	200	+
+chr1	100	200	.
+chr1	100	200	-
+''',
+'foi_strand_3': '''chr1	100	200	.	.	+
+chr1	100	200	.	.	.
+chr1	100	200	.	.	-
+chr1	300	400	.	.	+
+chr1	300	400	.	.	.
+chr1	300	400	.	.	-
+'''
 }
 
 def get_test_data():
 	data = {}
 	for i,k in feature_data.items():	
-		outpath = i + ".test.bed"	
+		outpath = os.path.join("test",i + ".test.bed")
 		with open(outpath, "w") as w:
 			w.write(textwrap.dedent(k))
 			data[i] = outpath

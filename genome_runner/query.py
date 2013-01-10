@@ -215,31 +215,39 @@ def run_proximity(Enrichment_Par):
 	#stores the means of the distances for the MC
 	e = Enrichment_Par 
 	expall =[]
-	for i in range(e.n):
-		tmp = shuffle(e.A,e.Background,e.organism).closest(e.B,d=True)
-		# get the distances
-		for t in tmp:
-			expall.append(t[-1])
-	# calculate the overal expected distance
-	expall.append(numpy.mean(numpy.array(expall,float)))
-	# calculate the expected mean for all of the runs
-	expprox = numpy.mean(numpy.array(expall,float))	
+	if os.path.exists(e.background):
+		rand_prox = [e.A.shuffle(genome=e.organism,chrom=True,incl=e.background).closest(e.B, d=True,t="first") for i in range(e.n)]
+	else:
+		rand_prox = [e.A.shuffle(genome=e.organism,chrom=True).closest(e.B, d=True,t="first") for i in range(e.n)]
 	
+	# get the distances
+	for r in rand_prox:
+		for d in r:
+			expall.append(d[-1])
+	
+	num_array_exp = numpy.array(expall,float)
+	num_array_exp = num_array_exp[num_array_exp != -1]
+
+	# calculate the expected mean for all of the runs
+	expprox = numpy.mean(num_array_exp)	
+	
+
 	# proximety analysis for observed
-	tmp = e.A.closest(e.B,d=True)
+	tmp = e.A.closest(e.B,d=True,t="first")
 	obsall = []
 	for t in tmp:
 		obsall.append(t[-1])
 
 	# filter out -1 values that occurs when no features are found 
 	# on a chromosome
-	num_array = numpy.array(obsall,float)
-	num_array = num_array[num_array != -1]
+	num_array_obs = numpy.array(obsall,float)
+	num_array_obs = num_array_obs[num_array_obs != -1]
 
-	obsprox = numpy.mean(num_array)
-
+	obsprox = numpy.mean(num_array_obs)
+	print "obxprox ",obsprox,"obsall ", obsall
 	# special case when there are no FOI on the same chroms as GF
 	if numpy.isnan(obsprox):
+		logger.info("Unable to run proximity, no Genomic Features exist on the same chrome as the Features of Interest ({}): (id={})".format(e.b,id))
 		return {"expprox": "NA", "proximityp_value": "NA","obsprox":"NA"}
 
 	proximityp_value = len([x for x in expall if x > obsprox]) / float(len(expall))
