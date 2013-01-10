@@ -30,6 +30,9 @@ def test_runenrichment_foiandgfcount():
 
 @with_setup(setup,teardown)
 def test_runenrichment_sameregions():
+    # Runs the test:
+    # 0 is the id of the run, d is a dictionary (pass in name of test file created in test_data.py to run),
+    # third argument is a list of test files to run,background, number of iterations, 
     results = query.run_enrichments(0,d['foi_duplicate_test'],[d['foi_duplicate_test']],
                                     "",10,None,None,None,'hg19',['pvalue'])
     # creates a new namedtuple with the 'correct' values to be compared.
@@ -50,7 +53,6 @@ def test_runenrichment_diffchromosome():
     chk_results(results[0],answers)
 
 @with_setup(setup,teardown)
-# TODO test jaccard in this test
 def test_runenrichment_chromspecific():
     ''' Tests where GF hits are only returned for FOI on the same chromosome
     '''
@@ -63,18 +65,37 @@ def test_runenrichment_chromspecific():
 def test_runenrichment_strandspecific():
     ''' Tests strand specific tests '''
 
-    # both strands included
+    # negative strand only
     results = query.run_enrichments(0,d['foi_strand_3'],[d['gf_strand_3']],"",
-                                    10,None, None, ".", 'hg19',['pvalue','jaccard','proximity'])
-    answers = results[0]._replace(nA=6, nB=3,observed=3,obsprox=50.5)
+                                    10,None, None, "-", 'hg19',['pvalue'])
+    answers = results[0]._replace(nA=5,nB=1,observed=2)
     chk_results(results[0],answers)
+
+    # positive strand only
+    results = query.run_enrichments(0,d['foi_strand_3'],[d['gf_strand_3']],"",
+                                    10,None, None, "+", 'hg19',['pvalue'])
+    answers = results[0]._replace(nA=5,nB=1,observed=3)
+    chk_results(results[0],answers)
+
+    # negative strand only for proximity
+    results = query.run_enrichments(0,d['foi_strand_prox'],[d['gf_strand_prox']],"",
+                                    10,None, None, "-", 'hg19',['proximity'])
+    answers = results[0]._replace(nA=1,nB=1,obsprox=201)
+    chk_results(results[0],answers)
+
+    # positive strand only for proximity
+    results = query.run_enrichments(0,d['foi_strand_prox'],[d['gf_strand_prox']],"",
+                                    10,None, None, "+", 'hg19',['proximity'])
+    answers = results[0]._replace(nA=1,nB=1,obsprox=101)
+    chk_results(results[0],answers)
+
 
 
 def chk_results(results,answers):
     '''Takes in two query._Enrichment tuples.  results contains the results from the run.
     answers contains what the actual results should be. gives a description of which results
-    failed.
-    '''
+    failed
+.    '''
     r = results
     a = answers
     for i in range(len(results)):
@@ -85,6 +106,7 @@ def chk_results(results,answers):
 
 
 def is_number(s):
+    if s==None: return None 
     try:
         float(s)
         return True

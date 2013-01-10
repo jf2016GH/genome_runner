@@ -37,7 +37,13 @@ _Enrichment = namedtuple("Enrichment",
 		["A","B","nA","nB","observed","expected","p_value","obsprox","expprox","pybed_p_value",
 		"pybed_expected","jaccard_observed","jaccard_p_value",
 		"jaccard_expected","proximity_p_value","kolmogorov_p_value","hypergeometric_p_value"])
-_Enrichment_Par = namedtuple("Enrichment_Par","a b A B Background n flt genome genome_fn organism obs background")
+_Enrichment_Par = namedtuple("Enrichment_Par","a b A B nA nB Background n flt genome genome_fn organism obs background")
+def Enrichment_Par(a=None, b=None, A=None, B=None, nA = None, nB = None, Background=None, n=None, 
+				   flt=None, genome=None, genome_fn=None, organism=None, obs=None, background=None):
+	return _Enrichment_Par(a=a, b=b, A=A, B=B, nA=nA,nB=nB, Background=Background, n=n, flt=flt, 
+						  genome=genome, genome_fn=genome_fn, organism=organism,
+						  obs=obs, background=background)
+
 class Enrichment(_Enrichment):
 	def category(self):
 		if self.expected == 0 or self.p_value > 0.05:
@@ -62,39 +68,40 @@ def make_filter(name, score, strand):
 def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, n=10, run=[]):
 	"""Perform enrichment analysis between two BED files.
 
-	a - path to Feature of Interest BED file
-	b - path to Genomic Feature BED file
+	a - path to Feature of Interest BED file (FOI)
+	b - path to Genomic Feature BED file (GF)
 	n - number of Monte-Carlo iterations
 	"""
 	write_debug("START",True)
 	r = {}
-	e = _Enrichment_Par
-	e.a,e.b,e.organism,e.n,e.Background, e.background = a,b,organism,n,None,background
+	e = Enrichment_Par(a=a,b=b,organism=organism,n=n,background=background)
 
-	if os.path.exists(background):
-		e.Background = BedTool(background)
+	if os.path.exists(e.background):
+		e = e.replace(Background = BedTool(e.background))
 
-	e.A = BedTool(str(e.a))
-	e.B = BedTool(str(e.b))
-	e.genome = pybedtools.get_chromsizes_from_ucsc(e.organism)
-	e.genome_fn = pybedtools.chromsizes_to_file(e.genome)
+	e = e._replace(A = BedTool(str(e.a)))
+	e = e._replace(B = BedTool(str(e.b)))
+	e = e._replace(genome = pybedtools.get_chromsizes_from_ucsc(e.organism))
+	e = e._replace(genome_fn = pybedtools.chromsizes_to_file(e.genome))
 
-	e.organism = str(e.organism)
+	e = e._replace(organism = str(e.organism))
 	flt = make_filter(name,score,strand)
-	e.B.filter(flt).saveas()
-	e.nA = len(e.A)
-	e.nB = len(e.B)
+	e = e._replace(B = e.B.filter(flt).saveas())
+	e = e._replace(nA = len(e.A))
+	e = e._replace(nB = len(e.B))
+	# Exits if there are 0 GFs or 0 FOI
 	if not e.nA or not e.nB:
-		return Enrichment(e.a,basename(e.b),e.nA,e.nB,0,0,1,0,0,1,0,0,1,0)
+		logger.info("Filter resulted in 0 Features of Interest. Terminating Run. {} (id={})".format(b,id))
+		return Enrichment(e.a,basename(e.b),e.nA,e.nB,"NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","NA","NA")
 
 	e.A.set_chromsizes(e.genome)
 	e.B.set_chromsizes(e.genome)
-	e.obs = len(e.A.intersect(e.B, u=True))
+	e = e._replace(obs = len(e.A.intersect(e.B, u=True)))
 	# This is the Monte-Carlo step.  If custom background present, it is used
 	if 'pvalue' in run:
 		logger.info("Running Monte Carlo ({}): (id={})".format(b,id))
 		write_progress(id, "Running Monte Carlo {}".format(b))
-		r.update(run_montecarlo(_Enrichment_Par))
+		r.update(run_montecarlo(e))
 	else:
 		r['p_value'], r['exp'] = "NA","NA"
 		logger.info("Skipping Monte Carlo ({}): (id={})".format(b,id))
@@ -106,7 +113,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if 'pybedtool' in run:
 		logger.info("Running Random Intersections ({}): (id={})".format(b,id))
 		write_progress(id, "Running Random Intersections: {0}".format(b))
-		r.update( run_pybedtool(_Enrichment_Par))
+		r.update( run_pybedtool(e))
 	else:
 		r['pybedp_value'], r['pybed_exp'] = "NA","NA"
 		logger.info("Skipping Random Intersections")
@@ -115,7 +122,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if 'jaccard' in run:
 		logger.info("Running Jaccard ({}): (id={})".format(e.b,id))
 		write_progress(id, "Running Jaccard {}".format(e.b))
-		r.update( run_jaccard(_Enrichment_Par))
+		r.update( run_jaccard(e))
 	else:
 		r['jaccardp_value'], r['jaccard_obs'],r['jaccard_exp'] = "NA","NA","NA"
 		logger.info("Skipping Jaccard ({}): (id={})".format(b,id))
@@ -124,7 +131,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if 'kolmogorov' in run:
 		logger.info("Running Kolmogorov-Smornov {} (id={})".format(b,id))
 		write_progress(id, "Running Kolmogorov-Smornov{}".format(b))
-		r.update( run_kolmogorov(_Enrichment_Par))
+		r.update( run_kolmogorov(e))
 	else:
 		r['kol_smor_p_value'] = "NA"
 		logger.info("Skipping Kolmogorov-Smornov {} (id={})".format(b,id))
@@ -133,7 +140,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if 'proximity' in run:
 		logger.info("Running proximity {} (id={})".format(b,id))
 		write_progress(id, "Running proximity analysis{}".format(b))
-		r.update( run_proximity(_Enrichment_Par))
+		r.update( run_proximity(e))
 	else:
 		logger.info( "Skipping Proximity")
 		r['obsprox'],r['expprox'],r['proximityp_value']="NA","NA", "NA" 
@@ -142,7 +149,7 @@ def enrichment(id,a, b,background, organism,name=None, score=None, strand=None, 
 	if 'hypergeometric' in run:
 		write_progress(id,"Running")
 		logger.info("Running hypergeometric analysis {} (id={})".format(b,id))
-		r.update(run_hypergeometric(_Enrichment_Par))
+		r.update(run_hypergeometric(e))
 	else:
 		logger.info("Skipping hypergeometric")
 		r['hypergeometric_p_value'] = "NA"
@@ -244,7 +251,6 @@ def run_proximity(Enrichment_Par):
 	num_array_obs = num_array_obs[num_array_obs != -1]
 
 	obsprox = numpy.mean(num_array_obs)
-	print "obxprox ",obsprox,"obsall ", obsall
 	# special case when there are no FOI on the same chroms as GF
 	if numpy.isnan(obsprox):
 		logger.info("Unable to run proximity, no Genomic Features exist on the same chrome as the Features of Interest ({}): (id={})".format(e.b,id))

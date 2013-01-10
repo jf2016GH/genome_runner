@@ -25,3 +25,10 @@ Run
 	python -m genome_runner.server [optional port#]
 
 By default the server is run on port 8081..
+
+
+# Unit testing
+Unit testing done with Nose
+Run from /genome_runner/genom_runner
+nosetests --exe
+
