@@ -188,19 +188,21 @@
 			${paths.org_as_html(id="org")}
 		</div>
 		<div class="well">
-			<h3>1. Upload Features of Interest <img class="helptooltip" title="Upload a bed formated file containing regions of interest,SNPs or both to run the enrichment analysis on." style="position: relative;top: 6px;" 								width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+			<h3>1. Upload Features of Interest <img class="helptooltip" title="Upload a bed formated file containing regions of interest, to run the enrichment analysis on." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 			</h3> 
 			<ul>
 				<li id="list-bedfeatures">
 					<input type="radio" name="rdbed"  checked="checked"  value="bedfile" onclick="switchinput(this.value)"/>
-					Bed File:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" />
+					Bed File:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" />   
+            <a href="http://www.google.com">Help on BED file format</a>
 				</li>
+                
 				<li id="list-listfeatures">
 					<span style="margin-right:5px; float: left">
 						<input name="rdbed" type="radio" id="bedchoicedata" style="margin:5px" value="beddata" onclick="switchinput(this.value)"/>
 					</span>
 					<span style="margin-right:5px; float: left">Paste Data in Bed Format:
-					<img id="helpfeature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+					<img class="helptooltip" title="Paste bed formatted regions of interest, to run the enrichment analysis on." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</span>
 					<br/><br/>
 					<textarea id="inputbeddata" rows=5 cols=50 style="margin:5px" name="bed_data" disabled>
@@ -209,7 +211,7 @@
 			</ul>
 		</div>
 		<div class="well">
-			<h3>2. Upload a Background (Optional)<img class="helptooltip" title="If no background file is uploaded, then the genome is used as a background." style="position: relative;top: 6px;"								width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+			<h3>2. Upload a Background (Optional)<img class="helptooltip" title="If no background file is uploaded, then the genome for the selected organism is used as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 			</h3>
 			<ul>
 				<li id="list-bedbackground">
@@ -224,7 +226,7 @@
 					</span>
 					<span style="margin-right:5px; float: left">
 						Paste Data in Bed Format:
-						<img id="helpfeature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<img class="helptooltip" title="Paste bed formatted intervals to be used as a background for random sampling." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 					</span>
 						<br/><br/>
 					<textarea id="inputbackgrounddata" rows=5 cols=50 style="margin:5px" name="background_data" disabled>
@@ -233,21 +235,21 @@
 			</ul>
 		</div>
 		<div class="well">
-			<h3>3. Choose tracks of interest:</h3>
+			<h3>3. Choose genome annotation features:</h3>
 			<div id="grfdroplist">
-				<label >Enter track names: </label>
+				<label >Enter genome annotation names: </label>
 				<ol style="left: 24px;position: relative; padding-top:10px;padding-bottom:10px;">        
 					<li id="grf-list" class="input-text">
 						<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
 					</li>
 					<div id="grfs-auto">
-						<div class="default">Type the names of the GenomeRunner features to run</div> 
+						<div class="default">Type the names of the genome annotation features to run</div>
 						<ul id="feed">
 						</ul>
 					</div>
 				</ol>   
 			</div>
-			<label >Select track names: </label>
+			<label >Select genome annotation features: </label>
 				<div>
 					<a class="btn" onClick="changeCheckedStateTreeView(true)">Expand All</a>
 					<a class="btn" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
@@ -260,51 +262,51 @@
 		</div>
 		
 		<div id="accordion" style="padding-bottom: 1em;list-style:none;">			
-			<h3  id="accordionheader"><a href="#" style="font-size:120%">5.Select Tests (Advanced)</a></h3> 
+			<h3  id="accordionheader"><a href="#" style="font-size:120%">4.Select Tests for enrichment analysis (Advanced)</a></h3>
 			<div>
 				<div class="well">
 					<table class="table table-bordered table-striped">
 						<tbody>
 							<tr>
-								<td>Calculates the P-Value using Monte Carlo and the PyBedTools intersect. Can use custom background</td>
+								<td>Calculates the P-Value using binomial distribution. Can use custom background</td>
 								<td>
 									<input type="checkbox" id="chk_pvalue"  name="run:pvalue" checked="checked"/><label for="chk_pvalue">Standard P-Value</label>
-									<a href="#" ><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+									<a href="#" ><img class="helptooltip" title="Observed number of regions of interest with genome annotation features is compared with what would be observed by random chance" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
-								<td>Calculates the P-Value using PyBedTools. Ignores custom background</td>
+								<td>Calculates the P-Value using PyBedTools. Whole genome background is used; any custom background ignored</td>
 								<td>
 									<input type="checkbox" id="chk_pybedtool"  name="run:pybedtool" /><label for="chk_pybed">BedTools P-Value</label>
-									<a href="#" ><img class="helptooltip" title="INSERT\n CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+									<a href="#" ><img class="helptooltip" title="P-value is calculated using native PyBedTools method" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
-								<td>Calculates the P-Value using the Jaccard statistical test. Ignores custom background</td>
+								<td>(beta) Calculates the P-Value using Jaccard statistics. Whole genome background is used; any custom background ignored</td>
 								<td>
 									<input type="checkbox" id="chk_jaccard" name="run:jaccard" /><label for="chk_jaccard">Jaccard P-Value</label>
-									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+									<a href="#"><img class="helptooltip" title="Observed and expected by random chance Jaccard statistics are compared using binomial distribution" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
-								<td>Runs a proximity analysis. TEST: currently uses background, are the results as expected? Also calculates a P-Value</td>
+								<td>(beta) Runs a proximity analysis.</td>
 								<td>
 									<input type="checkbox" id="chk_proximity"  name="run:proximity" /><label for="chk_proximity">Proximity</label>
-									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+									<a href="#"><img class="helptooltip" title="Observed and expected by tandom chance proximity are compared using binomial distribution" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
-								<td>Calculates a P-Value using the Kolmogorov-Smornov statistical test. Ignores custom background</td>
+								<td>(beta) Calculates a P-Value using Kolmogorov-Smirnov statistical test. Whole genome background is used; any custom background ignored</td>
 								<td>
-									<input type="checkbox" id="chk_kolmogorov"  name="run:kolmogorov" /><label for="chk_kolmogorov">Kolmogorov-Smornov P-Value</label>
-									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+									<input type="checkbox" id="chk_kolmogorov"  name="run:kolmogorov" /><label for="chk_kolmogorov">Kolmogorov-Smirnov P-Value</label>
+									<a href="#"><img class="helptooltip" title="See XYZ for the details" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 							<tr>
-								<td>Calculates a p-value using hypergeometric distribution</td>
+								<td>Calculates a p-value using hypergeometric distribution. Custom background required, and used as a set of regions for random sampling</td>
 								<td>
 									<input type="checkbox" id="chk_hypergeometric"  name="run:hypergeometric" /><label for="chk_hypergeometric">Hypergeometric Distribution P-Value</label>
-									<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+									<a href="#"><img class="helptooltip" title="The number of observed overlaps of regions of interest with genome annotation features is compared with that of expected by random chance using hypergeometric distribution" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 								</td>
 							</tr>
 						</tbody>
@@ -313,20 +315,20 @@
 				<div class="well">
 					<b># MC iters:</b>
 					<input id="niter"
-					type="text" name="niter" value="10"/> <a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a><br />
+					type="text" name="niter" value="10"/> <a href="#"><img class="helptooltip" title="Number of random simulations" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a><br />
 					<b>Score cutoff:</b>
-					<input type="text" name="score" /> <a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a><br />
-					<b>Strand:</b>
+					<input type="text" name="score" /> <a href="#"><img class="helptooltip" title="If a genome annotation feature has score column, anything below user-provided scoe will be filtered out" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a><br />
+					<b>Strand to use:</b>
 					<input checked="yes" 
-					type="radio" name="strand" value="" />Any
+					type="radio" name="strand" value="" />Both
 					<input type="radio" name="strand" value="+" />+
-					<input type="radio" name="strand" value="-" />-<a href="#"><img class="helptooltip" title="INSERT CONTENT HERE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
+					<input type="radio" name="strand" value="-" />-<a href="#"><img class="helptooltip" title="Genome annotation features on selected strand will be used" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"></img></a>
 					<br />
 				</div>
 			</div>
 		</div>
 		<div class="well">
-			<h3>6. Run query!</h3> 
+			<h3>5. Run query!</h3>
 			<ul>
 				<li>
 					<input id="jobname" name="jobname" type="text" value=""/>
