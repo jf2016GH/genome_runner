@@ -13,6 +13,8 @@ import re
 import collections
 import copy
 import traceback  as trace
+import pdb
+
 # connection information for the ucsc ftp server
 server = 'hgdownload.cse.ucsc.edu'
 directory = '/goldenPath/{}/database'
@@ -238,16 +240,10 @@ preparebed = {"bed 6" : extract_bed6,
 				"genePred acemblyPep acemblyMrn": extract_genepred,
 				"genePred acemblyPep acemblyMrna": extract_genepred,
 				"genePred" : extract_genepred,
-				"rmsk" : extract_rmsk}
-numdownloaded = {"bed 6" : 0, "broadPeak" : 0, "bed 6 +" : 0, "bed 3" : 0, "genePred" : 0,"bed 9 +": 0,
-				"bed 12 +": 0, "bed 12 .": 0, "bed 12": 0, "bed 10": 0, "bed 9 +": 0, "bed 9 .": 0, "bed 9": 0, 
-				"bed 8 +": 0, "bed 8 .": 0, "bed 6 .": 0, "bed 5 +": 0, "bed 5 .": 0, "bed 5": 0, "bed 4 +": 0, 
-				"bed 4 .": 0, "bed 4": 0, "bed 3 +": 0, "bed 3 .": 0, "genePred xenoRefPep xenoRefMrna": 0,
-				 "genePred vegaPep": 0, "genePred sgpPep": 0, "genePred refPep refMrna": 0, "genePred nscanPep": 0,
-				  "genePred knownGenePep knownGeneMrna": 0, "genePred genscanPep": 0, "genePred geneidPep": 0,
-				   "genePred ensPep": 0, "genePred acemblyPep acemblyMrn": 0,"genePred acemblyPep acemblyMrna": 0,
-				   "bed5FloatScore": 0, "rmsk": 0}
-
+				"rmsk" : extract_rmsk,
+				"factorSource" : extract_bed6}
+				
+numdownloaded = collections.defaultdict(int)
 
 def create_feature_set(trackdbpath,organism):
 	outputdir = os.path.dirname(trackdbpath)
@@ -279,7 +275,7 @@ def create_feature_set(trackdbpath,organism):
 							os.rename(outpath+".temp",outpath)
 							added_features.append(outpath)
 						else:
-							logger.info( "{} already exists, skipping extraction".format(outpath))
+							logger.info( "{} already exists, skipping extraction".format(outpath))							
 						numdownloaded[row["type"]] += 1
 					except Exception, e:
 						exc = trace.format_exc()
@@ -379,6 +375,7 @@ if __name__ == "__main__":
 	outputdir='released'
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
+		#pdb.set_trace()
 		create_feature_set(trackdbpath,args['organism'])
 	elif args['organism'] is not None and args['featurename'] is not None: # Both organism and feature name are specified. Download this feature for a given organism
 		trackdbpath = download_trackdb(args['organism'],outputdir)
