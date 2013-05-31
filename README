@@ -1,13 +1,14 @@
 # Setup
-sudo apt-get install python-cherrypy python-numpy python-pip bedtools
-sudo pip install pybedtools
+# Installing dependencies
+pacman -S blas lapack gcc-fortran python2-pip
+pip2 install -r requirements.txt
+
+# Tuning pyBedTools
 
 BEDTools also creates LOTS of tempfiles.
 Open /etc/security/limits.conf and add:
 	*	hard	nofile	1000000
 	*	soft	nofile	1000000
-
-All of this is done on wren2 already. This project could also be run on Windows by installing the corresponding Python packages in Windows.
 
 # Project structure
 * data/ contains the BED files and hg19.genome (chromosome lengths) used in analyses
