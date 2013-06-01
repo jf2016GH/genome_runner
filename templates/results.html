@@ -10,15 +10,25 @@
 			.ui-icon {float: left;}
 		</style>
 
- 		<!-- For IE6-8 support of HTML5 elements -->
+		<!-- For IE6-8 support of HTML5 elements -->
 		<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
 		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
 		<link type="text/css" href="static/css/main.css"/>
+		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
 		<script type="text/javascript" src="static/js/jquery.js"></script>
 	 	<script src="static/js/bootstrap.min.js"></script>
 		<script scr="static/js/main.js"></script>
+		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
+		<script type="text/javascript" charset="utf-8">
+		$(document).ready(function() {
+			$("#progressbar").progressbar({
+								value: ${curprog},
+								max:  ${progmax}
+							});
+		});
+		</script>
 		
 </head>
 <body bgcolor="#A8D5FF">
@@ -40,7 +50,20 @@
 		</div>
 	</div>
 <div class="well">
-	<h3>Demo</h3>
+	<div style="margin: 10px;">
+	<div id="progressbar" ></div>
+	<div class="ui-widget" style="marginr:0px;">
+		<div class="ui-state-highlight ui-corner-all">
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>
+		</div>
+	</div>
+</div>
+</div>
+<div class="well">
+	<h3>Matrix Results</h3>
+	<textarea cols="100" rows="30">${matrix}</textarea><br>
+	<h3>Detailed Results</h3>
+	<textarea cols="100" rows="30">${detailed}</textarea><br>
 </div>
 
 </body>

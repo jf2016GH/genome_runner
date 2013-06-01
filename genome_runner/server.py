@@ -8,8 +8,6 @@ import re
 from operator import attrgetter
 from multiprocessing import Process
 import cPickle
-import bedfilecreator as uscsreader
-import query as grquery
 from path import PathNode
 from operator import itemgetter
 from path import basename
@@ -17,6 +15,7 @@ import logging
 from logging import FileHandler,StreamHandler
 import json
 import pdb
+import hypergeom3 as grquery
 lookup = TemplateLookup(directories=["templates"])
 DEBUG_MODE = True
 
@@ -33,11 +32,10 @@ logger.setLevel(logging.INFO)
 class WebUI(object):
 	def __init__(self):
 		self.next_id = itertools.count().next # This creates a threadsafe counter
-		if os.listdir("results"):
-			last_id = max(map(int, [basename(file) for file in os.listdir("results")]))
-			while self.next_id() < last_id:
-				pass
-			print last_id
+		last_id = max(map(int, [file for file in os.walk('uploads').next()[1]]))
+		while self.next_id() < last_id:
+			pass
+		print last_id
 
 		self._index_html = {}
 
@@ -61,23 +59,16 @@ class WebUI(object):
 		return organisms
 
 
-
-	@cherrypy.expose
-	def meta(self, tbl,organism="hg19"):
-		try:
-			trackdb = uscsreader.load_tabledata_dumpfiles("data/{}/trackDb".format(organism))
-			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
-		except Exception, e:
-			print e
-			return "<h3>ERROR: table not found</h3>"
-		if html=='':
-			return "<h3>(no data found).</h3>"
-		else:
-			return html
-
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, niter=10, name="", score="", strand="", **kwargs):
 		id = self.next_id()
+		print 'id: ', id
+		upload_dir = os.path.join("uploads",str(id))
+		os.mkdir(upload_dir)
+		results_dir = os.path.join("results",str(id))
+		os.mkdir(results_dir)
+		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
+		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
 		print id
 		runset = {}
 		cherrypy.response.timeout = 3600
@@ -101,42 +92,53 @@ class WebUI(object):
 
 		data = ""
 		try:
-			f = os.path.join("uploads", str(id)+".bed")
-			if not os.path.exists(f):
-				with open(f, "wb") as out:
-					if bed_file != None and bed_file.filename != "":
-						bed_filename = bed_file.filename
-						logger.info('Received uploaded FOI file (id={})'.format(id))
-						while True:
-							data = bed_file.file.read(8192)
-							# TODO find empty lines
-							#data = os.linesep.join([s for s in data.splitlines() if s ])
+			with open(fois,"wb") as out_fois:
+				# bed files uploaded
+				if bed_file:
+					if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
+					for b in bed_file:
+						bed_filename = b.filename
+						f = os.path.join(upload_dir, bed_filename)
+						if not os.path.exists(f):
+							with open(f, "wb") as out:
+								if b != None and b.filename != "":
+									logger.info("Received uploaded FOI file (name={}, id={})".format(bed_filename, id))
+									while True:
+										data = b.file.read(8192)
+										# TODO find empty lines
+										#data = os.linesep.join([s for s in data.splitlines() if s ])
 
-							# strips out new lines not compatible with bed tools
-							#data = data.replace("\r\n","\n").replace("\r","\n")
-							data = data.replace("\r","")
-							if not data:
-								break
-							out.write(data)			
-					elif bed_data!="":
+										# strips out new lines not compatible with bed tools
+										data = data.replace("\r","")
+										if not data:
+											break
+										out.write(data)			
+									out_fois.write(f+"\n")
+						else:
+							logger.error("id={} Upload file already exists at {}".format(id,f))
+							return "ERROR: An internal error has occured on the server."	
+				# custom data entered	
+				elif bed_data!="":
+					f = os.path.join(upload_dir, "custom.bed")
+					with open(f, "wb") as out:
 						bed_filename = "Custom bed"
 						logger.info('Received raw text  FOI data (id={})'.format(id))
 						data = bed_data
 						data = os.linesep.join([s for s in data.splitlines() if s])
-						out.write(data)			
-					else:
-						return "upload a file please"
-			else:
-				logger.error("id={} Upload file already exists at {}".format(id,f))
-				return "ERROR: An internal error has occured on the server."		
+						out.write(data)		
+					out_fois.write(f+"\n")	
+				else:
+					return "upload a file please"
+
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: upload a file please"
 		runset["fois"] = bed_filename
 		# load the background data if uploaded
 		background_name = ""
+		
 		try:
-			b = os.path.join("uploads",str(id) + ".background")
+			b = os.path.join(upload_dir,background_file.filename+".background")
 			if background_file != None and background_file.filename != "":
 				logger.info('Received uploaded background file (id={})'.format(id))
 				background_name = background_file.filename
@@ -164,7 +166,6 @@ class WebUI(object):
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
-		runset['background'] = background_name
 
 		# "kwargs" (Keyword Arguments) stands for all the other
 		# fields from the HTML form besides bed_file, niter, name, score, and strand
@@ -176,7 +177,9 @@ class WebUI(object):
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		runset['gfs'] = gfeatures
-
+		with open(gfs,"wb") as out_gfs:
+			for g in gfeatures:
+				out_gfs.write(g+"\n")
 
 		for k,v in kwargs.items():
 			# organism to use
@@ -191,23 +194,16 @@ class WebUI(object):
 		runset['run'] = run
 
 		# write the enrichment settings.
-		path = os.path.join("results",str(id) + ".settings")
+		path = os.path.join(results_dir, ".settings")
 		settings = open(path,'wb')
 		settings.write(json.dumps(runset))
 		settings.close()
 
-
-		# Reserve a spot in the results folder
-		path = os.path.join("results", str(id))
-		results = open(path,'wb') 
-		results.close()
-
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
-		p = Process(target=grquery.run_enrichments,
-				args=(id,f,gfeatures,b,niter,name,score,strand,organism,run))
-				
+		p = Process(target=grquery.run_hypergeom,
+				args=(fois,gfs,b,results_dir))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
 
@@ -216,48 +212,31 @@ class WebUI(object):
 		path = os.path.join("results", id)
 		params = {}
 		params["run_id"] = id
+		params["detailed"] = "Results not yet available"
+		params["matrix"] = "Results not yet available"
 		if not os.path.exists(path):  #If file is empty...
-
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)
-		if os.stat(path).st_size:
-			with open(path) as strm:
-				enrichments = cPickle.load(strm)
-			enrichments.sort(key=attrgetter("p_value"))
-		else:
-			enrichments = []
-		params["enrichments"] = enrichments
-		tmpl = lookup.get_template("enrichment.html")
-		progress = grquery.get_progress(id)
-		# Loads the settings of the run if they exist
-		if os.path.exists(path + ".settings"):
-			settings = open(path + ".settings")
-			s = json.loads(settings.read())
-			settings.close()
-			f = s['filters']
-			# fills in default values for blank filter settings
-			for key, value in s.iteritems():
-				if value == "": s[key] = "None"
-			for key, value in f.iteritems():
-				if value == "": f[key] = "None"
-			# merge all settings into one dictionary to pass to template
-			params.update(s)
-			params.update(f)
-			print params
-		else:
-			params["background"] = "NA"
-			params["name"] = "NA"
-			params["niter"] = "NA"
-			params["score"]= "NA"
-			params["strand"] = "NA"
-			params["foi"] = "NA"
-			params["jobname"]= "NA"
-		
+		tmpl = lookup.get_template("results.html")
+
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
-		if os.path.exists(path+".prog"):
-			with open(path+".prog") as f:
+		progress_path = os.path.join(path,".prog")
+		if os.path.exists(progress_path):
+			print "progress_path: ", progress_path
+			with open(progress_path) as f:
 				p = json.loads(f.read() )
+
+		# loads results from results file		
+		detailed_path = os.path.join(path,"detailed.gr")
+		if os.path.exists(detailed_path):
+			with open(detailed_path) as f:
+				params["detailed"] = f.read()
+
+		matrix_path = os.path.join(path,"matrix.gr")
+		if os.path.exists(matrix_path):
+			with open(matrix_path) as f:
+				params["matrix"] = f.read()
 
 		params.update(p)
 		try:
