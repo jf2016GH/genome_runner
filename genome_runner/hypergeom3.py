@@ -26,19 +26,15 @@ Interval = collections.namedtuple("Interval", "chrom,start,end")
 # Logging configuration
 logger = logging.getLogger()
 logger = logging.getLogger('genomerunner.query')
-hdlr = logging.FileHandler('genomerunner_server.log')
-hdlr_std = StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
 # This line outputs logging info to the console
-logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
 
 matrix_outpath = None
 detailed_outpath = None
 progress_outpath = None
-console_output = False
+console_output = True
 
 def read_intervals(path, background=None, snp_only=False):
     with (gzip.open(path) if path.endswith(".gz") else open(path)) as h:
@@ -50,11 +46,11 @@ def read_intervals(path, background=None, snp_only=False):
             start = int(start)
             end = int(end)
             if snp_only and ((end - start) > 1):
-                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in {} is not a SNP. Shortening feature to be SNP".format(path))
+                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis not a SNP. Shortening feature to be SNP".format(path))
                 end = start + 1
             interval = Interval(chrom, int(start), int(end))
             if background and not background.query(interval):
-                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in {} does not overlap with the background. Continuing...".format(path))
+                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tdoes not overlap with the background. Continuing...".format(path))
             intervals.append(interval)
     return intervals
 
@@ -96,29 +92,37 @@ def p_value(gf, fois, bgs, foi_name):
 
 
 def run_hypergeom(fois, gfs, bg_path,outpath):    
+    
+    # set output settings
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
     detailed_outpath =  os.path.join(outpath, "detailed.gr")
     matrix_outpath = os.path.join(outpath,"matrix.gr")
     progress_outpath = os.path.join(outpath,".prog")
+    hdlr = logging.FileHandler(os.path.join(outpath,'.log'))
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    hdlr.setFormatter(formatter)
+    logger.addHandler(hdlr)
+
     fois = read_lines(fois)
     gfs = read_lines(gfs)
-
     bg = read_intervals(bg_path)
     bg_iset = IntervalSet(bg)
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
 
     write_output("\t".join(fois)+"\n", matrix_outpath)
     write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
-    curprog,progmax = 0,len(gfs)    
-    for gf in gfs:
-        curprog += 1
-        _write_progress("Performing Hypergeometric analysis for {}".format(gf))
-        gf_iset = IntervalSet(read_intervals(gf))
-        write_output(gf+"\n",detailed_outpath)
-        [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois]
-        write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
-    _write_progress("Analysis Completed")
-
+    curprog,progmax = 0,len(gfs) 
+    try:
+        for gf in gfs:
+            curprog += 1
+            _write_progress("Performing Hypergeometric analysis for {}".format(gf))
+            gf_iset = IntervalSet(read_intervals(gf))
+            write_output(gf+"\n",detailed_outpath)
+            write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+        _write_progress("Analysis Completed")
+    except Exception, e: 
+        logger.error(e)
+        _write_progress("Run crashed. See end of log for details.")
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
     if outpath:

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<style>
 			body {
 				padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -14,19 +13,21 @@
 		<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
+		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
 		<link type="text/css" href="static/css/main.css"/>
-		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
 		<script type="text/javascript" src="static/js/jquery.js"></script>
-	 	<script src="static/js/bootstrap.min.js"></script>
-		<script scr="static/js/main.js"></script>
 		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
+		<script src="static/js/bootstrap.min.js"></script>
+		<script src="static/js/bootstrap-tabs.js"></script>
+		<script scr="static/js/main.js"></script>
 		<script type="text/javascript" charset="utf-8">
 		$(document).ready(function() {
 			$("#progressbar").progressbar({
 								value: ${curprog},
 								max:  ${progmax}
 							});
+			$('#resultstab').tabs();
 		});
 		</script>
 		
@@ -50,21 +51,41 @@
 		</div>
 	</div>
 <div class="well">
-	<div style="margin: 10px;">
+	<div style="margin: 10px;margin-top:70px;">
 	<div id="progressbar" ></div>
-	<div class="ui-widget" style="marginr:0px;">
+	<div class="ui-widget" style="">
 		<div class="ui-state-highlight ui-corner-all">
 			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>
 		</div>
 	</div>
 </div>
 </div>
-<div class="well">
-	<h3>Matrix Results</h3>
-	<textarea cols="100" rows="30">${matrix}</textarea><br>
-	<h3>Detailed Results</h3>
-	<textarea cols="100" rows="30">${detailed}</textarea><br>
+<ul class="tabs" id="resultstab" data-tabs="tabs">
+	<li class="active" ><a href="#matrixresults">Raw Text Matrix</a></li>
+	<li ><a href="#detailedresults">Detailed Results</a></li>
+	<li ><a href="#debugresults">Analysis Log</a></li>
+</ul>
+
+<div class="pill-content">
+	<div class="active" id="matrixresults">
+		<div class="well">
+			<h3>Matrix Results</h3>
+			<textarea cols="150" rows="30">${matrix}</textarea><br>
+		</div>
+	</div>
+	<div id="detailedresults">
+		<div class="well">
+			<h3>Detailed Results</h3>
+			<textarea cols="150" rows="30">${detailed}</textarea><br>
+		</div>
+	</div>
+	<div id="debugresults">
+		<div class="well">
+			<h3>Analysis Log</h3>
+			<textarea cols="150" rows="30">${log}</textarea><br>
+		</div>
 </div>
+
 
 </body>
 </html>

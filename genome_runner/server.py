@@ -16,6 +16,8 @@ from logging import FileHandler,StreamHandler
 import json
 import pdb
 import hypergeom3 as grquery
+from time import gmtime, strftime
+
 lookup = TemplateLookup(directories=["templates"])
 DEBUG_MODE = True
 
@@ -72,12 +74,6 @@ class WebUI(object):
 		print id
 		runset = {}
 		cherrypy.response.timeout = 3600
-		runset['filters'] = {"name": name,"score": score,"strand": strand}
-		try:
-			niter = int(niter)
-		except ValueError:
-			niter = 10
-		runset["niter"] = niter
 
 		try:
 			jobname = kwargs["jobname"]
@@ -85,6 +81,7 @@ class WebUI(object):
 			jobname = ""
 			logger.error("id={}".format(id) + str(e))
 		runset['jobname'] = jobname
+		runset['time'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
 			
 		# load the FOI data
@@ -191,13 +188,17 @@ class WebUI(object):
 				run.append(k.split(":")[-1])
 
 		runset['organism']= organism	
-		runset['run'] = run
+		runset['background'] = background_name
 
 		# write the enrichment settings.
 		path = os.path.join(results_dir, ".settings")
-		settings = open(path,'wb')
-		settings.write(json.dumps(runset))
-		settings.close()
+		set_info = {"Jobname:": jobname,
+					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
+					"Background:": background_name,
+					"Organism:": organism}
+		with open(path, 'wb') as sett:
+			for k,v in set_info.iteritems():
+				sett.write(k+"\t"+v+"\n")
 
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
@@ -237,6 +238,17 @@ class WebUI(object):
 		if os.path.exists(matrix_path):
 			with open(matrix_path) as f:
 				params["matrix"] = f.read()
+
+		params["log"] = "###Run Settings###\n"
+		sett_path = os.path.join(path,".settings")
+		if os.path.exists(sett_path):
+			with open(sett_path) as f:
+				params["log"] = params["log"]+ f.read()				
+		params["log"] = params["log"] + "\n###Run Log###\n"
+		debug_path = os.path.join(path,".log")
+		if os.path.exists(debug_path):
+			with open(debug_path) as f:
+				params["log"] = params["log"] + f.read()
 
 		params.update(p)
 		try:
