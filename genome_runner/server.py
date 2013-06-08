@@ -250,12 +250,12 @@ class WebUI(object):
 		if os.path.exists(matrix_clust_path):
 			with open(matrix_clust_path) as f:
 				params["matrix_data"] = f.read().replace("\"","")
+				# d3 requires "gene_name" to be inserted into the first column
 				tmp =  params["matrix_data"].split("\n")
 				params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
 				params["matrix_data"] = params["matrix_data"].replace("\n","\\n")
 		else: 
 			params["matrix_data"] = "Heatmap will be available after the analysis is complete."
-		# d3 requires "gene_name" to be inserted into the first column
 
 		params["log"] = "###Run Settings###\n"
 		sett_path = os.path.join(path,".settings")
@@ -267,6 +267,13 @@ class WebUI(object):
 		if os.path.exists(debug_path):
 			with open(debug_path) as f:
 				params["log"] = params["log"] + f.read()
+
+		# check if run files ready for download
+		zip_path = os.path.join(path,"GR_Runfiles_{}.zip".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
+		if os.path.exists(zip_path):
+			params["zipfile"] = zip_path
+		else:
+			params["zipfile"] = ""
 
 		params.update(p)
 		try:
@@ -325,8 +332,13 @@ if __name__ == "__main__":
 		"server.socket_port":port,
 		"server.socket_host":"0.0.0.0"})
 	static_dir = os.path.abspath(os.path.join(".", "static"))
+	results = os.path.abspath(os.path.join(".","results"))
 	conf = {"/static": 
 			{"tools.staticdir.on": True,
-			"tools.staticdir.dir": static_dir}}
+			"tools.staticdir.dir": static_dir},
+			"/results": 
+			{"tools.staticdir.on": True,
+			"tools.staticdir.dir": results}
+			}
 		
 	cherrypy.quickstart(WebUI(), "/gr", config=conf)

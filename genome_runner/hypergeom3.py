@@ -157,11 +157,9 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     File paths of FOIs and GFs as a list. Gathers all the files together in one ziped file
     '''
     zip = zipfile.ZipFile(os.path.join(outdir,'GR_Runfiles_{}.zip'.format(job_name)),"a")
-    for f in fois:
-        zip.write(f,os.basename(f))
-    for g in gfs:
-        zip.write(g,os.basename(g))
-    zip.write(bg_path,os.basename(bg_path))
+    fls = fois + gfs + [bg_path]
+    for f in fls:
+        zip.write(f,os.path.basename(f))
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):

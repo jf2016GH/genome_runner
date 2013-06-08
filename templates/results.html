@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		% if status != "Analysis Completed":
+		% if status != "Analysis Completed" and not "Run crashed." in status:
 		<meta http-equiv="refresh" content="10">
 		% endif
 		<style>
@@ -67,6 +67,11 @@
 			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>
 		</div>
 	</div>
+	% if zipfile != "":
+	<a class="btn btn-primary" type="button" href="${zipfile}">Download all run files</a>
+	% else:
+	<a class="btn btn-primary disabled" type="button">Run files not ready for download</a>
+	% endif
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
@@ -88,7 +93,7 @@
 	<div id="detailedresults">
 		<div class="well">
 			<h3>Detailed Results</h3>
-			<textarea cols="150" rows="30">${detailed}</textarea><br>
+			<textarea cols="150" rows="30">${detailed}</textarea><br>			
 		</div>
 	</div>
 	<div id="debugresults">

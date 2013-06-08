@@ -193,7 +193,7 @@
 			<ul>
 				<li id="list-bedfeatures">
 					<input type="radio" name="rdbed"  checked="checked"  value="bedfile" onclick="switchinput(this.value)"/>
-					Bed File:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
+					Bed Files:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
             <a href="http://www.google.com">Help on BED file format</a>
 				</li>
                 
@@ -235,9 +235,20 @@
 			</ul>
 		</div>
 		<div class="well">
-			<h3>3. Choose genome annotation features:</h3>
+			<h3>3. Upload Genomic Features<img class="helptooltip" title="If no background file is uploaded, then the genome for the selected organism is used as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+			</h3>
+			<ul>
+				<li id="list-bedbackground">					
+					Bed Files (.bed or .gz):
+					<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" />
+					<a href="http://www.google.com">Help on BED file format</a>
+				</li>				
+			</ul>
+		</div>
+		<div class="well">
+			<h3>4. Choose genome annotation features:</h3>
 			<div id="grfdroplist">
-				<label >Enter genome annotation names: </label>
+				<label>Enter genome annotation names:</label>
 				<ol style="left: 24px;position: relative; padding-top:10px;padding-bottom:10px;">        
 					<li id="grf-list" class="input-text">
 						<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
