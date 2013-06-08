@@ -80,7 +80,7 @@ class WebUI(object):
 		except Exception, e:
 			jobname = ""
 			logger.error("id={}".format(id) + str(e))
-		runset['jobname'] = jobname
+		runset['job_name'] = jobname
 		runset['time'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
 			
@@ -118,7 +118,7 @@ class WebUI(object):
 				elif bed_data!="":
 					f = os.path.join(upload_dir, "custom.bed")
 					with open(f, "wb") as out:
-						bed_filename = "Custom bed"
+						bed_filename = "custom.bed"
 						logger.info('Received raw text  FOI data (id={})'.format(id))
 						data = bed_data
 						data = os.linesep.join([s for s in data.splitlines() if s])
@@ -133,36 +133,6 @@ class WebUI(object):
 		runset["fois"] = bed_filename
 		# load the background data if uploaded
 		background_name = ""
-		
-		try:
-			b = os.path.join(upload_dir,background_file.filename+".background")
-			if background_file != None and background_file.filename != "":
-				logger.info('Received uploaded background file (id={})'.format(id))
-				background_name = background_file.filename
-				with open(b, "wb") as out:
-					while True:
-						data = background_file.file.read(8192)
-						# TODO find empty lines
-						#data = os.linesep.join([s for s in data.splitlines() if not s.isspace() ])
-
-						# strips out new lines not compatible with bed tools
-						data = data.replace("\r","")
-						if not data:
-							break
-						out.write(data)			
-			elif background_data != None and background_data != "":
-				background_name = "Custom bed"
-				with open(b, "wb") as out:
-					logger.info('Received raw text background data (id={})'.format(id))
-					data = background_file
-					data = os.linesep.join([s for s in data.splitlines() if s])
-					out.write(data)
-			else:
-				background_name = "Genome"
-				b = ""
-		except Exception, e:
-			logger.error("id={}".format(id) + str(e))
-			return "ERROR: unable to upload background"
 
 		# "kwargs" (Keyword Arguments) stands for all the other
 		# fields from the HTML form besides bed_file, niter, name, score, and strand
@@ -189,6 +159,42 @@ class WebUI(object):
 
 		runset['organism']= organism	
 		runset['background'] = background_name
+		
+		try:
+			if background_file != None and background_file.filename != "":
+				b = os.path.join(upload_dir,background_file.filename+".background")
+				logger.info('Received uploaded background file (id={})'.format(id))
+				background_name = background_file.filename
+				with open(b, "wb") as out:
+					while True:
+						data = background_file.file.read(8192)
+						# TODO find empty lines
+						#data = os.linesep.join([s for s in data.splitlines() if not s.isspace() ])
+
+						# strips out new lines not compatible with bed tools
+						data = data.replace("\r","")
+						if not data:
+							break
+						out.write(data)			
+			elif background_data != None and background_data != "":
+				b = os.path.join(upload_dir,"custom.background")
+				background_name = "custom.bed"
+				with open(b, "wb") as out:
+					logger.info('Received raw text background data (id={})'.format(id))
+					data = background_file
+					data = os.linesep.join([s for s in data.splitlines() if s])
+					out.write(data)
+			else:
+				#b_organ = {"hg19": "data/hg19/varRep/Tier0/snp137.gz",
+				#		   "mm9": "data/mm9/varRep/Tier1/snp128.gz",
+				#		   "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
+				background_name = "Genome"
+				#b = b_organ[organism]
+				b= ""
+		except Exception, e:
+			logger.error("id={}".format(id) + str(e))
+			return "ERROR: unable to upload background"
+
 
 		# write the enrichment settings.
 		path = os.path.join(results_dir, ".settings")
@@ -204,7 +210,7 @@ class WebUI(object):
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,results_dir))				
+				args=(fois,gfs,b,results_dir,runset['job_name'],True))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
 
@@ -234,10 +240,22 @@ class WebUI(object):
 			with open(detailed_path) as f:
 				params["detailed"] = f.read()
 
+		# clustered matrix results loaded if they exist
 		matrix_path = os.path.join(path,"matrix.gr")
+		matrix_clust_path  = os.path.join(path,"matrix_clustered.gr")
+
 		if os.path.exists(matrix_path):
 			with open(matrix_path) as f:
-				params["matrix"] = f.read()
+				params["matrix"] = f.read().replace("\"","")
+		if os.path.exists(matrix_clust_path):
+			with open(matrix_clust_path) as f:
+				params["matrix_data"] = f.read().replace("\"","")
+				tmp =  params["matrix_data"].split("\n")
+				params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+				params["matrix_data"] = params["matrix_data"].replace("\n","\\n")
+		else: 
+			params["matrix_data"] = "Heatmap will be available after the analysis is complete."
+		# d3 requires "gene_name" to be inserted into the first column
 
 		params["log"] = "###Run Settings###\n"
 		sett_path = os.path.join(path,".settings")

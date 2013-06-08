@@ -20,6 +20,8 @@ import scipy
 import pdb
 import os
 import json
+import rpy2.robjects as robjects
+import zipfile
 
 Interval = collections.namedtuple("Interval", "chrom,start,end")
 
@@ -34,7 +36,7 @@ logger.setLevel(logging.INFO)
 matrix_outpath = None
 detailed_outpath = None
 progress_outpath = None
-console_output = True
+console_output = False
 
 def read_intervals(path, background=None, snp_only=False):
     with (gzip.open(path) if path.endswith(".gz") else open(path)) as h:
@@ -47,6 +49,7 @@ def read_intervals(path, background=None, snp_only=False):
             end = int(end)
             if snp_only and ((end - start) > 1):
                 logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis not a SNP. Shortening feature to be SNP".format(path))
+                start = (end-start)/2
                 end = start + 1
             interval = Interval(chrom, int(start), int(end))
             if background and not background.query(interval):
@@ -91,38 +94,75 @@ def p_value(gf, fois, bgs, foi_name):
         return sign * sys.float_info.min_10_exp
 
 
-def run_hypergeom(fois, gfs, bg_path,outpath):    
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):    
     
     # set output settings
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
-    detailed_outpath =  os.path.join(outpath, "detailed.gr")
-    matrix_outpath = os.path.join(outpath,"matrix.gr")
-    progress_outpath = os.path.join(outpath,".prog")
-    hdlr = logging.FileHandler(os.path.join(outpath,'.log'))
+    detailed_outpath =  os.path.join(outdir, "detailed.gr")
+    matrix_outpath = os.path.join(outdir,"matrix.gr")
+    progress_outpath = os.path.join(outdir,".prog")
+    hdlr = logging.FileHandler(os.path.join(outdir,'.log'))
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
 
     fois = read_lines(fois)
     gfs = read_lines(gfs)
+    print "GF: ", gfs[0]
     bg = read_intervals(bg_path)
     bg_iset = IntervalSet(bg)
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
 
-    write_output("\t".join(fois)+"\n", matrix_outpath)
+    write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
     write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
     curprog,progmax = 0,len(gfs) 
     try:
         for gf in gfs:
             curprog += 1
-            _write_progress("Performing Hypergeometric analysis for {}".format(gf))
+            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
             gf_iset = IntervalSet(read_intervals(gf))
-            write_output(gf+"\n",detailed_outpath)
-            write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+            write_output("###"+base_name(gf)+"###"+"\n",detailed_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+        if len(gfs) > 1 and len(fois) > 1:
+            cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
+        else:
+            with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
+                wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
+        _write_progress("Preparing run files for download")
+        _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         _write_progress("Analysis Completed")
     except Exception, e: 
         logger.error(e)
         _write_progress("Run crashed. See end of log for details.")
+
+def cluster_matrix(input_path,output_path):
+    '''
+    Takes the matrix file outputted by genomerunner and clusters it in R
+    '''    
+    r_script = """library(gplots)
+                    t5 = read.table("{}")                    
+                    pt5 <- as.matrix(t5)
+                    row_names <- rownames(pt5)
+                    col_names <- colnames(pt5)
+                    pt5 <- apply(pt5, 2, function(x) as.numeric(x))
+                    row.names(pt5) <- row_names
+                    colnames(pt5) <- col_names  
+                    h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                    write.table(t(h$carpet),"{}",sep="\t")""".format(input_path,output_path)
+    robjects.r(r_script)
+    return output_path    
+
+def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
+    '''
+    File paths of FOIs and GFs as a list. Gathers all the files together in one ziped file
+    '''
+    zip = zipfile.ZipFile(os.path.join(outdir,'GR_Runfiles_{}.zip'.format(job_name)),"a")
+    for f in fois:
+        zip.write(f,os.basename(f))
+    for g in gfs:
+        zip.write(g,os.basename(g))
+    zip.write(bg_path,os.basename(bg_path))
+
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
     if outpath:
@@ -140,6 +180,9 @@ def read_lines(path):
                 elems.append(line.strip())
     return elems
 
+def base_name(path):
+    return os.path.basename(path).split(".")[0]
+
 def _write_progress(line):
     """Saves the current progress to the progress file
     """
@@ -148,7 +191,6 @@ def _write_progress(line):
         global curprog, progmax
         progress = {"status": line, "curprog": curprog,"progmax": progmax}
         with open(progress_outpath,"wb") as progfile:
-            print "writePROGRESS", progress
             progfile.write(json.dumps(progress))
 
 if __name__ == "__main__":
@@ -172,3 +214,8 @@ if __name__ == "__main__":
         gf_iset = IntervalSet(read_intervals(gf))
         write_output(gf+"\n",detailed_outpath) 
         write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+    if len(gfs) > 1 and len(fois) > 1:
+        cluster_matrix(matrix_outpath,os.path.join(outpath,"matrix_clustered.gr"))
+    else:
+        with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
+            wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
