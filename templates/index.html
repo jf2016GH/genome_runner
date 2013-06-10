@@ -13,6 +13,7 @@
 	/* allows the check box tree to be rendered correctly*/
 	.ui-icon {float: left;}
 	.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
+	.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active {heigh: 100%;}
 	</style>
 	<link type="text/css" href="static/css/main.css"/>
 	<link type="text/css" href="static/css/demo_table.css"/>
@@ -70,9 +71,10 @@
 
 			$('input:submit').button();
 			$(function() {
-				$("#accordion").accordion({
+				$(".accordion").accordion({
 					collapsible: true,
-					active: false
+					active: false,
+					autoHeight: false
 				});
 			});
 
@@ -92,6 +94,41 @@
 			    	alwaysVisible: true
 			});
 			console.log($('.helptooltip'));
+
+
+
+		$("#accfoi").bind('accordionchange',
+				function () {
+					console.log($("#accfoi").accordion('option', 'active'));
+					if ($(this).find('.ui-state-active').length == 0){
+						document.getElementById("inputbedfile").disabled=false;
+						document.getElementById("inputbeddata").disabled=true;
+						document.getElementById("inputbeddata").text = ""
+						document.getElementById("inputbeddata").value = ""
+						}
+					else {
+						document.getElementById("inputbedfile").disabled=true;
+						document.getElementById("inputbeddata").disabled=false;
+						document.getElementById("inputbeddata").text = ""
+						document.getElementById("inputbeddata").value = ""
+					}
+				});
+
+		$("#accback").bind('accordionchange',
+				function () {
+					if ($(this).find('.ui-state-active').length == 0){
+						document.getElementById("inputbackgroundfile").disabled=false;
+						document.getElementById("inputbackgrounddata").disabled=true;
+						document.getElementById("inputbackgrounddata").text = ""
+						document.getElementById("inputbackgrounddata").value = ""
+					}
+					else {
+						document.getElementById("inputbackgroundfile").disabled=true;
+						document.getElementById("inputbackgrounddata").disabled=false;
+						document.getElementById("inputbackgrounddata").text = ""
+						document.getElementById("inputbackgrounddata").value = ""
+					}
+				});
 			
 		});
 		function viewBoxClick(){
@@ -112,36 +149,7 @@
 			}
 
 		}
-		function switchinput(checked){
-			if (checked == "bedfile"){
-				document.getElementById("inputbedfile").disabled=false;
-				document.getElementById("inputbeddata").disabled=true;
-				document.getElementById("inputbeddata").text = ""
-				document.getElementById("inputbeddata").value = ""
-			}
-			else {
-				document.getElementById("inputbedfile").disabled=true;
-				document.getElementById("inputbeddata").disabled=false;
-				document.getElementById("inputbeddata").text = ""
-				document.getElementById("inputbeddata").value = ""
-			}
-		}
-
-		function switchbackgroundinput(checked){
-			if (checked == "backgroundfile"){
-				document.getElementById("inputbackgroundfile").disabled=false;
-				document.getElementById("inputbackgrounddata").disabled=true;
-				document.getElementById("inputbackgrounddata").text = ""
-				document.getElementById("inputbackgrounddata").value = ""
-			}
-			else {
-				document.getElementById("inputbackgroundfile").disabled=true;
-				document.getElementById("inputbackgrounddata").disabled=false;
-				document.getElementById("inputbackgrounddata").text = ""
-				document.getElementById("inputbackgrounddata").value = ""
-			}
-		}
-
+		
 		//prevents user from submitting form by accidentally pressing the enter key
 		function stopRKey(evt) { 
 			var evt = (evt) ? evt : ((event) ? event : null); 
@@ -184,96 +192,93 @@
 	</div>
 	<form action="query" method="post" enctype="multipart/form-data">
 		<div class="well">
-			<b style="font-size:150%;">Organism</b>
-			${paths.org_as_html(id="org")}
+			<b style="font-size:150%;">Organism:</b>
+			${paths.org_as_html(id="org")}  
 		</div>
 		<div class="well">
 			<h3>1. Upload Features of Interest <img class="helptooltip" title="Upload a bed formated file containing regions of interest, to run the enrichment analysis on." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 			</h3> 
 			<ul>
-				<li id="list-bedfeatures">
-					<input type="radio" name="rdbed"  checked="checked"  value="bedfile" onclick="switchinput(this.value)"/>
+				<li id="list-bedfeatures">					
 					Bed Files:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
-            <a href="http://www.google.com">Help on BED file format</a>
+            		<a href="http://www.google.com">Help on BED file format</a>
 				</li>
                 
-				<li id="list-listfeatures">
-					<span style="margin-right:5px; float: left">
-						<input name="rdbed" type="radio" id="bedchoicedata" style="margin:5px" value="beddata" onclick="switchinput(this.value)"/>
-					</span>
-					<span style="margin-right:5px; float: left">Paste Data in Bed Format:
-					<img class="helptooltip" title="Paste bed formatted regions of interest, to run the enrichment analysis on." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-				</span>
-					<br/><br/>
-					<textarea id="inputbeddata" rows=5 cols=50 style="margin:5px" name="bed_data" disabled>
-					</textarea>
-				</li>
-			</ul>
-		</div>
-		<div class="well">
-			<h3>2. Upload a Background (Optional)<img class="helptooltip" title="If no background file is uploaded, then the genome for the selected organism is used as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			</h3>
-			<ul>
-				<li id="list-bedbackground">
-					<input type="radio" name="rdbackground"  checked="checked" style="margin:5px" value="backgroundfile" onclick="switchbackgroundinput(this.value)"/>
-					Bed File:
-					<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />
-				</li>
-				<li id="list-background">
-					<span style="margin-right:5px; float: left">
-
-						<input name="rdbackground" type="radio" id="bedchoicedata" style="margin:5px" value="backgrounddata" onclick="switchbackgroundinput(this.value)"/>	
-					</span>
-					<span style="margin-right:5px; float: left">
-						Paste Data in Bed Format:
-						<img class="helptooltip" title="Paste bed formatted intervals to be used as a background for random sampling." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-					</span>
-						<br/><br/>
-					<textarea id="inputbackgrounddata" rows=5 cols=50 style="margin:5px" name="background_data" disabled>
-					</textarea>
-				</li>
-			</ul>
-		</div>
-		<div class="well">
-			<h3>3. Upload Genomic Features<img class="helptooltip" title="If no background file is uploaded, then the genome for the selected organism is used as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			</h3>
-			<ul>
-				<li id="list-bedbackground">					
-					Bed Files (.bed or .gz):
-					<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" />
-					<a href="http://www.google.com">Help on BED file format</a>
-				</li>				
-			</ul>
-		</div>
-		<div class="well">
-			<h3>4. Choose genome annotation features:</h3>
-			<div id="grfdroplist">
-				<label>Enter genome annotation names:</label>
-				<ol style="left: 24px;position: relative; padding-top:10px;padding-bottom:10px;">        
-					<li id="grf-list" class="input-text">
-						<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
-					</li>
-					<div id="grfs-auto">
-						<div class="default">Type the names of the genome annotation features to run</div>
-						<ul id="feed">
-						</ul>
+				<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+			        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in Bed format</a></h3>
+					<div>               
+						<textarea id="inputbeddata" rows=5 cols=90 style="margin:5px" name="bed_data" disabled>
+						</textarea>
 					</div>
-				</ol>   
-			</div>
-			<label >Select genome annotation features: </label>
-				<div>
-					<a class="btn" onClick="changeCheckedStateTreeView(true)">Expand All</a>
-					<a class="btn" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
 				</div>
-			<div id="treeview-outer" style="padding-top:10px">
-				<div id="treeview-inner" onClick="viewBoxClick()">
-					${paths.as_html(id="ucsc")}
-				</div>
-			</div>
+			</ul>
 		</div>	
-		
 		<div class="well">
-			<h3>5. Run query!</h3>
+			<h3>2. Default background: ${default_background}<img class="helptooltip" title="If no background file is uploaded, then the default background for this organism is used." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+			</h3>
+			<b style="font-size:120%; margin-left: 10px"></b>
+				<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+				<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
+					<div style="height=100px">       
+								Bed File:
+								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />		
+								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+							        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in Bed format</a></h3>
+							        <div>
+									<textarea id="inputbackgrounddata" rows=5 cols=90 style="margin:10px" name="background_data" disabled>
+									</textarea>
+								</div>
+						</div>
+					</div>
+				</div>	
+		</div>	
+		<div class="well">
+			<h3>3. Default genome annotation features:</h3>
+			<input type="checkbox" checked="true" name="grouprun:./static/grouprun/gf_hg19_wgEncodeRegTfbsNames.txt" style="margin: 10px">TFBS</input>
+			<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_BroadHmm.GM12878.txt" style="margin: 10px">ChromatinStates</input>
+			<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_regulation.txt" style="margin: 10px">Regulation</input>
+			<div class="accordion" style="padding-bottom: 1em;list-style:none;"> 
+             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
+             <div >	
+				<ul>
+					<li id="list-bedbackground">					
+						Bed Files (.bed or .gz):
+						<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
+						<a href="http://www.google.com">Help on BED file format</a>
+					</li>				
+				</ul>
+				<div id="grfdroplist">
+					<label>Enter genome annotation names:</label>
+					<ol style="left: 24px;position: relative; padding-top:10px;padding-bottom:10px;">        
+						<li id="grf-list" class="input-text">
+							<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
+						</li>
+						<div id="grfs-auto">
+							<div class="default">Type the names of the genome annotation features to run</div>
+							<ul id="feed">
+							</ul>
+						</div>
+					</ol>
+			             <div style="margin:10px">
+							<label >Select genome annotation features: </label>
+								<div>
+									<a class="btn" onClick="changeCheckedStateTreeView(true)">Expand All</a>
+									<a class="btn" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
+								</div>
+							<div id="treeview-outer" style="padding-top:10px">
+								<div id="treeview-inner" onClick="viewBoxClick()">
+									${paths.as_html(id="ucsc")}
+								</div>
+							</div>
+						</div>
+				</div>			 
+
+		</div>
+		</div>
+		</div>	
+
+		<div class="well">
+			<h3>4. Run query!</h3>
 			<ul>
 				<li>
 					<input id="jobname" name="jobname" type="text" value=""/>

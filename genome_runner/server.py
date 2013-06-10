@@ -19,6 +19,9 @@ import hypergeom3 as grquery
 from time import gmtime, strftime
 
 lookup = TemplateLookup(directories=["templates"])
+default_backgrounds_paths = {"hg19": "data/hg19/varRep/Tier0/snp137Flagged.gz",
+							  "mm9": "data/mm9/varRep/Tier1/snp128.gz",
+							  "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
 DEBUG_MODE = True
 
 logger = logging.getLogger('genomerunner.server')
@@ -49,7 +52,7 @@ class WebUI(object):
 			paths.organisms = self.get_org() 
 			paths.traverse("data/{}".format(organism))
 			tmpl = lookup.get_template("index.html")
-			self._index_html[organism] = tmpl.render(paths=paths)
+			self._index_html[organism] = tmpl.render(paths=paths,default_background=default_backgrounds_paths[organism].split("/")[-1].split(".")[0])
 		return self._index_html[organism]
 
 	def get_org(self):
@@ -62,7 +65,8 @@ class WebUI(object):
 
 
 	@cherrypy.expose
-	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, niter=10, name="", score="", strand="", **kwargs):
+	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
+				genomicfeature_file=None, niter=10, name="", score="", strand="", **kwargs):
 		id = self.next_id()
 		print 'id: ', id
 		upload_dir = os.path.join("uploads",str(id))
@@ -95,7 +99,7 @@ class WebUI(object):
 					if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
 					for b in bed_file:
 						bed_filename = b.filename
-						f = os.path.join(upload_dir, bed_filename)
+						f = os.path.join(upload_dir, "".join(bed_filename.split(".")[:-1]+[".foi."]+[bed_filename.split(".")[-1]]) if not ".foi." in bed_filename  else bed_filename)
 						if not os.path.exists(f):
 							with open(f, "wb") as out:
 								if b != None and b.filename != "":
@@ -131,8 +135,37 @@ class WebUI(object):
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: upload a file please"
 		runset["fois"] = bed_filename
-		# load the background data if uploaded
-		background_name = ""
+
+		# uploads custom genomic features
+		try:
+			with open(gfs,"wb") as out_gfs:
+				# bed files uploaded
+				if genomicfeature_file:
+					if not isinstance(genomicfeature_file,(list)): genomicfeature_file = [genomicfeature_file] # makes a list if only one file uploaded
+					for b in genomicfeature_file:
+						gfbed_filename = b.filename
+						f = os.path.join(upload_dir, "".join(gfbed_filename.split(".")[:-1]+[".gf."]+ [gfbed_filename.split(".")[-1]]) if not ".gf." in gfbed_filename  else gfbed_filename)
+						if not os.path.exists(f):
+							with open(f, "wb") as out:
+								if b != None and b.filename != "":
+									logger.info("Received uploaded GF file (name={}, id={})".format(gfbed_filename, id))
+									while True:
+										data = b.file.read(8192)
+										# TODO find empty lines
+										#data = os.linesep.join([s for s in data.splitlines() if s ])
+
+										# strips out new lines not compatible with bed tools
+										data = data.replace("\r","")
+										if not data:
+											break
+										out.write(data)			
+									out_gfs.write(f+"\n")
+						else:
+							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
+							return "ERROR: An internal error has occured on the server."
+		except Exception, e:
+			logger.error("id={}".format(id) + str(e))
+			return "ERROR: Unable to process custom Genome annotation feature"
 
 		# "kwargs" (Keyword Arguments) stands for all the other
 		# fields from the HTML form besides bed_file, niter, name, score, and strand
@@ -143,8 +176,7 @@ class WebUI(object):
 		organism,run = "",[]
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
-		runset['gfs'] = gfeatures
-		with open(gfs,"wb") as out_gfs:
+		with open(gfs,"a") as out_gfs:
 			for g in gfeatures:
 				out_gfs.write(g+"\n")
 
@@ -156,10 +188,17 @@ class WebUI(object):
 			if "run:" in k and v=="on":
 				print "change {}".format(k.split(":")[-1])
 				run.append(k.split(":")[-1])
+			# append custom list to be run
+			if "grouprun:" in k and v == "on":
+				print "group ", k, " ::  " ,v
+				gp_gfs = open( k.split(":")[-1],"rb").read()
+				with open(gfs,"a") as out_gfs:
+					out_gfs.write(gp_gfs)
 
 		runset['organism']= organism	
-		runset['background'] = background_name
 		
+		# load the background data if uploaded
+		background_name = ""
 		try:
 			if background_file != None and background_file.filename != "":
 				b = os.path.join(upload_dir,background_file.filename+".background")
@@ -185,15 +224,13 @@ class WebUI(object):
 					data = os.linesep.join([s for s in data.splitlines() if s])
 					out.write(data)
 			else:
-				#b_organ = {"hg19": "data/hg19/varRep/Tier0/snp137.gz",
-				#		   "mm9": "data/mm9/varRep/Tier1/snp128.gz",
-				#		   "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
-				background_name = "Genome"
-				#b = b_organ[organism]
-				b= ""
+				
+				background_name = default_backgrounds_paths[organism]
+				b = default_backgrounds_paths[organism]
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
+		runset['background'] = background_name
 
 
 		# write the enrichment settings.
@@ -269,7 +306,7 @@ class WebUI(object):
 				params["log"] = params["log"] + f.read()
 
 		# check if run files ready for download
-		zip_path = os.path.join(path,"GR_Runfiles_{}.zip".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
+		zip_path = os.path.join(path,"GR_Runfiles_{}.tar".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
 		if os.path.exists(zip_path):
 			params["zipfile"] = zip_path
 		else:

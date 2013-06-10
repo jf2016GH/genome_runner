@@ -21,7 +21,8 @@ import pdb
 import os
 import json
 import rpy2.robjects as robjects
-import zipfile
+import tarfile
+import traceback
 
 Interval = collections.namedtuple("Interval", "chrom,start,end")
 
@@ -39,8 +40,9 @@ progress_outpath = None
 console_output = False
 
 def read_intervals(path, background=None, snp_only=False):
-    with (gzip.open(path) if path.endswith(".gz") else open(path)) as h:
+    with (gzip.open(path,"rb") if path.endswith(".gz") else open(path,"rb")) as h:
         intervals = []
+        print "path: ",path
         for i,line in enumerate(h):
             fields = line.strip().split("\t")
 #            print fields
@@ -108,7 +110,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
 
     fois = read_lines(fois)
     gfs = read_lines(gfs)
-    print "GF: ", gfs[0]
     bg = read_intervals(bg_path)
     bg_iset = IntervalSet(bg)
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
@@ -132,7 +133,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
         _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         _write_progress("Analysis Completed")
     except Exception, e: 
-        logger.error(e)
+        logger.error( traceback.print_exc())
         _write_progress("Run crashed. See end of log for details.")
 
 def cluster_matrix(input_path,output_path):
@@ -156,10 +157,10 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     '''
     File paths of FOIs and GFs as a list. Gathers all the files together in one ziped file
     '''
-    zip = zipfile.ZipFile(os.path.join(outdir,'GR_Runfiles_{}.zip'.format(job_name)),"a")
+    tar = tarfile.TarFile(os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name)),"a")
     fls = fois + gfs + [bg_path]
     for f in fls:
-        zip.write(f,os.path.basename(f))
+        tar.add(f,os.path.basename(f))
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):

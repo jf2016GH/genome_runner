@@ -81,7 +81,8 @@ class PathNode(defaultdict):
 
 	# for the organism combobox
 	def org_as_html(self,id=None):
-		s = "<select name='organism' "
+
+		s = "<select name='organism' style=\"margin-left: 10px\" "
 		if id:
 			s += "id='%s'" % str (id)
 		s += '>'
