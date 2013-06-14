@@ -8,7 +8,6 @@ sys.argv[3] - spot background file
 
 import argparse
 import collections
-import gzip
 import math
 import sys
 import logging
@@ -21,8 +20,10 @@ import pdb
 import os
 import json
 import rpy2.robjects as robjects
+import gzip
 import tarfile
 import traceback
+import StringIO
 
 Interval = collections.namedtuple("Interval", "chrom,start,end")
 
@@ -96,45 +97,6 @@ def p_value(gf, fois, bgs, foi_name):
         return sign * sys.float_info.min_10_exp
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):    
-    
-    # set output settings
-    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
-    detailed_outpath =  os.path.join(outdir, "detailed.gr")
-    matrix_outpath = os.path.join(outdir,"matrix.gr")
-    progress_outpath = os.path.join(outdir,".prog")
-    hdlr = logging.FileHandler(os.path.join(outdir,'.log'))
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-
-    fois = read_lines(fois)
-    gfs = read_lines(gfs)
-    bg = read_intervals(bg_path)
-    bg_iset = IntervalSet(bg)
-    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
-
-    write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
-    write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
-    curprog,progmax = 0,len(gfs) 
-    try:
-        for gf in gfs:
-            curprog += 1
-            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
-            gf_iset = IntervalSet(read_intervals(gf))
-            write_output("###"+base_name(gf)+"###"+"\n",detailed_outpath)
-            write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
-        if len(gfs) > 1 and len(fois) > 1:
-            cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
-        else:
-            with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
-                wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
-        _write_progress("Preparing run files for download")
-        _zip_run_files(fois,gfs,bg_path,outdir,job_name)
-        _write_progress("Analysis Completed")
-    except Exception, e: 
-        logger.error( traceback.print_exc())
-        _write_progress("Run crashed. See end of log for details.")
 
 def cluster_matrix(input_path,output_path):
     '''
@@ -153,14 +115,48 @@ def cluster_matrix(input_path,output_path):
     robjects.r(r_script)
     return output_path    
 
+def pearsons_cor_matrix(matrix_path,output_path):
+    r_script = """library(gplots)
+                    t5 = read.table("{}")                    
+                    pt5 <- cor(as.matrix(t5)) # Correlation matrix
+                    row_names <- colnames(pt5)
+                    col_names <- colnames(pt5)
+                    pt5 <- apply(pt5, 2, function(x) as.numeric(x))
+                    row.names(pt5) <- row_names
+                    colnames(pt5) <- col_names  
+                    h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                    write.table(t(h$carpet),"{}",sep="\t")""".format(matrix_path,output_path)
+    robjects.r(r_script)
+    return output_path    
+
+
 def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     '''
-    File paths of FOIs and GFs as a list. Gathers all the files together in one ziped file
-    '''
-    tar = tarfile.TarFile(os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name)),"a")
-    fls = fois + gfs + [bg_path]
+    File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
+    '''    
+    f = open(os.path.join(outdir,".log"))
+    f_log = f.read()
+    f.close()
+    f = open(os.path.join(outdir,".settings"))
+    f_sett = f.read() + "\n###LOG###\n"
+    f.close()
+    new_log_path = os.path.join(outdir,".details")
+    new_log = open(new_log_path,'wb')
+    new_log.write(f_sett+f_log)
+    new_log.close()
+
+    tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
+    tar = tarfile.TarFile(tar_path,"a")    
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr")]
+    fls = output_files + [new_log_path]
     for f in fls:
         tar.add(f,os.path.basename(f))
+    tar.close()
+    tar_file = open(tar_path,'rb')
+    with gzip.open(tar_path+".gz","wb") as gz:
+        gz.writelines(tar_file)
+    tar_file.close()
+    if os.path.exists(tar_path): os.remove(tar_path)
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
@@ -192,6 +188,48 @@ def _write_progress(line):
         with open(progress_outpath,"wb") as progfile:
             progfile.write(json.dumps(progress))
 
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):    
+    
+    # set output settings
+    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
+    detailed_outpath =  os.path.join(outdir, "detailed.gr")
+    matrix_outpath = os.path.join(outdir,"matrix.gr")
+    progress_outpath = os.path.join(outdir,".prog")
+    hdlr = logging.FileHandler(os.path.join(outdir,'.log'))
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    hdlr.setFormatter(formatter)
+    logger.addHandler(hdlr)
+
+    fois = read_lines(fois)
+    gfs = read_lines(gfs)
+    bg = read_intervals(bg_path)
+    bg_iset = IntervalSet(bg)
+    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
+
+    write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
+    write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
+    curprog,progmax = 0,len(gfs) 
+    try:
+        for gf in gfs:
+            curprog += 1
+            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
+            gf_iset = IntervalSet(read_intervals(gf))
+            write_output("###"+base_name(gf)+"###"+"\n",detailed_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+        if len(gfs) > 1 and len(fois) > 1:
+            cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
+            pearsons_cor_matrix(matrix_outpath,os.path.join(outdir,job_name + ".cor"))
+        else:
+            with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
+                wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
+        _write_progress("Preparing run files for download")
+        _zip_run_files(fois,gfs,bg_path,outdir,job_name)
+        _write_progress("Analysis Completed")
+    except Exception, e: 
+        logger.error( traceback.print_exc())
+        _write_progress("Run crashed. See end of log for details.")
+
+
 if __name__ == "__main__":
     console_output = True
     parser = argparse.ArgumentParser(description="Create a matrix of hypergeometric p-values for genomic intersections.")
@@ -215,6 +253,7 @@ if __name__ == "__main__":
         write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
     if len(gfs) > 1 and len(fois) > 1:
         cluster_matrix(matrix_outpath,os.path.join(outpath,"matrix_clustered.gr"))
+        pearsons_cor_matrix(matrix_outpath,os.path.join(outdir,job_name + ".cor"))
     else:
         with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
             wb.write("Clustered matrix requires at least a 2 X 2 matrix.")

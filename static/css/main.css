@@ -43,3 +43,15 @@
 ul { list-style-type: none }
 body { background: #1C1C1C;}
 img { padding: 10px; border-radius: 15px;} 
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 60px;                  
+  height: 28px;                 
+  padding: 2px;             
+  font: 12px sans-serif;        
+  background: black;   
+  border: 0px;      
+  border-radius: 8px;           
+  pointer-events: none;         
+}

@@ -3,8 +3,12 @@
   var Heatmap, getConditionNames, getGeneExpressions, isNumber;
 
   $(document).ready(function() {
-      var geneExpressionModel, genes, heatmap;
+    // Modified to work with GR data
+    // matrix_gfs, matrix_fois, genes are given values in results.html
+      var geneExpressionModel, genes, heatmap;      
       genes = d3.tsv.parse(matrix_data);
+      matrix_gfs = matrix_gfs.split("\t")
+      matrix_fois = matrix_fois.split("\t")
       if (genes.length == 0){ 
           heatmap = d3.select("#heatmap").append("svg").attr("width", 1195).attr("height", 500);
           heatmap.append("svg:rect")
@@ -62,7 +66,7 @@
       extent = this.model.get("extent");
       clusters = this.model.get("clusters");
       clusterColor = this.model.get("clusterColor");
-      heatmapColor = d3.scale.linear().domain([-5, 0, 5]).range(["#278DD6", "#fff", "#d62728"]);
+      heatmapColor = d3.scale.linear().domain([-5, 0, 5]).range(["#29DA29", "#EAEAEA", "#DF3435"]);
       textScaleFactor = 9;
       conditionNamesMargin = d3.max(conditionNames.map(function(conditionName) {
         return conditionName.length;
@@ -77,7 +81,7 @@
         left: geneNamesMargin * textScaleFactor
       };
       cell_size = 30;
-      width = cell_size * geneExpressions[0].length;
+      width = cell_size * geneExpressions[0]v .length;
       height = cell_size * geneNames.length;
       heatmap = d3.select(this.el).append("svg").attr("width", width + margin.right + margin.left).attr("height", height + margin.top + margin.bottom).attr("id", "heatmap").append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
       x = d3.scale.ordinal().domain(d3.range(geneExpressions[0].length)).rangeBands([0, width]);
@@ -92,22 +96,49 @@
           var legW = 20,legH = 10;
           var gradient = heatmap.append("svg:defs").append("svg:linearGradient").attr("id", "gradient")
                                   .attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "100%").attr("spreadMethod", "pad");
-          gradient.append("stop").attr("offset", "0").attr("stop-color", "#278DD6");
-          gradient.append("stop").attr("offset", "0.5").attr("stop-color", "#fff");
-          gradient.append("stop").attr("offset", "1.0").attr("stop-color", "#d62728");
+          gradient.append("stop").attr("offset", "0").attr("stop-color", "#29DA29");
+          gradient.append("stop").attr("offset", "0.5").attr("stop-color", "#EAEAEA");
+          gradient.append("stop").attr("offset", "1.0").attr("stop-color", "#DF3435");
           legend = d3.select("heatmap").append("rect").attr("class","legend").attr("x",100).attr("y",100)
                           .attr("width",100).attr("height",100).style("fill","url(#gradient)");
 
+      cur_row = -1;
       getRow = function(row) {
+        var divtooltip = d3.select("body").append("div")   
+          .attr("class", "tooltip")               
+          .style("opacity", 0);
+
         var cell;
+        cur_row += 1;
+        console.log(cur_row)
         return cell = d3.select(this).selectAll(".cell").data(row).enter().append("rect").attr("class", "cell").attr("x", function(d, i) {
+          console.log("i: " + i)
           return x(i);
         }).attr("width", x.rangeBand()).attr("height", x.rangeBand()).text(function(d) {
           return d;
         }).style("fill", function(d) {
           return heatmapColor(d);
-        });
+          // Tool tips
+        }).attr("value",function(d){
+          return d
+        })
+        .on("mouseover", function(d,i) {      
+            divtooltip.transition()        
+                .duration(50)      
+                .style("opacity", .9);  
+
+            pvalue = 1/Math.pow(10,Math.abs(d));
+            divtooltip .html("<p style=\"color:#C1C1C1; margin-top: 4px; font-size: 16px;\">p-value: " + pvalue.toExponential(4) + "<br>"+ "log: " + d +
+              "<br>GF: " + matrix_gfs[i] + "<br>FOI: " + matrix_fois[cur_row] + "</p>")  
+                .style("left", (d3.event.pageX) + "px")     
+                .style("top", (d3.event.pageY - 28) + "px");    
+            })                  
+          .on("mouseout", function(d) {       
+            divtooltip.transition()        
+                .duration(50)      
+                .style("opacity", 0)});          
       };
+
       rows = heatmap.selectAll(".row").data(geneExpressions).enter().append("g").attr("class", "row").attr("name", function(d, i) {
         return "gene_" + i;
       }).attr("transform", function(d, i) {

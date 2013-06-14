@@ -10,6 +10,18 @@
 			}
 			/* allows the check box tree to be rendered correctly*/
 			.ui-icon {float: left;}
+			div.tooltip {   
+			  position: absolute;           
+			  text-align: center;           
+			  width: 260px;                  
+			  height: 90px;                 
+			  padding: 2px;             
+			  font: 12px sans-serif;        
+			  background: #1C1C1C;   
+			  border: 0px;      
+			  border-radius: 8px;           
+			  pointer-events: none;         
+			}
 		</style>
 
 		<!-- For IE6-8 support of HTML5 elements -->
@@ -35,10 +47,12 @@
 							});
 			$('#resultstab').tabs();
 			matrix_data  = "${matrix_data}";
+			matrix_gfs = "${matrix_gfs}";
+			matrix_fois = "${matrix_fois}";
 
 		});
 		</script>
-      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>
+      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>\
 		
 </head>
 <body bgcolor="#A8D5FF">

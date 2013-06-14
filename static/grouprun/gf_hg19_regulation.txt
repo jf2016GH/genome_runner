@@ -25,7 +25,7 @@
 ./data/hg19/regulation/Tier1/wgEncodeUwDnaseHffHotspotsRep2.gz
 ./data/hg19/regulation/Tier1/wgEncodeUwDnaseHmveclblHotspotsRep2.gz
 ./data/hg19/regulation/Tier1/wgEncodeUwDnaseGm12865HotspotsRep1.gz
-./data/hg19/regulation/
+./data/hg19/regulation/Tier1/wgEncodeHaibMethyl450SknmcSitesRep1.gz
 ./data/hg19/regulation/Tier1/wgEncodeUwDnaseHconfHotspotsRep1.gz
 ./data/hg19/regulation/Tier1/wgEncodeHaibMethylRrbsGm12878HaibSitesRep2.gz
 ./data/hg19/regulation/Tier1/wgEncodeUwDnaseAg04450HotspotsRep1.gz

@@ -286,13 +286,18 @@ class WebUI(object):
 				params["matrix"] = f.read().replace("\"","")
 		if os.path.exists(matrix_clust_path):
 			with open(matrix_clust_path) as f:
-				params["matrix_data"] = f.read().replace("\"","")
+				d = f.read()
+				params["matrix_data"] = d.replace("\"","")
 				# d3 requires "gene_name" to be inserted into the first column
 				tmp =  params["matrix_data"].split("\n")
 				params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
 				params["matrix_data"] = params["matrix_data"].replace("\n","\\n")
+				params["matrix_fois"] =  d.split("\n")[0].replace("\"","")
+				params["matrix_gfs"] = "\t".join([x.split("\t")[0].replace("\"","") for x in d.split("\n")[1:] if x!=""])
 		else: 
 			params["matrix_data"] = "Heatmap will be available after the analysis is complete."
+			params["matrix_gfs"] = ""
+			params["matrix_fois"] = ""
 
 		params["log"] = "###Run Settings###\n"
 		sett_path = os.path.join(path,".settings")
@@ -306,7 +311,7 @@ class WebUI(object):
 				params["log"] = params["log"] + f.read()
 
 		# check if run files ready for download
-		zip_path = os.path.join(path,"GR_Runfiles_{}.tar".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
+		zip_path = os.path.join(path,"GR_Runfiles_{}.tar.gz".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
 		if os.path.exists(zip_path):
 			params["zipfile"] = zip_path
 		else:
