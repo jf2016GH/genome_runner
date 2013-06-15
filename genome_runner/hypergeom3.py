@@ -128,7 +128,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
                     colnames(pt5) <- col_names  
                     h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
                     write.table(t(h$carpet),"{}",sep="\t")""".format(matrix_path,output_path)
-    robjects.r(r_script)
+    #robjects.r(r_script)
 
     ## calculates the PCC p-values 
 
@@ -164,37 +164,19 @@ def pearsons_cor_matrix(matrix_path,out_dir):
                 row.names(pt5.prob) <- row_names
                 colnames(pt5.prob) <- col_names 
                 write.table(pt5.prob,\""""+output_path+".pvalue"+"""\",sep="\t")"""
+    #robjects.r(r_script)
+    r_script = """t5 = read.table(\""""+matrix_path+"""\") 
+        library("Hmisc")
+        p5<-rcorr(as.matrix(t5))
+        p5[[1]]
+        p5[[3]]
+        h<-heatmap.2(as.matrix(p5[[1]]))
+        write.table(h$carpet,\"""" + output_path + """\",sep="\t")
+        write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path+".pvalue"+ """\",sep="\t")""" 
     robjects.r(r_script)
-    return output_path    
+    return output_path   
 
 
-def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
-    '''
-    File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
-    '''    
-    f = open(os.path.join(outdir,".log"))
-    f_log = f.read()
-    f.close()
-    f = open(os.path.join(outdir,".settings"))
-    f_sett = f.read() + "\n###LOG###\n"
-    f.close()
-    new_log_path = os.path.join(outdir,".details")
-    new_log = open(new_log_path,'wb')
-    new_log.write(f_sett+f_log)
-    new_log.close()
-
-    tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
-    tar = tarfile.TarFile(tar_path,"a")    
-    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr")]
-    fls = output_files + [new_log_path]
-    for f in fls:
-        tar.add(f,os.path.basename(f))
-    tar.close()
-    tar_file = open(tar_path,'rb')
-    with gzip.open(tar_path+".gz","wb") as gz:
-        gz.writelines(tar_file)
-    tar_file.close()
-    if os.path.exists(tar_path): os.remove(tar_path)
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):

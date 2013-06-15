@@ -46,12 +46,9 @@
 								max:  ${progmax}
 							});
 			matrix_data  = "${matrix_data}";
-			matrix_gfs = "${matrix_gfs}";
-			matrix_fois = "${matrix_fois}";
 			matrix_cor = "${matrix_cor}";
-			matrix_cor_rownames = "${matrix_cor_rownames}";
-			matrix_cor_colnames = "${matrix_cor_colnames}";	
-			matrix_cor_pvalues = "${matrix_cor_pvalues}";		
+			matrix_cor_pvalues = "${matrix_cor_pvalues}";	
+			matrix_data_gf_description = "${matrix_data_gf_description}"	
 
 		});
 		</script>
@@ -82,12 +79,7 @@
 		<div class="ui-state-highlight ui-corner-all">
 			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>
 		</div>
-	</div>
-	% if zipfile != "":
-	<a class="btn btn-primary" type="button" href="${zipfile}">Download all run files</a>
-	% else:
-	<a class="btn btn-primary disabled" type="button">Run files not ready for download</a>
-	% endif
+	</div>	
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
@@ -95,18 +87,16 @@
 	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')">Pearson's Correlation Matrix Results</a></li>
 	<li ><a href="#detailedresults">Detailed Results</a></li>
 	<li ><a href="#debugresults">Analysis Log</a></li>
-	<li ><a href="#heatmapdownload">Download Matrices</a></li>
+	<li ><a href="#heatmapdownload">Download Results</a></li>
 </ul>
 
 <div class="pill-content">
 	<div class="active" id="matrixresults">
 		<div class="well">
-			<h3 style="float: left">Clustered Heatmap</h3>			
-				<a id="heatmap_download" class="btn btn-primary" style="margin-left: 20px; margin-top: 3px">Download Heatmap (Right click - 'Save As' to save)</a>
+			<h3 style="float: left">Clustered Heatmap</h3>		
+				
 				<div  id='heatmap' >
 	      		</div>
-	      		<h3>Raw Unclustered Matrix Data</h3>
-				<textarea cols="150" rows="30">${matrix}</textarea><br>
 			</div>
 
 		</div>
@@ -114,11 +104,8 @@
 	<div id="cormatrixresults">
 		<div class="well">
 			<h3 style="float: left">Clustered Heatmap</h3>		
-			<a id="heatmap_cor_download" class="btn btn-primary" style="margin-left: 20px; margin-top: 3px">Download Heatmap (Right click - 'Save As' to save)</a>
 			<div  id='heatmap_cor' >
       		</div>
-      		<h3>Raw Unclustered Matrix Data</h3>
-			<textarea cols="150" rows="30">${matrix_cor_data}</textarea><br>
 		</div>
 	</div>
 	<div id="detailedresults">
@@ -135,11 +122,20 @@
 	</div>
 	<div id="heatmapdownload">
 		<div class="well">
-			<h3>Right click the images and choose 'Save As'</h3>
-			<h4>Enrichment Matrix</h4>
-			<div id="heatmap3_download" >
+			<div style="margin: 20px">
+				% if zipfile != "":
+				<a class="btn btn-primary" style="margin-left: 230px;"  type="button" href="${zipfile}">Download all Run Files</a>
+				% else:
+				<a class="btn btn-primary disabled" style="margin-left: 230px;" type="button">Run files not ready for download</a>
+				% endif
 			</div>
-			<h4>Pearson's Correlation Matrix</h4>
+			<div style="margin:10px">
+				<a style="font-size: 19px;margin-top:10px;" id="heatmap_download" >Download Clustered 	Enrichment Matrix as SVG File (Right click - 'Save As' to save) </a>
+				<br>
+			</div>
+			<div style="margin:10px">
+				<a style="font-size: 19px" id="heatmap_cor_download" >Download Pearson's Correlation 	Matrix as SVG File (Right click - 'Save As' to save) </a>
+			</div>
 		</div>
 	</div>
 </div>

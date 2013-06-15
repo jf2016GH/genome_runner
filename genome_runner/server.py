@@ -17,6 +17,7 @@ import json
 import pdb
 import hypergeom3 as grquery
 from time import gmtime, strftime
+import bedfilecreator
 
 lookup = TemplateLookup(directories=["templates"])
 default_backgrounds_paths = {"hg19": "data/hg19/varRep/Tier0/snp137Flagged.gz",
@@ -270,6 +271,22 @@ class WebUI(object):
 			print "progress_path: ", progress_path
 			with open(progress_path) as f:
 				p = json.loads(f.read() )
+		params["log"] = "###Run Settings###\n"
+		sett_path = os.path.join(path,".settings")
+		organism = ""
+		if os.path.exists(sett_path):
+			with open(sett_path) as f:
+				tmp = f.read()	
+				params["log"] = params["log"]+ tmp
+				organism = [x.split("\t")[1] for x in tmp.split("\n") if x.split("\t")[0] == "Organism:"][0]
+
+		trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
+
+		params["log"] = params["log"] + "\n###Run Log###\n"
+		debug_path = os.path.join(path,".log")
+		if os.path.exists(debug_path):
+			with open(debug_path) as f:
+				params["log"] = params["log"] + f.read()
 
 		# loads results from results file		
 		detailed_path = os.path.join(path,"detailed.gr")
@@ -280,7 +297,6 @@ class WebUI(object):
 		# clustered matrix results loaded if they exist
 		matrix_path = os.path.join(path,"matrix.gr")
 		matrix_clust_path  = os.path.join(path,"matrix_clustered.gr")
-
 		if os.path.exists(matrix_path):
 			with open(matrix_path) as f:
 				params["matrix"] = f.read().replace("\"","")
@@ -289,15 +305,26 @@ class WebUI(object):
 				d = f.read()
 				params["matrix_data"] = d.replace("\"","")
 				# d3 requires "gene_name" to be inserted into the first column
-				tmp =  params["matrix_data"].split("\n")
-				params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
-				params["matrix_data"] = params["matrix_data"].replace("\n","\\n")
-				params["matrix_fois"] =  d.split("\n")[0].replace("\"","")
-				params["matrix_gfs"] = "\t".join([x.split("\t")[0].replace("\"","") for x in d.split("\n")[1:] if x!=""])
+				tmp_data =  params["matrix_data"].split("\n")
+				tmp = tmp_data[:] # this copy is passed onto the results page
+				# insert the description column if it does not exist
+				tmp_matrix = [x.split("\t") for x in tmp]
+				if tmp_matrix[0][-1] != "Genomic Feature Description":
+					tmp_matrix[0] += ["Genomic Feature Description"]
+					for i in range(1,len(tmp)):
+						description = [x["longLabel"] for x in trackdb if x["tableName"] == tmp_matrix[i][0]]
+						if len(description) is not 0: description = description[0]
+						else: description = ""
+						tmp_matrix[i] += [description]						
+			with open(matrix_clust_path,"wb") as writer:
+				writer.write("\n".join(["\t".join(x) for x in tmp_matrix]))
+
+			params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+			params["matrix_data"] = params["matrix_data"].replace("\n","\\n")
+			params["matrix_data_gf_description"] = "\t".join([x[-1] for x in tmp_matrix[1:]])
 		else: 
 			params["matrix_data"] = "Heatmap will be available after the analysis is complete."
-			params["matrix_gfs"] = ""
-			params["matrix_fois"] = ""
+			params["matrix_data_gf_description"] = ""
 
 		# Pearson's matrix results
 		matrix_cor_path = os.path.join(path,".cor")
@@ -309,16 +336,11 @@ class WebUI(object):
 				# d3 requires "gene_name" to be inserted into the first column
 				tmp =  params["matrix_cor"].split("\n")
 				params["matrix_cor"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
-				params["matrix_cor"] = params["matrix_cor"].replace("\n","\\n")
-				
-				params["matrix_cor_colnames"] =  d.split("\n")[0].replace("\"","")
-				params["matrix_cor_rownames"] = "\t".join([x.split("\t")[0].replace("\"","") for x in d.split("\n")[1:] if x!=""])
+				params["matrix_cor"] = params["matrix_cor"].replace("\n","\\n")				
 
 		else:
 			params["matrix_cor_data"] = ""
 			params["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
-			params["matrix_cor_colnames"] = ""
-			params["matrix_cor_rownames"] = ""				
 		if os.path.exists(matrix_cor_path+".pvalue"):
 			with open(matrix_cor_path+".pvalue") as f:
 				d = f.read()
@@ -330,16 +352,6 @@ class WebUI(object):
 		else: 
 			params["matrix_cor_pvalues"] = ""
 
-		params["log"] = "###Run Settings###\n"
-		sett_path = os.path.join(path,".settings")
-		if os.path.exists(sett_path):
-			with open(sett_path) as f:
-				params["log"] = params["log"]+ f.read()				
-		params["log"] = params["log"] + "\n###Run Log###\n"
-		debug_path = os.path.join(path,".log")
-		if os.path.exists(debug_path):
-			with open(debug_path) as f:
-				params["log"] = params["log"] + f.read()
 
 		# check if run files ready for download
 		zip_path = os.path.join(path,"GR_Runfiles_{}.tar.gz".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
@@ -388,7 +400,6 @@ class WebUI(object):
 	def demo(self):
 		tmpl = lookup.get_template("demo.html")
 		return tmpl.render()
-
 
 if __name__ == "__main__":
 	if not os.path.exists("results"):

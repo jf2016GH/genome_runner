@@ -3,6 +3,7 @@
   var Heatmap, getConditionNames, getGeneExpressions, isNumber,cur_heatmap,cur_tooltip_matrix, tooltip_matrices = {};
 
   $(document).ready(function() {
+    matrix_data_gf_description = matrix_data_gf_description.split("\t");
     var geneExpressionModel, genes, heatmap;
     color_range = 1;
     matrix_cor_pvalues = d3.tsv.parse(matrix_cor_pvalues)
@@ -166,7 +167,8 @@
         }).attr("value",function(d){
           return d
         })
-        .on("mouseover", function(d,i) {      
+        .on("mouseover", function(d,i) {             
+    
             divtooltip.transition()        
                 .duration(50)      
                 .style("opacity", .9);
@@ -204,15 +206,33 @@
                 .duration(50)      
                 .style("opacity", 0)});          
       };
-
+      var divtooltip = d3.select("body").append("div")   
+                        .attr("class", "tooltip")               
+                        .style("opacity", 0);   
       rows = heatmap.selectAll(".row").data(geneExpressions).enter().append("g").attr("class", "row").attr("name", function(d, i) {
         return "gene_" + i;
       }).attr("transform", function(d, i) {
         return "translate(0," + y(i) + ")";
       }).each(getRow);
       return rows.append("text").attr("x", -6).attr("y", x.rangeBand() / 2).attr("dy", ".32em").attr("text-anchor", "end").text(function(d, i) {
+        desc = matrix_data_gf_description[i]
+        if (desc == "") this.setAttribute("tt", "No Description");
+        else this.setAttribute("tt", desc);
         return geneNames[i];
-      });
+      }).on("mouseover", function(d,i) {              
+            divtooltip.transition()        
+                .duration(50)      
+                .style("opacity", .9);
+            
+            divtooltip .html("<p style=\"color:#C1C1C1; margin-top: 4px; font-size: 16px;\">" + this.getAttribute("tt") + "</p>")  
+
+                .style("left", (d3.event.pageX+30) + "px")     
+                .style("top", (d3.event.pageY - 28) + "px");    
+            })                  
+          .on("mouseout", function(d) {       
+            divtooltip.transition()        
+                .duration(50)      
+                .style("opacity", 0)}); 
      
     }
   });
