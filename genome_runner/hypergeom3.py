@@ -115,17 +115,44 @@ def cluster_matrix(input_path,output_path):
     robjects.r(r_script)
     return output_path    
 
-def pearsons_cor_matrix(matrix_path,output_path):
+def pearsons_cor_matrix(matrix_path,out_dir):
+    output_path = os.path.join(out_dir,".cor")
+    ### this calculates the PCC matrix
     r_script = """library(gplots)
                     t5 = read.table("{}")                    
                     pt5 <- cor(as.matrix(t5)) # Correlation matrix
-                    row_names <- colnames(pt5)
+                    row_names <- rownames(pt5)
                     col_names <- colnames(pt5)
                     pt5 <- apply(pt5, 2, function(x) as.numeric(x))
                     row.names(pt5) <- row_names
                     colnames(pt5) <- col_names  
                     h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
                     write.table(t(h$carpet),"{}",sep="\t")""".format(matrix_path,output_path)
+    robjects.r(r_script)
+
+    ## calculates the PCC p-values 
+
+    r_script = """t5 = read.table(\""""+output_path+"""\")                    
+                  pt5 <- cor(as.matrix(t5))
+
+                  cor.prob <- function(pt5){
+                  pair.SampSize <- pn(X)
+                  above1 <- row(pair.SampSize) < col(pair.SampSize)
+                  pair.df <- pair.SampSize[above1] - 2
+                  R <- cor(X, use="pair")
+                  above2 <- row(R) < col(R)
+                  r2 <- R[above2]^2
+                  Fstat <- (r2 * pair.df)/(1 - r2)
+                  R[above2] <- 1 - pf(Fstat, 1, pair.df)
+                  R
+                }
+
+                row_names <- rownames(pt5)
+                col_names <- colnames(pt5)
+                cor.prob <- apply(pt5, 2, function(x) as.numeric(x))
+                row.names(cor.prob) <- row_names
+                colnames(cor.prob) <- col_names 
+                write.table(cor.prob,\""""+output_path+".pvalue"+"""\",sep="\t")"""
     robjects.r(r_script)
     return output_path    
 
@@ -218,7 +245,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
             write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
         if len(gfs) > 1 and len(fois) > 1:
             cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
-            pearsons_cor_matrix(matrix_outpath,os.path.join(outdir,job_name + ".cor"))
+            pearsons_cor_matrix(matrix_outpath,outdir)
         else:
             with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
                 wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
@@ -253,7 +280,7 @@ if __name__ == "__main__":
         write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
     if len(gfs) > 1 and len(fois) > 1:
         cluster_matrix(matrix_outpath,os.path.join(outpath,"matrix_clustered.gr"))
-        pearsons_cor_matrix(matrix_outpath,os.path.join(outdir,job_name + ".cor"))
+        pearsons_cor_matrix(matrix_outpath,outdir)
     else:
         with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
             wb.write("Clustered matrix requires at least a 2 X 2 matrix.")

@@ -14,7 +14,7 @@
 			  position: absolute;           
 			  text-align: center;           
 			  width: 260px;                  
-			  height: 90px;                 
+			  height: 50px;                 
 			  padding: 2px;             
 			  font: 12px sans-serif;        
 			  background: #1C1C1C;   
@@ -45,18 +45,20 @@
 								value: ${curprog},
 								max:  ${progmax}
 							});
-			$('#resultstab').tabs();
 			matrix_data  = "${matrix_data}";
 			matrix_gfs = "${matrix_gfs}";
 			matrix_fois = "${matrix_fois}";
+			matrix_cor = "${matrix_cor}";
+			matrix_cor_rownames = "${matrix_cor_rownames}";
+			matrix_cor_colnames = "${matrix_cor_colnames}";	
+			matrix_cor_pvalues = "${matrix_cor_pvalues}";		
 
 		});
 		</script>
-      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>\
+      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>
 		
 </head>
-<body bgcolor="#A8D5FF">
-
+<body bgcolor="#A8D5FF">	
 	<div class="topbar">
 		<div class="topbar-inner">
 			<div class="container-fluid">
@@ -89,19 +91,34 @@
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
-	<li class="active" ><a href="#matrixresults">Matrix</a></li>
+	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')">Clustered Enrichment Matrix</a></li>
+	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')">Pearson's Correlation Matrix Results</a></li>
 	<li ><a href="#detailedresults">Detailed Results</a></li>
 	<li ><a href="#debugresults">Analysis Log</a></li>
+	<li ><a href="#heatmapdownload">Download Matrices</a></li>
 </ul>
 
 <div class="pill-content">
 	<div class="active" id="matrixresults">
 		<div class="well">
-			<h3>Clustered Heatmap</h3>
-			<div  id='heatmap' >
+			<h3 style="float: left">Clustered Heatmap</h3>			
+				<a id="heatmap_download" class="btn btn-primary" style="margin-left: 20px; margin-top: 3px">Download Heatmap (Right click - 'Save As' to save)</a>
+				<div  id='heatmap' >
+	      		</div>
+	      		<h3>Raw Unclustered Matrix Data</h3>
+				<textarea cols="150" rows="30">${matrix}</textarea><br>
+			</div>
+
+		</div>
+
+	<div id="cormatrixresults">
+		<div class="well">
+			<h3 style="float: left">Clustered Heatmap</h3>		
+			<a id="heatmap_cor_download" class="btn btn-primary" style="margin-left: 20px; margin-top: 3px">Download Heatmap (Right click - 'Save As' to save)</a>
+			<div  id='heatmap_cor' >
       		</div>
       		<h3>Raw Unclustered Matrix Data</h3>
-			<textarea cols="150" rows="30">${matrix}</textarea><br>
+			<textarea cols="150" rows="30">${matrix_cor_data}</textarea><br>
 		</div>
 	</div>
 	<div id="detailedresults">
@@ -115,8 +132,17 @@
 			<h3>Analysis Log</h3>
 			<textarea cols="150" rows="30">${log}</textarea><br>
 		</div>
+	</div>
+	<div id="heatmapdownload">
+		<div class="well">
+			<h3>Right click the images and choose 'Save As'</h3>
+			<h4>Enrichment Matrix</h4>
+			<div id="heatmap3_download" >
+			</div>
+			<h4>Pearson's Correlation Matrix</h4>
+		</div>
+	</div>
 </div>
-
 
 </body>
 </html>

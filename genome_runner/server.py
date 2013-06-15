@@ -299,6 +299,37 @@ class WebUI(object):
 			params["matrix_gfs"] = ""
 			params["matrix_fois"] = ""
 
+		# Pearson's matrix results
+		matrix_cor_path = os.path.join(path,".cor")
+		if os.path.exists(matrix_cor_path):
+			with open(matrix_cor_path) as f:
+				d = f.read()
+				params["matrix_cor_data"] =  d.replace("\"","")
+				params["matrix_cor"] = d.replace("\"","")
+				# d3 requires "gene_name" to be inserted into the first column
+				tmp =  params["matrix_cor"].split("\n")
+				params["matrix_cor"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+				params["matrix_cor"] = params["matrix_cor"].replace("\n","\\n")
+				
+				params["matrix_cor_colnames"] =  d.split("\n")[0].replace("\"","")
+				params["matrix_cor_rownames"] = "\t".join([x.split("\t")[0].replace("\"","") for x in d.split("\n")[1:] if x!=""])
+
+		else:
+			params["matrix_cor_data"] = ""
+			params["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
+			params["matrix_cor_colnames"] = ""
+			params["matrix_cor_rownames"] = ""				
+		if os.path.exists(matrix_cor_path+".pvalue"):
+			with open(matrix_cor_path+".pvalue") as f:
+				d = f.read()
+				params["matrix_cor_pvalues"] = d.replace("\"","")
+				# d3 requires "gene_name" to be inserted into the first column
+				tmp =  params["matrix_cor_pvalues"].split("\n")
+				params["matrix_cor_pvalues"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])   
+				params["matrix_cor_pvalues"] = params["matrix_cor_pvalues"].replace("\n","\\n")				
+		else: 
+			params["matrix_cor_pvalues"] = ""
+
 		params["log"] = "###Run Settings###\n"
 		sett_path = os.path.join(path,".settings")
 		if os.path.exists(sett_path):
