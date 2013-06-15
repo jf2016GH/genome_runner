@@ -316,8 +316,6 @@ class WebUI(object):
 						if len(description) is not 0: description = description[0]
 						else: description = ""
 						tmp_matrix[i] += [description]						
-			with open(matrix_clust_path,"wb") as writer:
-				writer.write("\n".join(["\t".join(x) for x in tmp_matrix]))
 
 			params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
 			params["matrix_data"] = params["matrix_data"].replace("\n","\\n")

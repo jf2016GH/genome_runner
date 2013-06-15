@@ -24,6 +24,8 @@ import gzip
 import tarfile
 import traceback
 import StringIO
+import bedfilecreator
+
 
 Interval = collections.namedtuple("Interval", "chrom,start,end")
 
@@ -208,8 +210,13 @@ def _write_progress(line):
         with open(progress_outpath,"wb") as progfile:
             progfile.write(json.dumps(progress))
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):    
-    
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
+    sett_path = os.path.join(outdir,".settings")
+    trackdb = []
+    if os.path.exists(sett_path):        
+        with open(sett_path) as re:
+            organism = [x.split("\t")[1] for x in re.read().split("\n") if x.split("\t")[0] == "Organism:"][0]
+            trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
     # set output settings
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
     detailed_outpath =  os.path.join(outdir, "detailed.gr")
@@ -234,7 +241,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
             curprog += 1
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
             gf_iset = IntervalSet(read_intervals(gf))
-            write_output("###"+base_name(gf)+"###"+"\n",detailed_outpath)
+            write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
             write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
         if len(gfs) > 1 and len(fois) > 1:
             cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
@@ -249,6 +256,38 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
         logger.error( traceback.print_exc())
         _write_progress("Run crashed. See end of log for details.")
 
+def get_description(gf,trackdb):
+    desc = [x["longLabel"] for x in trackdb if x["tableName"] == gf]
+    if len(desc) is not 0: return desc[0]
+    else: return "No Description"
+
+def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
+    '''
+    File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
+    '''    
+    f = open(os.path.join(outdir,".log"))
+    f_log = f.read()
+    f.close()
+    f = open(os.path.join(outdir,".settings"))
+    f_sett = f.read() + "\n###LOG###\n"
+    f.close()
+    new_log_path = os.path.join(outdir,".details")
+    new_log = open(new_log_path,'wb')
+    new_log.write(f_sett+f_log)
+    new_log.close()
+
+    tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
+    tar = tarfile.TarFile(tar_path,"a")    
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr")]
+    fls = output_files + [new_log_path]
+    for f in fls:
+        tar.add(f,os.path.basename(f))
+    tar.close()
+    tar_file = open(tar_path,'rb')
+    with gzip.open(tar_path+".gz","wb") as gz:
+        gz.writelines(tar_file)
+    tar_file.close()
+    if os.path.exists(tar_path): os.remove(tar_path)
 
 if __name__ == "__main__":
     console_output = True

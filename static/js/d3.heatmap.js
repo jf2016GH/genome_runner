@@ -219,22 +219,25 @@
         if (desc == "") this.setAttribute("tt", "No Description");
         else this.setAttribute("tt", desc);
         return geneNames[i];
-      }).on("mouseover", function(d,i) {              
-            divtooltip.transition()        
-                .duration(50)      
-                .style("opacity", .9);
-            
-            divtooltip .html("<p style=\"color:#C1C1C1; margin-top: 4px; font-size: 16px;\">" + this.getAttribute("tt") + "</p>")  
+      }).on("mouseover", function(d,i) {
+            if (cur_heatmap == "heatmap") {              
+              divtooltip.transition()        
+                  .duration(50)      
+                  .style("opacity", .9);
+              
+              divtooltip .html("<p style=\"color:#C1C1C1; margin-top: 4px; font-size: 16px;\">" + this.getAttribute("tt") + "</p>")  
 
-                .style("left", (d3.event.pageX+30) + "px")     
-                .style("top", (d3.event.pageY - 28) + "px");    
-            })                  
-          .on("mouseout", function(d) {       
+                  .style("left", (d3.event.pageX+30) + "px")     
+                  .style("top", (d3.event.pageY - 28) + "px");    
+            }
+          })                  
+          .on("mouseout", function(d) {  
+           if (cur_heatmap == "heatmap") {          
             divtooltip.transition()        
                 .duration(50)      
-                .style("opacity", 0)}); 
-     
-    }
+                .style("opacity", 0)}
+              }); 
+          }
   });
 
   getGeneExpressions = function(genes, conditionNames) {
