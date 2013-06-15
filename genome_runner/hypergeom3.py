@@ -132,10 +132,21 @@ def pearsons_cor_matrix(matrix_path,out_dir):
 
     ## calculates the PCC p-values 
 
-    r_script = """t5 = read.table(\""""+output_path+"""\")                    
-                  pt5 <- cor(as.matrix(t5))
+    r_script = """t5 = read.table(\""""+output_path+"""\")                   
+                
+                  pn <- function(X){crossprod(!is.na(X))}
 
-                  cor.prob <- function(pt5){
+                  col <- function (x, as.factor = FALSE) 
+                    {
+                      if (as.factor) {
+                        labs <- colnames(x, do.NULL = FALSE, prefix = "")
+                        res <- factor(.Internal(col(dim(x))), labels = labs)
+                        dim(res) <- dim(x)
+                        res
+                      }
+                      else .Internal(col(dim(x)))
+                    }
+                cor.prob <- function(X){
                   pair.SampSize <- pn(X)
                   above1 <- row(pair.SampSize) < col(pair.SampSize)
                   pair.df <- pair.SampSize[above1] - 2
@@ -147,12 +158,12 @@ def pearsons_cor_matrix(matrix_path,out_dir):
                   R
                 }
 
+                pt5.prob <- cor.prob(as.matrix(t5))
                 row_names <- rownames(pt5)
                 col_names <- colnames(pt5)
-                cor.prob <- apply(pt5, 2, function(x) as.numeric(x))
-                row.names(cor.prob) <- row_names
-                colnames(cor.prob) <- col_names 
-                write.table(cor.prob,\""""+output_path+".pvalue"+"""\",sep="\t")"""
+                row.names(pt5.prob) <- row_names
+                colnames(pt5.prob) <- col_names 
+                write.table(pt5.prob,\""""+output_path+".pvalue"+"""\",sep="\t")"""
     robjects.r(r_script)
     return output_path    
 
@@ -245,7 +256,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
             write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
         if len(gfs) > 1 and len(fois) > 1:
             cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
-            pearsons_cor_matrix(matrix_outpath,outdir)
+            pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
         else:
             with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
                 wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
@@ -280,7 +291,7 @@ if __name__ == "__main__":
         write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
     if len(gfs) > 1 and len(fois) > 1:
         cluster_matrix(matrix_outpath,os.path.join(outpath,"matrix_clustered.gr"))
-        pearsons_cor_matrix(matrix_outpath,outdir)
+        pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
     else:
         with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
             wb.write("Clustered matrix requires at least a 2 X 2 matrix.")

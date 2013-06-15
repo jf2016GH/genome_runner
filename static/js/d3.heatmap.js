@@ -155,9 +155,10 @@
         cur_row += 1;
         return cell = d3.select(this).selectAll(".cell").data(row).enter().append("rect").attr("class", "cell").attr("x", function(d, i) {
           return x(i);
-        }).attr("width", x.rangeBand()).attr("height", x.rangeBand()).attr("gf",matrix[cur_row].gene_name)
+        }).attr("width", x.rangeBand()).attr("height", x.rangeBand()).attr("row",matrix[cur_row].gene_name)
         .text(function(d,i) {
-          this.setAttribute("tt",tooltip_matrices[cur_heatmap][cur_row][i])
+          this.setAttribute("tt",tooltip_matrices[cur_heatmap][cur_row][i]);
+          this.setAttribute("col",conditionNames[i]);
           return d;
         }).style("fill", function(d) {
           return heatmapColor(d);
@@ -169,13 +170,33 @@
             divtooltip.transition()        
                 .duration(50)      
                 .style("opacity", .9);
-            curGF = this.getAttribute("gf");
-            curTooltip = this.getAttribute("tt");
-            if (log10_tt_value == true) {curTooltip = 1/Math.pow(10,Math.abs(curTooltip)); curTooltip = curTooltip.toExponential(4) ;}
-            divtooltip .html("<p style=\"color:#C1C1C1; margin-top: 4px; font-size: 16px;\">p-value: " + curTooltip +
-                    "<br>GF: " + curGF  + "</p>")  
 
-                .style("left", (d3.event.pageX) + "px")     
+            if (log10_tt_value == true) {
+
+               d  = parseFloat(this.getAttribute("value"));
+               if (d<0) { d = -1*(1/Math.pow(10,Math.abs(d))); }
+               else { d = 1/Math.pow(10,Math.abs(d)); }
+               
+               if (Math.abs(d) < .05) { 
+                  if (d<0) tip1 = "Underrepresented<br>";
+                  else tip1 = "Overrepresented<br>";
+               }
+               else{
+                 tip1 = "Not Significant<br>";
+               }             
+               tip2 = "P-value: "  + d.toExponential(4) + "<br>";               
+             }
+             else {
+                tip1 = parseFloat(this.getAttribute("value")).toPrecision(2);
+                tip1 = "Pearsons: " + tip1 + "<br>"
+                tip2 = parseFloat(this.getAttribute("tt")).toExponential(4);
+                tip2 = "P-value: " + tip2 + "<br>"
+             }
+            divtooltip .html("<p style=\"color:#C1C1C1; margin-top: 4px; font-size: 16px;\">" + tip1 + tip2 + 
+                            "Row: " + this.getAttribute("row")  + "<br>" +
+                            "Column: " + this.getAttribute("col") + "</p>")  
+
+                .style("left", (d3.event.pageX+30) + "px")     
                 .style("top", (d3.event.pageY - 28) + "px");    
             })                  
           .on("mouseout", function(d) {       
