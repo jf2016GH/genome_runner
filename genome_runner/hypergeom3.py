@@ -88,7 +88,7 @@ def p_value(gf, fois, bgs, foi_name):
     bg_obs = gf.n_overlaps(bgs) # number of spot bkg overlapping with a GF
     n_fois, n_bgs = len(fois), len(bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
-              [bg_obs-foi_obs,n_bgs-(bg_obs-foi_obs)]]
+              [bg_obs-foi_obs,n_bgs-n_foi-(bg_obs-foi_obs)]]
     odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, "%.2f" % odds_ratio, "%.2f" % pval])) + "\n",detailed_outpath)
