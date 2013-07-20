@@ -147,7 +147,7 @@ class IntervalSet(object):
     def __len__(self):
         return len(self._intervals)
 
-def p_value(gf, fois, bgs, foi_name,annotate):
+def p_value(gf, fois, bgs, foi_name,annotate):    
     "Return the signed log10 p-value of intersection with the given interval set."
     global current_foi
     current_foi = foi_name
@@ -157,9 +157,11 @@ def p_value(gf, fois, bgs, foi_name,annotate):
     n_fois, n_bgs = len(fois), len(bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-    odds_ratio, pval = scipy.stats.fisher_exact(ctable)
+    if n_fois == foi_obs or n_bgs == bg_obs: odds_ratio, pval = "-NaN", 1
+    else: odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
-    write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, "%.2f" % odds_ratio, "%.2f" % pval])) + "\n",detailed_outpath)
+    write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
+                ("%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio), "%.2f" % pval])) + "\n",detailed_outpath)
     try:        
         return sign * math.log10(pval)        
     except ValueError as e:
@@ -313,7 +315,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
     bg_iset = IntervalSet(bg)
 
     _write_head("\n\n#Detailed log report#\n",logger_path)
-    print "TYPE: ", type(bg_iset)
+    print "TYPE: ", 't'
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
     _write_head("#Grooming Summary#",logger_path)
 
@@ -321,8 +323,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
     write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
     curprog,progmax = 0,len(gfs) 
     try:
-        for gf in gfs:        
-            current_gf = base_name(gf)
+        for gf in gfs: 
+            print "BEFORE: ", current_gf   
+            print gf
+            current_gf = base_name(gf)  
+            print "after: ", current_gf       
             curprog += 1
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
             gf_iset = IntervalSet(read_intervals(gf))            
