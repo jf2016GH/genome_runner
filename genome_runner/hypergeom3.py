@@ -157,11 +157,11 @@ def p_value(gf, fois, bgs, foi_name,annotate):
     n_fois, n_bgs = len(fois), len(bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-    if n_fois == foi_obs or n_bgs == bg_obs: odds_ratio, pval = "-NaN", 1
+    if n_fois == foi_obs or n_bgs == bg_obs: odds_ratio, pval = "nan", 1
     else: odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
-                ("%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio), "%.2f" % pval])) + "\n",detailed_outpath)
+                "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, "%.2f" % pval])) + "\n",detailed_outpath)
     try:        
         return sign * math.log10(pval)        
     except ValueError as e:
@@ -315,7 +315,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
     bg_iset = IntervalSet(bg)
 
     _write_head("\n\n#Detailed log report#\n",logger_path)
-    print "TYPE: ", 't'
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
     _write_head("#Grooming Summary#",logger_path)
 
@@ -324,10 +323,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
     curprog,progmax = 0,len(gfs) 
     try:
         for gf in gfs: 
-            print "BEFORE: ", current_gf   
-            print gf
-            current_gf = base_name(gf)  
-            print "after: ", current_gf       
+            current_gf = base_name(gf)      
             curprog += 1
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
             gf_iset = IntervalSet(read_intervals(gf))            
@@ -335,7 +331,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi,run_annotation)) for foi in fois])+"\n",matrix_outpath)
         if len(gfs) > 1 and len(fois) > 1:
             cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
-            pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
+            if len(gfs) > 4:               
+                pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
+            else:
+                with open(os.path.join(os.path.join(outdir,".cor")),"wb") as wb:
+                    wb.write("PCC matrix requires at least a 5 X 2 matrix.")
         else:
             with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
                 wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
@@ -377,7 +377,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     new_log.close()
     tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
     tar = tarfile.TarFile(tar_path,"a")    
-    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr")]
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr") or  x.endswith(".cor")]
     fls = output_files + [new_log_path]
     for f in fls:
         tar.add(f,os.path.basename(f))
