@@ -20,7 +20,10 @@ from time import gmtime, strftime
 import bedfilecreator
 
 lookup = TemplateLookup(directories=["templates"])
-default_backgrounds_paths = {"hg19": "data/hg19/varRep/Tier0/snp137Flagged.gz",
+
+# add default background paths here
+default_backgrounds_paths = {"hg19": ["/home/lukas/Documents/GR/data/hg19/genes/Tier1/all_diseases2.gz",
+									  "/home/lukas/Documents/GR/data/hg19/genes/Tier2/all_diseases1.gz"],
 							  "mm9": "data/mm9/varRep/Tier1/snp128.gz",
 							  "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
 DEBUG_MODE = True
@@ -34,7 +37,7 @@ logger.addHandler(hdlr)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
-# Each function in this class is a web page
+# Each function in this class is a web page 
 class WebUI(object):
 	def __init__(self):
 		self.next_id = itertools.count().next # This creates a threadsafe counter
@@ -53,7 +56,10 @@ class WebUI(object):
 			paths.organisms = self.get_org() 
 			paths.traverse("data/{}".format(organism))
 			tmpl = lookup.get_template("index.html")
-			self._index_html[organism] = tmpl.render(paths=paths,default_background=default_backgrounds_paths[organism].split("/")[-1].split(".")[0])
+			# Load default backgrounds
+
+
+			self._index_html[organism] = tmpl.render(paths=paths,default_background=self.get_backgrounds_combo(organism))
 		return self._index_html[organism]
 
 	def get_org(self):
@@ -64,10 +70,20 @@ class WebUI(object):
 				organisms.append(f)
 		return organisms
 
+	def get_backgrounds_combo(self,organism):
+		''' Generates the html code for the combo box containing the 
+			default organism backgrounds.
+		'''
+
+		html = """<select name="default_background" style="margin-left: 5px; margin-top: 9px" id="default_background">"""
+		for bk in default_backgrounds_paths[organism]:			
+			html = html + "<option value='{}'>{}</option>".format(bk,bk.split("/")[-1].split(".")[0])
+		html  = html + "</select>"
+		return html
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", score="", strand="", **kwargs):
+				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=None, default_background = "",**kwargs):
 		id = self.next_id()
 		print 'id: ', id
 		upload_dir = os.path.join("uploads",str(id))
@@ -187,11 +203,9 @@ class WebUI(object):
 				organism = v.split(":")[-1]
 			# which tests to run
 			if "run:" in k and v=="on":
-				print "change {}".format(k.split(":")[-1])
 				run.append(k.split(":")[-1])
 			# append custom list to be run
 			if "grouprun:" in k and v == "on":
-				print "group ", k, " ::  " ,v
 				gp_gfs = open( k.split(":")[-1],"rb").read()
 				with open(gfs,"a") as out_gfs:
 					out_gfs.write(gp_gfs)
@@ -224,10 +238,9 @@ class WebUI(object):
 					data = background_file
 					data = os.linesep.join([s for s in data.splitlines() if s])
 					out.write(data)
-			else:
-				
-				background_name = default_backgrounds_paths[organism]
-				b = default_backgrounds_paths[organism]
+			else:				
+				background_name = default_background.split("/")[-1].split(".")[0] 
+				b = default_background
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
@@ -239,7 +252,9 @@ class WebUI(object):
 		set_info = {"Jobname:": jobname,
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
 					"Background:": background_name,
-					"Organism:": organism}
+					"Organism:": organism,
+					"Run Annotation:": str(bool(run_annotation))}
+
 		with open(path, 'wb') as sett:
 			for k,v in set_info.iteritems():
 				sett.write(k+"\t"+v+"\n")
@@ -248,7 +263,7 @@ class WebUI(object):
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,results_dir,runset['job_name'],True))				
+				args=(fois,gfs,b,results_dir,runset['job_name'],True,run_annotation != None))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
 

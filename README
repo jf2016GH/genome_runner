@@ -1,6 +1,6 @@
 # Setup
 # Installing dependencies
-pacman -S blas lapack gcc-fortran python2-pip
+pacman -S blas lapack gcc-fortran python2-pip r tcl tk
 pip2 install -r requirements.txt
 
 # Tuning pyBedTools

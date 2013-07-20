@@ -77,8 +77,9 @@
 	<div id="progressbar" ></div>
 	<div class="ui-widget" style="">
 		<div class="ui-state-highlight ui-corner-all">
-			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>			
 		</div>
+		<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>Please bookmark this page to return to your results. The results will be deleted after three days.</p>
 	</div>	
 </div>
 </div>
@@ -87,6 +88,7 @@
 	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')">Pearson's Correlation Matrix Results</a></li>
 	<li ><a href="#detailedresults">Detailed Results</a></li>
 	<li ><a href="#debugresults">Analysis Log</a></li>
+	<li><a href="#annotationresults">Annotation Results</a></li>
 	<li ><a href="#heatmapdownload">Download Results</a></li>
 </ul>
 
@@ -120,11 +122,16 @@
 			<textarea cols="150" rows="30">${log}</textarea><br>
 		</div>
 	</div>
+	<div id="annotationresults">
+		<div class="well">
+			<h4>Annotation results are included in the downloadable files found in "Download Results>Download All Run Files>annotations.gr(file)"</h4>\
+		</div>
+	</div>
 	<div id="heatmapdownload">
 		<div class="well">
 			<div style="margin: 20px">
 				% if zipfile != "":
-				<a class="btn btn-primary" style="margin-left: 230px;"  type="button" href="${zipfile}">Download all Run Files</a>
+				<a class="btn btn-primary" style="margin-left: 230px;"  type="button" href="${zipfile}">Download All Run Files</a>
 				% else:
 				<a class="btn btn-primary disabled" style="margin-left: 230px;" type="button">Run files not ready for download</a>
 				% endif

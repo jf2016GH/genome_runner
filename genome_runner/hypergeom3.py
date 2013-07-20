@@ -25,6 +25,7 @@ import tarfile
 import traceback
 import StringIO
 import bedfilecreator
+import textwrap
 
 
 Interval = collections.namedtuple("Interval", "chrom,start,end")
@@ -40,26 +41,56 @@ logger.setLevel(logging.INFO)
 matrix_outpath = None
 detailed_outpath = None
 progress_outpath = None
-console_output = False
+console_output = False 
+current_gf,current_foi = "", "" # used for annotation analysis
+#  There is one entry for each FOI.bed. "FOIname": FOI_Annotation
+annotations = {}
 
-def read_intervals(path, background=None, snp_only=False):
+def read_intervals(path, background=None, snp_only=False, d_path=None):
     with (gzip.open(path,"rb") if path.endswith(".gz") else open(path,"rb")) as h:
         intervals = []
-        print "path: ",path
+        num_before, num_zero,num_great,num_back,num_chrom = 0, 0, 0, 0,0
+
         for i,line in enumerate(h):
+            num_before += 1
             fields = line.strip().split("\t")
 #            print fields
             chrom, start, end = fields[:3]
             start = int(start)
             end = int(end)
-            if snp_only and ((end - start) > 1):
-                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis not a SNP. Shortening feature to be SNP".format(path))
-                start = (end-start)/2
-                end = start + 1
-            interval = Interval(chrom, int(start), int(end))
-            if background and not background.query(interval):
-                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tdoes not overlap with the background. Continuing...".format(path))
-            intervals.append(interval)
+
+            # exclude SNPs from weired chromosomes
+            if "_" not in chrom:
+                # convert regions to SNPs
+                if snp_only and ((end - start) > 1):
+                    logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis not a SNP. Shortening feature to be SNP".format(path))
+                    start = (end-start)/2
+                    end, num_great = start + 1, num_great + 1
+
+                # convert '0 length' regions to SNPs
+                if snp_only and ((end - start) == 0):
+                    logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis zero length. Converting to SNP".format(path))
+                    end, num_zero = start + 1, num_zero + 1
+
+                interval = Interval(chrom, int(start), int(end))
+                # output warning for features not in background
+                if background and not background.query(interval):
+                    logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tdoes not overlap with the background. Continuing...".format(path))                
+                    num_back += 1
+                intervals.append(interval)
+            else:
+                logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis on strange chromosome, excluding".format(path))
+                num_chrom += 1
+
+        # output grooming summary
+        if d_path:
+            str_groom_sum = """\n{}
+            {} SNPs before grooming.
+            {} SNPs with length of 0 converted to SNP
+            {} SNPs with length > 1 converted to SNP
+            {} SNPs on strange chromosomes and excluded
+            {} SNPs after grooming.""".format(os.path.split(path)[-1], num_before,num_zero,num_great,num_chrom,len(intervals))
+            _write_head(textwrap.dedent(str_groom_sum),d_path)
     return intervals
 
 class IntervalSet(object):
@@ -72,23 +103,50 @@ class IntervalSet(object):
             self._trees[iv.chrom].add(iv.start, iv.end, i)
 
     def query(self, interval):
+        '''Checks for overlap of single SNP.
+        '''
         t = self._trees.get(interval.chrom)
-        if t:
-            return t.find(interval.start, interval.end)
+        # Found a chromosome
+        if t: 
+            return t.find(interval.start, interval.end)  
 
-    def n_overlaps(self, intervals):
-        return sum([1 if self.query(iv) else 0 for iv in intervals])
+    def query_annotation(self, interval):
+        '''Checks for overlap of single SNP. Does Annotation
+        '''
+        t = self._trees.get(interval.chrom)
+        if t: 
+            found = t.find(interval.start, interval.end)   
+            # relies on a global dictionary to annotation results
+            global annotations
+            annotations[current_foi].add_hit(current_gf,int(found != []))
+            return found
+        # record a miss for annotation in case no GF is on the same chrom as the FOI
+        else:
+            global annotations
+            annotations[current_foi].add_hit(current_gf,int(0))
+
+
+    def n_overlaps(self, intervals,annotate=False):
+        '''Gets the total number over laps. Records annotation results if annotation=True
+        '''
+        if annotate:
+            return sum([1 if self.query_annotation(iv) else 0 for i,iv in enumerate(intervals)])
+        else:
+            return sum([1 if self.query(iv) else 0 for iv in intervals])
 
     def __len__(self):
         return len(self._intervals)
 
-def p_value(gf, fois, bgs, foi_name):
+def p_value(gf, fois, bgs, foi_name,annotate):
     "Return the signed log10 p-value of intersection with the given interval set."
-    foi_obs = gf.n_overlaps(fois) # number of FOIs overlapping with a GF
+    global current_foi
+    current_foi = foi_name
+    if not foi_name in annotations.keys(): annotations[foi_name] = FOI_Annotation(foi_name,fois)  # create new annotation entry
+    foi_obs = gf.n_overlaps(fois,annotate) # number of FOIs overlapping with a GF
     bg_obs = gf.n_overlaps(bgs) # number of spot bkg overlapping with a GF
     n_fois, n_bgs = len(fois), len(bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
-              [bg_obs-foi_obs,n_bgs-n_foi-(bg_obs-foi_obs)]]
+              [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
     odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, "%.2f" % odds_ratio, "%.2f" % pval])) + "\n",detailed_outpath)
@@ -210,19 +268,31 @@ def _write_progress(line):
         with open(progress_outpath,"wb") as progfile:
             progfile.write(json.dumps(progress))
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
+
+def _write_head(content,outpath):
+    f = front_appender(outpath)
+    f.write(content)
+    f.close()
+
+
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
     sett_path = os.path.join(outdir,".settings")
+    logger_path = os.path.join(outdir,'.log')
     trackdb = []
     if os.path.exists(sett_path):        
         with open(sett_path) as re:
             organism = [x.split("\t")[1] for x in re.read().split("\n") if x.split("\t")[0] == "Organism:"][0]
             trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
     # set output settings
-    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
+    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,current_gf
     detailed_outpath =  os.path.join(outdir, "detailed.gr")
     matrix_outpath = os.path.join(outdir,"matrix.gr")
     progress_outpath = os.path.join(outdir,".prog")
-    hdlr = logging.FileHandler(os.path.join(outdir,'.log'))
+    f = open(matrix_outpath,'wb') 
+    f.close()
+    f = open(detailed_outpath,'wb')
+    f.close()
+    hdlr = logging.FileHandler(logger_path)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
@@ -231,27 +301,36 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False):
     gfs = read_lines(gfs)
     bg = read_intervals(bg_path)
     bg_iset = IntervalSet(bg)
-    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
+
+    _write_head("\n\n#Detailed log report#\n",logger_path)
+    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
+    _write_head("#Grooming Summary#",logger_path)
 
     write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
     write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
     curprog,progmax = 0,len(gfs) 
     try:
-        for gf in gfs:
+        for gf in gfs:        
+            current_gf = base_name(gf)
             curprog += 1
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
-            gf_iset = IntervalSet(read_intervals(gf))
+            gf_iset = IntervalSet(read_intervals(gf))            
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
-            write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi,run_annotation)) for foi in fois])+"\n",matrix_outpath)
         if len(gfs) > 1 and len(fois) > 1:
             cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
             pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
         else:
             with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
                 wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
+        if run_annotation:
+            _write_progress("Outputting annotation data")
+            with open(os.path.join(outdir, "annotations.gr"),"w") as a_out:
+                for k,v in annotations.iteritems():
+                    a_out.write(v.return_str_matrix() +"\n")
         _write_progress("Preparing run files for download")
         _zip_run_files(fois,gfs,bg_path,outdir,job_name)
-        _write_progress("Analysis Completed")
+        _write_progress("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
         _write_progress("Run crashed. See end of log for details.")
@@ -261,6 +340,9 @@ def get_description(gf,trackdb):
     if len(desc) is not 0: return desc[0]
     else: return "No Description"
 
+
+
+
 def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     '''
     File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
@@ -268,14 +350,15 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     f = open(os.path.join(outdir,".log"))
     f_log = f.read()
     f.close()
-    f = open(os.path.join(outdir,".settings"))
-    f_sett = f.read() + "\n###LOG###\n"
-    f.close()
+    path_settings,f_sett =os.path.join(outdir,".settings"),""
+    if os.path.exists(path_settings):
+        f = open(path_settings)
+        f_sett = f.read() + "\n###LOG###\n"
+        f.close()
     new_log_path = os.path.join(outdir,".details")
     new_log = open(new_log_path,'wb')
     new_log.write(f_sett+f_log)
     new_log.close()
-
     tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
     tar = tarfile.TarFile(tar_path,"a")    
     output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr")]
@@ -289,30 +372,101 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
+
 if __name__ == "__main__":
-    console_output = True
+    console_output,logger_path = True,os.path.join(outdir,'.log')
     parser = argparse.ArgumentParser(description="Create a matrix of hypergeometric p-values for genomic intersections.")
     parser.add_argument("fois", nargs=1, help="Text file with FOI file names (SNPs only).") 
     parser.add_argument("gfs", nargs=1, help="Text file with GF file, gzipped.") 
     parser.add_argument("bg_path", nargs=1, help="Path to spot background file (SNPs only).")
     args = parser.parse_args()
-
     fois = read_lines(args.fois[0])
     gfs = read_lines(args.gfs[0])
 
     bg = read_intervals(args.bg_path[0])
-    bg_iset = IntervalSet(bg)
-    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset)) for path in fois)
+    bg_iset = IntervalSet(bg)    
+    f = open(matrix_outpath,'wb')
+    f.close()
+    f = open(detailed_outpath,'wb')
+    f.close()
+
+    _write_head("\n\n#Detailed log report#\n",logger_path)
+    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
+    _write_head("#Grooming Summary#",logger_path)
 
     write_output("\t".join(fois)+"\n", matrix_outpath)
     write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val'])+"\n",detailed_outpath)
+    global current_gf
     for gf in gfs:
+        current_gf = base_name(gf)
         gf_iset = IntervalSet(read_intervals(gf))
         write_output(gf+"\n",detailed_outpath) 
-        write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi)) for foi in fois])+"\n",matrix_outpath)
+        write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi,True)) for foi in fois])+"\n",matrix_outpath)
     if len(gfs) > 1 and len(fois) > 1:
         cluster_matrix(matrix_outpath,os.path.join(outpath,"matrix_clustered.gr"))
         pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
     else:
         with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
             wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
+
+
+class front_appender:
+    '''
+    Appends content to start of file.
+    '''
+    def __init__(self, fname, mode='a'):
+        self.__write_queue = []
+        self.__old_content = ""
+        if mode == 'a': 
+            self.__old_content = open(fname).read()
+        self.__f = open(fname, 'w')
+
+
+    def write(self, s):
+        self.__write_queue.append(s)
+
+    def close(self):
+        self.__f.writelines(self.__write_queue + [self.__old_content])
+        self.__f.close()
+
+
+# 'gf': name of the GF. 
+# Each entry in 'hits' represents a single SNP.
+# The order must match the foi.bed.
+Annotation = collections.namedtuple("Annotation", "gf,hits") 
+
+class FOI_Annotation:
+    '''Stores the name of the FOI.bed and creates a 
+    list of 'Annotation' for each GF run.
+    'Annotation' stores GF.bed name and a list of booleans, each boolean
+     represents whether the corresponding SNP overlapped with the GF.
+    '''
+    def __init__(self,foiname,foi_intervals):
+        self._foiname = foiname
+        self._fois = foi_intervals
+        self._results = [] # stores results as Annotation entries
+    
+    def add_hit(self, gf,hit):
+        ''' 'gf' is the name of the GF.
+            'hit' is boolean of whether SNP overlapped.  
+            Appends 'hit' to existing 'Annotation' if one exists
+            for the 'gf'. Otherwise, creates new 'Annotation'          
+        '''
+        ind = [i for i,x in enumerate(self._results) if x.gf==gf]
+
+        if len(ind) != 0:
+            self._results[ind[0]].hits.append(hit)
+        else:
+            self._results.append(Annotation(gf,[hit]))
+
+    def return_str_matrix(self):
+        '''Returns a string of the formated annotation results matrix.
+        '''
+        res = "###{}###\n".format(self._foiname) 
+        res += "FOI\t" + "\t".join([x.gf for x in self._results]) + "\tTotal\n"
+        for i,v in enumerate(self._fois):         
+            res += "|".join(str(x) for x in v) + "\t"
+            # print out each hit for each GF record for the current SNP
+            hits = [x.hits[i] for x in self._results ]
+            res += "\t".join(str(x) for x in hits) + "\t" + str(sum(hits)) + "\n"
+        return res

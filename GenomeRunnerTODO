@@ -1,0 +1,2 @@
+Fix bug with TFBS and all_disease with Annotation some of the hit lists are shorter than others
+    if current_gf == 'TFBS_XRCC4': pdb.set_trace()
