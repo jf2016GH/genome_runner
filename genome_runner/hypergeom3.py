@@ -59,24 +59,29 @@ def read_intervals(path, background=None, snp_only=False, d_path=None):
             start = int(start)
             end = int(end)
 
-            # exclude SNPs from weired chromosomes
-            if "_" not in chrom:
+            if not snp_only:                
+                if not "_" in chrom:  # if on strange chromosome, we ignore region
+                    intervals.append( Interval(chrom, int(start), int(end)))                
+                continue  # if not working with FOIs, then grooming not needed
+
+            if "_" not in chrom: # if on strange chromosome, we ignore SNP
                 # convert regions to SNPs
-                if snp_only and ((end - start) > 1):
+                if (end - start) > 1:
                     logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis not a SNP. Shortening feature to be SNP".format(path))
-                    start = (end-start)/2
+                    start = start + (end-start)/2
                     end, num_great = start + 1, num_great + 1
 
                 # convert '0 length' regions to SNPs
-                if snp_only and ((end - start) == 0):
+                if (end - start) == 0:
                     logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis zero length. Converting to SNP".format(path))
                     end, num_zero = start + 1, num_zero + 1
 
                 interval = Interval(chrom, int(start), int(end))
-                # output warning for features not in background
+                # output warning for features not in background, then add to background
                 if background and not background.query(interval):
-                    logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tdoes not overlap with the background. Continuing...".format(path))                
-                    num_back += 1
+                    logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tdoes not overlap with the background. Adding.".format(path))                
+                    num_back += 1                   
+                    background.add_intervals([interval]) 
                 intervals.append(interval)
             else:
                 logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis on strange chromosome, excluding".format(path))
@@ -96,11 +101,16 @@ def read_intervals(path, background=None, snp_only=False, d_path=None):
 class IntervalSet(object):
     def __init__(self, intervals, snp_only=False):
         self._trees = {}
-        self._intervals = list(intervals)
+        self._intervals = []
+        self.add_intervals(intervals)
+       
+    def add_intervals(self,intervals):
+        self._intervals = self._intervals + list(intervals)
         for i,iv in enumerate(intervals):
             if not iv.chrom in self._trees:
                 self._trees[iv.chrom] = IntervalTree()
             self._trees[iv.chrom].add(iv.start, iv.end, i)
+
 
     def query(self, interval):
         '''Checks for overlap of single SNP.
@@ -303,6 +313,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
     bg_iset = IntervalSet(bg)
 
     _write_head("\n\n#Detailed log report#\n",logger_path)
+    print "TYPE: ", type(bg_iset)
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
     _write_head("#Grooming Summary#",logger_path)
 

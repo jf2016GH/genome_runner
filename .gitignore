@@ -32,3 +32,5 @@ profile
 *.tmp
 results_cmd
 *DS_Store*
+*.Sync*
+GenomeRunnerTODO
