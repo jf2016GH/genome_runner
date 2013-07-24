@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		% if status != "Analysis Completed" and not "Run crashed." in status:
-		<meta http-equiv="refresh" content="10">
-		% endif
+	<head>		
 		<style>
 			body {
 				padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -28,8 +25,8 @@
 		<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
-		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<link type="text/css" href="static/css/main.css"/>
 		<script type="text/javascript" src="static/js/jquery.js"></script>
 		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
@@ -38,22 +35,52 @@
 		<script scr="static/js/main.js"></script>
 		<script src='http://documentcloud.github.com/underscore/underscore.js'></script>
       	<script src='http://documentcloud.github.com/backbone/backbone.js'></script>
-      	<script src='http://mbostock.github.com/d3/d3.js'></script>
+      	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>
 		<script type="text/javascript" charset="utf-8">
-		$(document).ready(function() {
+		var refresh_progress = ""
+		$(document).ready(function() {	
 			$("#progressbar").progressbar({
 								value: ${curprog},
 								max:  ${progmax}
 							});
-			matrix_data  = "${matrix_data}";
-			matrix_cor = "${matrix_cor}";
-			matrix_cor_pvalues = "${matrix_cor_pvalues}";	
-			matrix_data_gf_description = "${matrix_data_gf_description}"	
-
+			$("#btnheatmaps1").click(function(){
+				add_heatmaps();
+			});
+			update_progress();
+			refresh_progress = setInterval(update_progress, 10000);		
+			${}
 		});
+
+ 		// generates both of the heatmap graphs
+		function add_heatmaps(){
+			$.post('/gr/get_heatmaps?run_id=' + ${run_id}+'&organism=${organism}', function(data){
+			matrix_data  = data['matrix_data'];
+			matrix_cor = data['matrix_cor'];
+			matrix_cor_pvalues = data['matrix_cor_pvalues'];
+			matrix_data_gf_description = data['matrix_data_gf_description'];
+			generate_heatmaps()  // Creates the heatmaps using the function in static/js/d3.heatmap.js
+			});
+			return false;
+		}
+		function update_progress(){
+			$.post('/gr/get_progress?run_id=' + ${run_id},function(data){
+				data = jQuery.parseJSON( data );
+				$("#progressbar").progressbar({
+								value: data['curprog'],
+								max:  data['progmax']
+							});
+				if (data['status'] != "") $("#status").html(data['status']);
+				console.log(data);
+				if (data['status'] == "Analysis Completed"){
+					clearInterval(refresh_progress);
+				}
+
+			});
+
+		}
 		</script>
-      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>
-		
+			}
 </head>
 <body bgcolor="#A8D5FF">	
 	<div class="topbar">
@@ -77,57 +104,68 @@
 	<div id="progressbar" ></div>
 	<div class="ui-widget" style="">
 		<div class="ui-state-highlight ui-corner-all">
-			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>${status}</p>			
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><label id="status">Starting Analysis</label></p>			
 		</div>
 		<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>Please bookmark this page to return to your results. The results will be deleted after three days.</p>
 	</div>	
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
-	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')">Clustered Enrichment Matrix</a></li>
-	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')">Pearson's Correlation Matrix Results</a></li>
-	<li ><a href="#detailedresults">Detailed Results</a></li>
-	<li ><a href="#debugresults">Analysis Log</a></li>
-	<li><a href="#annotationresults">Annotation Results</a></li>
-	<li ><a href="#heatmapdownload">Download Results</a></li>
+	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')" data-toggle="tab">Clustered Enrichment Matrix</a></li>
+	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')" data-toggle="tab">Pearson's Correlation Matrix Results</a></li>
+	<li ><a href="#detailedresults" data-toggle="tab">Detailed Results</a></li>
+	<li ><a href="#debugresults" data-toggle="tab">Analysis Log</a></li>
+	<li><a href="#annotationresults" data-toggle="tab">Annotation Results</a></li>
+	<li ><a href="#heatmapdownload" data-toggle="tab">Download Results</a></li>
 </ul>
 
-<div class="pill-content">
-	<div class="active" id="matrixresults">
+<div class="tab-content">
+	<div class="tab-pane active" id="matrixresults">
 		<div class="well">
-			<h3 style="float: left">Clustered Heatmap</h3>		
-				
+			<h3 style="float: left">Clustered Heatmap</h3><br>
+				<a class="btn btn-primary" id="btnheatmaps1" style="margin-left: 230px;"  type="button">Load Matrix Results</a>
 				<div  id='heatmap' >
 	      		</div>
-			</div>
-
 		</div>
 
-	<div id="cormatrixresults">
+	</div>
+
+	<div class="tab-pane" id="cormatrixresults">
 		<div class="well">
 			<h3 style="float: left">Clustered Heatmap</h3>		
 			<div  id='heatmap_cor' >
       		</div>
 		</div>
 	</div>
-	<div id="detailedresults">
+	<div class="tab-pane" id="detailedresults">
 		<div class="well">
 			<h3>Detailed Results</h3>
 			<textarea cols="150" rows="30">${detailed}</textarea><br>			
 		</div>
 	</div>
-	<div id="debugresults">
+	<div class="tab-pane" id="debugresults">
 		<div class="well">
 			<h3>Analysis Log</h3>
 			<textarea cols="150" rows="30">${log}</textarea><br>
 		</div>
 	</div>
-	<div id="annotationresults">
-		<div class="well">
-			<h4>Annotation results are included in the downloadable files found in "Download Results>Download All Run Files>annotations.gr(file)"</h4>\
-		</div>
+	<div class="tab-pane" id="annotationresults">
+			<ul class="tabs" id="annotationtab" data-tabs="tabs">
+				% for i,item in enumerate(fois):
+				  <li><a href="#ano_tab_${item}" data-toggle="tab">${item}</a></li>
+				% endfor
+			</ul>
+			<div class="tab-content">
+				% for i,item in enumerate(fois):
+				<div ${"class='tab-pane active'" if i==0 else "class='tab-pane'"} id="ano_tab_${item}">
+					<div class="well">
+						${item}
+					</div>
+				</div>
+				% endfor
+			</div>	
 	</div>
-	<div id="heatmapdownload">
+	<div class="tab-pane" id="heatmapdownload">
 		<div class="well">
 			<div style="margin: 20px">
 				% if zipfile != "":

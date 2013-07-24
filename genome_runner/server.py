@@ -18,6 +18,7 @@ import pdb
 import hypergeom3 as grquery
 from time import gmtime, strftime
 import bedfilecreator
+import simplejson
 
 lookup = TemplateLookup(directories=["templates"])
 
@@ -263,7 +264,7 @@ class WebUI(object):
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,results_dir,runset['job_name'],True,run_annotation != None))				
+				args=(fois,gfs,b,results_dir,runset['job_name'],True))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%d" % id)
 
@@ -294,8 +295,8 @@ class WebUI(object):
 				tmp = f.read()	
 				params["log"] = params["log"]+ tmp
 				organism = [x.split("\t")[1] for x in tmp.split("\n") if x.split("\t")[0] == "Organism:"][0]
-
-		trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
+		params["organism"] = organism
+		
 
 		params["log"] = params["log"] + "\n###Run Log###\n"
 		debug_path = os.path.join(path,".log")
@@ -309,63 +310,14 @@ class WebUI(object):
 			with open(detailed_path) as f:
 				params["detailed"] = f.read()
 
-		# clustered matrix results loaded if they exist
-		matrix_path = os.path.join(path,"matrix.gr")
-		matrix_clust_path  = os.path.join(path,"matrix_clustered.gr")
-		if os.path.exists(matrix_path):
-			with open(matrix_path) as f:
-				params["matrix"] = f.read().replace("\"","")
-		if os.path.exists(matrix_clust_path):
-			with open(matrix_clust_path) as f:
-				d = f.read()
-				params["matrix_data"] = d.replace("\"","")
-				# d3 requires "gene_name" to be inserted into the first column
-				tmp_data =  params["matrix_data"].split("\n")
-				tmp = tmp_data[:] # this copy is passed onto the results page
-				# insert the description column if it does not exist
-				tmp_matrix = [x.split("\t") for x in tmp]
-				if tmp_matrix[0][-1] != "Genomic Feature Description":
-					tmp_matrix[0] += ["Genomic Feature Description"]
-					for i in range(1,len(tmp)):
-						description = [x["longLabel"] for x in trackdb if x["tableName"] == tmp_matrix[i][0]]
-						if len(description) is not 0: description = description[0]
-						else: description = ""
-						tmp_matrix[i] += [description]						
-
-			params["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
-			params["matrix_data"] = params["matrix_data"].replace("\n","\\n")
-			params["matrix_data_gf_description"] = "\t".join([x[-1] for x in tmp_matrix[1:]])
-		else: 
-			params["matrix_data"] = "Heatmap will be available after the analysis is complete."
-			params["matrix_data_gf_description"] = ""
-
-		# Pearson's matrix results
-		matrix_cor_path = os.path.join(path,".cor")
-		if os.path.exists(matrix_cor_path):
-			with open(matrix_cor_path) as f:
-				d = f.read()
-				params["matrix_cor_data"] =  d.replace("\"","")
-				params["matrix_cor"] = d.replace("\"","")
-				# d3 requires "gene_name" to be inserted into the first column
-				tmp =  params["matrix_cor"].split("\n")
-				params["matrix_cor"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
-				params["matrix_cor"] = params["matrix_cor"].replace("\n","\\n")				
-
+		
+		foi_names_path = os.path.join(os.path.join("uploads", id),".fois")
+		if os.path.exists(foi_names_path):
+			with open(foi_names_path) as f:
+				params["fois"] = [basename(x).split(".")[0] for x in f.read().split("\n") if x != ""]
 		else:
-			params["matrix_cor_data"] = ""
-			params["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
-		if os.path.exists(matrix_cor_path+".pvalue"):
-			with open(matrix_cor_path+".pvalue") as f:
-				d = f.read()
-				params["matrix_cor_pvalues"] = d.replace("\"","")
-				# d3 requires "gene_name" to be inserted into the first column
-				tmp =  params["matrix_cor_pvalues"].split("\n")
-				params["matrix_cor_pvalues"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])   
-				params["matrix_cor_pvalues"] = params["matrix_cor_pvalues"].replace("\n","\\n")				
-		else: 
-			params["matrix_cor_pvalues"] = ""
-
-
+			params["fois"] = ""
+		print params["fois"]
 		# check if run files ready for download
 		zip_path = os.path.join(path,"GR_Runfiles_{}.tar.gz".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
 		if os.path.exists(zip_path):
@@ -387,6 +339,84 @@ class WebUI(object):
 			print str_error
 			rend_template = str_error
 		return rend_template
+
+
+	@cherrypy.expose
+	def get_heatmaps(self, run_id, organism):
+		"""	Returns clustered and PCC matrix if they exist.
+		'organism': is used to load detailed labels for the GFs.
+		"""
+		cherrypy.response.headers['Content-Type'] = 'application/json'
+		trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
+		results = {}
+		path = os.path.join("results", run_id)
+		matrix_path = os.path.join(path,"matrix.gr")
+		# Load clustered matrix
+		matrix_clust_path  = os.path.join(path,"matrix_clustered.gr")
+		if os.path.exists(matrix_path):
+			with open(matrix_path) as f:
+				results["matrix"] = f.read().replace("\"","")
+		if os.path.exists(matrix_clust_path):
+			with open(matrix_clust_path) as f:
+				d = f.read()
+				results["matrix_data"] = d.replace("\"","")
+				# d3 requires "gene_name" to be inserted into the first column
+				tmp_data =  results["matrix_data"].split("\n")
+				tmp = tmp_data[:] # this copy is passed onto the results page
+				# insert the description column if it does not exist
+				tmp_matrix = [x.split("\t") for x in tmp]
+				if tmp_matrix[0][-1] != "Genomic Feature Description":
+					tmp_matrix[0] += ["Genomic Feature Description"]
+					for i in range(1,len(tmp)):
+						description = [x["longLabel"] for x in trackdb if x["tableName"] == tmp_matrix[i][0]]
+						if len(description) is not 0: description = description[0]
+						else: description = ""
+						tmp_matrix[i] += [description]						
+
+			results["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+			results["matrix_data"] = results["matrix_data"]
+			results["matrix_data_gf_description"] = "\t".join([x[-1] for x in tmp_matrix[1:]])
+		else: 
+			results["matrix_data"] = "Heatmap will be available after the analysis is complete."
+			results["matrix_data_gf_description"] = ""
+
+		# Pearson's matrix results
+		matrix_cor_path = os.path.join(path,".cor")
+		if os.path.exists(matrix_cor_path):
+			with open(matrix_cor_path) as f:
+				d = f.read()
+				results["matrix_cor_data"] =  d.replace("\"","")
+				results["matrix_cor"] = d.replace("\"","")
+				# d3 requires "gene_name" to be inserted into the first column
+				tmp =  results["matrix_cor"].split("\n")
+				results["matrix_cor"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+				results["matrix_cor"] = results["matrix_cor"]				
+
+		else:
+			results["matrix_cor_data"] = ""
+			results["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
+		if os.path.exists(matrix_cor_path+".pvalue"):
+			with open(matrix_cor_path+".pvalue") as f:
+				d = f.read()
+				results["matrix_cor_pvalues"] = d.replace("\"","")
+				# d3 requires "gene_name" to be inserted into the first column
+				tmp =  results["matrix_cor_pvalues"].split("\n")
+				results["matrix_cor_pvalues"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])   
+				results["matrix_cor_pvalues"] = results["matrix_cor_pvalues"]			
+		else: 
+			results["matrix_cor_pvalues"] = ""
+		print "RESULTS "
+		return simplejson.dumps(results)
+
+	@cherrypy.expose
+	def get_progress(self, run_id):
+		# Loads the progress file if it exists
+		p = {"status":"","curprog":0,"progmax":0}
+		progress_path = os.path.join(os.path.join("results", run_id),".prog")
+		if os.path.exists(progress_path):
+			with open(progress_path) as f:
+				p = json.loads(f.read() )
+		return simplejson.dumps(p)
 
 	@cherrypy.expose
 	def enrichment_log(self, id):

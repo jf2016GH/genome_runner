@@ -287,7 +287,7 @@ def _write_head(content,outpath):
     f.close()
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True):
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'.log')
     trackdb = []
