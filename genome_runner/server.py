@@ -350,9 +350,9 @@ class WebUI(object):
 		trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
 		results = {}
 		path = os.path.join("results", run_id)
-		matrix_path = os.path.join(path,"matrix.gr")
+		matrix_path = os.path.join(path,"matrix.txt")
 		# Load clustered matrix
-		matrix_clust_path  = os.path.join(path,"matrix_clustered.gr")
+		matrix_clust_path  = os.path.join(path,"clustered.txt")
 		if os.path.exists(matrix_path):
 			with open(matrix_path) as f:
 				results["matrix"] = f.read().replace("\"","")
@@ -381,7 +381,7 @@ class WebUI(object):
 			results["matrix_data_gf_description"] = ""
 
 		# Pearson's matrix results
-		matrix_cor_path = os.path.join(path,".cor")
+		matrix_cor_path = os.path.join(path,"pcc_matrix.txt")
 		if os.path.exists(matrix_cor_path):
 			with open(matrix_cor_path) as f:
 				d = f.read()
@@ -395,8 +395,9 @@ class WebUI(object):
 		else:
 			results["matrix_cor_data"] = ""
 			results["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
-		if os.path.exists(matrix_cor_path+".pvalue"):
-			with open(matrix_cor_path+".pvalue") as f:
+		pvalue_path = os.path.join(path,"pcc_matrix_pvalu.txt")
+		if os.path.exists(pvalue_path):
+			with open(pvalue_path) as f:
 				d = f.read()
 				results["matrix_cor_pvalues"] = d.replace("\"","")
 				# d3 requires "gene_name" to be inserted into the first column
@@ -407,6 +408,14 @@ class WebUI(object):
 			results["matrix_cor_pvalues"] = ""
 		print "RESULTS "
 		return simplejson.dumps(results)
+
+	@cherrypy.expose
+	def get_annotation(self,run_id,foi_name):
+		annotation_path = os.path.join(os.path.join("results","run_id",foi_name + ".granno"))
+		if os.path.exists(annotation_path):
+			with open(annotation_path) as f:
+				pass
+
 
 	@cherrypy.expose
 	def get_progress(self, run_id):

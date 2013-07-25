@@ -188,7 +188,7 @@ def cluster_matrix(input_path,output_path):
     return output_path    
 
 def pearsons_cor_matrix(matrix_path,out_dir):
-    output_path = os.path.join(out_dir,".cor")
+    output_path = os.path.join(out_dir,"pcc_matrix.txt")
     ### this calculates the PCC matrix
     r_script = """library(gplots)
                     t5 = read.table("{}")                    
@@ -235,7 +235,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
                 col_names <- colnames(pt5)
                 row.names(pt5.prob) <- row_names
                 colnames(pt5.prob) <- col_names 
-                write.table(pt5.prob,\""""+output_path+".pvalue"+"""\",sep="\t")"""
+                write.table(pt5.prob,\""""+output_path.split(".")[0]+"_pvalue.txt"+"""\",sep="\t")"""
     #robjects.r(r_script)
     r_script = """t5 = read.table(\""""+matrix_path+"""\") 
         library("Hmisc")
@@ -244,7 +244,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
         p5[[3]]
         h<-heatmap.2(as.matrix(p5[[1]]))
         write.table(h$carpet,\"""" + output_path + """\",sep="\t")
-        write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path+".pvalue"+ """\",sep="\t")""" 
+        write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t")""" 
     robjects.r(r_script)
     return output_path   
 
@@ -289,7 +289,7 @@ def _write_head(content,outpath):
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True):
     sett_path = os.path.join(outdir,".settings")
-    logger_path = os.path.join(outdir,'.log')
+    logger_path = os.path.join(outdir,'log.txt')
     trackdb = []
     if os.path.exists(sett_path):        
         with open(sett_path) as re:
@@ -297,8 +297,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
     # set output settings
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,current_gf
-    detailed_outpath =  os.path.join(outdir, "detailed.gr")
-    matrix_outpath = os.path.join(outdir,"matrix.gr")
+    detailed_outpath =  os.path.join(outdir, "detailed.txt") 
+    matrix_outpath = os.path.join(outdir,"matrix.txt")
     progress_outpath = os.path.join(outdir,".prog")
     f = open(matrix_outpath,'wb') 
     f.close()
@@ -330,19 +330,20 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
             write_output("\t".join([base_name(gf)] + [str(p_value(gf_iset, foi_sets[foi], bg, foi,run_annotation)) for foi in fois])+"\n",matrix_outpath)
         if len(gfs) > 1 and len(fois) > 1:
-            cluster_matrix(matrix_outpath,os.path.join(outdir,"matrix_clustered.gr"))
+            cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
             if len(gfs) > 4:               
-                pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
+                pearsons_cor_matrix(os.path.join(outdir,"clustered.txt"),outdir)
             else:
-                with open(os.path.join(os.path.join(outdir,".cor")),"wb") as wb:
+                with open(os.path.join(os.path.join(outdir,"pcc_matrix.txt")),"wb") as wb:
                     wb.write("PCC matrix requires at least a 5 X 2 matrix.")
         else:
-            with open(os.path.join(outdir,"matrix_clustered.gr"),"wb") as wb:
+            with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
                 wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
         if run_annotation:
             _write_progress("Outputting annotation data")
-            with open(os.path.join(outdir, "annotations.gr"),"w") as a_out:
-                for k,v in annotations.iteritems():
+            for k,v in annotations.iteritems():
+                print "FOI: ", v._foiname
+                with open(os.path.join(outdir, os.path.basename(v._foiname).split(".")[0]+ ".txt"),"w") as a_out:
                     a_out.write(v.return_str_matrix() +"\n")
         _write_progress("Preparing run files for download")
         _zip_run_files(fois,gfs,bg_path,outdir,job_name)
@@ -363,7 +364,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     '''
     File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
     '''    
-    f = open(os.path.join(outdir,".log"))
+    f = open(os.path.join(outdir,"log.txt"))
     f_log = f.read()
     f.close()
     path_settings,f_sett =os.path.join(outdir,".settings"),""
@@ -371,14 +372,14 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
         f = open(path_settings)
         f_sett = f.read() + "\n###LOG###\n"
         f.close()
-    new_log_path = os.path.join(outdir,".details")
+    new_log_path = os.path.join(outdir,"detailed.txt")
     new_log = open(new_log_path,'wb')
     new_log.write(f_sett+f_log)
     new_log.close()
     tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
     tar = tarfile.TarFile(tar_path,"a")    
-    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".gr") or  x.endswith(".cor")]
-    fls = output_files + [new_log_path]
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt")]
+    fls = output_files
     for f in fls:
         tar.add(f,os.path.basename(f))
     tar.close()
