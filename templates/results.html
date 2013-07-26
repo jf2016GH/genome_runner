@@ -26,12 +26,18 @@
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
 		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+		
+
 		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<link type="text/css" href="static/css/demo_table.css" rel="stylesheet" />
+		<link type="text/css" href="static/css/TableTools_JUI.css" rel="stylesheet" />		
 		<link type="text/css" href="static/css/main.css"/>
 		<script type="text/javascript" src="static/js/jquery.js"></script>
 		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
 		<script type="text/javascript" src="static/js/jquery.dataTables.min.js"></script>
+		<script type="text/javascript" src="static/js/ZeroClipboard.js"></script>
+
+		<script type="text/javascript" src="static/js/TableTools.js"></script>
 		<script src="static/js/bootstrap.min.js"></script>
 		<script src="static/js/bootstrap-tabs.js"></script>
 		<script scr="static/js/main.js"></script>
@@ -50,7 +56,7 @@
 				add_heatmaps();
 			});
 			update_progress();
-			refresh_progress = setInterval(update_progress, 10000);		
+			refresh_progress = setInterval(update_progress, 1000);		
 			${}
 		});
 
@@ -104,9 +110,21 @@
 					}
 					// Create data table
 					$('#dt_'+foi_name).dataTable({
+						"sDom": 'T<"clear">lfrtip',
 						"bProcessing": true,
 						"aaData": data,
-						"aoColumns": cols
+						"aoColumns": cols,
+						 "oTableTools": {
+					            "aButtons": [
+					                "copy",
+					                "print",
+					                {
+					                    "sExtends":    "collection",
+					                    "sButtonText": "Save",
+					                    "aButtons":    [ "csv", "xls", "pdf" ]
+					                }
+					            ]
+					        }
 					});
 				}
 				else{

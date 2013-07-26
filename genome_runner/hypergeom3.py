@@ -28,7 +28,9 @@ import bedfilecreator
 import textwrap
 
 
-Interval = collections.namedtuple("Interval", "chrom,start,end")
+class Interval(collections.namedtuple('Interval', ["chrom", "start", "end","name"])):
+    def __new__(cls,chrom, start, end,name=""):
+        return super(Interval,cls).__new__(cls,chrom, start, end, name)
 
 # Logging configuration
 logger = logging.getLogger()
@@ -55,7 +57,11 @@ def read_intervals(path, background=None, snp_only=False, d_path=None):
             num_before += 1
             fields = line.strip().split("\t")
 #            print fields
-            chrom, start, end = fields[:3]
+            if len(fields) > 3:
+                chrom, start, end, name = fields[:4]
+            else:
+                chrom, start, end = fields[:3]
+                name = ""
             start = int(start)
             end = int(end)
 
@@ -76,7 +82,7 @@ def read_intervals(path, background=None, snp_only=False, d_path=None):
                     logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tis zero length. Converting to SNP".format(path))
                     end, num_zero = start + 1, num_zero + 1
 
-                interval = Interval(chrom, int(start), int(end))
+                interval = Interval(chrom, int(start), int(end),name)
                 # output warning for features not in background, then add to background
                 if background and not background.query(interval):
                     logger.warning("\t"+" ".join([chrom,str(start),str(end)]) + " in\t{}\tdoes not overlap with the background. Adding.".format(path))                
@@ -481,10 +487,10 @@ class FOI_Annotation:
         '''Returns a string of the formated annotation results matrix.
         '''
         res = "###{}###\n".format(self._foiname) 
-        res += "FOI\t" + "\t".join([x.gf for x in self._results]) + "\tTotal\n"
+        res += "FOI\t" + "Total\t" +"\t".join([x.gf for x in self._results]) + "\n"
         for i,v in enumerate(self._fois):         
             res += "|".join(str(x) for x in v) + "\t"
             # print out each hit for each GF record for the current SNP
             hits = [x.hits[i] for x in self._results ]
-            res += "\t".join(str(x) for x in hits) + "\t" + str(sum(hits)) + "\n"
+            res += str(sum(hits)) + "\t" +  "\t".join(str(x) for x in hits)  + "\n"
         return res

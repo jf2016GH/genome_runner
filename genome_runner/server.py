@@ -482,12 +482,16 @@ if __name__ == "__main__":
 		"server.socket_host":"0.0.0.0"})
 	static_dir = os.path.abspath(os.path.join(".", "static"))
 	results = os.path.abspath(os.path.join(".","results"))
+	media = os.path.abspath(os.path.join(".","media"))
 	conf = {"/static": 
-			{"tools.staticdir.on": True,
-			"tools.staticdir.dir": static_dir},
+				{"tools.staticdir.on": True,
+				"tools.staticdir.dir": static_dir},
 			"/results": 
-			{"tools.staticdir.on": True,
-			"tools.staticdir.dir": results}
+				{"tools.staticdir.on": True,
+				"tools.staticdir.dir": results},
+			"/media":
+				{"tools.staticdir.on": True,
+				"tools.staticdir.dir": media},
 			}
 		
 	cherrypy.quickstart(WebUI(), "/gr", config=conf)
