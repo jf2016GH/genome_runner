@@ -19,14 +19,15 @@ class PathNode(defaultdict):
 		self.files = []
 		self.organisms = []
 
-
+		
 	# for the autocomplete text box
-	def traverse(self, base, int_data):
+	def traverse(self, base):
 		''' Reads the data directory.
 		int_data: an integer indicating which directory level of the base the actual data is.
 		'''
 		# used to generate a json list of gfs
 		gfs = []
+		int_data = len(base.split("/"))
 		for base, dirs, files in os.walk(base):
 
 			prefix = base.split("/")[int_data:]

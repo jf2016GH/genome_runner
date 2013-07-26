@@ -23,15 +23,15 @@ import string
 import random
 
 lookup = TemplateLookup(directories=["templates"])
-sett = {"dir_data": "../data_new",
-		"default_organism": "org_626"
+
+
+sett = {"dir_data": "data",
+		"default_organism": "hg19"
 		}
 
 # add default background paths here
 default_backgrounds_paths = {"hg19": [os.path.join(sett["dir_data"],"hg19/genes/Tier1/all_diseases2.gz"),
 									  os.path.join(sett["dir_data"],"hg19/genes/Tier2/all_diseases1.gz")],
-							  "org_626": [os.path.join(sett["dir_data"],"org_626/genes/Tier1/all_diseases2.gz"),
-									  os.path.join(sett["dir_data"],"org_626/genes/Tier2/all_diseases1.gz")],
 							  "mm9": "data/mm9/varRep/Tier1/snp128.gz",
 							  "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
 DEBUG_MODE = True
@@ -57,7 +57,7 @@ class WebUI(object):
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			paths.traverse(os.path.join(sett["dir_data"],organism),3)
+			paths.traverse(os.path.join(sett["dir_data"],organism))
 			tmpl = lookup.get_template("index.html")
 			# Load default backgrounds
 
@@ -96,6 +96,8 @@ class WebUI(object):
 
 		upload_dir = os.path.join("uploads",str(id))
 		os.mkdir(upload_dir)
+		os.mkdir(os.path.join(upload_dir,"fois"))
+		os.mkdir(os.path.join(upload_dir,"gfs"))
 		results_dir = os.path.join("results",str(id))
 		os.mkdir(results_dir)
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
@@ -123,7 +125,7 @@ class WebUI(object):
 					if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
 					for b in bed_file:
 						bed_filename = b.filename
-						f = os.path.join(upload_dir, "".join(bed_filename.split(".")[:-1]+[".foi."]+[bed_filename.split(".")[-1]]) if not ".foi." in bed_filename  else bed_filename)
+						f = os.path.join(upload_dir, "fois",bed_filename)
 						if not os.path.exists(f):
 							with open(f, "wb") as out:
 								if b != None and b.filename != "":
@@ -141,10 +143,10 @@ class WebUI(object):
 									out_fois.write(f+"\n")
 						else:
 							logger.error("id={} Upload file already exists at {}".format(id,f))
-							return "ERROR: An internal error has occured on the server."	
+							print "id={} Upload file already exists at {}".format(id,f)
 				# custom data entered	
 				elif bed_data!="":
-					f = os.path.join(upload_dir, "custom.bed")
+					f = os.path.join(upload_dir,"fois", "custom.bed")
 					with open(f, "wb") as out:
 						bed_filename = "custom.bed"
 						logger.info('Received raw text  FOI data (id={})'.format(id))
@@ -168,7 +170,7 @@ class WebUI(object):
 					if not isinstance(genomicfeature_file,(list)): genomicfeature_file = [genomicfeature_file] # makes a list if only one file uploaded
 					for b in genomicfeature_file:
 						gfbed_filename = b.filename
-						f = os.path.join(upload_dir, "".join(gfbed_filename.split(".")[:-1]+[".gf."]+ [gfbed_filename.split(".")[-1]]) if not ".gf." in gfbed_filename  else gfbed_filename)
+						f = os.path.join(upload_dir, "gfs", gfbed_filename)
 						if not os.path.exists(f):
 							with open(f, "wb") as out:
 								if b != None and b.filename != "":
@@ -186,7 +188,6 @@ class WebUI(object):
 									out_gfs.write(f+"\n")
 						else:
 							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
-							return "ERROR: An internal error has occured on the server."
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: Unable to process custom Genome annotation feature"
@@ -281,7 +282,6 @@ class WebUI(object):
 		params["run_id"] = id
 		params["detailed"] = "Results not yet available"
 		params["matrix"] = "Results not yet available"
-		print "PATH: ", path, os.path.exists(path)
 		if not os.path.exists(path):  #If file is empty...
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)

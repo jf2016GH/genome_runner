@@ -268,7 +268,7 @@ def read_lines(path):
     return elems
 
 def base_name(path):
-    return os.path.basename(path).split(".")[0]
+    return ".".join(os.path.basename(path).split(".")[:-1])
 
 def _write_progress(line):
     """Saves the current progress to the progress file
