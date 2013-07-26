@@ -395,7 +395,7 @@ class WebUI(object):
 		else:
 			results["matrix_cor_data"] = ""
 			results["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
-		pvalue_path = os.path.join(path,"pcc_matrix_pvalu.txt")
+		pvalue_path = os.path.join(path,"pcc_matrix_pvalue.txt")
 		if os.path.exists(pvalue_path):
 			with open(pvalue_path) as f:
 				d = f.read()
