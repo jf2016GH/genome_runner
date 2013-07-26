@@ -411,11 +411,21 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
-		annotation_path = os.path.join(os.path.join("results","run_id",foi_name + ".granno"))
+		annotation_path = os.path.join(os.path.join("results",run_id,foi_name + ".txt"))
+		results = []
 		if os.path.exists(annotation_path):
 			with open(annotation_path) as f:
-				pass
-
+				# skip the comment lines
+				cols = f.readline().rstrip()
+				while cols[0] == "#":
+					cols = f.readline().rstrip()
+				cols = cols.split("\t")	
+				results.append(cols)			
+				for foi in f:
+					if foi.strip() != "":
+						results.append(foi.rstrip().split("\t"))
+		print results
+		return simplejson.dumps(results)
 
 	@cherrypy.expose
 	def get_progress(self, run_id):
