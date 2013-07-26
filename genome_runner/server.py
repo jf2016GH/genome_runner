@@ -19,12 +19,19 @@ import hypergeom3 as grquery
 from time import gmtime, strftime
 import bedfilecreator
 import simplejson
+import string
+import random
 
 lookup = TemplateLookup(directories=["templates"])
+sett = {"dir_data": "../data_new",
+		"default_organism": "org_626"
+		}
 
 # add default background paths here
-default_backgrounds_paths = {"hg19": ["/home/lukas/Documents/GR/data/hg19/genes/Tier1/all_diseases2.gz",
-									  "/home/lukas/Documents/GR/data/hg19/genes/Tier2/all_diseases1.gz"],
+default_backgrounds_paths = {"hg19": [os.path.join(sett["dir_data"],"hg19/genes/Tier1/all_diseases2.gz"),
+									  os.path.join(sett["dir_data"],"hg19/genes/Tier2/all_diseases1.gz")],
+							  "org_626": [os.path.join(sett["dir_data"],"org_626/genes/Tier1/all_diseases2.gz"),
+									  os.path.join(sett["dir_data"],"org_626/genes/Tier2/all_diseases1.gz")],
 							  "mm9": "data/mm9/varRep/Tier1/snp128.gz",
 							  "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
 DEBUG_MODE = True
@@ -38,24 +45,19 @@ logger.addHandler(hdlr)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
+
 # Each function in this class is a web page 
 class WebUI(object):
-	def __init__(self):
-		self.next_id = itertools.count().next # This creates a threadsafe counter
-		last_id = max(map(int, [file for file in os.walk('uploads').next()[1]]))
-		while self.next_id() < last_id:
-			pass
-		print last_id
-
+	def __init__(self, default_organism="hg19"):
 		self._index_html = {}
 
 	@cherrypy.expose
-	def index(self, organism="hg19"):
+	def index(self, organism=sett["default_organism"]):
 		if DEBUG_MODE or not organism in self._index_html:
-			paths = PathNode(organism)
+			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			paths.traverse("data/{}".format(organism))
+			paths.traverse(os.path.join(sett["dir_data"],organism),3)
 			tmpl = lookup.get_template("index.html")
 			# Load default backgrounds
 
@@ -63,9 +65,10 @@ class WebUI(object):
 			self._index_html[organism] = tmpl.render(paths=paths,default_background=self.get_backgrounds_combo(organism))
 		return self._index_html[organism]
 
+
 	def get_org(self):
 		organisms = []
-		files = os.listdir("./data")
+		files = os.listdir(sett["dir_data"])
 		for f in files:
 			if f.find(".") == -1:
 				organisms.append(f)
@@ -85,15 +88,18 @@ class WebUI(object):
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
 				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=None, default_background = "",**kwargs):
-		id = self.next_id()
-		print 'id: ', id
+
+		# Assign a random id
+		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
+		while (os.path.exists(os.path.join("uploads",id))):
+			id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
+
 		upload_dir = os.path.join("uploads",str(id))
 		os.mkdir(upload_dir)
 		results_dir = os.path.join("results",str(id))
 		os.mkdir(results_dir)
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
-		print id
 		runset = {}
 		cherrypy.response.timeout = 3600
 
@@ -266,7 +272,7 @@ class WebUI(object):
 		p = Process(target=grquery.run_hypergeom,
 				args=(fois,gfs,b,results_dir,runset['job_name'],True))				
 		p.start()
-		raise cherrypy.HTTPRedirect("result?id=%d" % id)
+		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
 	@cherrypy.expose
 	def result(self, id):
@@ -275,6 +281,7 @@ class WebUI(object):
 		params["run_id"] = id
 		params["detailed"] = "Results not yet available"
 		params["matrix"] = "Results not yet available"
+		print "PATH: ", path, os.path.exists(path)
 		if not os.path.exists(path):  #If file is empty...
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)
@@ -284,7 +291,6 @@ class WebUI(object):
 		p = {"status":"","curprog":0,"progmax":0}
 		progress_path = os.path.join(path,".prog")
 		if os.path.exists(progress_path):
-			print "progress_path: ", progress_path
 			with open(progress_path) as f:
 				p = json.loads(f.read() )
 		params["log"] = "###Run Settings###\n"
@@ -317,7 +323,6 @@ class WebUI(object):
 				params["fois"] = [basename(x).split(".")[0] for x in f.read().split("\n") if x != ""]
 		else:
 			params["fois"] = ""
-		print params["fois"]
 		# check if run files ready for download
 		zip_path = os.path.join(path,"GR_Runfiles_{}.tar.gz".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
 		if os.path.exists(zip_path):

@@ -14,20 +14,22 @@ class PathNode(defaultdict):
 	# each of the top level folders in the db directory are
 	# considered to contain organism data.
 
-	def __init__(self, organism="hg19"):
+	def __init__(self):
 		defaultdict.__init__(self, PathNode)
 		self.files = []
 		self.organisms = []
 
 
 	# for the autocomplete text box
-	def traverse(self, base):
-
+	def traverse(self, base, int_data):
+		''' Reads the data directory.
+		int_data: an integer indicating which directory level of the base the actual data is.
+		'''
 		# used to generate a json list of gfs
 		gfs = []
-
 		for base, dirs, files in os.walk(base):
-			prefix = base.split("/")[2:]
+
+			prefix = base.split("/")[int_data:]
 			node = self
 			# creates a node for each subfolder i.e group,visibility
 			while prefix:
@@ -38,6 +40,8 @@ class PathNode(defaultdict):
 				node.name = p
 			node.files = ["file:"+os.path.join(base, f) for f 
 				in list(fnmatch.filter(files, ("*.gz")))]
+
+			# used for the auto-complete text box
 			for f in node.files:
 				gfs.append({"caption": str(basename(os.path.splitext(f)[0])),"value":f})
 		f = open("static/gfs.php","wb")

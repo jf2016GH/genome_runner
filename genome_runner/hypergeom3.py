@@ -287,14 +287,16 @@ def _write_head(content,outpath):
     f.close()
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True,data_dir=""):
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
     trackdb = []
     if os.path.exists(sett_path):        
         with open(sett_path) as re:
             organism = [x.split("\t")[1] for x in re.read().split("\n") if x.split("\t")[0] == "Organism:"][0]
-            trackdb = bedfilecreator.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
+            trackdb_path = os.path.join("data",organism,"trackDb")
+            if os.path.exists(trackdb_path):
+                trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
     # set output settings
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,current_gf
     detailed_outpath =  os.path.join(outdir, "detailed.txt") 
