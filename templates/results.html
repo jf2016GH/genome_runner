@@ -25,8 +25,9 @@
 		<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 		<![endif]-->
-		<link href="static/css/bootstrap.min.css" rel="stylesheet">
 		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+		<link href="static/css/bootstrap.min.css" rel="stylesheet">
+		<link type="text/css" href="static/css/demo_table.css" rel="stylesheet" />
 		<link type="text/css" href="static/css/main.css"/>
 		<script type="text/javascript" src="static/js/jquery.js"></script>
 		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
@@ -84,20 +85,34 @@
 		function get_annotation(foi_name){
 			$.post('/gr/get_annotation?run_id=' + ${run_id}+"&foi_name="+foi_name, function(data){
 				data = jQuery.parseJSON(data);
-				// Get column names
-				var cols = []
-				var c = data.shift()
-				for(var k in c){
-					cols.push({"sTitle": c[k]})
-				}
-				// Create data table
-				$('#dt_'+foi_name).dataTable({
-					"bProcessing": true,
-					"aaData": data,
-					"aoColumns": cols
-				});
+				if (data.length != 0) {
+					// clear old data tables.
+												
+					$(".dt_annotations").each(function (){ 
+						$(this).children().first().empty();
+						tmp = $(this).attr("id").split("_")
+						tmp = tmp.slice(2,tmp.length).join("_")
+						 $(this).children().first().append("<table id='dt_" + tmp + "'></table>") 						
 
-			})
+					});
+
+					// Get column names
+					var cols = []
+					var c = data.shift()
+					for(var k in c){
+						cols.push({"sTitle": c[k]})
+					}
+					// Create data table
+					$('#dt_'+foi_name).dataTable({
+						"bProcessing": true,
+						"aaData": data,
+						"aoColumns": cols
+					});
+				}
+				else{
+
+				}
+			});
 		}
 		</script>
 			}
@@ -177,10 +192,9 @@
 			</ul>
 			<div class="tab-content">
 				% for i,item in enumerate(fois):
-				<div ${"class='tab-pane active'" if i==0 else "class='tab-pane'"} id="ano_tab_${item}">
+				<div class="dt_annotations" ${"class='tab-pane active'" if i==0 else "class='tab-pane'"} id="ano_tab_${item}">
 					<div class="well">
-						<table id="dt_${item}">
-						</table>
+						<table id="dt_${item}"></table>
 					</div>
 				</div>
 				% endfor

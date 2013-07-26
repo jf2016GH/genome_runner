@@ -406,7 +406,6 @@ class WebUI(object):
 				results["matrix_cor_pvalues"] = results["matrix_cor_pvalues"]			
 		else: 
 			results["matrix_cor_pvalues"] = ""
-		print "RESULTS "
 		return simplejson.dumps(results)
 
 	@cherrypy.expose
@@ -424,7 +423,6 @@ class WebUI(object):
 				for foi in f:
 					if foi.strip() != "":
 						results.append(foi.rstrip().split("\t"))
-		print results
 		return simplejson.dumps(results)
 
 	@cherrypy.expose

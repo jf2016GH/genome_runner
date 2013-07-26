@@ -342,7 +342,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         if run_annotation:
             _write_progress("Outputting annotation data")
             for k,v in annotations.iteritems():
-                print "FOI: ", v._foiname
                 with open(os.path.join(outdir, os.path.basename(v._foiname).split(".")[0]+ ".txt"),"w") as a_out:
                     a_out.write(v.return_str_matrix() +"\n")
         _write_progress("Preparing run files for download")
