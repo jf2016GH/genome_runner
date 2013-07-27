@@ -2,24 +2,42 @@
 <html lang="en">
 <head>
 	<link href="static/css/bootstrap.min.css" rel="stylesheet">
-	<style>
-	body {
-		padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-	}
-	* {
-	  margin: 0;
-	  padding: 0;
-	}
-	/* allows the check box tree to be rendered correctly*/
-	.ui-icon {float: left;}
-	.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
-	.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active {heigh: 100%;}
-	</style>
 	<link type="text/css" href="static/css/main.css"/>
 	<link type="text/css" href="static/css/demo_table.css"/>
 	<link type="text/css" href="static/css/jquery.tipsy.class"/>
 	<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css " rel="stylesheet" />
 	
+	<style>
+	body {
+		margin: 0px 10px; padding:0px;
+		position: relative;
+		width: 100%;
+	}
+	.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active{
+		margin: 9px;
+	}
+	#content{
+		margin:0px auto;
+		text-align:left;
+		padding:15px;
+	}
+	#ucsc {
+		padding-left: 0px;
+	}
+	#treeview-inner{
+		margin-left: -40px;
+	}
+	label {
+		font-size: 120%;
+	}
+	.ui-widget-content { background: #ffffff url(images/ui-bg_glass_75_ffffff_1x400.png) 50% 50% repeat-x; color: #404040; }
+	#divCheckBox { border: 2px solid #C0C0C0;
+				   padding: 3px; }
+	/* allows the check box tree to be rendered correctly*/
+	.ui-icon {float: left;}
+	.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
+	.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active {heigh: 100%;}
+	</style>
 	<script type="text/javascript" src="static/js/jquery.js"></script>
 	<script type="text/javascript" src="static/js/jquery-ui-1.8.22.custom.min.js"></script>
 	<script type="text/javascript" src="static/js/jquery.ui.widget.js"></script>
@@ -171,7 +189,7 @@
 
 </script>
 </head>
-<body bgcolor="#A8D5FF" style="width: 800px">
+<body bgcolor="#A8D5FF" style="width: 1000px">
 
 	<div class="topbar">
 		<div class="topbar-inner">
@@ -194,105 +212,102 @@
 			</div>
 		</div>
 	</div>
-	<form action="query" method="post" enctype="multipart/form-data">
-		<div class="well">
-		<h3>GenomeRunnerSNP: Annotation, enrichment, and similarity analyses of sets of SNPs</h3>
-		More that 80&#37; of phenotype-associated SNPs fall in non-coding regions &#40;Hindorff, L. A. et al. Potential etiologic and functional implications of genome-wide association loci for human diseases and traits. Proc. Natl Acad. Sci. USA 106, 9362&#45;9367 &#40;2009&#41;&#41;, making their functional impact less clear. GenomeRunnerSNP is a tool for automating functional interpretation of individual SNPs and a set of SNPs as a whole by considering their co-localization with functional genome annotation data. The data are mirrored from the UCSC genome database and contain >6,000 tracks for the human genome. <br><br>First, GenomeRunnerSNP annotates each SNP by its overlap with genome annotation features. Second, GenomeRunnerSNP calculates enrichment p-values for each set of SNPs - genome annotation feature, and visualize the results as a heatmap. Third, GenomeRunnerSNP calculates pair-wise correlation coefficients among sets of SNPs, based on their enrichment similarity.
-		</div>
-		<div class="well">
-			<div style="float:right;margin-top: 10px;">
-				<b style="font-size:150%;">Organism:</b>
-				${paths.org_as_html(id="org")} 
-<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			</div> 
-			<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			</h3> 
-			<ul>
-				<li id="list-bedfeatures">					
+	<div id="content">
+		<form action="query" method="post" enctype="multipart/form-data">
+			<div class="well">
+			<h3>GenomeRunnerSNP: Annotation, enrichment, and similarity analyses of sets of SNPs</h3>
+			<label >
+			More that 80&#37; of phenotype-associated SNPs fall in non-coding regions &#40;Hindorff, L. A. et al. Potential etiologic and functional implications of genome-wide association loci for human diseases and traits. Proc. Natl Acad. Sci. USA 106, 9362&#45;9367 &#40;2009&#41;&#41;, making their functional impact less clear. GenomeRunnerSNP is a tool for automating functional interpretation of individual SNPs and a set of SNPs as a whole by considering their co-localization with functional genome annotation data. The data are mirrored from the UCSC genome database and contain >6,000 tracks for the human genome. <br><br>First, GenomeRunnerSNP annotates each SNP by its overlap with genome annotation features. Second, GenomeRunnerSNP calculates enrichment p-values for each set of SNPs - genome annotation feature, and visualize the results as a heatmap. Third, GenomeRunnerSNP calculates pair-wise correlation coefficients among sets of SNPs, based on their enrichment similarity.
+			</label>
+			</div>
+			<div class="well">
+				<div style="float:right;margin-top: 10px;">
+					<b style="font-size:150%;">Organism:</b>
+					${paths.org_as_html(id="org")} 
+			<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</div> 
+				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</h3> 				
 					Bed Files:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
-            		<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">How my data should look like?</a>
-				</li>
-                
-				<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
-			        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>
-					<div>          
-						<table>
-					    	<tr>
-							    <td>
-									<textarea id="inputbeddata" rows=5 cols=30 style="margin:10px" name="bed_data" disabled>
-									</textarea>
-								</td>
-								<td>
-									<label stlye="float:left">
-										Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Example&#58; chr17   7579222   7579223   &#91;Optional: rs104255   .   .&#93;. Note that the end coordinate should be the start coordinate + 1. If a SNP has the same start and end coordinates, the end coordinate will set to start + 1. If a region has length &#62;1, coordinates of its middle point will be used. Pasting the data restricts the analysis to one set of SNPs&#59; to analyze multiple sets, upload them as separate files using 'Choose Files' button.
-									</label>
-								</td>
-							</tr>
-						</table>
-					</div>
-				</div>
-			</ul>
-		</div>	
-		<div class="well">
-			<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'universe', used to calculate the probability of SNPs in a set to overlap a genome annotation feature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			</h3>
-			<b style="font-size:120%; margin-left: 10px"></b>
-				<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
-				<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
-					<div style="height=100px">       
-								Bed File:
-								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />		
-								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
-							        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>							        
-							    <table>
-							    	<tr>
-									    <td>
-											<textarea id="inputbackgrounddata" rows=5 cols=30 style="margin:10px" name="background_data" disabled>
-											</textarea>
-										</td>
-										<td>
-											<label stlye="float:left">
-												The background selection is critical for the correct p-value calculation using hypergeometric distribution. We are calculating the probability of k SNPs co-localizing with a genomic feature out of n in a set, drawn from the population of SNPs of size N &#40;background&#41; containing exactly K SNPs co-localized with that genomic feature. A set of SNPs being analyzed should be a subset of the background, or 'universe' of all SNPs. If that is not the case, non-background SNPs are appended to the background, generating a warning.<br><br>
-												Default background selection &#40;all SNPs from the latest organism-specific database&#41; is suitable when genome-wide study was performed. When using SNPs identified by a microarray, it is advisable to use all SNPs on that array as a background.
-											</label>
-										</td>
-									</tr>
-								</table>
+            		<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
+	                
+					<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+				        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>
+						<div>          
+							<table>
+						    	<tr>
+								    <td>
+										<textarea id="inputbeddata" rows=5 cols=30 style="margin:10px" name="bed_data" disabled>
+										</textarea>
+									</td>
+									<td>
+										<label stlye="float:left">
+											Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Example&#58; chr17   7579222   7579223   &#91;Optional: rs104255   .   .&#93;. Note that the end coordinate should be the start coordinate + 1. If a SNP has the same start and end coordinates, the end coordinate will set to start + 1. If a region has length &#62;1, coordinates of its middle point will be used. Pasting the data restricts the analysis to one set of SNPs&#59; to analyze multiple sets, upload them as separate files using 'Choose Files' button.
+										</label>
+									</td>
+								</tr>
+							</table>
 						</div>
 					</div>
-				</div>	
-		</div>	
-		<div class="well">
-			<h3>3. Default genome annotation features:</h3>
-			<input type="checkbox" checked="true" name="grouprun:./static/grouprun/gf_hg19_wgEncodeRegTfbsNames.txt" style="margin: 10px">TFBS</input><img class="helptooltip" title="Transcription Factor ChIP-seq from ENCODE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_BroadHmm.GM12878.txt" style="margin: 10px">ChromatinStates</input><img class="helptooltip" title="Chromatin State Segmentation by HMM from ENCODE&#47;Broad, Gm12878 cell line" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_regulation.txt" style="margin: 10px">Regulation</input><img class="helptooltip" title="Histone Modifications by ChIP&#45;seq from ENCODE&#47;Broad, Gm12878 cell line" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-			<div class="accordion" style="padding-bottom: 1em;list-style:none;"> 
-             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
-             <div >	
-				<ul>
-					<li id="list-bedbackground">					
-						Bed Files (.bed or .gz):
-						<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
-						<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">How my data should look like?</a>
-					</li>				
-				</ul>
-				<div id="grfdroplist">
-					<table>						     
-						<tr>
-							<td >
-								<label>Enter genome annotation names:</label>
-								<ol style="left: 9px;position: relative; padding-top:10px;padding-bottom:10px;">        
-									<li id="grf-list" class="input-text">
-										<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
-									</li>
-									<div id="grfs-auto">
-										<div class="default">Type the names of the genome annotation features to run</div>
-										<ul id="feed">
-										</ul>
-									</div>
-								</ol>	
-					            <div style="margin:10px">
+			</div>	
+			<div class="well">
+				<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'universe', used to calculate the probability of SNPs in a set to overlap a genome annotation feature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</h3>
+				<b style="font-size:120%; margin-left: 10px"></b>
+					<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+					<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
+						<div style="height=100px">       
+									Bed File:
+									<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />		
+									<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+								        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>							        
+								    <table style="margin-bottom:0px; padding-bottom:0px">
+								    	<tr>
+										    <td>
+												<textarea id="inputbackgrounddata" rows=5 cols=30 style="margin:10px" name="background_data" disabled>
+												</textarea>
+											</td>
+											<td>
+												<label stlye="float:left">
+													The background selection is critical for the correct p-value calculation using hypergeometric distribution. We are calculating the probability of k SNPs co-localizing with a genomic feature out of n in a set, drawn from the population of SNPs of size N &#40;background&#41; containing exactly K SNPs co-localized with that genomic feature. A set of SNPs being analyzed should be a subset of the background, or 'universe' of all SNPs. If that is not the case, non-background SNPs are appended to the background, generating a warning.<br><br>
+													Default background selection &#40;all SNPs from the latest organism-specific database&#41; is suitable when genome-wide study was performed. When using SNPs identified by a microarray, it is advisable to use all SNPs on that array as a background.
+												</label>
+											</td>
+										</tr>
+									</table>
+							</div>
+						</div>
+					</div>	
+			</div>	
+			<div class="well">
+				<h3>3. Default genome annotation features:</h3>
+				<input type="checkbox" checked="true" name="grouprun:./static/grouprun/gf_hg19_wgEncodeRegTfbsNames.txt" style="margin: 10px">TFBS</input><img class="helptooltip" title="Transcription Factor ChIP-seq from ENCODE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_BroadHmm.GM12878.txt" style="margin: 10px">ChromatinStates</input><img class="helptooltip" title="Chromatin State Segmentation by HMM from ENCODE&#47;Broad, Gm12878 cell line" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_regulation.txt" style="margin: 10px">Regulation</input><img class="helptooltip" title="Histone Modifications by ChIP&#45;seq from ENCODE&#47;Broad, Gm12878 cell line" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<div class="accordion" style="padding-bottom: 1em;list-style:none;"> 
+	             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
+	             <div >	
+					<ul>
+						<li id="list-bedbackground">					
+							Bed Files (.bed or .gz):
+							<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
+							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">How my data should look like?</a>
+						</li>				
+					</ul>
+					<div id="grfdroplist" style="display: table;">	
+						<label>Enter genome annotation names:</label>
+						<ol style="left: 9px;position: relative; padding-top:10px;padding-bottom:10px;">        
+							<li id="grf-list" class="input-text">
+								<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
+							</li>
+							<div id="grfs-auto">
+								<div class="default">Type the names of the genome annotation features to run</div>
+								<ul id="feed">
+								</ul>
+							</div>
+						</ol>	
+							<div style="display: table-row;">
+					            <div id="divCheckBox" style="margin:10px; display: table-cell; verticle-align: top;">
 									<label >Select genome annotation features: </label>
 										<div>
 											<a class="btn" onClick="changeCheckedStateTreeView(true)">Expand All</a>
@@ -300,43 +315,43 @@
 										</div>
 									<div id="treeview-outer" style="padding-top:10px;">
 										<div id="treeview-inner" onClick="viewBoxClick()">
-											${paths.as_html(id="ucsc")}
+												${paths.as_html(id="ucsc")}
 										</div>
 									</div>
 								</div>
-							</td>
-							<td> 
-								<label>Functional genome annotation data are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run annotation&#47;enrichment analyses with, use search box to find them. It is also advisable to search for functional genomic elements of interest to see which tracks are available, like 'H3K4me1'. Use checkboxes in the collapsible treeview to select groups of functional genomic elements</label>
-							</td>
-						</tr>
-					</table>
-				</div>			 
+								<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
+										<label style="">Functional genome annotation data are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run annotation&#47;enrichment analyses with, use search box to find them. It is also advisable to search for functional genomic elements of interest to see which tracks are available, like 'H3K4me1'. Use checkboxes in the collapsible treeview to select groups of functional genomic elements</label>
+								</div>
+								
+						</div>
+					</div>			 
 
-		</div>
-		</div>
-		</div>	
-
-		<div class="well">
-			<table width="100%">
-				<tr>
-
-					<td id="td_submit" style="width:90px">
-						<button class="btn btn-primary" type="submit" ><label style="font-size:110%">Submit job</label></button>
-<img class="helptooltip" title="Run annotation and enrichment analyses for each set of SNPs" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-					</td>
-					<td id="td_submit" style="width:170px">
-						
-					</td>
-				</tr>
-			</table>
-			<br>
-			<div class="ui-state-highlight ui-corner-all">
-				<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
-				</span>GenomeRunner works best in Chrome (Windows) or Internet Explorer 9+ (no compatibility mode). Mac users, use Safari.</p>
 			</div>
+			</div>
+			</div>	
 
-		</div>
-	</form>
+			<div class="well">
+				<table width="100%">
+					<tr>
+
+						<td id="td_submit" style="width:90px">
+							<button class="btn btn-primary" type="submit" >Submit job</button>
+	<img class="helptooltip" title="Run annotation and enrichment analyses for each set of SNPs" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						</td>
+						<td id="td_submit" style="width:170px">
+							
+						</td>
+					</tr>
+				</table>
+				<br>
+				<div class="ui-state-highlight ui-corner-all">
+					<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
+					</span>GenomeRunner works best in Chrome (Windows) or Internet Explorer 9+ (no compatibility mode). Mac users, use Safari.</p>
+				</div>
+
+			</div>
+		</form>
+	</div>
 </body>
 </html>
 

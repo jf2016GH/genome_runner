@@ -57,7 +57,6 @@
 			});
 			update_progress();
 			refresh_progress = setInterval(update_progress, 1000);		
-			${}
 		});
 
  		// generates both of the heatmap graphs
@@ -71,21 +70,39 @@
 			});
 			return false;
 		}
+
 		function update_progress(){
 			$.post('/gr/get_progress?run_id=${run_id}',function(data){
 				data = jQuery.parseJSON( data );
 				$("#progressbar").progressbar({
 								value: data['curprog'],
-								max:  data['progmax']
-							});
+								max:  data['progmax']});
 				if (data['status'] != "") $("#status").html(data['status']);
-				console.log(data);
 				if (data['status'] == "Analysis Completed"){
 					clearInterval(refresh_progress);
+					$(".lblMat").remove()
+					add_heatmaps();
+					$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>"						)
+					$("#wellDownloads").append("<div style='margin:10px'><a style='font-size: 19px;margin-top:10px;' id='heatmap_download' >Download Clustered 	Enrichment Matrix as SVG File (Right click - 'Save As' to save) </a><br></div><div style='margin:10px'><a style='font-size: 19px' id='heatmap_cor_download' >Download Pearson's Correlation 	Matrix as SVG File (Right click - 'Save As' to save) </a></div>")
 				}
-
+				else if(data['status'] == "Run crashed. See end of log for details."){
+					clearInterval(refresh_progress);
+				}
 			});
+		}
 
+		function get_log(){
+			$.post('/gr/get_log?run_id=${run_id}',function(data){
+				data = jQuery.parseJSON( data );
+				$("#txtLog").html(data['log']);
+			});
+		}
+
+		function get_detailed(){
+			$.post('/gr/get_detailed?run_id=${run_id}',function(data){
+				data = jQuery.parseJSON( data );
+				$("#txtDetailed").html(data['detailed']);
+			});
 		}
 
 		function get_annotation(foi_name){
@@ -166,8 +183,8 @@
 <ul class="tabs" id="resultstab" data-tabs="tabs">
 	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')" data-toggle="tab">Clustered Enrichment Matrix</a></li>
 	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')" data-toggle="tab">Pearson's Correlation Matrix Results</a></li>
-	<li ><a href="#detailedresults" data-toggle="tab">Detailed Results</a></li>
-	<li ><a href="#debugresults" data-toggle="tab">Analysis Log</a></li>
+	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()">Detailed Results</a></li>
+	<li ><a href="#debugresults" data-toggle="tab" onclick="get_log()">Analysis Log</a></li>
 	<li><a href="#annotationresults" data-toggle="tab">Annotation Results</a></li>
 	<li ><a href="#heatmapdownload" data-toggle="tab">Download Results</a></li>
 </ul>
@@ -175,8 +192,7 @@
 <div class="tab-content">
 	<div class="tab-pane active" id="matrixresults">
 		<div class="well">
-			<h3 style="float: left">Clustered Heatmap</h3><br>
-				<a class="btn btn-primary" id="btnheatmaps1" style="margin-left: 230px;"  type="button">Load Matrix Results</a>
+				<h4 class="lblMat" style="margin: 202px;">Matrix results will be loaded after analysis completion.</h4>
 				<div  id='heatmap' >
 	      		</div>
 		</div>
@@ -185,7 +201,7 @@
 
 	<div class="tab-pane" id="cormatrixresults">
 		<div class="well">
-			<h3 style="float: left">Clustered Heatmap</h3>		
+			<h4 class="lblMat" style="margin: 202px;">Matrix results will be loaded after analysis completion.</h4>	
 			<div  id='heatmap_cor' >
       		</div>
 		</div>
@@ -193,13 +209,13 @@
 	<div class="tab-pane" id="detailedresults">
 		<div class="well">
 			<h3>Detailed Results</h3>
-			<textarea cols="150" rows="30">${detailed}</textarea><br>			
+			<textarea  id="txtDetailed" cols="150" rows="30"></textarea><br>			
 		</div>
 	</div>
 	<div class="tab-pane" id="debugresults">
 		<div class="well">
 			<h3>Analysis Log</h3>
-			<textarea cols="150" rows="30">${log}</textarea><br>
+			<textarea id="txtLog" cols="150" rows="30"></textarea><br>
 		</div>
 	</div>
 	<div class="tab-pane" id="annotationresults">
@@ -219,21 +235,10 @@
 			</div>	
 	</div>
 	<div class="tab-pane" id="heatmapdownload">
-		<div class="well">
-			<div style="margin: 20px">
-				% if zipfile != "":
-				<a class="btn btn-primary" style="margin-left: 230px;"  type="button" href="${zipfile}">Download All Run Files</a>
-				% else:
+		<div id="wellDownloads" class="well">
+			<div id="divDownload" style="margin: 20px">
 				<a class="btn btn-primary disabled" style="margin-left: 230px;" type="button">Run files not ready for download</a>
-				% endif
-			</div>
-			<div style="margin:10px">
-				<a style="font-size: 19px;margin-top:10px;" id="heatmap_download" >Download Clustered 	Enrichment Matrix as SVG File (Right click - 'Save As' to save) </a>
-				<br>
-			</div>
-			<div style="margin:10px">
-				<a style="font-size: 19px" id="heatmap_cor_download" >Download Pearson's Correlation 	Matrix as SVG File (Right click - 'Save As' to save) </a>
-			</div>
+			</div>			
 		</div>
 	</div>
 </div>

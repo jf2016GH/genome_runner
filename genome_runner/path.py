@@ -22,8 +22,7 @@ class PathNode(defaultdict):
 		
 	# for the autocomplete text box
 	def traverse(self, base):
-		''' Reads the data directory.
-		int_data: an integer indicating which directory level of the base the actual data is.
+		''' Reads the data directory for GenomicFeatures
 		'''
 		# used to generate a json list of gfs
 		gfs = []

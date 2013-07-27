@@ -21,6 +21,8 @@ import bedfilecreator
 import simplejson
 import string
 import random
+import traceback
+import bedfilecreator as uscsreader
 
 lookup = TemplateLookup(directories=["templates"])
 
@@ -88,7 +90,6 @@ class WebUI(object):
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
 				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=None, default_background = "",**kwargs):
-
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join("uploads",id))):
@@ -413,6 +414,7 @@ class WebUI(object):
 			results["matrix_cor_pvalues"] = ""
 		return simplejson.dumps(results)
 
+
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
 		annotation_path = os.path.join(os.path.join("results",run_id,foi_name + ".txt"))
@@ -431,6 +433,29 @@ class WebUI(object):
 		return simplejson.dumps(results)
 
 	@cherrypy.expose
+	def meta(self, tbl,organism="hg19"):
+		try:
+			trackdb = uscsreader.load_tabledata_dumpfiles("data/{}/trackDb".format(organism))
+			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
+		except Exception, e:
+			print traceback.format_exc()
+			return "<h3>(No data found for {}.)</h3>".format(tbl)
+		if html=='':
+			return "<h3>(No data found for {}.)</h3>".format(tbl)
+		else:
+			return html
+
+	@cherrypy.expose
+	def get_detailed(self,run_id):
+		""" loads results from detailed results file
+		"""
+		detailed_path,results = os.path.join("results", run_id,"detailed.txt"),{"detailed": ""}		 
+		if os.path.exists(detailed_path):
+			with open(detailed_path) as f:
+				results["detailed"] = f.read()
+		return simplejson.dumps(results)
+
+	@cherrypy.expose
 	def get_progress(self, run_id):
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
@@ -439,6 +464,17 @@ class WebUI(object):
 			with open(progress_path) as f:
 				p = json.loads(f.read() )
 		return simplejson.dumps(p)
+
+	@cherrypy.expose
+	def get_log(sefl,run_id):
+		results = {"log": ""}
+		log_path = os.path.join(os.path.join("results", run_id),"log.txt")
+		print log_path
+		if os.path.exists(log_path):
+			with open(log_path) as f:
+				results["log"] = f.read()
+				print "log ",results["log"]
+		return simplejson.dumps(results)
 
 	@cherrypy.expose
 	def enrichment_log(self, id):

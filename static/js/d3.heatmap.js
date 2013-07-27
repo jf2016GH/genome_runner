@@ -30,8 +30,6 @@
       geneExpressions = this.model.get("geneExpressions");
       conditionNames = this.model.get("conditionNames");
       geneNames = this.model.get("geneNames");
-      console.log("cur" );
-      console.log(cur_tooltip_matrix);
       tooltip_matrices[cur_heatmap] = getGeneExpressions(cur_tooltip_matrix, conditionNames); // for tooltips
       extent = this.model.get("extent");
       clusters = this.model.get("clusters");

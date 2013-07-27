@@ -7,7 +7,7 @@ ul.holder li.bit-box-focus { border-color: #598BEC; background: #598BEC; color: 
 ul.holder li.bit-input input { width: 150px; margin: 0; border: none; outline: 0; padding: 3px 0 2px; } /* no left/right padding here please */
 ul.holder li.bit-input input.smallinput { width: 20px; }
 
-#grfdroplist { solid #999; width: 550px; }
+#grfdroplist { solid #999; width: 880px; }
 form ol li { list-style-type: none; }
 form ol { font: 11px "Lucida Grande", "Verdana"; margin: 0; padding: 0; }
 form ol li.input-text {list-style-type: none; }

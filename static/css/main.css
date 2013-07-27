@@ -40,7 +40,8 @@
 	padding-bottom: 20px;
 	border-collapse:or: white;
 }
-ul { list-style-type: none }
+ul { list-style-type: none;
+	 padding-left: 0px;}
 body { background: #1C1C1C;}
 img { padding: 10px; border-radius: 15px;} 
 div.tooltip {   

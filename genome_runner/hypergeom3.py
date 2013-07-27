@@ -57,7 +57,7 @@ def read_intervals(path, background=None, snp_only=False, d_path=None):
             num_before += 1
             fields = line.strip().split("\t")
 #            print fields
-            if len(fields) > 3:
+            if len(fields) > 4:
                 chrom, start, end, name = fields[:4]
             else:
                 chrom, start, end = fields[:3]
@@ -296,40 +296,41 @@ def _write_head(content,outpath):
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True,data_dir=""):
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
-    trackdb = []
-    if os.path.exists(sett_path):        
-        with open(sett_path) as re:
-            organism = [x.split("\t")[1] for x in re.read().split("\n") if x.split("\t")[0] == "Organism:"][0]
-            trackdb_path = os.path.join("data",organism,"trackDb")
-            if os.path.exists(trackdb_path):
-                trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
-    # set output settings
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,current_gf
-    detailed_outpath =  os.path.join(outdir, "detailed.txt") 
-    matrix_outpath = os.path.join(outdir,"matrix.txt")
-    progress_outpath = os.path.join(outdir,".prog")
-    f = open(matrix_outpath,'wb') 
-    f.close()
-    f = open(detailed_outpath,'wb')
-    f.close()
-    hdlr = logging.FileHandler(logger_path)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr)
-
-    fois = read_lines(fois)
-    gfs = read_lines(gfs)
-    bg = read_intervals(bg_path)
-    bg_iset = IntervalSet(bg)
-
-    _write_head("\n\n#Detailed log report#\n",logger_path)
-    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
-    _write_head("#Grooming Summary#",logger_path)
-
-    write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
-    write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
-    curprog,progmax = 0,len(gfs) 
+    curprog,progmax = 1,1
     try:
+        trackdb = []
+        if os.path.exists(sett_path):        
+            with open(sett_path) as re:
+                organism = [x.split("\t")[1] for x in re.read().split("\n") if x.split("\t")[0] == "Organism:"][0]
+                trackdb_path = os.path.join("data",organism,"trackDb")
+                if os.path.exists(trackdb_path):
+                    trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
+        # set output settings
+        detailed_outpath =  os.path.join(outdir, "detailed.txt") 
+        matrix_outpath = os.path.join(outdir,"matrix.txt")
+        progress_outpath = os.path.join(outdir,".prog")
+        f = open(matrix_outpath,'wb') 
+        f.close()
+        f = open(detailed_outpath,'wb')
+        f.close()
+        hdlr = logging.FileHandler(logger_path)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr)
+
+        fois = read_lines(fois)
+        gfs = read_lines(gfs)
+        bg = read_intervals(bg_path)
+        bg_iset = IntervalSet(bg)
+
+        _write_head("\n\n#Detailed log report#\n",logger_path)
+        foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
+        _write_head("#Grooming Summary#",logger_path)
+
+        write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
+        curprog,progmax = 0,len(gfs)
         for gf in gfs: 
             current_gf = base_name(gf)      
             curprog += 1
@@ -357,6 +358,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         _write_progress("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
+        write_output(traceback.format_exc(),logger_path)
         _write_progress("Run crashed. See end of log for details.")
 
 def get_description(gf,trackdb):
@@ -373,13 +375,14 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     '''    
     f = open(os.path.join(outdir,"log.txt"))
     f_log = f.read()
+    print "F_LOG ", f_log
     f.close()
     path_settings,f_sett =os.path.join(outdir,".settings"),""
     if os.path.exists(path_settings):
         f = open(path_settings)
         f_sett = f.read() + "\n###LOG###\n"
         f.close()
-    new_log_path = os.path.join(outdir,"detailed.txt")
+    new_log_path = os.path.join(outdir,"log.txt")
     new_log = open(new_log_path,'wb')
     new_log.write(f_sett+f_log)
     new_log.close()
