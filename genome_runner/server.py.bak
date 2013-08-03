@@ -31,6 +31,11 @@ sett = {"dir_data": "data",
 		"default_organism": "hg19"
 		}
 
+# add default background paths here
+default_backgrounds_paths = {"hg19": [os.path.join(sett["dir_data"],"hg19/genes/Tier1/all_diseases2.gz"),
+									  os.path.join(sett["dir_data"],"hg19/genes/Tier2/all_diseases1.gz")],
+							  "mm9": "data/mm9/varRep/Tier1/snp128.gz",
+							  "mm8": "data/mm8/varRep/Tier1/snp126.gz"}
 DEBUG_MODE = True
 
 logger = logging.getLogger('genomerunner.server')
@@ -54,7 +59,6 @@ class WebUI(object):
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			print paths.organisms
 			paths.traverse(os.path.join(sett["dir_data"],organism))
 			tmpl = lookup.get_template("index.html")
 			# Load default backgrounds
@@ -78,12 +82,8 @@ class WebUI(object):
 		'''
 
 		html = """<select name="default_background" style="margin-left: 5px; margin-top: 9px" id="default_background">"""
-		background_dir = os.path.join("backgrounds",organism)
-		if not os.path.exists(background_dir):
-			return html + "</select>"
-		for bk in [ f for f in os.listdir(background_dir) if os.path.isfile(os.path.join(background_dir,f))]:
-			tmp = os.path.join(background_dir,bk)			
-			html = html + "<option value='{}'>{}</option>".format(tmp,tmp.split("/")[-1].split(".")[0])
+		for bk in default_backgrounds_paths[organism]:			
+			html = html + "<option value='{}'>{}</option>".format(bk,bk.split("/")[-1].split(".")[0])
 		html  = html + "</select>"
 		return html
 

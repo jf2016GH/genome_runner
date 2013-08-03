@@ -47,6 +47,7 @@ console_output = False
 current_gf,current_foi = "", "" # used for annotation analysis
 #  There is one entry for each FOI.bed. "FOIname": FOI_Annotation
 annotations = {}
+logger_path = "log.txt"
 
 def read_intervals(path, background=None, snp_only=False, d_path=None):
     with (gzip.open(path,"rb") if path.endswith(".gz") else open(path,"rb")) as h:
@@ -194,7 +195,24 @@ def cluster_matrix(input_path,output_path):
     return output_path    
 
 def pearsons_cor_matrix(matrix_path,out_dir):
+    global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
+    with open(matrix_path) as f:
+        # check if each row has unique 
+        rows = [x.rstrip() for x in f if x != ""]
+        unique = True
+        for k in rows[1:]:
+            if len(k) is 0: continue
+            lst = k.split("\t")[1:]
+            if lst[1:] == lst[:-1]: # check if all values in the list are the same
+                unique = False   
+
+    if unique == False:
+        with open(output_path, "wb") as f:
+            f.write("PCC cannot be performed.  Each row of matrix must have varying values.")
+        write_output("PCC cannot be performed.  Each row of matrix must have varying values.", logger_path)
+        return output_path
+
     ### this calculates the PCC matrix
     r_script = """library(gplots)
                     t5 = read.table("{}")                    
