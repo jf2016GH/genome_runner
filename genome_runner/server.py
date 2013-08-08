@@ -15,7 +15,7 @@ import logging
 from logging import FileHandler,StreamHandler
 import json
 import pdb
-import hypergeom3 as grquery
+import hypergeom4 as grquery
 from time import gmtime, strftime
 import bedfilecreator
 import simplejson

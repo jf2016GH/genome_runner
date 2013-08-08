@@ -1,3 +1,4 @@
+backgrounds
 *.swp
 nohup.out
 *.swo
@@ -34,3 +35,4 @@ results_cmd
 *DS_Store*
 *.Sync*
 GenomeRunnerTODO
+cbio_test
