@@ -68,7 +68,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name):
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
     if n_fois == foi_obs or n_bgs == bg_obs: odds_ratio, pval = "nan", 1
-    elif n_fois < 5: odds_ratio, pval = "nan", 10
+    elif n_fois < 5: odds_ratio, pval = "nan", 1
     else: 
         odds_ratio, pval = scipy.stats.fisher_exact(ctable)
         write_output("WARNING: P-value cannot be calculated for {}, must have > 5 intervals".format(foi_name), logger_path)
@@ -91,7 +91,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name):
 def cluster_matrix(input_path,output_path):
     '''
     Takes the matrix file outputted by genomerunner and clusters it in R
-    '''    
+    '''        
     r_script = """library(gplots)
                     t5 = read.table("{}")                    
                     pt5 <- as.matrix(t5)
@@ -99,9 +99,14 @@ def cluster_matrix(input_path,output_path):
                     col_names <- colnames(pt5)
                     pt5 <- apply(pt5, 2, function(x) as.numeric(x))
                     row.names(pt5) <- row_names
-                    colnames(pt5) <- col_names        
-                    h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
-                    write.table(t(h$carpet),"{}",sep="\t")""".format(input_path,output_path)
+                    colnames(pt5) <- col_names
+                    if (!all(pt5[1,1] == pt5))
+                    {{
+                       h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                       write.table(t(h$carpet),"{}",sep="\t")
+                    }} else {{
+                        write.table(t5,"{}",sep="\t")
+                    }}""".format(input_path,output_path,output_path)
     robjects.r(r_script)
     return output_path    
 
@@ -186,9 +191,15 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     return output_path   
 
 
-
-
-
+def get_annotation(foi,gfs):
+    """
+    fois: list of FOI filepath
+    gfs: filepaths for GF
+    """
+    results = []
+    out = subprocess.Popen(["annotationAnalysis"] + ["--print-region-name"] + [foi] + gfs,stdout=subprocess.PIPE)
+    out.wait()
+    return out.stdout.read()
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
@@ -228,12 +239,12 @@ def _write_head(content,outpath):
 
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False,data_dir=""):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True,data_dir=""):
 
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
-    curprog,progmax = 1,1
+    curprog,progmax = 0,1
     try:
         trackdb = []
         if os.path.exists(sett_path):        
@@ -266,12 +277,12 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         curprog,progmax = 0,len(gfs)
         for gf in gfs: 
             current_gf = base_name(gf)      
-            curprog += 1
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))   
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,fois,bg_path)
             # run the enrichment analysis and output the matrix line for the current gf
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],res[-1]["intersectregions"],res[-1]["queryregions"],os.path.basename(fois[i]) )) for i in range(len(fois))])+"\n",matrix_outpath)
+            curprog += 1
         if len(gfs) > 1 and len(fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
             if len(gfs) > 4:               
@@ -283,7 +294,19 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
                 wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
         if run_annotation:
-            
+            annot_outdir = os.path.join(outdir,"annotations")
+            if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
+            for f in fois:
+                with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
+                    anot = get_annotation(f,gfs).split("\n")
+                    wr.write("\t".join(base_name(x) for x in anot[0].split("\t")) + "\tTotal")
+                    ind = 1
+                    for a in anot[1:]:
+                        if a != "":
+                            cur_row = a.split("\t")
+                            wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:]]))]))
+                            ind += 1
+
             
         _write_progress("Preparing run files for download")
         _zip_run_files(fois,gfs,bg_path,outdir,job_name)
@@ -307,7 +330,6 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     '''    
     f = open(os.path.join(outdir,"log.txt"))
     f_log = f.read()
-    print "F_LOG ", f_log
     f.close()
     path_settings,f_sett =os.path.join(outdir,".settings"),""
     if os.path.exists(path_settings):

@@ -258,11 +258,10 @@ class WebUI(object):
 
 		# write the enrichment settings.
 		path = os.path.join(results_dir, ".settings")
-		set_info = {"Jobname:": jobname,
+		set_info = {"Jobname:": str(id),
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
 					"Background:": background_name,
-					"Organism:": organism,
-					"Run Annotation:": str(bool(run_annotation))}
+					"Organism:": organism}
 
 		with open(path, 'wb') as sett:
 			for k,v in set_info.iteritems():
@@ -400,7 +399,7 @@ class WebUI(object):
 
 		else:
 			results["matrix_cor_data"] = ""
-			results["matrix_cor"] = "Heatmap wil-l be available after the analysis is complete."
+			results["matrix_cor"] = "Heatmap will be available after the analysis is complete."
 		pvalue_path = os.path.join(path,"pcc_matrix_pvalue.txt")
 		if os.path.exists(pvalue_path):
 			with open(pvalue_path) as f:
@@ -417,7 +416,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
-		annotation_path = os.path.join(os.path.join("results",run_id,foi_name + ".txt"))
+		annotation_path = os.path.join(os.path.join("results",run_id,"annotations",foi_name + ".txt"))
 		results = []
 		if os.path.exists(annotation_path):
 			with open(annotation_path) as f:
