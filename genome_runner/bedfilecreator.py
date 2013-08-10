@@ -107,8 +107,7 @@ def extract_bed6(outputpath,datapath,colnames):
 							break
 						r  = dict(zip(colnames,line.split('\t')))
 						row = []
-						for col in colstoextract:
-							row.append(r[col]) 
+						row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"] if r["score"] != "." else "0",r["strand"]]
 						bed.write("\t".join(map(str,row))+"\n")
 	else:
 		logger.warning("Nonstandard bed6, attempting extraction as bed5")
@@ -124,7 +123,7 @@ def extract_bed5(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"],"."]
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"] if r["score"] != "." else "0","."]
 					bed.write("\t".join(map(str,row))+"\n")
 	else:
 		logger.warning("Nonstandard bed5, attempting extraction as bed4")
@@ -140,7 +139,7 @@ def extract_bed4(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],".","."]
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],"0","."]
 					bed.write("\t".join(map(str,row))+"\n")
 	else:
 		logger.warning("Nonstandard bed4, attempting extraction as bed3")
@@ -155,7 +154,7 @@ def extract_bed3(outputpath,datapath,colnames):
 				if line == "":
 					break
 				r  = dict(zip(colnames,line.split('\t')))
-				row = [r["chrom"],r["chromStart"],r["chromEnd"],".",".","."]
+				row = [r["chrom"],r["chromStart"],r["chromEnd"],".","0","."]
 				bed.write("\t".join(map(str,row))+"\n")
 
 def extract_genepred(outputpath,datapath,colnames):
@@ -171,12 +170,12 @@ def extract_genepred(outputpath,datapath,colnames):
 						break
 					r = dict(zip(colnames,line.split('\t')))
 					# extract the gene data inserts a blank for score
-					row = [r['chrom'],r['txStart'],r['txEnd'],r['name'],'.',r['strand']]
+					row = [r['chrom'],r['txStart'],r['txEnd'],r['name'],'0',r['strand']]
 					bed.write("\t".join(map(str,row))+"\n")
 					# extract the exon data
 					for (s,e) in zip(r["exonStarts"].split(","),r["exonEnds"].split(",")):
 						if s != '':
-							rowexon = [r['chrom'],s,e,r['name'],'.',r['strand']]
+							rowexon = [r['chrom'],s,e,r['name'],'0',r['strand']]
 							exonbed.write("\t".join(map(str,rowexon))+"\n")
 	# remove the .temp extension from the exon file 
 	os.rename(exonpath+".temp",exonpath)
