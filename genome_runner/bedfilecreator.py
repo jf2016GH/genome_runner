@@ -29,6 +29,9 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
+
+ftp = ftplib.FTP(server)
+ftp.login(username,password)
 			
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
 def download_ucsc_file(organism,filename,downloaddir):
@@ -53,11 +56,11 @@ def download_ucsc_file(organism,filename,downloaddir):
 		outputpath = os.path.join(outputdir,filename)
 		if not os.path.exists(outputpath):
 			with open(outputpath + ".temp",'wb') as fhandle:  
-				logger.info( 'Downloading {} from UCSC'.format(filename))
-				ftp = ftplib.FTP(server)
-				ftp.login(username,password)
+				global ftp
+				logger.info( 'Downloading {} from UCSC'.format(filename))				
 				ftp.cwd(directory.format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(filename),fhandle.write)
+				FTP.quit()
 				os.rename(outputpath+".temp",outputpath)
 				logger.info( 'Finished downloading {} from UCSC'.format(filename))
 		else:
@@ -250,11 +253,11 @@ def create_feature_set(trackdbpath,organism):
 	prog, num = 0,len(trackdb)
 	added_features = [] 
 	notsuptypes, outpath = set([]),""
-	for row in trackdb:	
+	for row in trackdb:
 		logger.info( 'Processing files {} of {}'.format(prog,num))
 		if row['type'] in preparebed:
 			# DEBUG this line limits the number of GRF to download
-			if numdownloaded[row["type"]] <=5:
+			if numdownloaded[row["type"]] <= 5:
 				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql","downloads")
 				download_ucsc_file(organism,row["tableName"] + ".txt.gz","downloads")
 				if sqlpath != '':
