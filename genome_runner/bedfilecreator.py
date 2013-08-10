@@ -60,7 +60,6 @@ def download_ucsc_file(organism,filename,downloaddir):
 				logger.info( 'Downloading {} from UCSC'.format(filename))				
 				ftp.cwd(directory.format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(filename),fhandle.write)
-				FTP.quit()
 				os.rename(outputpath+".temp",outputpath)
 				logger.info( 'Finished downloading {} from UCSC'.format(filename))
 		else:
