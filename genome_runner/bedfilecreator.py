@@ -30,8 +30,7 @@ logger.addHandler(hdlr)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
-ftp = ftplib.FTP(server)
-ftp.login(username,password)
+ftp = ""
 			
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
 def download_ucsc_file(organism,filename,downloaddir):
@@ -373,6 +372,9 @@ if __name__ == "__main__":
 	parser.add_argument('--organism','-g', help='The UCSC code of the organism to be downloaded (example: hg19 (human))')
 	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
 	args = vars(parser.parse_args())
+	global ftp
+	ftp = ftplib.FTP(server)
+	ftp.login(username,password)
 	outputdir='released'
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
