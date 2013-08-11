@@ -127,6 +127,7 @@ class WebUI(object):
 					for b in bed_file:
 						bed_filename = b.filename
 						f = os.path.join(upload_dir, "fois",bed_filename)
+						extension = bed_filename.split(".")[-1]
 						if not os.path.exists(f):
 							with open(f, "wb") as out:
 								if b != None and b.filename != "":
@@ -137,7 +138,7 @@ class WebUI(object):
 										#data = os.linesep.join([s for s in data.splitlines() if s ])
 
 										# strips out new lines not compatible with bed tools
-										data = data.replace("\r","")
+										if extension not in ["gz","bb"]: data.replace("\r","")
 										if not data:
 											break
 										out.write(data)			
@@ -172,6 +173,7 @@ class WebUI(object):
 					for b in genomicfeature_file:
 						gfbed_filename = b.filename
 						f = os.path.join(upload_dir, "gfs", gfbed_filename)
+						extension = gfbed_filename.split(".")[-1]
 						if not os.path.exists(f):
 							with open(f, "wb") as out:
 								if b != None and b.filename != "":
@@ -182,7 +184,7 @@ class WebUI(object):
 										#data = os.linesep.join([s for s in data.splitlines() if s ])
 
 										# strips out new lines not compatible with bed tools
-										data = data.replace("\r","")
+										if extension not in ["gz","bb"]: data.replace("\r","")
 										if not data:
 											break
 										out.write(data)			
@@ -225,9 +227,10 @@ class WebUI(object):
 		background_name = ""
 		try:
 			if background_file != None and background_file.filename != "":
-				b = os.path.join(upload_dir,background_file.filename+".background")
+				b = os.path.join(upload_dir,background_file.filename)
 				logger.info('Received uploaded background file (id={})'.format(id))
 				background_name = background_file.filename
+				extension = background_name.split(".")[-1]
 				with open(b, "wb") as out:
 					while True:
 						data = background_file.file.read(8192)
@@ -235,7 +238,8 @@ class WebUI(object):
 						#data = os.linesep.join([s for s in data.splitlines() if not s.isspace() ])
 
 						# strips out new lines not compatible with bed tools
-						data = data.replace("\r","")
+						print "BACK: ", extension not in ["gz","bb"]
+						if extension not in ["gz","bb"]: data = data.replace("\r","")
 						if not data:
 							break
 						out.write(data)			
@@ -364,23 +368,25 @@ class WebUI(object):
 		if os.path.exists(matrix_clust_path):
 			with open(matrix_clust_path) as f:
 				d = f.read()
-				results["matrix_data"] = d.replace("\"","")
-				# d3 requires "gene_name" to be inserted into the first column
-				tmp_data =  results["matrix_data"].split("\n")
-				tmp = tmp_data[:] # this copy is passed onto the results page
-				# insert the description column if it does not exist
-				tmp_matrix = [x.split("\t") for x in tmp]
-				if tmp_matrix[0][-1] != "Genomic Feature Description":
-					tmp_matrix[0] += ["Genomic Feature Description"]
-					for i in range(1,len(tmp)):
-						description = [x["longLabel"] for x in trackdb if x["tableName"] == tmp_matrix[i][0]]
-						if len(description) is not 0: description = description[0]
-						else: description = ""
-						tmp_matrix[i] += [description]						
+				if d[:6] != "ERROR:":
+					results["matrix_data"] = d.replace("\"","")
+					# d3 requires "gene_name" to be inserted into the first column
+					tmp_data =  results["matrix_data"].split("\n")
+					tmp = tmp_data[:] # this copy is passed onto the results page
+					# insert the description column if it does not exist
+					tmp_matrix = [x.split("\t") for x in tmp]
+					if tmp_matrix[0][-1] != "Genomic Feature Description":
+						tmp_matrix[0] += ["Genomic Feature Description"]
+						for i in range(1,len(tmp)):
+							description = [x["longLabel"] for x in trackdb if x["tableName"] == tmp_matrix[i][0]]
+							if len(description) is not 0: description = description[0]
+							else: description = ""
+							tmp_matrix[i] += [description]					
 
-			results["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
-			results["matrix_data"] = results["matrix_data"]
-			results["matrix_data_gf_description"] = "\t".join([x[-1] for x in tmp_matrix[1:]])
+					results["matrix_data"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+					results["matrix_data"] = results["matrix_data"]
+					results["matrix_data_gf_description"] = "\t".join([x[-1] for x in tmp_matrix[1:]])
+				else: results["matrix_data"] = d[6:]
 		else: 
 			results["matrix_data"] = "Heatmap will be available after the analysis is complete."
 			results["matrix_data_gf_description"] = ""
@@ -390,16 +396,18 @@ class WebUI(object):
 		if os.path.exists(matrix_cor_path):
 			with open(matrix_cor_path) as f:
 				d = f.read()
-				results["matrix_cor_data"] =  d.replace("\"","")
-				results["matrix_cor"] = d.replace("\"","")
-				# d3 requires "gene_name" to be inserted into the first column
-				tmp =  results["matrix_cor"].split("\n")
-				results["matrix_cor"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
-				results["matrix_cor"] = results["matrix_cor"]				
+				if d[:6] != "ERROR:":
+					results["matrix_cor_data"] =  d.replace("\"","")
+					results["matrix_cor"] = d.replace("\"","")
+					# d3 requires "gene_name" to be inserted into the first column
+					tmp =  results["matrix_cor"].split("\n")
+					results["matrix_cor"] = "\n".join(["\t".join(["gene_name",tmp[0]])]+tmp[1:])  
+					results["matrix_cor"] = results["matrix_cor"]
+				else: results["matrix_cor"],results["matrix_cor_data"] = d[6:],""				
 
 		else:
 			results["matrix_cor_data"] = ""
-			results["matrix_cor"] = "Heatmap will be available after the analysis is complete."
+			results["matrix_cor"] = "PCC heatmap will be available after the clustered matrix is created."
 		pvalue_path = os.path.join(path,"pcc_matrix_pvalue.txt")
 		if os.path.exists(pvalue_path):
 			with open(pvalue_path) as f:
@@ -500,6 +508,8 @@ class WebUI(object):
 	def demo(self):
 		tmpl = lookup.get_template("demo.html")
 		return tmpl.render()
+
+
 
 if __name__ == "__main__":
 	if not os.path.exists("results"):

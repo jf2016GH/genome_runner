@@ -27,6 +27,7 @@ import StringIO
 import bedfilecreator
 import textwrap
 import subprocess
+import sys
 
 
 
@@ -124,10 +125,23 @@ def pearsons_cor_matrix(matrix_path,out_dir):
             if lst[1:] == lst[:-1]: # check if all values in the list are the same
                 unique = False   
 
+        len_row = len(rows[1].split("\t"))
+        print rows
+
+        print "LENGTH: ", len(rows[2].split("\t"))
+        print "len)row ",len_row  
+        print "range(1,len_row) ",range(1,len_row)
+        print "range(1,len(row): ", range(1,len(rows))
+        for k in range(1,len_row):
+            lst = [rows[x].split("\t")[k] for x in range(1,len(rows))]  
+            print "col LIst: ", lst
+            if lst[1:] == lst[:-1]: # check if all values in the list are the same
+                unique = False   
+
     if unique == False:
         with open(output_path, "wb") as f:  
-            f.write("PCC cannot be performed.  Each row of matrix must have varying values.")
-        write_output("PCC cannot be performed.  Each row of matrix must have varying values.", logger_path)
+            f.write("ERROR:PCC cannot be performed.  Each row/column of matrix must have varying values.")
+        write_output("PCC cannot be performed.  Each row/column of matrix must have varying values.", logger_path)
         return output_path
 
     ### this calculates the PCC matrix
@@ -240,7 +254,7 @@ def _write_head(content,outpath):
 
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True,data_dir=""):
-
+    print "BP_OATH: ", bg_path
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
@@ -289,14 +303,16 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
                 pearsons_cor_matrix(clust_path,outdir)
             else:
                 with open(os.path.join(os.path.join(outdir,"pcc_matrix.txt")),"wb") as wb:
-                    wb.write("PCC matrix requires at least a 5 X 2 matrix.")
+                    wb.write("ERROR:PCC matrix requires at least a 5 X 2 matrix.")
         else:
             with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
-                wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
+                wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
         if run_annotation:
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
-            for f in fois:
+            curprog,progmax = 0,len(fois)
+            for f in fois:                
+                _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
                     anot = get_annotation(f,gfs).split("\n")
                     wr.write("\t".join(base_name(x) for x in anot[0].split("\t")) + "\tTotal")
@@ -306,6 +322,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
                             cur_row = a.split("\t")
                             wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:]]))]))
                             ind += 1
+                curprog += 1
 
             
         _write_progress("Preparing run files for download")
@@ -388,7 +405,7 @@ if __name__ == "__main__":
         pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
     else:
         with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
-            wb.write("Clustered matrix requires at least a 2 X 2 matrix.")
+            wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
 
 
 class front_appender:
