@@ -51,14 +51,19 @@ def get_overlap_statistics(gf,fois,bg):
     fois: list of FOI filepaths
     """
     results = []
-    out = subprocess.Popen(["overlapStatistics"] + [gf] + fois + [bg],stdout=subprocess.PIPE)
-    out.wait()
-    tmp = out.stdout.read()
-    for x in tmp.split("\n")[1:]:
-        if x != "":
-            tmp = x.split("\t")
-            foi_name,n,hit_count = os.path.split(tmp[0])[-1],tmp[2],tmp[3]
-            results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count)})
+    out = ""
+    try:
+        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois + [bg],stdout=subprocess.PIPE)
+        out.wait()
+        tmp = out.stdout.read()
+        for x in tmp.split("\n")[1:]:
+            if x != "":
+                tmp = x.split("\t")
+                foi_name,n,hit_count = os.path.split(tmp[0])[-1],tmp[2],tmp[3]
+                results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count)})
+    except Exception, e:        
+        write_output(traceback.format_exc(), logger_path)
+        return
     return results
 
 def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name):    
@@ -116,7 +121,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
     outputpdf_path = ".".join(output_path.split(".")[:-1] + [".pdf"])
     with open(matrix_path) as f:
-        # check if each row has unique 
+        # check if each row has unique values
         rows = [x.rstrip() for x in f if x != ""]
         unique = True
         for k in rows[1:]:
@@ -125,17 +130,11 @@ def pearsons_cor_matrix(matrix_path,out_dir):
             if lst[1:] == lst[:-1]: # check if all values in the list are the same
                 unique = False   
 
-        len_row = len(rows[1].split("\t"))
-        print rows
-
-        print "LENGTH: ", len(rows[2].split("\t"))
-        print "len)row ",len_row  
-        print "range(1,len_row) ",range(1,len_row)
-        print "range(1,len(row): ", range(1,len(rows))
+        # check if each rolumn has unique values
+        len_row = len(rows[0].split("\t"))
         for k in range(1,len_row):
             lst = [rows[x].split("\t")[k] for x in range(1,len(rows))]  
-            print "col LIst: ", lst
-            if lst[1:] == lst[:-1]: # check if all values in the list are the same
+            if lst[1:] == lst[:-1]: 
                 unique = False   
 
     if unique == False:
@@ -253,8 +252,7 @@ def _write_head(content,outpath):
 
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True,data_dir=""):
-    print "BP_OATH: ", bg_path
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False,data_dir=""):
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
@@ -293,7 +291,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             current_gf = base_name(gf)      
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))   
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
-            res = get_overlap_statistics(gf,fois,bg_path)
+            res = get_overlap_statistics(gf,fois,bg_path)   
             # run the enrichment analysis and output the matrix line for the current gf
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],res[-1]["intersectregions"],res[-1]["queryregions"],os.path.basename(fois[i]) )) for i in range(len(fois))])+"\n",matrix_outpath)
             curprog += 1
