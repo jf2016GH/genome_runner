@@ -327,12 +327,8 @@ class WebUI(object):
 				params["fois"] = [basename(x).split(".")[0] for x in f.read().split("\n") if x != ""]
 		else:
 			params["fois"] = ""
-		# check if run files ready for download
-		zip_path = os.path.join(path,"GR_Runfiles_{}.tar.gz".format([y.split("\t")[1] for y in open(sett_path).read().split("\n") if "Jobname:" in y][0]))
-		if os.path.exists(zip_path):
-			params["zipfile"] = zip_path
-		else:
-			params["zipfile"] = ""
+
+		params["zipfile"] = os.path.join(path,"GR_Runfiles_.tar.gz")
 
 		params.update(p)
 		try:
@@ -469,7 +465,7 @@ class WebUI(object):
 		progress_path = os.path.join(os.path.join("results", run_id),".prog")
 		if os.path.exists(progress_path):
 			with open(progress_path) as f:
-				p = json.loads(f.read() )
+				p = json.loads(f.read())
 		return simplejson.dumps(p)
 
 	@cherrypy.expose

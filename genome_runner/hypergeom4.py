@@ -281,6 +281,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         fois = read_lines(fois)
         gfs = read_lines(gfs)
 
+        print "GFS: ", gfs
         _write_head("\n\n#Detailed log report#\n",logger_path)
         _write_head("#Grooming Summary#",logger_path)
 

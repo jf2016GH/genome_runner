@@ -9,15 +9,14 @@
 			.ui-icon {float: left;}
 			div.tooltip {   
 			  position: absolute;           
-			  text-align: center;           
-			  width: 300px;                  
-			  height: 80px;                 
-			  padding: 2px;             
+			  text-align: center;                
+			  padding: 5px;             
 			  font: 10px sans-serif;        
 			  background: #1C1C1C;   
 			  border: 0px;      
-			  border-radius: 8px;           
-			  pointer-events: none;         
+			  border-radius: 4px;           
+			  pointer-events: none;
+			  color: #FFFFFF;         
 			}
 		</style>
 
@@ -56,7 +55,8 @@
 				add_heatmaps();
 			});
 			update_progress();
-			refresh_progress = setInterval(update_progress, 1000);		
+			refresh_progress = setInterval(update_progress, 1000);	
+			$(".helptooltip").tooltip();	
 		});
 
  		// generates both of the heatmap graphs
@@ -189,12 +189,17 @@
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
-	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')" data-toggle="tab">Clustered Enrichment Matrix</a></li>
-	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')" data-toggle="tab">Pearson's Correlation Matrix Results</a></li>
-	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()">Detailed Results</a></li>
-	<li ><a href="#debugresults" data-toggle="tab" onclick="get_log()">Analysis Log</a></li>
-	<li><a href="#annotationresults" data-toggle="tab">Annotation Results</a></li>
-	<li ><a href="#heatmapdownload" data-toggle="tab">Download Results</a></li>
+	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')" data-toggle="tab">Clustered Enrichment Matrix<img class="helptooltip" title="Contains a clustered enrichment matrix" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+
+	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')" data-toggle="tab">Pearson's Correlation Matrix Results<img class="helptooltip" title="Contains a correlation matrix that is calculated using Pearson's Correlation" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+
+	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()" >Detailed Results<img class="helptooltip" title="Contains detailed results" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+
+	<li ><a href="#debugresults" data-toggle="tab" onclick="get_log()">Analysis Log<img class="helptooltip" title="Contains log" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+
+	<li><a href="#annotationresults" data-toggle="tab">Annotation Results<img class="helptooltip" title="Contains Annotation Results" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+
+	<li ><a href="#heatmapdownload" data-toggle="tab">Download Results<img class="helptooltip" title="Contains a correlation matrix that is calculated using Pearson's Correlation" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 </ul>
 
 <div class="tab-content">

@@ -82,6 +82,8 @@ def download_trackdb(organism,outputdir):
 	with gzip.open(dataoutpath,'wb') as sw:
 		sw.write(text.replace('\\\n','<br />').replace('\\\t','     '))
 	return sqloutputpath
+
+
 	
 
 def _check_cols(colnames,colstoextract):
@@ -262,9 +264,10 @@ def create_feature_set(trackdbpath,organism):
 					logger.info( "converting"+row['tableName']+ " into proper bed format")
 					try:
 						outpath = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"]+".gz")
+						outpath_bb = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"]+".bb")
 						if not os.path.exists(os.path.dirname(outpath)):
 							os.makedirs(os.path.dirname(outpath))
-						if os.path.exists(outpath) == False:
+						if os.path.exists(outpath) == False and os.path.exists(outpath_bb) == False:
 							# removes the .temp file, to prevent duplicate data from being written
 							if os.path.exists(outpath+".temp"):
 								os.remove(outpath+".temp")
@@ -275,7 +278,7 @@ def create_feature_set(trackdbpath,organism):
 							os.rename(outpath+".temp",outpath)
 							added_features.append(outpath)
 						else:
-							logger.info( "{} already exists, skipping extraction".format(outpath))							
+							logger.info( "{} already exists as .bb or .gz, skipping extraction".format(outpath.replace(".gz","")))							
 						numdownloaded[row["type"]] += 1
 					except Exception, e:
 						exc = trace.format_exc()
@@ -366,16 +369,43 @@ def load_tabledata_dumpfiles(datapath):
 			data.append(row)
 	return data
 
+def convert_bed_to_bigbed(organism):
+	""" Converts all .gz files, in the current organism's GF directory, into BigBed format and deletes the original .gz after conversion.
+	"""
+	path_chrominfo_gz = download_ucsc_file(organism,"chromInfo.txt.gz",outputdir)
+	out_dir = os.path.join("released",organism)
+	path_chrominfo = os.path.join(out_dir,"chromInfo.txt")
+	script = """for file in `find . -type f -name '*gz'`; do d=`dirname $file`;  f=`basename $file`;  f=${f%.gz};  gunzip $file && sort -k1,1 -k2,2n $d"/"$f -o $d"/"$f &&  ../../../bedToBigBed $d"/"$f ../chromInfo.txt $d"/"$f".bb" && rm $d"/"$f; done """
+	with open(path_chrominfo, "wb") as writer:
+		writer.write(gzip.open(path_chrominfo_gz, 'rb').read())
+
+	dirs = [name for name in os.listdir(os.path.join("released",organism))
+		if os.path.isdir(os.path.join(out_dir, name))]
+	for d in dirs:
+		logger.info("Converting all .gz to .bb in {}".format(d))
+		os.chdir(os.path.join(out_dir,d))
+		out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+		out.wait()		
+		tmp =  out.stdout.read()
+		logger.info("BigBed Converter: " + tmp)
+		os.chdir("../../../")
+
+
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in /Downloads.  Converted files are placed in /Released')
 	parser.add_argument('--organism','-g', help='The UCSC code of the organism to be downloaded (example: hg19 (human))')
 	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
+	parser.add_argument('--bigbed','-b', help="Convert all .gz files to .bb files.  Deletes old .gz files after conversion.", action='store_true')
 	args = vars(parser.parse_args())
 	global ftp
 	ftp = ftplib.FTP(server)
 	ftp.login(username,password)
 	outputdir='released'
+	if args['bigbed'] == True and args['organism'] is not None:
+		convert_bed_to_bigbed(args['organism'])
+		sys.exit()
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		#pdb.set_trace()
@@ -387,3 +417,6 @@ if __name__ == "__main__":
 		print "To add a specific feature to the local database, please supply an organism assembly name"
 	else:
 		print "Requires UCSC organism code.  Use --help for more information"
+
+
+
