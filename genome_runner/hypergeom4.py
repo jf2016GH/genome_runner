@@ -65,7 +65,7 @@ def get_overlap_statistics(gf,fois):
                 foi_name,n,hit_count = os.path.split(tmp[0])[-1],tmp[2],tmp[3]
                 results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count),"indexregions": int(tmp[1])})
     except Exception, e:        
-        write_output(traceback.format_exc(), logger_path)
+        logger.error(traceback.format_exc())
         return
     return results
 
@@ -73,26 +73,23 @@ def get_overlap_statistics(gf,fois):
 def get_bgobs(bg,gf,bkg_overlap_path): 
 
     if os.path.exists(bkg_overlap_path):
-        print "BK"
         _write_progress("Getting overlap stats on background and {}".format(gf))
         write_output("Getting overlap stats on background and {}".format(gf),logger_path)
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
         d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
-        print "d_gf", d_gf
         if len(d_gf) != 0:
             bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
-            print "ob",bg_obs
             if len(bg_obs) != 0:
                 return bg_obs[0]
-    print "TESTSETS"
+    logger.info("Manually calculating background stats")
     result = get_overlap_statistics(bg,[gf])
     return int(result[0]["intersectregions"])
 
 
 
 
-def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name):    
+def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):    
     """Return the signed log10 p-value of all FOIs against the GF.
     """
     global logger_path
@@ -100,11 +97,19 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name):
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
+    # Ensure there are no negative values in the ctable
+    for i in ctable:
+        for k in i:
+            if k < 0:
+                logger.warning("Cannot calculate p-value for {} and {}. Is the background too small?".format(foi_name,gf_name))
+                return 1.0
+
     if n_fois == foi_obs or n_bgs == bg_obs: odds_ratio, pval = "nan", 1
-    elif n_fois < 5: odds_ratio, pval = "nan", 1
+    elif n_fois < 5: 
+        odds_ratio, pval = "nan", 1
+        logger.warning("WARNING: P-value cannot be calculated for {}, must have > 5 intervals".format(foi_name))
     else: 
         odds_ratio, pval = scipy.stats.fisher_exact(ctable)
-        write_output("WARNING: P-value cannot be calculated for {}, must have > 5 intervals".format(foi_name), logger_path)
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
@@ -167,7 +172,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     if unique == False:
         with open(output_path, "wb") as f:  
             f.write("ERROR:PCC cannot be performed.  Each row/column of matrix must have varying values.")
-        write_output("PCC cannot be performed.  Each row/column of matrix must have varying values.", logger_path)
+        logger.warning("PCC cannot be performed.  Each row/column of matrix must have varying values.")
         return output_path
 
     ### this calculates the PCC matrix
@@ -282,7 +287,8 @@ def check_background_foi_overlap(bg,fois):
     """ Calculates the overlap of the FOIs with the background
     """
     foi_bg_stats =  get_overlap_statistics(bg,fois)
-    write_output("###Background and SNPs stats###\n", logger_path)
+    logger.info("###Background and SNPs stats###\n")
+
 
     return foi_bg_stats
 
@@ -315,8 +321,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
         fois = read_lines(fois)
         gfs = read_lines(gfs)
-        _write_head("\n\n#Detailed log report#\n",logger_path)
-        _write_head("#Grooming Summary#",logger_path)
 
         write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
@@ -331,7 +335,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             res = get_overlap_statistics(gf,fois)  
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(fois[i]) )) for i in range(len(fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(fois[i]),os.path.basename(gf))) for i in range(len(fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
