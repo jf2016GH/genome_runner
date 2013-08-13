@@ -40,7 +40,6 @@ class PathNode(defaultdict):
 				node.name = p
 			node.files = ["file:"+os.path.join(base, f) for f 
 				in files if f.endswith(('.gz', '.bb'))]
-			print files
 
 			# used for the auto-complete text box
 			for f in node.files:

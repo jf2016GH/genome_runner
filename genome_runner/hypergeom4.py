@@ -45,31 +45,58 @@ progress_outpath = None
 console_output = False 
 logger_path = "log.txt"
 
-def get_overlap_statistics(gf,fois,bg):
+def get_overlap_statistics(gf,fois):
     """Returns a dictionary with indicating how many hits exist for each foi against the gf
     gf: filepath for GF
     fois: list of FOI filepaths
     """
+    print "overlap: ", gf, fois
     results = []
     out = ""
     try:
-        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois + [bg],stdout=subprocess.PIPE)
+        # Runs overlapStatistics with preprocessed background stats if they exist
+
+        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE)
         out.wait()
         tmp = out.stdout.read()
         for x in tmp.split("\n")[1:]:
             if x != "":
                 tmp = x.split("\t")
                 foi_name,n,hit_count = os.path.split(tmp[0])[-1],tmp[2],tmp[3]
-                results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count)})
+                results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count),"indexregions": int(tmp[1])})
     except Exception, e:        
         write_output(traceback.format_exc(), logger_path)
         return
     return results
 
+
+def get_bgobs(bg,gf,bkg_overlap_path): 
+
+    if os.path.exists(bkg_overlap_path):
+        print "BK"
+        _write_progress("Getting overlap stats on background and {}".format(gf))
+        write_output("Getting overlap stats on background and {}".format(gf),logger_path)
+        data = open(bkg_overlap_path).read().split("\n")
+        data = [x.split("\t") for x in data if x != ""]
+        d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
+        print "d_gf", d_gf
+        if len(d_gf) != 0:
+            bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
+            print "ob",bg_obs
+            if len(bg_obs) != 0:
+                return bg_obs[0]
+    print "TESTSETS"
+    result = get_overlap_statistics(bg,[gf])
+    return int(result[0]["intersectregions"])
+
+
+
+
 def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name):    
     """Return the signed log10 p-value of all FOIs against the GF.
     """
     global logger_path
+    bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
@@ -251,6 +278,14 @@ def _write_head(content,outpath):
     f.close()
 
 
+def check_background_foi_overlap(bg,fois):
+    """ Calculates the overlap of the FOIs with the background
+    """
+    foi_bg_stats =  get_overlap_statistics(bg,fois)
+    write_output("###Background and SNPs stats###\n", logger_path)
+
+    return foi_bg_stats
+
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
     sett_path = os.path.join(outdir,".settings")
@@ -280,21 +315,23 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
         fois = read_lines(fois)
         gfs = read_lines(gfs)
-
-        print "GFS: ", gfs
         _write_head("\n\n#Detailed log report#\n",logger_path)
         _write_head("#Grooming Summary#",logger_path)
 
         write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
+        _write_progress("Performing calculations on the background.")
+        foi_bg = check_background_foi_overlap(bg_path,fois)
         for gf in gfs: 
             current_gf = base_name(gf)      
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))   
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
-            res = get_overlap_statistics(gf,fois,bg_path)   
+
+            res = get_overlap_statistics(gf,fois)  
+            bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],res[-1]["intersectregions"],res[-1]["queryregions"],os.path.basename(fois[i]) )) for i in range(len(fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(fois[i]) )) for i in range(len(fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
@@ -369,7 +406,6 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
 
 if __name__ == "__main__":
     console_output,logger_path = True,os.path.join(outdir,'.log')
@@ -378,7 +414,7 @@ if __name__ == "__main__":
     parser.add_argument("--gfs" , "-g",nargs=1, help="Text file with GF file names, gzipped.") 
     parser.add_argument("--bg_path" "-b", nargs=1, help="Path to spot background file (SNPs only).")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
-    
+
     args = parser.parse_args()
     fois = read_lines(args.fois[0])
     gfs = read_lines(args.gfs[0])
