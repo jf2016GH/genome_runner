@@ -39,7 +39,8 @@ class PathNode(defaultdict):
 				node = node[p]
 				node.name = p
 			node.files = ["file:"+os.path.join(base, f) for f 
-				in list(fnmatch.filter(files, ("*.gz")))]
+				in files if f.endswith(('.gz', '.bb'))]
+			print files
 
 			# used for the auto-complete text box
 			for f in node.files:
@@ -77,7 +78,7 @@ class PathNode(defaultdict):
 			s += self._li(self.name)
 		for f in sorted(self.files):	
 			# ensure that trackDb is not listed
-			if "trackDb" not in f:
+			if "trackDb" not in f and "chromInfo" not in f:
 				s += "<ul>" + self._li(f) + "</ul>"
 		for _,child in sorted(self.items()):
 			s += child.as_html()

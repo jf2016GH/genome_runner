@@ -252,7 +252,7 @@ def _write_head(content,outpath):
 
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False,data_dir=""):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
@@ -369,13 +369,16 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
 
 if __name__ == "__main__":
     console_output,logger_path = True,os.path.join(outdir,'.log')
     parser = argparse.ArgumentParser(description="Create a matrix of hypergeometric p-values for genomic intersections.")
-    parser.add_argument("fois", nargs=1, help="Text file with FOI file names (SNPs only).") 
-    parser.add_argument("gfs", nargs=1, help="Text file with GF file, gzipped.") 
-    parser.add_argument("bg_path", nargs=1, help="Path to spot background file (SNPs only).")
+    parser.add_argument("--fois", "-f", nargs=1, help="Text file with FOI file names (SNPs only).") 
+    parser.add_argument("--gfs" , "-g",nargs=1, help="Text file with GF file names, gzipped.") 
+    parser.add_argument("--bg_path" "-b", nargs=1, help="Path to spot background file (SNPs only).")
+    parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
+    
     args = parser.parse_args()
     fois = read_lines(args.fois[0])
     gfs = read_lines(args.gfs[0])
