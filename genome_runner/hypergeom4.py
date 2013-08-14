@@ -96,8 +96,6 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
-    ctable = [[10,139],[100,10]]
-
     # Ensure there are no negative values in the ctable
     do_chi_square = True
     for i in ctable:
