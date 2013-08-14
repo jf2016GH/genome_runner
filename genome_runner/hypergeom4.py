@@ -106,12 +106,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
             if k < 11:
                 do_chi_square = False
 
-
-
-    if n_bgs == bg_obs:
-        odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number background SNPs equal to number of background SNPs overlapping with background.")
-    elif bg_obs < foi_obs:
+    if bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
         logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF.".format(foi_name,gf_name))
     else: 
@@ -312,7 +307,7 @@ def check_background_foi_overlap(bg,fois):
         if foi_obs < n_fois:
             logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_obs,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
-
+                                                                                                                       
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
     sett_path = os.path.join(outdir,".settings")
