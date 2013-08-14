@@ -110,13 +110,13 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
 
     if n_fois == foi_obs: 
         odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of {} SNPs equal to # SNPs overlapping with {}".format(foi_name,gf_name))
+        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of FOI:{} SNPs equal to # SNPs overlapping with GF:{}".format(foi_name,gf_name))
     elif n_bgs == bg_obs:
         odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number background SNPs equal to number of SNPs overlapping with background.".format(foi_name,gf_name))
+        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number background SNPs equal to number of background SNPs overlapping with background.")
     elif bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of backgroun SNPs overlapping with GF.".format(foi_name,gf_name))
+        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF.".format(foi_name,gf_name))
     else: 
         if do_chi_square:        
             logger.info("Using the Chi-squared test for {} and {}. Ctable values all > 10: {}".format(gf_name,foi_name,ctable))
@@ -296,13 +296,14 @@ def _write_head(content,outpath):
 
 
 def check_background_foi_overlap(bg,fois):
-    """ Calculates the overlap of the FOIs with the background
+    """ Calculates the overlap of the FOIs with the background.
+    Removes FOIs that are poorly formed with the background.
     """
     good_fois = []
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
-        foi_name,n_bgs,n_fois = f["queryfile"],f["indexregions"],f["queryregions"]
+        foi_name,n_bgs,n_fois,foi_obs = f["queryfile"],f["indexregions"],f["queryregions"],f["intersectregions"]
         if n_fois < 5:
             isgood = False
             logger.error("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
@@ -311,6 +312,8 @@ def check_background_foi_overlap(bg,fois):
             logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
         if isgood:
             good_fois.append([x for x in fois if os.path.split(x)[-1] == f["queryfile"]][0])
+        if foi_obs < n_fois:
+            logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_obs,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
 
 
