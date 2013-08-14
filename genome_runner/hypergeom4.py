@@ -108,9 +108,15 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
 
 
 
-    if n_fois == foi_obs or n_bgs == bg_obs: 
+    if n_fois == foi_obs: 
         odds_ratio, pval = "nan", 1
-        logger.warning("P-value cannot be calculated (set to 1.0). Number of {} equal to # SNPs overlapping with {} (GF) or number of SNPs in background equal to number overlapping with GF".format(foi_name,gf_name))
+        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of {} SNPs equal to # SNPs overlapping with {}".format(foi_name,gf_name))
+    elif n_bgs == bg_obs:
+        odds_ratio, pval = "nan", 1
+        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number background SNPs equal to number of SNPs overlapping with background.".format(foi_name,gf_name))
+    elif bg_obs < foi_obs:
+        odds_ratio, pval = "nan", 1
+        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of backgroun SNPs overlapping with GF.".format(foi_name,gf_name))
     else: 
         if do_chi_square:        
             logger.info("Using the Chi-squared test for {} and {}. Ctable values all > 10: {}".format(gf_name,foi_name,ctable))
