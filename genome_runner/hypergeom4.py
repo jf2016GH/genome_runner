@@ -111,9 +111,6 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     if n_fois == foi_obs or n_bgs == bg_obs: 
         odds_ratio, pval = "nan", 1
         logger.warning("P-value cannot be calculated (set to 1.0). Number of {} equal to # SNPs overlapping with {} (GF) or number of SNPs in background equal to number overlapping with GF".format(foi_name,gf_name))
-    elif n_fois < 5: 
-        odds_ratio, pval = "nan", 1
-        logger.warning("P-value cannot be calculated for {}, must have > 5 (p-value set to 1.0)".format(foi_name))
     else: 
         if do_chi_square:        
             logger.info("Using the Chi-squared test for {} and {}. Ctable values all > 10: {}".format(gf_name,foi_name,ctable))
@@ -295,10 +292,20 @@ def _write_head(content,outpath):
 def check_background_foi_overlap(bg,fois):
     """ Calculates the overlap of the FOIs with the background
     """
+    good_fois = []
     foi_bg_stats =  get_overlap_statistics(bg,fois)
-
-
-    return foi_bg_stats
+    for f in foi_bg_stats:
+        isgood = True
+        foi_name,n_bgs,n_fois = f["queryfile"],f["indexregions"],f["queryregions"]
+        if n_fois < 5:
+            isgood = False
+            logger.error("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
+        elif n_bgs < n_fois:
+            isgood = False
+            logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
+        if isgood:
+            good_fois.append([x for x in fois if os.path.split(x)[-1] == f["queryfile"]][0])
+    return [foi_bg_stats, good_fois]
 
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
@@ -330,22 +337,23 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         fois = read_lines(fois)
         gfs = read_lines(gfs)
 
-        write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
+        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)
+        write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type']) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         _write_progress("Performing calculations on the background.")
-        foi_bg = check_background_foi_overlap(bg_path,fois)
+
         for gf in gfs: 
             current_gf = base_name(gf)      
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))   
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
 
-            res = get_overlap_statistics(gf,fois)  
+            res = get_overlap_statistics(gf,good_fois)  
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(fois[i]),os.path.basename(gf))) for i in range(len(fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(good_fois[i]),os.path.basename(gf))) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
-        if len(gfs) > 1 and len(fois) > 1:
+        if len(gfs) > 1 and len(good_fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
             if len(gfs) > 4:               
                 pearsons_cor_matrix(clust_path,outdir)
@@ -440,7 +448,7 @@ if __name__ == "__main__":
 
     _write_head("\n\n#Detailed log report#\n",logger_path)
     foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
-    _write_head("#Grooming Summary#",logger_path)
+
 
     write_output("\t".join(fois)+"\n", matrix_outpath)
     write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val'])+"\n",detailed_outpath)
