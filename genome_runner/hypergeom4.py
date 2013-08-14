@@ -5,7 +5,7 @@ sys.argv[1] - text file with FOI file names. Include full, or relative path, if 
 sys.argv[2] - text file with GF file names. Include full, or relative path, if needed.
 sys.argv[3] - spot background file
 """
-
+from __future__ import division
 import argparse
 import collections
 import math
@@ -113,9 +113,11 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
         if do_chi_square:        
             logger.info("Using the Chi-squared test for {} and {}. Ctable values all > 10: {}".format(gf_name,foi_name,ctable))
             chi_result = scipy.stats.chi2_contingency(ctable)
-            obs = ctable[0][0]
-            exp = chi_result[3][0][0]
-            odds_ratio = obs/exp
+            # obs = ctable[0][0]
+            # exp = chi_result[3][0][0]
+            # odds_ratio = obs/exp
+            # Per example in http://www.stat.ucla.edu/~dinov/courses_students.dir/06/Fall/STAT13.1.dir/STAT13_notes.dir/lecture10.pdf
+            odds_ratio = ((ctable[0][0]/(ctable[0][0]+ctable[0][1]))/(1-ctable[0][0]/(ctable[0][0]+ctable[0][1])))/((ctable[1][0]/(ctable[1][0]+ctable[1][1]))/(1-ctable[1][0]/(ctable[1][0]+ctable[1][1])))
             pval = chi_result[1]
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
