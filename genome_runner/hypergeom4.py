@@ -108,10 +108,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
 
 
 
-    if n_fois == foi_obs: 
-        odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of FOI:{} SNPs equal to # SNPs overlapping with GF:{}".format(foi_name,gf_name))
-    elif n_bgs == bg_obs:
+    if n_bgs == bg_obs:
         odds_ratio, pval = "nan", 1
         logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number background SNPs equal to number of background SNPs overlapping with background.")
     elif bg_obs < foi_obs:
