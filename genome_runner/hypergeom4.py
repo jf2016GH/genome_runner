@@ -123,12 +123,12 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
             odds_ratio = obs/exp
             pval = chi_result[1]
         else:    
-            logger.info("Using the Fisher's exact test test for {} and {}. Ctable values not all > 10: {}".format(gf_name,foi_name,ctable))
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
-                "%.2f" % pval if type(pval) != type("") else pval])) + "\n",detailed_outpath)  
+                "%.2f" % pval if type(pval) != type("") else pval,
+                "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
     
     return sign * math.log10(pval)   
 
@@ -296,7 +296,6 @@ def check_background_foi_overlap(bg,fois):
     """ Calculates the overlap of the FOIs with the background
     """
     foi_bg_stats =  get_overlap_statistics(bg,fois)
-    logger.info("###Background and SNPs stats###\n")
 
 
     return foi_bg_stats
@@ -332,7 +331,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         gfs = read_lines(gfs)
 
         write_output("\t".join(map(base_name,fois))+"\n", matrix_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val']) + "\n",detailed_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type']) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         _write_progress("Performing calculations on the background.")
         foi_bg = check_background_foi_overlap(bg_path,fois)
