@@ -83,7 +83,12 @@ def get_bgobs(bg,gf,bkg_overlap_path):
                 return bg_obs[0]
     logger.info("Manually calculating background stats")
     result = get_overlap_statistics(bg,[gf])
-    return int(result[0]["intersectregions"])
+    try:
+        result = int(result[0]["intersectregions"])
+    except Exception, e:
+        result = None
+        logger.error(traceback.format_exc())
+    return result
 
 
 
@@ -111,7 +116,6 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
         logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF.".format(foi_name,gf_name))
     else: 
         if do_chi_square:        
-            logger.info("Using the Chi-squared test for {} and {}. Ctable values all > 10: {}".format(gf_name,foi_name,ctable))
             chi_result = scipy.stats.chi2_contingency(ctable)
             obs = ctable[0][0]
             exp = chi_result[3][0][0]
@@ -124,7 +128,10 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval if type(pval) != type("") else pval,
                 "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
-    
+
+    if pval == 0.0:
+        return sign * sys.float_info.min_10_exp
+
     return sign * math.log10(pval)   
 
 
@@ -351,6 +358,10 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
             res = get_overlap_statistics(gf,good_fois)  
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
+            print bg_obs
+            if bg_obs == None: 
+                logger.error("Skipping {}".format(gf))
+                continue
             # run the enrichment analysis and output the matrix line for the current gf
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(good_fois[i]),os.path.basename(gf))) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
