@@ -50,7 +50,6 @@ def get_overlap_statistics(gf,fois):
     gf: filepath for GF
     fois: list of FOI filepaths
     """
-    print "overlap: ", gf, fois
     results = []
     out = ""
     try:
@@ -97,31 +96,43 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
+    ctable = [[10,139],[100,10]]
+
     # Ensure there are no negative values in the ctable
+    do_chi_square = True
     for i in ctable:
         for k in i:
             if k < 0:
-                logger.warning("Cannot calculate p-value for {} and {}. Is the background too small?".format(foi_name,gf_name))
-                return 1.0
+                logger.warning("Cannot calculate p-value for {} and {}. Is the background too small?".format(gf_name,foi_name))
+                return math.log10(1)
+            if k < 11:
+                do_chi_square = False
 
-    if n_fois == foi_obs or n_bgs == bg_obs: odds_ratio, pval = "nan", 1
+
+
+    if n_fois == foi_obs or n_bgs == bg_obs: 
+        odds_ratio, pval = "nan", 1
+        logger.warning("P-value cannot be calculated (set to 1.0). Number of {} equal to # SNPs overlapping with {} (GF) or number of SNPs in background equal to number overlapping with GF".format(foi_name,gf_name))
     elif n_fois < 5: 
         odds_ratio, pval = "nan", 1
-        logger.warning("WARNING: P-value cannot be calculated for {}, must have > 5 intervals".format(foi_name))
+        logger.warning("P-value cannot be calculated for {}, must have > 5 (p-value set to 1.0)".format(foi_name))
     else: 
-        odds_ratio, pval = scipy.stats.fisher_exact(ctable)
+        if do_chi_square:        
+            logger.info("Using the Chi-squared test for {} and {}. Ctable values all > 10: {}".format(gf_name,foi_name,ctable))
+            chi_result = scipy.stats.chi2_contingency(ctable)
+            obs = ctable[0][0]
+            exp = chi_result[3][0][0]
+            odds_ratio = obs/exp
+            pval = chi_result[1]
+        else:    
+            logger.info("Using the Fisher's exact test test for {} and {}. Ctable values not all > 10: {}".format(gf_name,foi_name,ctable))
+            odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
-                "%.2f" % pval if type(pval) != type("") else pval])) + "\n",detailed_outpath)
-    try:      
-        if pval != 10:
-            return sign * math.log10(pval)   
-        else:
-            return pval
-    except ValueError as e:
-        logger.error(e)
-        return sign * sys.float_info.min_10_exp
+                "%.2f" % pval if type(pval) != type("") else pval])) + "\n",detailed_outpath)  
+    
+    return sign * math.log10(pval)   
 
 
 
