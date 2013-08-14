@@ -122,7 +122,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     sign = 1 if (odds_ratio < 1) else -1
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
-                "%.2f" % pval if type(pval) != type("") else pval,
+                "%.2e" % pval if type(pval) != type("") else pval,
                 "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
     
     return sign * math.log10(pval)   
@@ -295,7 +295,7 @@ def check_background_foi_overlap(bg,fois):
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
-        foi_name,n_bgs,n_fois,foi_obs = f["queryfile"],f["indexregions"],f["queryregions"],f["intersectregions"]
+        foi_name,n_bgs,n_fois,foi_in = f["queryfile"],f["indexregions"],f["queryregions"],f["intersectregions"]
         if n_fois < 5:
             isgood = False
             logger.error("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
@@ -304,8 +304,8 @@ def check_background_foi_overlap(bg,fois):
             logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
         if isgood:
             good_fois.append([x for x in fois if os.path.split(x)[-1] == f["queryfile"]][0])
-        if foi_obs < n_fois:
-            logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_obs,n_fois,foi_name))
+        if foi_in < n_fois:
+            logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
                                                                                                                        
 
