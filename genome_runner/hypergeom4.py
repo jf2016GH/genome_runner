@@ -123,9 +123,11 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval if type(pval) != type("") else pval,
-                "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
-    
-    return sign * math.log10(pval)   
+                "Chi-squared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
+    if pval > 0:    
+            return sign * math.log10(pval)
+    else:
+        return sign * sys.float_info.min_10_exp   
 
 
 
