@@ -360,7 +360,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
-            if len(gfs) > 4:               
+            if len(gfs) > 2:               
                 pearsons_cor_matrix(clust_path,outdir)
             else:
                 with open(os.path.join(os.path.join(outdir,"pcc_matrix.txt")),"wb") as wb:
