@@ -28,7 +28,8 @@ lookup = TemplateLookup(directories=["templates"])
 
 
 sett = {"dir_data": "data",
-		"default_organism": "hg19"
+		"default_organism": "hg19",
+		"custom_dir": "custom_data"
 		}
 
 DEBUG_MODE = True
@@ -46,6 +47,16 @@ logger.setLevel(logging.INFO)
 # Each function in this class is a web page 
 class WebUI(object):
 	def __init__(self, default_organism="hg19"):
+		# create all directories in the custom_data dir if they do not already exist
+		orgs = self.get_org()
+		print "ORGS: ",orgs
+		for o in orgs:
+			if not os.path.exists(sett["custom_dir"]): os.mkdir(sett["custom_dir"])
+			cust_sub_dir = ["backgrounds","gfs","fois"]
+			for c in cust_sub_dir:
+				c_dir = os.path.join(sett["custom_dir"],c,o)
+				if not os.path.exists(c_dir): os.mkdir(c_dir)
+
 		self._index_html = {}
 
 	@cherrypy.expose
@@ -60,7 +71,7 @@ class WebUI(object):
 			# Load default backgrounds
 
 
-			self._index_html[organism] = tmpl.render(paths=paths,default_background=self.get_backgrounds_combo(organism))
+			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]))
 		return self._index_html[organism]
 
 
@@ -72,20 +83,7 @@ class WebUI(object):
 				organisms.append(f)
 		return organisms
 
-	def get_backgrounds_combo(self,organism):
-		''' Generates the html code for the combo box containing the 
-			default organism backgrounds.
-		'''
-
-		html = """<select name="default_background" style="margin-left: 5px; margin-top: 9px" id="default_background">"""
-		background_dir = os.path.join("backgrounds",organism)
-		if not os.path.exists(background_dir):
-			return html + "</select>"
-		for bk in [ f for f in os.listdir(background_dir) if os.path.isfile(os.path.join(background_dir,f))]:
-			tmp = os.path.join(background_dir,bk)			
-			html = html + "<option value='{}'>{}</option>".format(tmp,tmp.split("/")[-1].split(".")[0])
-		html  = html + "</select>"
-		return html
+	
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
@@ -227,9 +225,12 @@ class WebUI(object):
 				run.append(k.split(":")[-1])
 			# append custom list to be run
 			if "grouprun:" in k and v == "on":
-				gp_gfs = open( k.split(":")[-1],"rb").read()
-				with open(gfs,"a") as out_gfs:
-					out_gfs.write(gp_gfs)
+				gp_gfs_dir = k.split(":")[-1]
+				ls_foi = [os.path.join(gp_gfs_dir,f) for f in os.listdir(gp_gfs_dir) if os.path.isfile(os.path.join(gp_gfs_dir,f))]
+				with open(gfs,"wb") as writer:
+					for f in ls_foi:
+						writer.write(f+"\n")					
+
 
 		runset['organism']= organism	
 		

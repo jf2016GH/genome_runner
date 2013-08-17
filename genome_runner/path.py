@@ -96,18 +96,43 @@ class PathNode(defaultdict):
 		return s + "</select>"
 
 
-	def get_demo_snps(self):
+	def get_custom_fois(self,organism,custom_dir):
 		'''Get all of the sample FOI SNPs files.
 		'''
-		demo_dir = os.path.join("demo","fois")
+		demo_dir = os.path.join(custom_dir,"fois",organism)
 		html = """<button type="button" id="demo_fois_none" onclick="enable_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary active" title="" >None</button>\n"""
 		if not os.path.exists(demo_dir):
-			return ""
+			return html
 		for snp_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f))]:
 				tooltip += "\t"+basename(s) + "\n" 
 			html = html + """<button type="button" onclick="clear_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,basename(snp_dir))
 		return html
-		
 
+	def get_backgrounds_combo(self,organism,custom_dir):
+		''' Generates the html code for the combo box containing the 
+			default organism backgrounds.
+		'''
+
+		html = """<select name="default_background" style="margin-left: 5px; margin-top: 9px" id="default_background">"""
+		background_dir = os.path.join(custom_dir,"backgrounds",organism)
+		if not os.path.exists(background_dir):
+			return html + "</select>"
+		for bk in [ f for f in os.listdir(background_dir) if os.path.isfile(os.path.join(background_dir,f))]:
+			tmp = os.path.join(background_dir,bk)			
+			html = html + "<option value='{}'>{}</option>".format(tmp,tmp.split("/")[-1].split(".")[0])
+		html  = html + "</select>"
+		return html
+
+	def get_custom_gfs(self,organism,custom_dir):
+		demo_dir = os.path.join(custom_dir,"gfs",organism)
+		html = ""
+		if not os.path.exists(demo_dir):
+			return ""
+		for gfs_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
+			tooltip = "Includes the following files:\n"
+			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f))]:
+				tooltip += "\t"+basename(s) + "\n" 
+			html += """<input type="checkbox"  name="grouprun:{}" style="margin: 10px" title="{}">{}</input>""".format(gfs_dir,tooltip,basename(gfs_dir))
+		return html

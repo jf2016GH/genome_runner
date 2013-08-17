@@ -267,7 +267,7 @@
             		<h4 style="font-size: 110%;float: left;margin-top: 9px;margin-right: 13px;">Demo SNPs file sets: </h4>
             		<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
             			<input type="hidden" name="demo_fois"/>
-	            			${paths.get_demo_snps()}
+	            			${demo_snps}
             		</div>
             	</div>
 					<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
@@ -320,9 +320,7 @@
 			</div>	
 			<div class="well">
 				<h3>3. Default genome annotation features:</h3>
-				<input type="checkbox" checked="true" name="grouprun:./static/grouprun/gf_hg19_wgEncodeRegTfbsNames.txt" style="margin: 10px">TFBS</input><img class="helptooltip" title="Transcription Factor ChIP-seq from ENCODE" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-				<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_BroadHmm.GM12878.txt" style="margin: 10px">ChromatinStates</input><img class="helptooltip" title="Chromatin State Segmentation by HMM from ENCODE&#47;Broad, Gm12878 cell line" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-				<input type="checkbox" name="grouprun:./static/grouprun/gf_hg19_regulation.txt" style="margin: 10px">Regulation</input><img class="helptooltip" title="Histone Modifications by ChIP&#45;seq from ENCODE&#47;Broad, Gm12878 cell line" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				${custom_gfs}
 				<div class="accordion" style="padding-bottom: 1em;list-style:none;"> 
 	             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
 	             <div >	
