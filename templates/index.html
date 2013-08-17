@@ -1,42 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<link href="static/css/bootstrap.min.css" rel="stylesheet">
 	<link type="text/css" href="static/css/main.css"/>
+	<link href="static/css/bootstrap.min.css" rel="stylesheet">
 	<link type="text/css" href="static/css/demo_table.css"/>
 	<link type="text/css" href="static/css/jquery.tipsy.class"/>
 	<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css " rel="stylesheet" />
 	
 	<style>
+	
 	body {
-		margin: 0px 10px; padding:0px;
-		position: relative;
-		width: 100%;
-	}
-	.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active{
-		margin: 9px;
-	}
-	#content{
-		margin:0px auto;
-		text-align:left;
-		padding:15px;
-	}
-	#ucsc {
-		padding-left: 0px;
-	}
-	#treeview-inner{
-		margin-left: -40px;
-	}
-	label {
-		font-size: 120%;
-	}
-	.ui-widget-content { background: #ffffff url(images/ui-bg_glass_75_ffffff_1x400.png) 50% 50% repeat-x; color: #404040; }
-	#divCheckBox { border: 2px solid #C0C0C0;
-				   padding: 3px; }
-	/* allows the check box tree to be rendered correctly*/
-	.ui-icon {float: left;}
-	.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
-	.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active {heigh: 100%;}
+			margin: 0px 10px; padding:0px;
+			position: relative;
+			width: 100%;
+		}
+		.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active{
+			margin: 9px;
+		}
+		#content{
+			margin:0px auto;
+			text-align:left;
+			padding:15px;
+		}
+		#ucsc {
+			padding-left: 0px;
+		}
+		#treeview-inner{
+			margin-left: -40px;
+		}
+		label {
+			font-size: 120%;
+		}
+		.ui-widget-content { background: #ffffff url(images/ui-bg_glass_75_ffffff_1x400.png) 50% 50% repeat-x; color: #404040; }
+		#divCheckBox { border: 2px solid #C0C0C0;
+					   padding: 3px; }
+		/* allows the check box tree to be rendered correctly*/
+		.ui-icon {float: left;}
+		.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
+		.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active {heigh: 100%;}
 	</style>
 	<script type="text/javascript" src="static/js/jquery.js"></script>
 	<script type="text/javascript" src="static/js/jquery-ui-1.8.22.custom.min.js"></script>
@@ -53,6 +54,7 @@
 	<link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
 	<script src="static/js/bootstrap.min.js"></script>
 	<script scr="static/js/main.js"></script>
+	<script type="text/javascript" src="satic/js/bootstrap-buttons.js"></script>
 
 	<script type="text/javascript">
 	function getQueryVariable(variable) { 
@@ -73,6 +75,18 @@
 			initializeUnchecked: 'collapsed',
 			collapseEffect: '',
 			expandEffect: ''
+		});
+		// Allows the radio buttons for the FOI to be sent as a POST request
+		$('div.btn-group[data-toggle-name]').each(function () {
+		    var group = $(this);
+		    var form = group.parents('form').eq(0);
+		    var name = group.attr('data-toggle-name');
+		    var hidden = $('input[name="' + name + '"]', form);
+		    $('button', group).each(function () {
+		        $(this).on('click', function () {
+		            hidden.val($(this).data("toggle-value"));
+		        });
+		    });
 		});
 
 		$('#org').change(function() {;
@@ -229,7 +243,13 @@
 				</h3> 				
 					Bed Files:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
             		<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
-	                
+            		<br>
+            		<h4></h4>
+            		<h4 style="font-size: 110%;float: left;margin-top: 8px;margin-right: 13px;">Demo SNPs file sets: <h4>
+            		<div class="btn-group" data-toggle="buttons-radio" data-toggle-name="demo_fois">
+            			<input type="hidden" name="demo_fois"/>
+	            			${paths.get_demo_snps()}
+            		</div>
 					<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
 				        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>
 						<div>          

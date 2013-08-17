@@ -119,50 +119,60 @@ class WebUI(object):
 		bed_filename = ""
 
 		data = ""
-		try:
-			with open(fois,"wb") as out_fois:
-				# bed files uploaded
-				if bed_file:
-					if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
-					for b in bed_file:
-						bed_filename = b.filename
-						f = os.path.join(upload_dir, "fois",bed_filename)
-						extension = bed_filename.split(".")[-1]
-						if not os.path.exists(f):
-							with open(f, "wb") as out:
-								if b != None and b.filename != "":
-									logger.info("Received uploaded FOI file (name={}, id={})".format(bed_filename, id))
-									while True:
-										data = b.file.read(8192)
-										# TODO find empty lines
-										#data = os.linesep.join([s for s in data.splitlines() if s ])
+		demo_fois_dir = kwargs["demo_fois"] # If the user selects a demo set of FOIs to run, this will contain the directory
+		if demo_fois_dir == "":
+			try:
+				with open(fois,"wb") as out_fois:
+					# bed files uploaded
+					if bed_file:
+						if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
+						for b in bed_file:
+							bed_filename = b.filename
+							f = os.path.join(upload_dir, "fois",bed_filename)
+							extension = bed_filename.split(".")[-1]
+							if not os.path.exists(f):
+								with open(f, "wb") as out:
+									if b != None and b.filename != "":
+										logger.info("Received uploaded FOI file (name={}, id={})".format(bed_filename, id))
+										while True:
+											data = b.file.read(8192)
+											# TODO find empty lines
+											#data = os.linesep.join([s for s in data.splitlines() if s ])
 
-										# strips out new lines not compatible with bed tools
-										if extension not in ["gz","bb"]: data.replace("\r","")
-										if not data:
-											break
-										out.write(data)			
-									out_fois.write(f+"\n")
-						else:
-							logger.error("id={} Upload file already exists at {}".format(id,f))
-							print "id={} Upload file already exists at {}".format(id,f)
-				# custom data entered	
-				elif bed_data!="":
-					f = os.path.join(upload_dir,"fois", "custom.bed")
-					with open(f, "wb") as out:
-						bed_filename = "custom.bed"
-						logger.info('Received raw text  FOI data (id={})'.format(id))
-						data = bed_data
-						data = os.linesep.join([s for s in data.splitlines() if s])
-						out.write(data)		
-					out_fois.write(f+"\n")	
-				else:
-					return "upload a file please"
+											# strips out new lines not compatible with bed tools
+											if extension not in ["gz","bb"]: data.replace("\r","")
+											if not data:
+												break
+											out.write(data)			
+										out_fois.write(f+"\n")
+							else:
+								logger.error("id={} Upload file already exists at {}".format(id,f))
+								print "id={} Upload file already exists at {}".format(id,f)
+					# custom data entered	
+					elif bed_data!="":
+						f = os.path.join(upload_dir,"fois", "custom.bed")
+						with open(f, "wb") as out:
+							bed_filename = "custom.bed"
+							logger.info('Received raw text  FOI data (id={})'.format(id))
+							data = bed_data
+							data = os.linesep.join([s for s in data.splitlines() if s])
+							out.write(data)		
+						out_fois.write(f+"\n")	
+					else:
+						return "upload a file please"
 
-		except Exception, e:
-			logger.error("id={}".format(id) + str(e))
-			return "ERROR: upload a file please"
-		runset["fois"] = bed_filename
+			except Exception, e:
+				logger.error("id={}".format(id) + str(e))
+				return "ERROR: upload a file please"
+			runset["fois"] = bed_filename
+		else:
+
+			# gather the FOI files in the demo directory
+			ls_foi = [os.path.join(demo_fois_dir,f) for f in os.listdir(demo_fois_dir) if os.path.isfile(os.path.join(demo_fois_dir,f))]
+			with open(fois,"wb") as writer:
+				for f in ls_foi:
+					writer.write(f+"\n")					
+
 
 		# uploads custom genomic features
 		try:
@@ -238,7 +248,6 @@ class WebUI(object):
 						#data = os.linesep.join([s for s in data.splitlines() if not s.isspace() ])
 
 						# strips out new lines not compatible with bed tools
-						print "BACK: ", extension not in ["gz","bb"]
 						if extension not in ["gz","bb"]: data = data.replace("\r","")
 						if not data:
 							break
@@ -472,11 +481,9 @@ class WebUI(object):
 	def get_log(sefl,run_id):
 		results = {"log": ""}
 		log_path = os.path.join(os.path.join("results", run_id),"log.txt")
-		print log_path
 		if os.path.exists(log_path):
 			with open(log_path) as f:
 				results["log"] = f.read()
-				print "log ",results["log"]
 		return simplejson.dumps(results)
 
 	@cherrypy.expose

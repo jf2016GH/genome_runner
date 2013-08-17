@@ -6,6 +6,8 @@ from collections import namedtuple
 def basename(k):
 	return os.path.basename(os.path.splitext(k)[0])
 
+
+
 #This class finds files recursively in the data/ directory
 # so they can be represented as a treeview
 class PathNode(defaultdict):
@@ -19,7 +21,6 @@ class PathNode(defaultdict):
 		self.files = []
 		self.organisms = []
 
-		
 	# for the autocomplete text box
 	def traverse(self, base):
 		''' Reads the data directory for GenomicFeatures
@@ -48,7 +49,7 @@ class PathNode(defaultdict):
 		f.write(json.dumps(gfs))
 		f.close()
 
-
+    
 	def _li(self, k):
 		if k.startswith("file:"):
 			label = basename(k)
@@ -93,4 +94,20 @@ class PathNode(defaultdict):
 		for org in self.organisms:
 			s += "<option value='organism:{}'>{}</option>".format(org,org)
 		return s + "</select>"
+
+
+	def get_demo_snps(self):
+		'''Get all of the sample FOI SNPs files.
+		'''
+		demo_dir = os.path.join("demo","fois")
+		html = """<button type="button" style="margin-top: 12px"  class="btn btn-primary active" title="" >None</button>\n"""
+		if not os.path.exists(demo_dir):
+			return ""
+		for snp_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
+			tooltip = "Includes the following files:\n"
+			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f))]:
+				tooltip += "\t"+basename(s) + "\n" 
+			html = html + """<button type="button" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,basename(snp_dir))
+		return html
+		
 

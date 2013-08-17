@@ -5,7 +5,7 @@ sys.argv[1] - text file with FOI file names. Include full, or relative path, if 
 sys.argv[2] - text file with GF file names. Include full, or relative path, if needed.
 sys.argv[3] - spot background file
 """
-
+from __future__ import division
 import argparse
 import collections
 import math
@@ -117,9 +117,11 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     else: 
         if do_chi_square:        
             chi_result = scipy.stats.chi2_contingency(ctable)
-            obs = ctable[0][0]
-            exp = chi_result[3][0][0]
-            odds_ratio = obs/exp
+            # obs = ctable[0][0]
+            # exp = chi_result[3][0][0]
+            # odds_ratio = obs/exp
+            # Per example in http://www.stat.ucla.edu/~dinov/courses_students.dir/06/Fall/STAT13.1.dir/STAT13_notes.dir/lecture10.pdf
+            odds_ratio = ((ctable[0][0]/(ctable[0][0]+ctable[0][1]))/(1-ctable[0][0]/(ctable[0][0]+ctable[0][1])))/((ctable[1][0]/(ctable[1][0]+ctable[1][1]))/(1-ctable[1][0]/(ctable[1][0]+ctable[1][1])))
             pval = chi_result[1]
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
@@ -127,12 +129,20 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval if type(pval) != type("") else pval,
+<<<<<<< HEAD
                 "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
 
     if pval == 0.0:
         return sign * sys.float_info.min_10_exp
 
     return sign * math.log10(pval)   
+=======
+                "Chi-squared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
+    if pval > 0:    
+            return sign * math.log10(pval)
+    else:
+        return sign * sys.float_info.min_10_exp   
+>>>>>>> 89178d02d6c014a5a0e32f97c71c3c6ff9730401
 
 
 
@@ -163,87 +173,87 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
     outputpdf_path = ".".join(output_path.split(".")[:-1] + [".pdf"])
-   
-    print matrix_path
+    with open(matrix_path) as f:
+        # check if each row has unique values
+        rows = [x.rstrip() for x in f if x != ""]
+        unique = True
+        for k in rows[1:]:
+            if len(k) is 0: continue
+            lst = k.split("\t")[1:]
+            if lst[1:] == lst[:-1]: # check if all values in the list are the same
+                unique = False   
+
+        # check if each rolumn has unique values
+        len_row = len(rows[0].split("\t"))
+        for k in range(1,len_row):
+            lst = [rows[x].split("\t")[k] for x in range(1,len(rows))]  
+            if lst[1:] == lst[:-1]: 
+                unique = False   
+
+    if unique == False:
+        with open(output_path, "wb") as f:  
+            f.write("ERROR:PCC cannot be performed.  Each row/column of matrix must have varying values.")
+        logger.warning("PCC cannot be performed.  Each row/column of matrix must have varying values.")
+        return output_path
 
     ### this calculates the PCC matrix
     r_script = """library(gplots)
-                    t5 = read.table(\""""+ matrix_path +"""\")                    
-                    pt5 = as.matrix(t5)
-                    print(pt5);
-                    print("clearning");                    
-                    pt5<-pt5[apply(pt5,1,function(row){sum(abs(row)>0)>=1}),] #Remove rows with all zeros
-                    pt5<-pt5[,apply(pt5,2,function(col){sum(abs(col)>0)>=1})] #Remove columns with all zeros
-                    pt5<-pt5[apply(pt5,1,sd)!=0,] # Remove rows with SD=0
-                    pt5<-pt5[,apply(pt5,2,sd)!=0] # Remove cols with SD=0
-                    print(pt5);
-                    
-                    print(nrow(pt5) >= 5 && ncol(pt5) >= 2);
-                    print(ncol(pt5) >= 2);
-                    if (nrow(pt5) >= 5 && ncol(pt5) >= 2) {                
-                        pt5 <- cor(pt5) # Correlation matrix
-
-                        row_names <- rownames(pt5)
-                        col_names <- colnames(pt5)
-
-                        pt5 <- apply(pt5, 2, function(x) as.numeric(x))
-                        row.names(pt5) <- row_names
-                        colnames(pt5) <- col_names 
-                        h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
-                        write.table(t(h$carpet),\""""+output_path +"""\",sep="\t")
-                    } else{
-                    fileConn<-file(\""""+ output_path +"""\")
-                    writeLines(c("PCC can't be performed"), fileConn)
-                    close(fileConn)
-                       
-                    }"""
-    robjects.r(r_script)
-    pcc = open(output_path).read() 
-    if "PCC can't be performed" not in pcc:
-        ## calculates the PCC p-values 
-        r_script = """t5 = read.table(\""""+output_path+"""\")                   
-                    
-                      pn <- function(X){crossprod(!is.na(X))}
-
-                      col <- function (x, as.factor = FALSE) 
-                        {
-                          if (as.factor) {
-                            labs <- colnames(x, do.NULL = FALSE, prefix = "")
-                            res <- factor(.Internal(col(dim(x))), labels = labs)
-                            dim(res) <- dim(x)
-                            res
-                          }
-                          else .Internal(col(dim(x)))
-                        }
-                    cor.prob <- function(X){
-                      pair.SampSize <- pn(X)
-                      above1 <- row(pair.SampSize) < col(pair.SampSize)
-                      pair.df <- pair.SampSize[above1] - 2
-                      R <- cor(X, use="pair")
-                      above2 <- row(R) < col(R)
-                      r2 <- R[above2]^2
-                      Fstat <- (r2 * pair.df)/(1 - r2)
-                      R[above2] <- 1 - pf(Fstat, 1, pair.df)
-                      R
-                    }
-
-                    pt5.prob <- cor.prob(as.matrix(t5))
+                    t5 = read.table("{}")                    
+                    pt5 <- cor(as.matrix(t5)) # Correlation matrix
                     row_names <- rownames(pt5)
                     col_names <- colnames(pt5)
-                    row.names(pt5.prob) <- row_names
-                    colnames(pt5.prob) <- col_names 
-                    write.table(pt5.prob,\""""+output_path.split(".")[0]+"_pvalue.txt"+"""\",sep="\t")"""
-        robjects.r(r_script)
-        
-        r_script = """t5 = read.table(\""""+matrix_path+"""\") 
-            library("Hmisc")
-            p5<-rcorr(as.matrix(t5))
-            p5[[1]]
-            p5[[3]]
-            h<-heatmap.2(as.matrix(p5[[1]]))
-            write.table(h$carpet,\"""" + output_path + """\",sep="\t")
-            write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t")""" 
-        robjects.r(r_script)
+                    pt5 <- apply(pt5, 2, function(x) as.numeric(x))
+                    row.names(pt5) <- row_names
+                    colnames(pt5) <- col_names 
+                    h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                    write.table(t(h$carpet),"{}",sep="\t")
+                    """.format(matrix_path,outputpdf_path,output_path)
+    #robjects.r(r_script)
+
+    ## calculates the PCC p-values 
+
+    r_script = """t5 = read.table(\""""+output_path+"""\")                   
+                
+                  pn <- function(X){crossprod(!is.na(X))}
+
+                  col <- function (x, as.factor = FALSE) 
+                    {
+                      if (as.factor) {
+                        labs <- colnames(x, do.NULL = FALSE, prefix = "")
+                        res <- factor(.Internal(col(dim(x))), labels = labs)
+                        dim(res) <- dim(x)
+                        res
+                      }
+                      else .Internal(col(dim(x)))
+                    }
+                cor.prob <- function(X){
+                  pair.SampSize <- pn(X)
+                  above1 <- row(pair.SampSize) < col(pair.SampSize)
+                  pair.df <- pair.SampSize[above1] - 2
+                  R <- cor(X, use="pair")
+                  above2 <- row(R) < col(R)
+                  r2 <- R[above2]^2
+                  Fstat <- (r2 * pair.df)/(1 - r2)
+                  R[above2] <- 1 - pf(Fstat, 1, pair.df)
+                  R
+                }
+
+                pt5.prob <- cor.prob(as.matrix(t5))
+                row_names <- rownames(pt5)
+                col_names <- colnames(pt5)
+                row.names(pt5.prob) <- row_names
+                colnames(pt5.prob) <- col_names 
+                write.table(pt5.prob,\""""+output_path.split(".")[0]+"_pvalue.txt"+"""\",sep="\t")"""
+    #robjects.r(r_script)
+    r_script = """t5 = read.table(\""""+matrix_path+"""\") 
+        library("Hmisc")
+        p5<-rcorr(as.matrix(t5))
+        p5[[1]]
+        p5[[3]]
+        h<-heatmap.2(as.matrix(p5[[1]]))
+        write.table(h$carpet,\"""" + output_path + """\",sep="\t")
+        write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t")""" 
+    robjects.r(r_script)
     return output_path   
 
 
@@ -367,7 +377,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
-            if len(gfs) > 4:               
+            if len(gfs) > 2:               
                 pearsons_cor_matrix(clust_path,outdir)
             else:
                 with open(os.path.join(os.path.join(outdir,"pcc_matrix.txt")),"wb") as wb:

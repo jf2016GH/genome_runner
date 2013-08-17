@@ -110,7 +110,7 @@ def extract_bed6(outputpath,datapath,colnames):
 							break
 						r  = dict(zip(colnames,line.split('\t')))
 						row = []
-						row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"] if r["score"] != "." else "0",r["strand"]]
+						row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"] if r["score"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
 						bed.write("\t".join(map(str,row))+"\n")
 	else:
 		logger.warning("Nonstandard bed6, attempting extraction as bed5")
@@ -126,7 +126,7 @@ def extract_bed5(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"] if r["score"] != "." else "0","."]
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],r["score"] if r["score"] != "." else "0"] # Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
 	else:
 		logger.warning("Nonstandard bed5, attempting extraction as bed4")
@@ -142,7 +142,7 @@ def extract_bed4(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"],"0","."]
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],r["name"].replace(": ",""),"0"] # Can't use strand as ".". Replace ": " is needed for cpgIslandExt
 					bed.write("\t".join(map(str,row))+"\n")
 	else:
 		logger.warning("Nonstandard bed4, attempting extraction as bed3")
@@ -157,7 +157,7 @@ def extract_bed3(outputpath,datapath,colnames):
 				if line == "":
 					break
 				r  = dict(zip(colnames,line.split('\t')))
-				row = [r["chrom"],r["chromStart"],r["chromEnd"],".","0","."]
+				row = [r["chrom"],r["chromStart"],r["chromEnd"],".","0"] # Can't use strand as "."
 				bed.write("\t".join(map(str,row))+"\n")
 
 def extract_genepred(outputpath,datapath,colnames):
@@ -192,7 +192,7 @@ def extract_rmsk(outputpath,datapath,colnames):
 				if line == "":
 					break
 				r = dict(zip(colnames,line.split('\t')))
-				row = [r["genoName"],r["genoStart"],r["genoEnd"],r["repClass"],r["strand"],r["swScore"]]
+				row = [r["genoName"],r["genoStart"],r["genoEnd"],r["repClass"],r["swScore"],r["strand"]]
 				bed.write("\t".join(map(str,row))+"\n")
 
 def get_column_names(sqlfilepath):
