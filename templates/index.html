@@ -134,7 +134,7 @@
 			// the viewport for the treeview
 			$("#treeview-inner").slimScroll({
 			    	height: $("#ucsc").height(),
-			    	width: '281px',
+			    	width: '400px',
 			    	alwaysVisible: true
 			});
 			console.log($('.helptooltip'));
@@ -214,6 +214,13 @@
 				$('#ucsc').checkboxTree('collapseAll');
 				viewBoxClick();
 			}
+		}
+
+		function treeviewCheckAll(){
+			$("#ucsc").children().find(':checkbox').prop("checked", true);
+		}
+		function treeviewUncheckAll(){
+			$("#ucsc").children().find(':checkbox').prop("checked", false);
 		}
 
 		document.onkeypress = stopRKey; 
@@ -347,8 +354,10 @@
 					            <div id="divCheckBox" style="margin:10px; display: table-cell; verticle-align: top;">
 									<label >Select genome annotation features: </label>
 										<div>
-											<a class="btn" onClick="changeCheckedStateTreeView(true)">Expand All</a>
-											<a class="btn" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
+											<a class="btn" style="margin-top: 9px;"onClick="changeCheckedStateTreeView(true)">Expand All</a>
+											<a class="btn" style="margin-top: 9px;" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
+											<a class="btn" style="margin-top: 9px;" onClick="treeviewCheckAll()">Select All</a>
+											<a class="btn" style="margin-top: 9px" onClick="treeviewUncheckAll()">Deselect all</a>
 										</div>
 									<div id="treeview-outer" style="padding-top:10px;">
 										<div id="treeview-inner" onClick="viewBoxClick()">
