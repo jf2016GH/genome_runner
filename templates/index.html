@@ -69,7 +69,20 @@
 		return null; 
 	} 
 
+
+	function clear_foi_uploads(){
+		document.getElementById("inputbedfile").disabled=true;
+		var control = $("#inputbedfile");
+		control.replaceWith( control = control.clone( true ) );
+	}
+
+	function enable_foi_uploads(){
+		document.getElementById("inputbedfile").disabled=false;
+	}
+
 	$(document).ready(function() {
+		$("#inputbeddata").text("chr1\t200\t300\tsnp1\t300\t+\nchr2\t200\t300\tsnp2\t400\t-");
+		$("#inputbackgrounddata").text("chr1\t200\t300\tsnp1\t300\t+\nchr2\t200\t300\tsnp2\t400\t-");
 		$('#ucsc').checkboxTree({
 			initializeChecked: 'collapsed',
 			initializeUnchecked: 'collapsed',
@@ -130,18 +143,22 @@
 
 		$("#accfoi").bind('accordionchange',
 				function () {
-					console.log($("#accfoi").accordion('option', 'active'));
 					if ($(this).find('.ui-state-active').length == 0){
-						document.getElementById("inputbedfile").disabled=false;
+						enable_foi_uploads();
+						$("#btngroup_demo_fois").children().each(function(x){ 
+							 $(this).prop('disabled', false);
+						});						
 						document.getElementById("inputbeddata").disabled=true;
 						document.getElementById("inputbeddata").text = ""
-						document.getElementById("inputbeddata").value = ""
 						}
 					else {
-						document.getElementById("inputbedfile").disabled=true;
+						clear_foi_uploads();
+						$('#demo_fois_none').button('toggle')
+						$("#btngroup_demo_fois").children().each(function(x){ 
+							 $(this).prop('disabled', true);
+						});
 						document.getElementById("inputbeddata").disabled=false;
 						document.getElementById("inputbeddata").text = ""
-						document.getElementById("inputbeddata").value = ""
 					}
 				});
 
@@ -150,18 +167,18 @@
 					if ($(this).find('.ui-state-active').length == 0){
 						document.getElementById("inputbackgroundfile").disabled=false;
 						document.getElementById("inputbackgrounddata").disabled=true;
-						document.getElementById("inputbackgrounddata").text = ""
-						document.getElementById("inputbackgrounddata").value = ""
 					}
 					else {
+						document.getElementById("inputbedfile").disabled=true;
+						var control = $("#inputbackgroundfile");
+						control.replaceWith( control = control.clone( true ) );
 						document.getElementById("inputbackgroundfile").disabled=true;
 						document.getElementById("inputbackgrounddata").disabled=false;
-						document.getElementById("inputbackgrounddata").text = ""
-						document.getElementById("inputbackgrounddata").value = ""
 					}
 				});
 			
 		});
+
 		function viewBoxClick(){
 			var minHeight = 300;
 			var maxHeight = 500;			
@@ -240,16 +257,19 @@
 			<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</div> 
 				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-				</h3> 				
-					Bed Files:<input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
-            		<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
-            		<br>
-            		<h4></h4>
-            		<h4 style="font-size: 110%;float: left;margin-top: 8px;margin-right: 13px;">Demo SNPs file sets: <h4>
-            		<div class="btn-group" data-toggle="buttons-radio" data-toggle-name="demo_fois">
+				</h3>
+            	<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
+				<br>
+				<div id="div_upload_fois"	style="float: left;margin-right: 213px;margin-top: 14px;"	>
+					<h4 style="float:left;">Bed Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>   
+            	</div>
+        		<div id="div_demo_fois">
+            		<h4 style="font-size: 110%;float: left;margin-top: 9px;margin-right: 13px;">Demo SNPs file sets: </h4>
+            		<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
             			<input type="hidden" name="demo_fois"/>
 	            			${paths.get_demo_snps()}
             		</div>
+            	</div>
 					<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
 				        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>
 						<div>          

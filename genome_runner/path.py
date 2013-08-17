@@ -100,14 +100,14 @@ class PathNode(defaultdict):
 		'''Get all of the sample FOI SNPs files.
 		'''
 		demo_dir = os.path.join("demo","fois")
-		html = """<button type="button" style="margin-top: 12px"  class="btn btn-primary active" title="" >None</button>\n"""
+		html = """<button type="button" id="demo_fois_none" onclick="enable_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary active" title="" >None</button>\n"""
 		if not os.path.exists(demo_dir):
 			return ""
 		for snp_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f))]:
 				tooltip += "\t"+basename(s) + "\n" 
-			html = html + """<button type="button" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,basename(snp_dir))
+			html = html + """<button type="button" onclick="clear_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,basename(snp_dir))
 		return html
 		
 
