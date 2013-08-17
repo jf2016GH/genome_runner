@@ -165,86 +165,22 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     outputpdf_path = ".".join(output_path.split(".")[:-1] + [".pdf"])
    
     print matrix_path
-
-    ### this calculates the PCC matrix
-    r_script = """library(gplots)
-                    t5 = read.table(\""""+ matrix_path +"""\")                    
-                    pt5 = as.matrix(t5)
-                    print(pt5);
-                    print("clearning");                    
-                    pt5<-pt5[apply(pt5,1,function(row){sum(abs(row)>0)>=1}),] #Remove rows with all zeros
-                    pt5<-pt5[,apply(pt5,2,function(col){sum(abs(col)>0)>=1})] #Remove columns with all zeros
-                    pt5<-pt5[apply(pt5,1,sd)!=0,] # Remove rows with SD=0
-                    pt5<-pt5[,apply(pt5,2,sd)!=0] # Remove cols with SD=0
-                    print(pt5);
-                    
-                    print(nrow(pt5) >= 5 && ncol(pt5) >= 2);
-                    print(ncol(pt5) >= 2);
-                    if (nrow(pt5) >= 5 && ncol(pt5) >= 2) {                
-                        pt5 <- cor(pt5) # Correlation matrix
-
-                        row_names <- rownames(pt5)
-                        col_names <- colnames(pt5)
-
-                        pt5 <- apply(pt5, 2, function(x) as.numeric(x))
-                        row.names(pt5) <- row_names
-                        colnames(pt5) <- col_names 
-                        h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
-                        write.table(t(h$carpet),\""""+output_path +"""\",sep="\t")
-                    } else{
-                    fileConn<-file(\""""+ output_path +"""\")
-                    writeLines(c("PCC can't be performed"), fileConn)
-                    close(fileConn)
-                       
-                    }"""
+    #pcc = open(output_path).read() 
+    #if "PCC can't be performed" not in pcc:
+    r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\")) 
+        library(Hmisc)
+        library(gplots)
+        t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
+        if (dim(t5)[1] > 2 && dim(t5) > 4) {
+            p5<-rcorr(t5)
+            h<-heatmap.2(as.matrix(p5[[1]])) # [[1]] element contains actual PCCs, we cluster them
+            write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
+            write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
+        } else{
+            write.table(paste("ERROR:Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 3. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
+        }"""
     robjects.r(r_script)
-    pcc = open(output_path).read() 
-    if "PCC can't be performed" not in pcc:
-        ## calculates the PCC p-values 
-        r_script = """t5 = read.table(\""""+output_path+"""\")                   
-                    
-                      pn <- function(X){crossprod(!is.na(X))}
-
-                      col <- function (x, as.factor = FALSE) 
-                        {
-                          if (as.factor) {
-                            labs <- colnames(x, do.NULL = FALSE, prefix = "")
-                            res <- factor(.Internal(col(dim(x))), labels = labs)
-                            dim(res) <- dim(x)
-                            res
-                          }
-                          else .Internal(col(dim(x)))
-                        }
-                    cor.prob <- function(X){
-                      pair.SampSize <- pn(X)
-                      above1 <- row(pair.SampSize) < col(pair.SampSize)
-                      pair.df <- pair.SampSize[above1] - 2
-                      R <- cor(X, use="pair")
-                      above2 <- row(R) < col(R)
-                      r2 <- R[above2]^2
-                      Fstat <- (r2 * pair.df)/(1 - r2)
-                      R[above2] <- 1 - pf(Fstat, 1, pair.df)
-                      R
-                    }
-
-                    pt5.prob <- cor.prob(as.matrix(t5))
-                    row_names <- rownames(pt5)
-                    col_names <- colnames(pt5)
-                    row.names(pt5.prob) <- row_names
-                    colnames(pt5.prob) <- col_names 
-                    write.table(pt5.prob,\""""+output_path.split(".")[0]+"_pvalue.txt"+"""\",sep="\t")"""
-        robjects.r(r_script)
-        
-        r_script = """t5 = read.table(\""""+matrix_path+"""\") 
-            library("Hmisc")
-            p5<-rcorr(as.matrix(t5))
-            p5[[1]]
-            p5[[3]]
-            h<-heatmap.2(as.matrix(p5[[1]]))
-            write.table(h$carpet,\"""" + output_path + """\",sep="\t")
-            write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t")""" 
-        robjects.r(r_script)
-    return output_path   
+    return output_path
 
 
 def get_annotation(foi,gfs):
@@ -358,7 +294,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
             res = get_overlap_statistics(gf,good_fois)  
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
-            print bg_obs
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue
@@ -394,6 +329,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
             
         _write_progress("Preparing run files for download")
+        print "JOB NAME:",job_name
         _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         _write_progress("Analysis Completed")       
     except Exception, e: 
@@ -409,7 +345,7 @@ def get_description(gf,trackdb):
 
 
 
-def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
+def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     '''
     File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
     '''    
@@ -425,7 +361,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,job_name=""):
     new_log = open(new_log_path,'wb')
     new_log.write(f_sett+f_log)
     new_log.close()
-    tar_path = os.path.join(outdir,'GR_Runfiles_{}.tar'.format(job_name))
+    tar_path = os.path.join(outdir,'GR_{}.tar'.format(id))
     tar = tarfile.TarFile(tar_path,"a")    
     output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt")]
     fls = output_files

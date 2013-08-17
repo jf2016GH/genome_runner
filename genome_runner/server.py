@@ -110,7 +110,7 @@ class WebUI(object):
 		except Exception, e:
 			jobname = ""
 			logger.error("id={}".format(id) + str(e))
-		runset['job_name'] = jobname
+		runset['job_name'] = id
 		runset['time'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
 			
@@ -281,7 +281,7 @@ class WebUI(object):
 		with open(path, 'wb') as sett:
 			for k,v in set_info.iteritems():
 				sett.write(k+"\t"+v+"\n")
-
+		print "server.jobname: ", runset['job_name']
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
@@ -339,7 +339,7 @@ class WebUI(object):
 		else:
 			params["fois"] = ""
 
-		params["zipfile"] = os.path.join(path,"GR_Runfiles_.tar.gz")
+		params["zipfile"] = os.path.join(path,"GR_{}.tar.gz").format(id)
 
 		params.update(p)
 		try:
@@ -375,6 +375,7 @@ class WebUI(object):
 		if os.path.exists(matrix_clust_path):
 			with open(matrix_clust_path) as f:
 				d = f.read()
+				d = d.replace("\"","")
 				if d[:6] != "ERROR:":
 					results["matrix_data"] = d.replace("\"","")
 					# d3 requires "gene_name" to be inserted into the first column
@@ -403,6 +404,7 @@ class WebUI(object):
 		if os.path.exists(matrix_cor_path):
 			with open(matrix_cor_path) as f:
 				d = f.read()
+				d = d.replace("\"","")
 				if d[:6] != "ERROR:":
 					results["matrix_cor_data"] =  d.replace("\"","")
 					results["matrix_cor"] = d.replace("\"","")
