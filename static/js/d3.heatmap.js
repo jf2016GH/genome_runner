@@ -34,7 +34,7 @@
       extent = this.model.get("extent");
       clusters = this.model.get("clusters");
       clusterColor = this.model.get("clusterColor");
-      heatmapColor = d3.scale.linear().domain([-1*color_range, 0, color_range]).range(["#29DA29", "#EAEAEA", "#DF3435"]);
+      heatmapColor = d3.scale.linear().domain([-1*color_range, 0, color_range]).range(["#23890A", "#EAEAEA", "#9A1717"]);
       textScaleFactor = 9;
       conditionNamesMargin = d3.max(conditionNames.map(function(conditionName) {
         return conditionName.length;
@@ -61,7 +61,12 @@
         return conditionNames[i];
       });
        
-
+      color_log10 = function(val) {
+        if (Math.abs(val) <= 1) return 0
+        var sign = 1
+        if (val < 0) {sign = -1;}
+        return sign * Math.log(Math.abs(val)) / Math.LN10;
+      }
       cur_row = -1;
       getRow = function(row) {
         var divtooltip = d3.select("body").append("div")   
@@ -78,7 +83,8 @@
           this.setAttribute("col",conditionNames[i]);
           return d;
         }).style("fill", function(d) {
-          return heatmapColor(d);
+          console.log(d + ":"+color_log10(d))
+          return heatmapColor(color_log10(d));
       // Tool tips
         }).attr("value",function(d){
           return d

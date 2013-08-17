@@ -49,11 +49,12 @@ class WebUI(object):
 	def __init__(self, default_organism="hg19"):
 		# create all directories in the custom_data dir if they do not already exist
 		orgs = self.get_org()
-		print "ORGS: ",orgs
 		for o in orgs:
 			if not os.path.exists(sett["custom_dir"]): os.mkdir(sett["custom_dir"])
 			cust_sub_dir = ["backgrounds","gfs","fois"]
 			for c in cust_sub_dir:
+				tmp = os.path.join(sett["custom_dir"],c)
+				if not os.path.exists(tmp): os.mkdir(tmp)
 				c_dir = os.path.join(sett["custom_dir"],c,o)
 				if not os.path.exists(c_dir): os.mkdir(c_dir)
 
