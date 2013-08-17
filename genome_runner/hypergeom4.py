@@ -142,7 +142,7 @@ def cluster_matrix(input_path,output_path):
     Takes the matrix file outputted by genomerunner and clusters it in R
     '''        
     r_script = """library(gplots)
-                    t5 = read.table("{}")                    
+                    t5 = as.matrix(read.table("{}"))                    
                     pt5 <- as.matrix(t5)
                     row_names <- rownames(pt5)
                     col_names <- colnames(pt5)
@@ -171,7 +171,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
         library(Hmisc)
         library(gplots)
         t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
-        if (dim(t5)[1] > 2 && dim(t5) > 4) {
+        if (dim(t5)[1] > 2 && dim(t5)[2] > 4) {
             p5<-rcorr(t5)
             h<-heatmap.2(as.matrix(p5[[1]])) # [[1]] element contains actual PCCs, we cluster them
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
