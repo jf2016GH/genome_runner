@@ -101,6 +101,7 @@ class WebUI(object):
 		os.mkdir(results_dir)
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
+
 		runset = {}
 		cherrypy.response.timeout = 3600
 
@@ -174,7 +175,7 @@ class WebUI(object):
 
 		# uploads custom genomic features
 		try:
-			with open(gfs,"wb") as out_gfs:
+			with open(gfs,"a") as out_gfs:
 				# bed files uploaded
 				if genomicfeature_file:
 					if not isinstance(genomicfeature_file,(list)): genomicfeature_file = [genomicfeature_file] # makes a list if only one file uploaded
@@ -227,7 +228,7 @@ class WebUI(object):
 			if "grouprun:" in k and v == "on":
 				gp_gfs_dir = k.split(":")[-1]
 				ls_foi = [os.path.join(gp_gfs_dir,f) for f in os.listdir(gp_gfs_dir) if os.path.isfile(os.path.join(gp_gfs_dir,f))]
-				with open(gfs,"wb") as writer:
+				with open(gfs,"a") as writer:
 					for f in ls_foi:
 						writer.write(f+"\n")					
 
