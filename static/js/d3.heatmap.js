@@ -35,7 +35,7 @@
       clusters = this.model.get("clusters");
       clusterColor = this.model.get("clusterColor");
       // heatmapColor = d3.scale.linear().domain([-1*color_range, 0, color_range]).range(["#23890A", "#EAEAEA", "#9A1717"]);
-      heatmapColor = d3.scale.linear().domain(-16, 0, 16]).range(["green", "#white", "#red"]);
+      heatmapColor = d3.scale.linear().domain([-5, 0, 5]).range(["green", "white", "red"]);
       textScaleFactor = 9;
       conditionNamesMargin = d3.max(conditionNames.map(function(conditionName) {
         return conditionName.length;
