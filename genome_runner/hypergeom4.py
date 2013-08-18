@@ -94,7 +94,7 @@ def get_bgobs(bg,gf,bkg_overlap_path):
 
 
 def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):    
-    """Return the signed log10 p-value of all FOIs against the GF.
+    """Return the signed p-value of all FOIs against the GF.
     """
     global logger_path
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
@@ -107,7 +107,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
         for k in i:
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small?".format(gf_name,foi_name))
-                return math.log10(1)
+                return 1
             if k < 11:
                 do_chi_square = False
 
@@ -123,7 +123,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
             pval = chi_result[1]
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
-    sign = 1 if (odds_ratio < 1) else -1
+    sign = -1 if (odds_ratio < 1) else 1
 
     # write out to the detailed results file
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
@@ -137,17 +137,16 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
     # writes the first line as the header line
     if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
-    if sign == -1 or str(odds_ratio) == "inf":
+    if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented"    
     else: direction =  "underrepresented"
     if pval > 0.05:
         direction = "nonsignificant"
-    write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path)  
-
-    if pval == 0.0:
-        return sign * sys.float_info.min_10_exp
-
-    return sign * math.log10(pval)   
+    write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
+    if pval < 1E-307:
+        # set to value obtained from sys.float_info.min_10_exp
+        pval = 1E-306
+    return sign * pval
 
 
 
@@ -156,10 +155,15 @@ def cluster_matrix(input_path,output_path):
     '''
     Takes the matrix file outputted by genomerunner and clusters it in R
     '''        
-    print input_path
     r_script = """library(gplots)
                     t5 = as.matrix(read.table("{}")) 
-                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) > 2) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)    
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.05) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)    
+                    # Log transform matrix and keep correct sign
+                    for (i in 1:nrow(t5)) {{
+                      for (j in 1:ncol(t5)) {{
+                        if (t5[i, j] < 0) {{ t5[i, j] <- log10(abs(t5[i, j]))}} else {{ t5[i,j] <- -log10(t5[i,j])}}
+                      }}
+                    }}
                     if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
                        h = heatmap.2(t5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
                        write.table(t(h$carpet),"{}",sep="\t")
@@ -174,20 +178,19 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
     outputpdf_path = ".".join(output_path.split(".")[:-1] + [".pdf"])
    
-    print matrix_path
     #pcc = open(output_path).read() 
     #if "PCC can't be performed" not in pcc:
     r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\")) 
         library(Hmisc)
         library(gplots)
         t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
-        if (dim(t5)[1] > 5 && dim(t5)[2] > 1) {
+        if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
             p5<-rcorr(t5)
             h<-heatmap.2(as.matrix(p5[[1]])) # [[1]] element contains actual PCCs, we cluster them
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
         } else {
-            write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 3. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
+            write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
         }"""
     robjects.r(r_script)
     return output_path
@@ -341,7 +344,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
             
         _write_progress("Preparing run files for download")
-        print "JOB NAME:",job_name
         _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         _write_progress("Analysis Completed")       
     except Exception, e: 
