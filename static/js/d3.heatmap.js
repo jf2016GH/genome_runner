@@ -84,7 +84,6 @@
           this.setAttribute("col",conditionNames[i]);
           return d;
         }).style("fill", function(d) {
-          console.log(d + ":"+color_log10(d))
           return heatmapColor(color_log10(d));
       // Tool tips
         }).attr("value",function(d){

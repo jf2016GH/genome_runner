@@ -66,7 +66,6 @@ class WebUI(object):
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			print paths.organisms
 			paths.traverse(os.path.join(sett["dir_data"],organism))
 			tmpl = lookup.get_template("index.html")
 			# Load default backgrounds
@@ -437,6 +436,23 @@ class WebUI(object):
 		results = []
 		if os.path.exists(annotation_path):
 			with open(annotation_path) as f:
+				# skip the comment lines
+				cols = f.readline().rstrip()
+				while cols[0] == "#":
+					cols = f.readline().rstrip()
+				cols = cols.split("\t")	
+				results.append(cols)			
+				for foi in f:
+					if foi.strip() != "":
+						results.append(foi.rstrip().split("\t"))
+		return simplejson.dumps(results)
+
+	@cherrypy.expose
+	def get_enrichment(self,run_id,foi_name):
+		enrichment_path = os.path.join(os.path.join("results",run_id,"enrichment",foi_name + ".txt"))
+		results = []
+		if os.path.exists(enrichment_path):
+			with open(enrichment_path) as f:
 				# skip the comment lines
 				cols = f.readline().rstrip()
 				while cols[0] == "#":

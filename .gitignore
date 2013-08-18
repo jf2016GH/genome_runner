@@ -3,7 +3,7 @@ matrix.txt
 TestMatrix.txt
 pcc_matrix.txt
 pcc_matrix_pvalue.txt
-log.txt
+*log.txt
 backgrounds
 released
 *.swp

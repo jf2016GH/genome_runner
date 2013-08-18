@@ -148,13 +148,50 @@
 					        }
 					});
 				}
-				else{
+			});
+		}
 
+		function get_enrichment(foi_name){
+			$.post("/gr/get_enrichment?run_id=${run_id}&foi_name="+foi_name, function(data){
+				data = jQuery.parseJSON(data);
+				if (data.length != 0) {
+					// clear old data tables.												
+					$(".dt_enrichments").each(function (){ 
+						$(this).children().first().empty();
+						tmp = $(this).attr("id").split("_")
+						tmp = tmp.slice(2,tmp.length).join("_")
+						 $(this).children().first().append("<table id='dter_" + tmp + "'></table>") 						
+
+					});
+					// Get column names
+					var cols = []
+					var c = data.shift()
+					for(var k in c){
+						cols.push({"sTitle": c[k]})
+					}
+					// Create data table
+					$('#dter_'+foi_name).dataTable({
+						"sDom": 'T<"clear">lfrtip',
+						"bProcessing": true,
+						"aaData": data,
+						"aoColumns": cols,
+						"asSorting": [],
+						 "oTableTools": {
+					            "aButtons": [
+					                "copy",
+					                "print",
+					                {
+					                    "sExtends":    "collection",
+					                    "sButtonText": "Save",
+					                    "aButtons":    [ "csv", "xls", "pdf" ]
+					                }
+					            ]
+					        }
+					});
 				}
 			});
 		}
 		</script>
-			}
 </head>
 <body bgcolor="#A8D5FF">	
 	<div class="topbar">
@@ -196,10 +233,14 @@
 	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()" >Detailed Results<img class="helptooltip" title="Contains detailed results" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li ><a href="#debugresults" data-toggle="tab" onclick="get_log()">Analysis Log<img class="helptooltip" title="Contains log" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+	
+	<li ><a href="#enrichmentresults" data-toggle="tab">Enrichment Results<img class="helptooltip" title="Contains P-value results in list form for each of the SNP files run" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li><a href="#annotationresults" data-toggle="tab">Annotation Results<img class="helptooltip" title="Contains Annotation Results" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li ><a href="#heatmapdownload" data-toggle="tab">Download Results<img class="helptooltip" title="Contains a correlation matrix that is calculated using Pearson's Correlation" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+
+
 </ul>
 
 <div class="tab-content">
@@ -242,6 +283,22 @@
 				<div class="dt_annotations" ${"class='tab-pane active'" if i==0 else "class='tab-pane'"} id="ano_tab_${item}">
 					<div class="well">
 						<table id="dt_${item}"></table>
+					</div>
+				</div>
+				% endfor
+			</div>	
+	</div>
+	<div class="tab-pane" id="enrichmentresults">
+			<ul class="tabs" id="enrichmentab" data-tabs="tabs">
+				% for i,item in enumerate(fois):
+				  <li><a href="#enri_tab_${item}" data-toggle="tab" onclick="get_enrichment('${item}')">${item}</a></li>
+				% endfor
+			</ul>
+			<div class="tab-content">
+				% for i,item in enumerate(fois):
+				<div class="dt_enrichments" ${"class='tab-pane active'" if i==0 else "class='tab-pane'"} id="enri_tab_${item}">
+					<div class="well">
+						<table id="dter_${item}"></table>
 					</div>
 				</div>
 				% endfor
