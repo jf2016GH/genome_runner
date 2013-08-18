@@ -1,4 +1,4 @@
- var Heatmap, getConditionNames, getGeneExpressions, isNumber,cur_heatmap,cur_tooltip_matrix, tooltip_matrices = {};
+ var Heatmap, getConditionNames, getGeneExpressions, isNumber,cur_heatmap,cur_tooltip_matrix, tooltip_matrices = {},log_transform_color = false;
  // ### helper functions
    getGeneExpressions = function(genes, conditionNames) {
       return genes.map(function(gene) {
@@ -35,7 +35,7 @@
       clusters = this.model.get("clusters");
       clusterColor = this.model.get("clusterColor");
       // heatmapColor = d3.scale.linear().domain([-1*color_range, 0, color_range]).range(["#23890A", "#EAEAEA", "#9A1717"]);
-      heatmapColor = d3.scale.linear().domain([-5, 0, 5]).range(["green", "white", "red"]);
+      heatmapColor = d3.scale.linear().domain([-color_range, 0, color_range]).range(["green", "white", "red"]);
       textScaleFactor = 9;
       conditionNamesMargin = d3.max(conditionNames.map(function(conditionName) {
         return conditionName.length;
@@ -68,6 +68,8 @@
         if (val < 0) {sign = -1;}
         return sign * Math.log(Math.abs(val)) / Math.LN10;
       }
+
+     
       cur_row = -1;
       getRow = function(row) {
         var divtooltip = d3.select("body").append("div")   
@@ -84,7 +86,9 @@
           this.setAttribute("col",conditionNames[i]);
           return d;
         }).style("fill", function(d) {
-          return heatmapColor(color_log10(d));
+          if (log_transform_color) return heatmapColor(color_log10(d));
+          else return heatmapColor(d);
+          
       // Tool tips
         }).attr("value",function(d){
           return d
@@ -163,24 +167,57 @@
   });
 
 function generate_heatmaps() {
+
+      matrix_max = function(arr,log_transform) {
+        var max = 0;
+        var max_non_log = 0;
+        for (var i =0; i<arr.length;i++){
+          for (var o in matrix[i]){
+            var val = matrix[0][o];
+            var val_non_log = matrix[0][o];
+            if (isNumber(val)){
+              val_non_log = Math.abs(matrix[0][o]);
+              val = Math.abs(color_log10(val));
+
+              if (val > max){ max = val;}
+              if (val_non_log > max_non_log) { max_non_log = val_non_log;}
+            }}}
+           if (log_transform){
+             return max;
+           }
+           return max_non_log;
+         }
+
+      color_log10 = function(val) {
+        if (Math.abs(val) <= 1) return 0
+        var sign = 1
+        if (val < 0) {sign = -1;}
+        return sign * Math.log(Math.abs(val)) / Math.LN10;
+      }
+
+
       // The code that create the heatmaps
       $(document).ready(function() {
         matrix_data_gf_description = matrix_data_gf_description.split("\t");
-        var geneExpressionModel, genes, heatmap;
-        color_range = 1;
+        var geneExpressionModel, genes, heatmap
         matrix_cor_pvalues = d3.tsv.parse(matrix_cor_pvalues)
         log10_tt_value = false;
         matrix_cor = d3.tsv.parse(matrix_cor)
         matrix = matrix_cor;
+        color_range = matrix_max(matrix,false); // Sets the color max to the largest value in the matrix
+         console.log("range cor: "+ color_range);
         cur_heatmap = "heatmap_cor";
         cur_tooltip_matrix = matrix_cor_pvalues;    
         create_heatmap("#heatmap_cor", matrix,matrix_cor);
-        color_range = 5; 
+
         matrix_enrich_data = d3.tsv.parse(matrix_data);
         matrix = matrix_enrich_data
         log10_tt_value = true;
         cur_heatmap = "heatmap";
         cur_tooltip_matrix = matrix_enrich_data;
+        color_range = matrix_max(matrix,true);
+        log_transform_color = true;
+        console.log("range: "+ color_range);
         create_heatmap("#heatmap",matrix);
         // Creates links to download the svg file
         d3.selectAll("#heatmap_download")
