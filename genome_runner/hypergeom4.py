@@ -155,6 +155,7 @@ def cluster_matrix(input_path,output_path):
     '''
     Takes the matrix file outputted by genomerunner and clusters it in R
     '''        
+    pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
     r_script = """library(gplots)
                     t5 = as.matrix(read.table("{}")) 
                     t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.05) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)    
@@ -165,18 +166,20 @@ def cluster_matrix(input_path,output_path):
                       }}
                     }}
                     if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
-                       h = heatmap.2(t5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                       pdf(file="{}")
+                       h = heatmap.2(t5,  hclustfun=function(m) hclust(m,method="average"),margins=c(15,15),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                       dev.off()
                        write.table(t(h$carpet),"{}",sep="\t")
                     }} else {{
                         write.table(t5,"{}",sep="\t")
-                    }}""".format(input_path,output_path,output_path)
+                    }}""".format(input_path,pdf_outpath,output_path,output_path)
     robjects.r(r_script)
     return output_path    
 
 def pearsons_cor_matrix(matrix_path,out_dir):
     global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
-    outputpdf_path = ".".join(output_path.split(".")[:-1] + [".pdf"])
+    pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
    
     #pcc = open(output_path).read() 
     #if "PCC can't be performed" not in pcc:
@@ -186,7 +189,9 @@ def pearsons_cor_matrix(matrix_path,out_dir):
         t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
         if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
             p5<-rcorr(t5)
-            h<-heatmap.2(as.matrix(p5[[1]])) # [[1]] element contains actual PCCs, we cluster them
+            pdf(file=\"""" + pdf_outpath +"""\")
+            h<-heatmap.2(as.matrix(p5[[1]]),margins=c(15,15)) # [[1]] element contains actual PCCs, we cluster them
+            dev.off()
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
         } else {
@@ -377,7 +382,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     new_log.close()
     tar_path = os.path.join(outdir,'GR_{}.tar'.format(id))
     tar = tarfile.TarFile(tar_path,"a")    
-    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt")]
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt") or x.endswith(".pdf")]
     fls = output_files
     for f in fls:
         tar.add(f,os.path.basename(f))
