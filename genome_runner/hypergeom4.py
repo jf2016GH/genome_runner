@@ -82,7 +82,6 @@ def get_bgobs(bg,gf,bkg_overlap_path):
             bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
             if len(bg_obs) != 0:
                 return bg_obs[0]
-    logger.info("Manually calculating background stats")
     result = get_overlap_statistics(bg,[gf])
     try:
         result = int(result[0]["intersectregions"])
@@ -138,7 +137,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
     # writes the first line as the header line
     if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
-    write_output("\t".join([gf_name,str(pval),"overrepresented" if sign == -1 or str(odds_ratio) == "inf" else "underrepresented"])+"\n",er_result_path)  
+    write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,"overrepresented" if sign == -1 or str(odds_ratio) == "inf" else "underrepresented"])+"\n",er_result_path)  
 
     if pval == 0.0:
         return sign * sys.float_info.min_10_exp
