@@ -134,5 +134,6 @@ class PathNode(defaultdict):
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f))]:
 				tooltip += "\t"+basename(s) + "\n" 
-			html += """<input type="checkbox"  name="grouprun:{}" style="margin: 10px" title="{}">{}</input>""".format(gfs_dir,tooltip,basename(gfs_dir))
+			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" style="margin: 10px">{}</input>
+						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,basename(gfs_dir),tooltip)
 		return html

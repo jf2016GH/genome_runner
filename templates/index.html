@@ -265,14 +265,14 @@
 				</div> 
 				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3>
-				<div id="div_upload_fois"	style="float: left;margin-right: 213px;margin-top: 14px;"	>
+				<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 					<h4 style="float:left;">Bed Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
 					<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
             			</div>
         		<div id="div_demo_fois">
-            		<h4 style="font-size: 110%;float: left;margin-top: 9px;margin-right: 13px;">Demo SNPs file sets: </h4>
+            		<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNPs file sets: </h4>
             		<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
-            			<input type="hidden" name="demo_fois"/>
+            			<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
 	            			${demo_snps}
             		</div>
             	</div>
@@ -299,7 +299,7 @@
 				<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'universe', used to calculate the probability of SNPs in a set to overlap a genome annotation feature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3>
 				<b style="font-size:120%; margin-left: 10px"></b>
-					<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+					<div class="accordion" style="padding-bottom: 1em;list-style:none">        
 					<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
 						<div style="height=100px">       
 									Bed File:
@@ -325,10 +325,10 @@
 					</div>	
 			</div>	
 			<div class="well">
-				<h3>3. Default genome annotation features:</h3>
+				<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Default genome annotation features:</h3>
 				${custom_gfs}
-			</div>
-				<div class="accordion" style="padding-bottom: 1em;list-style:none;"> 
+			
+				<div class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;"> 
 	             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
 	             <div >	
 					<ul>
