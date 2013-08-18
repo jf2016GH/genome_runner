@@ -43,6 +43,8 @@ logger.addHandler(hdlr)
 logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
+def base_name(path):
+    return ".".join(os.path.basename(path).split(".")[:-1])
 
 # Each function in this class is a web page 
 class WebUI(object):
@@ -101,6 +103,7 @@ class WebUI(object):
 		os.mkdir(results_dir)
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
+		list_gfs = []
 
 		runset = {}
 		cherrypy.response.timeout = 3600
@@ -196,8 +199,9 @@ class WebUI(object):
 										if extension not in ["gz","bb"]: data.replace("\r","")
 										if not data:
 											break
-										out.write(data)			
-									out_gfs.write(f+"\n")
+										out.write(data)	
+									if (base_name(f) not in list_gfs): out_gfs.write(f+"\n")
+									list_gfs.append(base_name(f))		
 						else:
 							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
 		except Exception, e:
@@ -215,7 +219,8 @@ class WebUI(object):
 			if k.startswith("file:") and v=="on"]
 		with open(gfs,"a") as out_gfs:
 			for g in gfeatures:
-				out_gfs.write(g+"\n")
+				if (base_name(g) not in list_gfs): out_gfs.write(g+"\n")
+				list_gfs.append(base_name(g))
 
 		for k,v in kwargs.items():
 			# organism to use
@@ -230,8 +235,8 @@ class WebUI(object):
 				ls_foi = [os.path.join(gp_gfs_dir,f) for f in os.listdir(gp_gfs_dir) if os.path.isfile(os.path.join(gp_gfs_dir,f))]
 				with open(gfs,"a") as writer:
 					for f in ls_foi:
-						writer.write(f+"\n")					
-
+						if (base_name(f) not in list_gfs): writer.write(f+"\n")
+						list_gfs.append(base_name(f))	
 
 		runset['organism']= organism	
 		
@@ -564,3 +569,5 @@ if __name__ == "__main__":
 			}
 		
 	cherrypy.quickstart(WebUI(), "/gr", config=conf)
+
+
