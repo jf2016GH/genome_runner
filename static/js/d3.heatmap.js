@@ -168,25 +168,20 @@
 
 function generate_heatmaps() {
 
-      matrix_max = function(arr,log_transform) {
+      matrix_max = function(arr) {
         var max = 0;
-        var max_non_log = 0;
         for (var i =0; i<arr.length;i++){
           for (var o in matrix[i]){
-            var val = matrix[0][o];
-            var val_non_log = matrix[0][o];
+            var val = matrix[i][o];
             if (isNumber(val)){
-              val_non_log = Math.abs(matrix[0][o]);
               val = Math.abs(color_log10(val));
 
               if (val > max){ max = val;}
-              if (val_non_log > max_non_log) { max_non_log = val_non_log;}
-            }}}
-           if (log_transform){
-             return max;
-           }
-           return max_non_log;
-         }
+            }
+          }
+        }
+          return max;
+       }
 
       color_log10 = function(val) {
         if (Math.abs(val) <= 1) return 0
@@ -204,8 +199,8 @@ function generate_heatmaps() {
         log10_tt_value = false;
         matrix_cor = d3.tsv.parse(matrix_cor)
         matrix = matrix_cor;
-        color_range = matrix_max(matrix,false); // Sets the color max to the largest value in the matrix
-         console.log("range cor: "+ color_range);
+        color_range = 1; // Sets the color max to the largest value in the matrix
+        console.log("range cor: "+ color_range);
         cur_heatmap = "heatmap_cor";
         cur_tooltip_matrix = matrix_cor_pvalues;    
         create_heatmap("#heatmap_cor", matrix,matrix_cor);
@@ -215,7 +210,7 @@ function generate_heatmaps() {
         log10_tt_value = true;
         cur_heatmap = "heatmap";
         cur_tooltip_matrix = matrix_enrich_data;
-        color_range = matrix_max(matrix,true);
+        color_range = matrix_max(matrix);
         log_transform_color = true;
         console.log("range: "+ color_range);
         create_heatmap("#heatmap",matrix);
