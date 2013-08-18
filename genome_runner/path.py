@@ -25,6 +25,11 @@ class PathNode(defaultdict):
 	def traverse(self, base):
 		''' Reads the data directory for GenomicFeatures
 		'''
+		blacklist = []
+		if os.path.exists("blacklistedgf.txt"):
+			with open("blacklistedgf.txt") as f:
+				blacklist = [line.strip() for i,line in enumerate(f)]
+		print "BLACKLIST: ",blacklist
 		# used to generate a json list of gfs
 		gfs = []
 		int_data = len(base.split("/"))
@@ -40,11 +45,12 @@ class PathNode(defaultdict):
 				node = node[p]
 				node.name = p
 			node.files = ["file:"+os.path.join(base, f) for f 
-				in files if f.endswith(('.gz', '.bb'))]
+				in files if f.endswith(('.gz', '.bb')) and base_name(f) not in blacklist]
 
 			# used for the auto-complete text box
 			for f in node.files:
-				gfs.append({"caption": str(basename(os.path.splitext(f)[0])),"value":f})
+				if base_name(f) not in blacklist:
+					 gfs.append({"caption": str(basename(os.path.splitext(f)[0])),"value":f})
 		f = open("static/gfs.php","wb")
 		f.write(json.dumps(gfs))
 		f.close()
@@ -137,3 +143,6 @@ class PathNode(defaultdict):
 			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" style="margin: 10px">{}</input>
 						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,basename(gfs_dir),tooltip)
 		return html
+
+def base_name(path):
+    return ".".join(os.path.basename(path).split(".")[:-1])
