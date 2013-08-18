@@ -141,17 +141,12 @@ def cluster_matrix(input_path,output_path):
     '''
     Takes the matrix file outputted by genomerunner and clusters it in R
     '''        
+    print input_path
     r_script = """library(gplots)
-                    t5 = as.matrix(read.table("{}"))                    
-                    pt5 <- as.matrix(t5)
-                    row_names <- rownames(pt5)
-                    col_names <- colnames(pt5)
-                    pt5 <- apply(pt5, 2, function(x) as.numeric(x))
-                    row.names(pt5) <- row_names
-                    colnames(pt5) <- col_names
-                    if (!all(pt5[1,1] == pt5))
-                    {{
-                       h = heatmap.2(pt5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                    t5 = as.matrix(read.table("{}")) 
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) > 2) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)    
+                    if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
+                       h = heatmap.2(t5,  hclustfun=function(m) hclust(m,method="average"),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
                        write.table(t(h$carpet),"{}",sep="\t")
                     }} else {{
                         write.table(t5,"{}",sep="\t")
@@ -171,13 +166,13 @@ def pearsons_cor_matrix(matrix_path,out_dir):
         library(Hmisc)
         library(gplots)
         t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
-        if (dim(t5)[1] > 2 && dim(t5)[2] > 4) {
+        if (dim(t5)[1] > 5 && dim(t5)[2] > 1) {
             p5<-rcorr(t5)
             h<-heatmap.2(as.matrix(p5[[1]])) # [[1]] element contains actual PCCs, we cluster them
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
-        } else{
-            write.table(paste("ERROR:Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 3. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
+        } else {
+            write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 3. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
         }"""
     robjects.r(r_script)
     return output_path
