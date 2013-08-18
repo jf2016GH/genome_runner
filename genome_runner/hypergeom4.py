@@ -42,6 +42,7 @@ logger.setLevel(logging.INFO)
 matrix_outpath = None
 detailed_outpath = None
 progress_outpath = None
+output_dir = None
 console_output = False 
 logger_path = "log.txt"
 
@@ -124,10 +125,23 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = 1 if (odds_ratio < 1) else -1
+
+    # write out to the detailed results file
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval if type(pval) != type("") else pval,
-                "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)  
+                "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)
+
+    # write out to the enrichment result file
+    er_result_path = os.path.join(output_dir,"enrichment")
+    if not os.path.exists(er_result_path): os.mkdir(er_result_path)
+    er_result_path = os.path.join(er_result_path,foi_name+".txt")
+    # writes the first line as the header line
+    if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
+    if  sign == -1 and str(odds_ratio) != "nan":
+        print "HIT: ", pval," ",foi_name," ",gf_name, " ",odds_ratio," ",sign
+        print ctable
+    write_output("\t".join([gf_name,str(pval),"overrepresented" if sign == -1 or str(odds_ratio) == "inf" else "underrepresented"])+"\n",er_result_path)  
 
     if pval == 0.0:
         return sign * sys.float_info.min_10_exp
@@ -250,7 +264,8 @@ def check_background_foi_overlap(bg,fois):
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
     sett_path = os.path.join(outdir,".settings")
     logger_path = os.path.join(outdir,'log.txt')
-    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax
+    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
+    output_dir = outdir
     curprog,progmax = 0,1
     try:
         trackdb = []
@@ -272,6 +287,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         logger.addHandler(hdlr)
+        logger.propagate = False
 
         fois = read_lines(fois)
         gfs = read_lines(gfs)
