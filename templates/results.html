@@ -108,6 +108,21 @@
 			});
 		}
 
+		// Sorting functions for the P-values
+		jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+		    "scientific-pre": function ( a ) {
+		        return parseFloat(a);
+		    },
+		 
+		    "scientific-asc": function ( a, b ) {
+		        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+		    },
+		 
+		    "scientific-desc": function ( a, b ) {
+		        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+		    }
+		} );
+
 		function get_annotation(foi_name){
 			$.post("/gr/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
 				data = jQuery.parseJSON(data);
@@ -170,15 +185,20 @@
 					var cols = []
 					var c = data.shift()
 					for(var k in c){
-						cols.push({"sTitle": c[k]})
+						if (c[k] == "P-value"){
+							cols.push({"sTitle": c[k], "sType": "scientific"})
+						}
+						else {
+							cols.push({"sTitle": c[k]})
+						}
 					}
+
 					// Create data table
 					$('#dter_'+foi_name).dataTable({
 						"sDom": 'T<"clear">lfrtip',
 						"bProcessing": true,
 						"aaData": data,
 						"aoColumns": cols,
-						"asSorting": [],
 						 "oTableTools": {
 					            "aButtons": [
 					                "copy",
