@@ -33,10 +33,8 @@ import sys
 
 # Logging configuration
 logger = logging.getLogger()
-logger = logging.getLogger('genomerunner.query')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 # This line outputs logging info to the console
-logger.setLevel(logging.INFO)
 
 
 matrix_outpath = None
@@ -44,7 +42,8 @@ detailed_outpath = None
 progress_outpath = None
 output_dir = None
 console_output = False 
-logger_path = "log.txt"
+print_progress = False
+logger_path = "gr_log.txt"
 
 def get_overlap_statistics(gf,fois):
     """Returns a dictionary with indicating how many hits exist for each foi against the gf
@@ -74,7 +73,7 @@ def get_bgobs(bg,gf,bkg_overlap_path):
 
     if os.path.exists(bkg_overlap_path):
         _write_progress("Getting overlap stats on background and {}".format(gf))
-        write_output("Getting overlap stats on background and {}".format(gf),logger_path)
+        logger.info("Getting overlap stats on background and {}".format(gf))
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
         d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
@@ -240,6 +239,8 @@ def _write_progress(line):
         progress = {"status": line, "curprog": curprog,"progmax": progmax}
         with open(progress_outpath,"wb") as progfile:
             progfile.write(json.dumps(progress))
+    if print_progress:
+        print line
 
 
 def _write_head(content,outpath):
@@ -270,12 +271,56 @@ def check_background_foi_overlap(bg,fois):
     return [foi_bg_stats, good_fois]
                                                                                                                        
 
+
+def get_description(gf,trackdb):
+    desc = [x["longLabel"] for x in trackdb if x["tableName"] == gf]
+    if len(desc) is not 0: return desc[0]
+    else: return "No Description"
+
+
+
+
+def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
+    '''
+    File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
+    '''    
+    f = open(os.path.join(outdir,"gr_log.txt"))
+    f_log = f.read()
+    f.close()
+    path_settings,f_sett =os.path.join(outdir,".settings"),""
+    if os.path.exists(path_settings):
+        f = open(path_settings)
+        f_sett = f.read() + "\n###LOG###\n"
+        f.close()
+    new_log_path = os.path.join(outdir,"gr_log.txt")
+    new_log = open(new_log_path,'wb')
+    new_log.write(f_sett+f_log)
+    new_log.close()
+    tar_path = os.path.join(outdir,'GR_{}.tar'.format(id))
+    tar = tarfile.TarFile(tar_path,"a")    
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt") or x.endswith(".pdf")]
+    fls = output_files
+    for f in fls:
+        tar.add(f,os.path.basename(f))
+    tar.close()
+    tar_file = open(tar_path,'rb')
+    with gzip.open(tar_path+".gz","wb") as gz:
+        gz.writelines(tar_file)
+    tar_file.close()
+    if os.path.exists(tar_path): os.remove(tar_path)
+
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
+    global formatter
+    if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
     sett_path = os.path.join(outdir,".settings")
-    logger_path = os.path.join(outdir,'log.txt')
+    fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
+    fh.setLevel(logging.ERROR)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     output_dir = outdir
     curprog,progmax = 0,1
+    organism = ""
     try:
         trackdb = []
         if os.path.exists(sett_path):        
@@ -309,10 +354,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 
         for gf in gfs: 
             current_gf = base_name(gf)      
-            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))   
+            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf))) 
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
 
-            res = get_overlap_statistics(gf,good_fois)  
+            res = get_overlap_statistics(gf,good_fois) 
+
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
@@ -347,90 +393,27 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
                             ind += 1
                 curprog += 1
 
-            
-        _write_progress("Preparing run files for download")
-        _zip_run_files(fois,gfs,bg_path,outdir,job_name)
+        if zip_run_files:
+            _write_progress("Preparing run files for download")
+            _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         _write_progress("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
         write_output(traceback.format_exc(),logger_path)
         _write_progress("Run crashed. See end of log for details.")
 
-def get_description(gf,trackdb):
-    desc = [x["longLabel"] for x in trackdb if x["tableName"] == gf]
-    if len(desc) is not 0: return desc[0]
-    else: return "No Description"
-
-
-
-
-def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
-    '''
-    File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
-    '''    
-    f = open(os.path.join(outdir,"log.txt"))
-    f_log = f.read()
-    f.close()
-    path_settings,f_sett =os.path.join(outdir,".settings"),""
-    if os.path.exists(path_settings):
-        f = open(path_settings)
-        f_sett = f.read() + "\n###LOG###\n"
-        f.close()
-    new_log_path = os.path.join(outdir,"log.txt")
-    new_log = open(new_log_path,'wb')
-    new_log.write(f_sett+f_log)
-    new_log.close()
-    tar_path = os.path.join(outdir,'GR_{}.tar'.format(id))
-    tar = tarfile.TarFile(tar_path,"a")    
-    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt") or x.endswith(".pdf")]
-    fls = output_files
-    for f in fls:
-        tar.add(f,os.path.basename(f))
-    tar.close()
-    tar_file = open(tar_path,'rb')
-    with gzip.open(tar_path+".gz","wb") as gz:
-        gz.writelines(tar_file)
-    tar_file.close()
-    if os.path.exists(tar_path): os.remove(tar_path)
-
-
 if __name__ == "__main__":
-    console_output,logger_path = True,os.path.join(outdir,'.log')
+    global print_progress
+    print_progress = True
     parser = argparse.ArgumentParser(description="Create a matrix of hypergeometric p-values for genomic intersections.")
-    parser.add_argument("--fois", "-f", nargs=1, help="Text file with FOI file names (SNPs only).") 
-    parser.add_argument("--gfs" , "-g",nargs=1, help="Text file with GF file names, gzipped.") 
-    parser.add_argument("--bg_path" "-b", nargs=1, help="Path to spot background file (SNPs only).")
+    parser.add_argument("fois", nargs=1, help="Text file with FOI file names (SNPs only).") 
+    parser.add_argument("gfs" ,nargs=1, help="Text file with GF file names, gzipped.") 
+    parser.add_argument("bg_path", nargs=1, help="Path to spot background file (SNPs only).")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
+    parser.add_argument("--output_dir","-d", help="Directory to output the result to", default="")
+    args = vars(parser.parse_args())
+    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,args["run_annotation"])
 
-    args = parser.parse_args()
-    fois = read_lines(args.fois[0])
-    gfs = read_lines(args.gfs[0])
-
-    bg = read_intervals(args.bg_path[0])
-    bg_iset = IntervalSet(bg)    
-    f = open(matrix_outpath,'wb')
-    f.close()
-    f = open(detailed_outpath,'wb')
-    f.close()
-
-    _write_head("\n\n#Detailed log report#\n",logger_path)
-    foi_sets = dict((path,read_intervals(path, snp_only=True, background=bg_iset,d_path=logger_path)) for path in fois)
-
-
-    write_output("\t".join(fois)+"\n", matrix_outpath)
-    write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val'])+"\n",detailed_outpath)
-    global current_gf
-    for gf in gfs:
-        current_gf = base_name(gf)
-        gf_iset = IntervalSet(read_intervals(gf))
-        write_output(gf+"\n",detailed_outpath) 
-        write_output("\t".join([gf] + [str(p_value(gf_iset, foi_sets[foi], bg, foi,True)) for foi in fois])+"\n",matrix_outpath)
-    if len(gfs) > 1 and len(fois) > 1:
-        cluster_matrix(matrix_outpath,os.path.join(outpath,"matrix_clustered.gr"))
-        pearsons_cor_matrix(os.path.join(outdir,"matrix_clustered.gr"),outdir)
-    else:
-        with open(os.path.join(outpath,"matrix_clustered.gr"),"wb") as wb:
-            wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
 
 
 class front_appender:

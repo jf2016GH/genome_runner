@@ -506,7 +506,7 @@ class WebUI(object):
 	@cherrypy.expose
 	def get_log(sefl,run_id):
 		results = {"log": ""}
-		log_path = os.path.join(os.path.join("results", run_id),"log.txt")
+		log_path = os.path.join(os.path.join("results", run_id),"gr_log.txt")
 		if os.path.exists(log_path):
 			with open(log_path) as f:
 				results["log"] = f.read()
