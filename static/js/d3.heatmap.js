@@ -45,7 +45,7 @@
         num_range = [color_range.min,color_range.max];
         col_range = ["white","red"];
         diff= color_range.max - color_range.min;       
-        legend = [col_range.min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max];
+        legend = [c_min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max];
         
       } 
       // case of complete underrepresentation
@@ -60,7 +60,7 @@
         num_range = [color_range.min,0,color_range.max];
         col_range = ["green","white","red"];
         diff= color_range.max - color_range.min;       
-        legend = [c_min,c_max*.50,0,cmax*.5,c_max];
+        legend = [c_min,c_min*.50,0,c_max*.5,c_max];
       }
       console.log(num_range);
       console.log(col_range);
@@ -112,7 +112,7 @@
                 .text(function(d){
                     return d.toPrecision(3);
                 });
-      
+
        
       color_log10 = function(val) {
         if (Math.abs(val) <= 1) return 0
