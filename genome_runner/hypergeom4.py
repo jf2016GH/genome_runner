@@ -165,7 +165,7 @@ def cluster_matrix(input_path,output_path):
                         }}
                         if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
                            pdf(file="{}")
-                           h = heatmap.2(t5,  hclustfun=function(e) hclust(m,method="average"),margins=c(15,15),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                           h = heatmap.2(t5,  hclustfun=function(e) hclust(e,method="average"),margins=c(15,15),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
                            dev.off()
                            write.table(t(h$carpet),"{}",sep="\t")
                         }} else {{
