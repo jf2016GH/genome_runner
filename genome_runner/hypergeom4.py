@@ -116,9 +116,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     else: 
         if do_chi_square:        
             chi_result = scipy.stats.chi2_contingency(ctable)
-            obs = ctable[0][0]
-            exp = chi_result[3][0][0]
-            odds_ratio = obs/exp
+            odds_ratio = (ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
             pval = chi_result[1]
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
@@ -157,21 +155,25 @@ def cluster_matrix(input_path,output_path):
     pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
     r_script = """library(gplots)
                     t5 = as.matrix(read.table("{}")) 
-                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.05) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)    
-                    # Log transform matrix and keep correct sign
-                    for (i in 1:nrow(t5)) {{
-                      for (j in 1:ncol(t5)) {{
-                        if (t5[i, j] < 0) {{ t5[i, j] <- log10(abs(t5[i, j]))}} else {{ t5[i,j] <- -log10(t5[i,j])}}
-                      }}
-                    }}
-                    if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
-                       pdf(file="{}")
-                       h = heatmap.2(t5,  hclustfun=function(m) hclust(m,method="average"),margins=c(15,15),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
-                       dev.off()
-                       write.table(t(h$carpet),"{}",sep="\t")
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.05) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
+                    if (nrow(t5) > 0 && ncol(t5) > 0) {{
+                        # Log transform matrix and keep correct sign
+                        for (i in 1:nrow(t5)) {{
+                          for (j in 1:ncol(t5)) {{
+                            if (t5[i, j] < 0) {{ t5[i, j] <- log10(abs(t5[i, j]))}} else {{ t5[i,j] <- -log10(t5[i,j])}}
+                          }}
+                        }}
+                        if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
+                           pdf(file="{}")
+                           h = heatmap.2(t5,  hclustfun=function(e) hclust(m,method="average"),margins=c(15,15),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
+                           dev.off()
+                           write.table(t(h$carpet),"{}",sep="\t")
+                        }} else {{
+                            write.table(t5,"{}",sep="\t")
+                        }}
                     }} else {{
-                        write.table(t5,"{}",sep="\t")
-                    }}""".format(input_path,pdf_outpath,output_path,output_path)
+                        write.table("Nothing significant","{}",sep="\t",row.names=F,col.names=F)
+                    }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
     robjects.r(r_script)
     return output_path    
 
