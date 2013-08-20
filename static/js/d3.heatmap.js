@@ -34,8 +34,28 @@
       extent = this.model.get("extent");
       clusters = this.model.get("clusters");
       clusterColor = this.model.get("clusterColor");
-      // heatmapColor = d3.scale.linear().domain([-1*color_range, 0, color_range]).range(["#23890A", "#EAEAEA", "#9A1717"]);
-      heatmapColor = d3.scale.linear().domain([-color_range, 0, color_range]).range(["green", "white", "red"]);
+
+      // Sets the color range
+      var num_range, col_range;
+      // case of complete over representation
+      if (color_range.min >=0 && color_range.max >=0){
+        num_range = [color_range.min,color_range.max];
+        col_range = ["white","red"];
+      } 
+      // case of complete underrepresentation
+      else if (color_range.min<=0 && color_range.max<=0){
+        num_range = [color_range.min,color_range.max];
+        col_range = ["green","white"];
+      }
+      else if (color_range.min<=0 && color_range.max >= 0){
+        num_range = [color_range.min,0,color_range.max];
+        col_range = ["green","white","red"];
+      }
+      console.log(num_range);
+      console.log(col_range);
+      heatmapColor = d3.scale.linear().domain(num_range).range(col_range);
+      
+
       textScaleFactor = 9;
       conditionNamesMargin = d3.max(conditionNames.map(function(conditionName) {
         return conditionName.length;
@@ -168,19 +188,23 @@
 
 function generate_heatmaps() {
 
-      matrix_max = function(arr) {
-        var max = 0;
+      matrix_range = function(arr,log_trans) {
+        var max = -400;
+        var min = 400;
+
         for (var i =0; i<arr.length;i++){
           for (var o in matrix[i]){
             var val = matrix[i][o];
             if (isNumber(val)){
-              val = Math.abs(color_log10(val));
-
+              if(log_trans){
+                val = color_log10(parseFloat(val));
+              } else { val = parseFloat(val);}
               if (val > max){ max = val;}
+              if (val < min) { min = val; }
             }
           }
         }
-          return max;
+          return {"min": min, "max": max};
        }
 
       color_log10 = function(val) {
@@ -199,8 +223,8 @@ function generate_heatmaps() {
         log10_tt_value = false;
         matrix_cor = d3.tsv.parse(matrix_cor)
         matrix = matrix_cor;
-        color_range = 1; // Sets the color max to the largest value in the matrix
-        console.log("range cor: "+ color_range);
+        color_range = matrix_range(matrix_cor,false); // Sets the color max to the largest value in the matrix
+        console.log("range cor: "+ color_range.min + " : "+ color_range.max);
         cur_heatmap = "heatmap_cor";
         cur_tooltip_matrix = matrix_cor_pvalues;    
         create_heatmap("#heatmap_cor", matrix,matrix_cor);
@@ -210,9 +234,9 @@ function generate_heatmaps() {
         log10_tt_value = true;
         cur_heatmap = "heatmap";
         cur_tooltip_matrix = matrix_enrich_data;
-        color_range = matrix_max(matrix);
+        color_range = matrix_range(matrix,true);
         log_transform_color = true;
-        console.log("range: "+ color_range);
+        console.log("range: "+ color_range.min + " : "+ color_range.max);
         create_heatmap("#heatmap",matrix);
         // Creates links to download the svg file
         d3.selectAll("#heatmap_download")

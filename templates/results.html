@@ -122,7 +122,7 @@
 		        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
 		    }
 		} );
-
+		
 		function get_annotation(foi_name){
 			$.post("/gr/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
 				data = jQuery.parseJSON(data);
