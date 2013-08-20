@@ -169,10 +169,10 @@ def cluster_matrix(input_path,output_path):
                            dev.off()
                            write.table(t(h$carpet),"{}",sep="\t")
                         }} else {{
-                            write.table(t5,"{}",sep="\t")
+                            write.table(paste("ERROR: Cannot run clustering on",nrow(t5),"x",ncol(t5),"matrix. Should be at least 2 x 2. Analyze more sets of SNPs and select more genomic features"),"{}",sep="\t", row.names=F, col.names=F)
                         }}
                     }} else {{
-                        write.table("Nothing significant","{}",sep="\t",row.names=F,col.names=F)
+                        write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
                     }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
     robjects.r(r_script)
     return output_path    
