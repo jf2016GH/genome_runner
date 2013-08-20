@@ -36,23 +36,35 @@
       clusterColor = this.model.get("clusterColor");
 
       // Sets the color range
-      var num_range, col_range;
+      var num_range, col_range,legend;
+      legend = [0,-10,-40,-60];
+      c_max = color_range.max;
+      c_min = color_range.min
       // case of complete over representation
       if (color_range.min >=0 && color_range.max >=0){
         num_range = [color_range.min,color_range.max];
         col_range = ["white","red"];
+        diff= color_range.max - color_range.min;       
+        legend = [col_range.min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max];
+        
       } 
       // case of complete underrepresentation
       else if (color_range.min<=0 && color_range.max<=0){
         num_range = [color_range.min,color_range.max];
         col_range = ["green","white"];
+        diff= color_range.min + color_range.max;   
+        console.log("diff"+diff);
+        legend = [c_min,diff*.75+c_max,diff*.50+c_max,diff*.25+c_max,c_max];
       }
       else if (color_range.min<=0 && color_range.max >= 0){
         num_range = [color_range.min,0,color_range.max];
         col_range = ["green","white","red"];
+        diff= color_range.max - color_range.min;       
+        legend = [c_min,c_max*.50,0,cmax*.5,c_max];
       }
       console.log(num_range);
       console.log(col_range);
+      console.log(legend);
       heatmapColor = d3.scale.linear().domain(num_range).range(col_range);
       
 
@@ -69,7 +81,7 @@
         bottom: conditionNamesMargin * textScaleFactor,
         left: geneNamesMargin * textScaleFactor
       };
-      cell_size = 30;
+      cell_size = 40;
       width = cell_size * geneExpressions[0].length;
       height = cell_size * geneNames.length;
       heatmap = d3.select(this.el).append("svg").attr("width", width + margin.right + margin.left).attr("height", height + margin.top + margin.bottom).attr("id", "heatmap").append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -81,6 +93,26 @@
       columns.append("text").attr("x", 6).attr("y", x.rangeBand() / 2).attr("dy", "-.5em").attr("dx", ".5em").attr("text-anchor", "start").attr("transform", "rotate(45)").text(function(d, i) {
         return conditionNames[i];
       });
+      // Create the legend
+      var root = "svg#"+this.el.getAttribute("id");
+      d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
+             return i*cell_size+10;
+        }).attr("y",200).attr("width",cell_size).attr("height",cell_size).style("fill", function(d) {
+          return heatmapColor(d);
+        }).attr("value",function(d){
+          return d;
+        });
+
+       d3.select(root).selectAll(".legend").data(legend).enter().append("text").attr("class","legend").attr("x", function(d, i) {
+                      console.log(d);
+                    return (i * cell_size) +15;
+                })
+                .attr("y", 200+cell_size + 20)
+                .attr("font-size", "10px")
+                .text(function(d){
+                    return d.toPrecision(3);
+                });
+      
        
       color_log10 = function(val) {
         if (Math.abs(val) <= 1) return 0
