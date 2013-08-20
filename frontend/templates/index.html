@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link type="text/css" href="static/css/main.css"/>
+	<link href="static/css/bootstrap.min.css" rel="stylesheet">
+	<link type="text/css" href="static/css/demo_table.css"/>
+	<link type="text/css" href="static/css/jquery.tipsy.class"/>
+	<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css " rel="stylesheet" />
+	
+	<style>
+	
+	body {
+			margin: 0px 10px; padding:0px;
+			position: relative;
+			width: 100%;
+		}
+		.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active{
+			margin: 9px;
+		}
+		#content{
+			margin:0px auto;
+			text-align:left;
+			padding:15px;
+		}
+		#ucsc {
+			padding-left: 0px;
+		}
+		#treeview-inner{
+			margin-left: -40px;
+		}
+		label {
+			font-size: 120%;
+		}
+		.ui-widget-content { background: #ffffff url(images/ui-bg_glass_75_ffffff_1x400.png) 50% 50% repeat-x; color: #404040; }
+		#divCheckBox { border: 2px solid #C0C0C0;
+					   padding: 3px; }
+		/* allows the check box tree to be rendered correctly*/
+		.ui-icon {float: left;}
+		.popover {background: whiteSmoke;border: 1px solid #5E5E5E;}
+		.ui-accordion-content.ui-helper-reset.ui-widget-content.ui-corner-bottom.ui-accordion-content-active {heigh: 100%;}
+	</style>
+	<script type="text/javascript" src="static/js/jquery.js"></script>
+	<script type="text/javascript" src="static/js/jquery-ui-1.8.22.custom.min.js"></script>
+	<script type="text/javascript" src="static/js/jquery.ui.widget.js"></script>
+	<script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
+	<script src="static/js/fcbkcomplete.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="static/js/jquery.slimScroll.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript" src="static/js/jquery.tipsy.js"></script>
+	<!-- File input -->
+	<script src="static/js/enhance.min.js"i type="text/javascript"></script>
+	<script src="static/js/jquery.fileinput.js" type="text/javascript"></script>
+	<link type="text/css" href="static/css/jqury.ui.fileinput.css"></link>
+
+	<link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
+	<script src="static/js/bootstrap.min.js"></script>
+	<script scr="static/js/main.js"></script>
+	<script type="text/javascript" src="satic/js/bootstrap-buttons.js"></script>
+
+	<script type="text/javascript">
+	function getQueryVariable(variable) { 
+		var query = window.location.search.substring(1); 
+		var vars = query.split("&"); 
+		for (var i = 0; i < vars.length; i++) { 
+			var pair = vars[i].split("="); 
+			if (pair[0] == variable) { 
+				return pair[1]; 
+			} 
+		} 
+		return null; 
+	} 
+
+
+	function clear_foi_uploads(){
+		document.getElementById("inputbedfile").disabled=true;
+		var control = $("#inputbedfile");
+		control.replaceWith( control = control.clone( true ) );
+	}
+
+	function enable_foi_uploads(){
+		document.getElementById("inputbedfile").disabled=false;
+	}
+
+	$(document).ready(function() {
+		$("#inputbeddata").text("chr1\t200\t300\tsnp1\t300\t+\nchr2\t200\t300\tsnp2\t400\t-");
+		$("#inputbackgrounddata").text("chr1\t200\t300\tsnp1\t300\t+\nchr2\t200\t300\tsnp2\t400\t-");
+		$('#ucsc').checkboxTree({
+			initializeChecked: 'collapsed',
+			initializeUnchecked: 'collapsed',
+			collapseEffect: '',
+			expandEffect: ''
+		});
+		// Allows the radio buttons for the FOI to be sent as a POST request
+		$('div.btn-group[data-toggle-name]').each(function () {
+		    var group = $(this);
+		    var form = group.parents('form').eq(0);
+		    var name = group.attr('data-toggle-name');
+		    var hidden = $('input[name="' + name + '"]', form);
+		    $('button', group).each(function () {
+		        $(this).on('click', function () {
+		            hidden.val($(this).data("toggle-value"));
+		        });
+		    });
+		});
+
+		$('#org').change(function() {;
+			var org = document.getElementById("org").value;
+			var temp = org.split(":");
+			var $url="index?organism=" + temp[1];
+			window.location = $url;})
+
+		if (getQueryVariable('organism') != null){
+			$('#org').val("organism:" + getQueryVariable('organism'));}
+
+			else{$('#org').val("organism:hg19");}
+			$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:'static/gfs.php',cache:1}, 10, {userfilter:1,casesensetive:1});
+
+			$(function() {
+				$(".accordion").accordion({
+					collapsible: true,
+					active: false,
+					autoHeight: false
+				});
+			});
+
+			// The tooltips
+			/*$('.helptooltip').tipsy({
+				gravity: 'e',html: true,
+				title: function(){
+					var d = $(this).attr("title");
+					return '<p>'+d+'</p>';
+				}				
+			})*/
+
+			// the viewport for the treeview
+			$("#treeview-inner").slimScroll({
+			    	height: $("#ucsc").height(),
+			    	width: '400px',
+			    	alwaysVisible: true
+			});
+			console.log($('.helptooltip'));
+
+
+
+		$("#accfoi").bind('accordionchange',
+				function () {
+					if ($(this).find('.ui-state-active').length == 0){
+						enable_foi_uploads();
+						$("#btngroup_demo_fois").children().each(function(x){ 
+							 $(this).prop('disabled', false);
+						});						
+						document.getElementById("inputbeddata").disabled=true;
+						document.getElementById("inputbeddata").text = ""
+						}
+					else {
+						clear_foi_uploads();
+						$('#demo_fois_none').button('toggle')
+						$("#btngroup_demo_fois").children().each(function(x){ 
+							 $(this).prop('disabled', true);
+						});
+						document.getElementById("inputbeddata").disabled=false;
+						document.getElementById("inputbeddata").text = ""
+					}
+				});
+
+		$("#accback").bind('accordionchange',
+				function () {
+					if ($(this).find('.ui-state-active').length == 0){
+						document.getElementById("inputbackgroundfile").disabled=false;
+						document.getElementById("inputbackgrounddata").disabled=true;
+					}
+					else {
+						document.getElementById("inputbedfile").disabled=true;
+						var control = $("#inputbackgroundfile");
+						control.replaceWith( control = control.clone( true ) );
+						document.getElementById("inputbackgroundfile").disabled=true;
+						document.getElementById("inputbackgrounddata").disabled=false;
+					}
+				});
+			
+		});
+
+		function viewBoxClick(){
+			var minHeight = 300;
+			var maxHeight = 500;			
+			// resize to the expanded treeview as long as it is less than 500			
+			if ($("#ucsc").height() <= maxHeight) {
+				var oldHeight = $(".slimScrollDiv").height();
+				//$(".slimScrollDiv").css("height", $('#ucsc').height()+'px');
+				$(".slimScrollDiv").height($('#ucsc').height());
+				$("#treeview-inner").height($("#treeview-inner").height() + $(".slimScrollDiv").height() - oldHeight);
+
+			}
+			else if ($("#ucsc").height() > maxHeight){
+				//$(".slimScrollDiv").css("height",maxHeight + 'px');
+				$(".slimScrollDiv").height(maxHeight);
+				$("#treeview-inner").height(maxHeight);
+			}
+
+		}
+		
+		//prevents user from submitting form by accidentally pressing the enter key
+		function stopRKey(evt) { 
+			var evt = (evt) ? evt : ((event) ? event : null); 
+			var node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null); 
+			if ((evt.keyCode == 13) && (node.type=="text"))  {return false;} 
+		} 
+
+		function changeCheckedStateTreeView(checkAll){
+			if (checkAll == true){
+				$('#ucsc').checkboxTree('expandAll');
+				viewBoxClick();
+			}
+			else {
+				$('#ucsc').checkboxTree('collapseAll');
+				viewBoxClick();
+			}
+		}
+
+		function treeviewCheckAll(){
+			$("#ucsc").children().find(':checkbox').prop("checked", true);
+		}
+		function treeviewUncheckAll(){
+			$("#ucsc").children().find(':checkbox').prop("checked", false);
+		}
+
+		document.onkeypress = stopRKey; 
+
+</script>
+</head>
+<body bgcolor="#A8D5FF" style="width: 1000px">
+
+	<div class="topbar">
+		<div class="topbar-inner">
+			<div class="container-fluid">
+				<a class="brand" href="./" style="font-family:Futura,'Helvetica Neue', Arial">
+					<img width="200px" src="static/images/GRLogo.png" />
+				</a>
+				<ul class="pull-right">
+					<li><a href="./overview">Overview</a></li>
+					<li><a href="./news">News</a></li>
+					<li><a href="./demo">Demo</a></li>
+					<li><a href="./cite">How to Cite</a></li>
+					<li><a href="./help">Help</a></li>
+<!-- <div>
+					<li><a href="./google">Google Group</a></li>
+					<li><img width="30px" src="static/new-icon.jpg" alt="New: GenomeRunnerSNP Google Groups" /></li>
+</div> -->
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div id="content">
+		<form action="query" method="post" enctype="multipart/form-data">
+			<div class="well" style="margin-top: 20px;">
+			<h3>GenomeRunnerSNP: Annotation, enrichment, and similarity analyses of sets of SNPs</h3>
+			<label >
+			More that 80&#37; of phenotype-associated SNPs fall in non-coding regions &#40;Hindorff, L. A. et al. Potential etiologic and functional implications of genome-wide association loci for human diseases and traits. Proc. Natl Acad. Sci. USA 106, 9362&#45;9367 &#40;2009&#41;&#41;, making their functional impact less clear. GenomeRunnerSNP is a tool for automating functional interpretation of individual SNPs and a set of SNPs as a whole by considering their co-localization with functional genome annotation data. The data are mirrored from the UCSC genome database and contain >6,000 tracks for the human genome. <br><br>First, GenomeRunnerSNP annotates each SNP by its overlap with genome annotation features. Second, GenomeRunnerSNP calculates enrichment p-values for each set of SNPs - genome annotation feature, and visualize the results as a heatmap. Third, GenomeRunnerSNP calculates pair-wise correlation coefficients among sets of SNPs, based on their enrichment similarity.
+			</label>
+			</div>
+			<div class="well">
+				<div style="float:right;margin-top: 10px;">
+					<b style="font-size:150%;">Organism:</b>
+					${paths.org_as_html(id="org")} 
+			<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</div> 
+				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</h3>
+				<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
+					<h4 style="float:left;">Bed Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
+					<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
+            			</div>
+        		<div id="div_demo_fois">
+            		<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNPs file sets: </h4>
+            		<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
+            			<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
+	            			${demo_snps}
+            		</div>
+            	</div>
+					<div id="accfoi" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+				        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>
+						<div>          
+							<table>
+						    	<tr>
+								    <td>
+										<textarea id="inputbeddata" rows=5 cols=30 style="margin:10px" name="bed_data" disabled>
+										</textarea>
+									</td>
+									<td>
+										<label stlye="float:left">
+											Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Example&#58; chr17   7579222   7579223   &#91;Optional: rs104255   .   .&#93;. Note that the end coordinate should be the start coordinate + 1. If a SNP has the same start and end coordinates, the end coordinate will set to start + 1. If a region has length &#62;1, coordinates of its middle point will be used. Pasting the data restricts the analysis to one set of SNPs&#59; to analyze multiple sets, upload them as separate files using 'Choose Files' button.
+										</label>
+									</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+			</div>	
+			<div class="well">
+				<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'universe', used to calculate the probability of SNPs in a set to overlap a genome annotation feature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</h3>
+				<b style="font-size:120%; margin-left: 10px"></b>
+					<div class="accordion" style="padding-bottom: 1em;list-style:none">        
+					<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
+						<div style="height=100px">       
+									Bed File:
+									<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />		
+									<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
+								        <h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>							        
+								    <table style="margin-bottom:0px; padding-bottom:0px">
+								    	<tr>
+										    <td>
+												<textarea id="inputbackgrounddata" rows=5 cols=30 style="margin:10px" name="background_data" disabled>
+												</textarea>
+											</td>
+											<td>
+												<label stlye="float:left">
+													The background selection is critical for the correct p-value calculation using hypergeometric distribution. We are calculating the probability of k SNPs co-localizing with a genomic feature out of n in a set, drawn from the population of SNPs of size N &#40;background&#41; containing exactly K SNPs co-localized with that genomic feature. A set of SNPs being analyzed should be a subset of the background, or 'universe' of all SNPs. If that is not the case, non-background SNPs are appended to the background, generating a warning.<br><br>
+													Default background selection &#40;all SNPs from the latest organism-specific database&#41; is suitable when genome-wide study was performed. When using SNPs identified by a microarray, it is advisable to use all SNPs on that array as a background.
+												</label>
+											</td>
+										</tr>
+									</table>
+							</div>
+						</div>
+					</div>	
+			</div>	
+			<div class="well">
+				<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Default genome annotation features:</h3>
+				${custom_gfs}
+			
+				<div class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;"> 
+	             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
+	             <div >	
+					<ul>
+						<li id="list-bedbackground">					
+							Bed Files (.bed or .gz):
+							<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
+							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">How my data should look like?</a>
+						</li>				
+					</ul>
+					<div id="grfdroplist" style="display: table;">	
+						<label>Enter genome annotation names:</label>
+						<ol style="left: 9px;position: relative; padding-top:10px;padding-bottom:10px;">        
+							<li id="grf-list" class="input-text">
+								<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
+							</li>
+							<div id="grfs-auto">
+								<div class="default">Type the names of the genome annotation features to run</div>
+								<ul id="feed">
+								</ul>
+							</div>
+						</ol>	
+							<div style="display: table-row;">
+					            <div id="divCheckBox" style="margin:10px; display: table-cell; verticle-align: top;">
+									<label >Select genome annotation features: </label>
+										<div>
+											<a class="btn" style="margin-top: 9px;"onClick="changeCheckedStateTreeView(true)">Expand All</a>
+											<a class="btn" style="margin-top: 9px;" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
+											<a class="btn" style="margin-top: 9px;" onClick="treeviewCheckAll()">Select All</a>
+											<a class="btn" style="margin-top: 9px" onClick="treeviewUncheckAll()">Deselect all</a>
+										</div>
+									<div id="treeview-outer" style="padding-top:10px;">
+										<div id="treeview-inner" onClick="viewBoxClick()">
+												${paths.as_html(id="ucsc")}
+										</div>
+									</div>
+								</div>
+								<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
+										<label style="">Functional genome annotation data are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run annotation&#47;enrichment analyses with, use search box to find them. It is also advisable to search for functional genomic elements of interest to see which tracks are available, like 'H3K4me1'. Use checkboxes in the collapsible treeview to select groups of functional genomic elements</label>
+								</div>
+								
+						</div>
+					</div>			 
+
+			</div>
+			</div>
+			</div>	
+
+			<div class="well">
+				<table width="100%">
+					<tr>
+
+						<td id="td_submit" style="width:90px">
+							<button class="btn btn-primary" type="submit" >Submit job</button>
+	<img class="helptooltip" title="Run annotation and enrichment analyses for each set of SNPs" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						</td>
+						<td id="td_submit" style="width:170px">
+							
+						</td>
+					</tr>
+				</table>
+				<br>
+				<div class="ui-state-highlight ui-corner-all">
+					<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
+					</span>GenomeRunner works best in Chrome (Windows) or Internet Explorer 9+ (no compatibility mode). Mac users, use Safari.</p>
+				</div>
+
+			</div>
+		</form>
+	</div>
+</body>
+</html>
+

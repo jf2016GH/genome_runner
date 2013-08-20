@@ -16,6 +16,8 @@ class PathNode(defaultdict):
 	# each of the top level folders in the db directory are
 	# considered to contain organism data.
 
+	static_dir = os.path.join("frontend","static")
+
 	def __init__(self):
 		defaultdict.__init__(self, PathNode)
 		self.files = []
@@ -29,7 +31,6 @@ class PathNode(defaultdict):
 		if os.path.exists("blacklistedgf.txt"):
 			with open("blacklistedgf.txt") as f:
 				blacklist = [line.strip() for i,line in enumerate(f)]
-		print "BLACKLIST: ",blacklist
 		# used to generate a json list of gfs
 		gfs = []
 		int_data = len(base.split("/"))
@@ -51,7 +52,7 @@ class PathNode(defaultdict):
 			for f in node.files:
 				if base_name(f) not in blacklist:
 					 gfs.append({"caption": str(basename(os.path.splitext(f)[0])),"value":f})
-		f = open("static/gfs.php","wb")
+		f = open(os.path.join(self.static_dir,"gfs.php"),"wb")
 		f.write(json.dumps(gfs))
 		f.close()
 

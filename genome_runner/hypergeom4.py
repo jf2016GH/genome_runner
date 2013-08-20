@@ -1,10 +1,4 @@
 #!/usr/bin/env python2
-"""
-Analysis of several FOI files against several GFs using Fisher's exact test. Best used for SNP set analysis, using whole SNP database as a spot background.
-sys.argv[1] - text file with FOI file names. Include full, or relative path, if needed.
-sys.argv[2] - text file with GF file names. Include full, or relative path, if needed.
-sys.argv[3] - spot background file
-"""
 
 import argparse
 import collections
@@ -24,7 +18,7 @@ import gzip
 import tarfile
 import traceback
 import StringIO
-import bedfilecreator
+import bin.bedfilecreator as bedfilecreator
 import textwrap
 import subprocess
 import sys
@@ -407,7 +401,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
 if __name__ == "__main__":
     global print_progress
     print_progress = True
-    parser = argparse.ArgumentParser(description="Create a matrix of hypergeometric p-values for genomic intersections.")
+    parser = argparse.ArgumentParser(description="Analysis of several FOI files against several GFs using Fisher's exact test or Chi-square. Best used for SNP set analysis, using whole SNP database as a spot background.")
     parser.add_argument("fois", nargs=1, help="Text file with FOI file names (SNPs only).") 
     parser.add_argument("gfs" ,nargs=1, help="Text file with GF file names, gzipped.") 
     parser.add_argument("bg_path", nargs=1, help="Path to spot background file (SNPs only).")
