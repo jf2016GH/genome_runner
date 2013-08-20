@@ -1,4 +1,5 @@
  var Heatmap, getConditionNames, getGeneExpressions, isNumber,cur_heatmap,cur_tooltip_matrix, tooltip_matrices = {},log_transform_color = false;
+  sign = function(x) { return x > 0 ? 1 : x < 0 ? -1 : 0; }
  // ### helper functions
    getGeneExpressions = function(genes, conditionNames) {
       return genes.map(function(gene) {
@@ -25,6 +26,7 @@
      
       return this.render();
     },
+
     render: function() {    
       var cell_size, clusterColor, clusters, columns, conditionNames, conditionNamesMargin, extent, geneExpressions, geneNames, geneNamesMargin, getRow, heatmap, heatmapColor, height, margin, rows, textScaleFactor, width, x, y, legend;
       geneExpressions = this.model.get("geneExpressions");
@@ -37,30 +39,34 @@
 
       // Sets the color range
       var num_range, col_range,legend;
-      legend = [0,-10,-40,-60];
-      c_max = color_range.max;
+      c_max_log = sign(color_range.max) * Math.pow(10,Math.abs(color_range.max));
+      c_min_log = sign(color_range.min) * Math.pow(10,Math.abs(color_range.min));
+      c_max = color_range.max
       c_min = color_range.min
       // case of complete over representation
-      if (color_range.min >=0 && color_range.max >=0){
+      if (c_min >=0 && c_max >=0){
         num_range = [color_range.min,color_range.max];
         col_range = ["white","red"];
-        diff= color_range.max - color_range.min;       
+        diff= c_max - c_min;       
         legend = [c_min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max];
+        legend_log = [c_min_log,diff*.25+c_min_log,diff*.50+c_min_log,diff*.75+c_min_log,c_max_log];
         
       } 
       // case of complete underrepresentation
-      else if (color_range.min<=0 && color_range.max<=0){
+      else if (c_min<=0 && c_max<=0){
         num_range = [color_range.min,color_range.max];
         col_range = ["green","white"];
-        diff= color_range.min + color_range.max;   
+        diff= c_min + c_max;   
         console.log("diff"+diff);
         legend = [c_min,diff*.75+c_max,diff*.50+c_max,diff*.25+c_max,c_max];
+        legend_log = [c_min_log,diff*.75+c_max_log,diff*.50+c_max_log,diff*.25+c_max_log,c_max_log];
       }
-      else if (color_range.min<=0 && color_range.max >= 0){
-        num_range = [color_range.min,0,color_range.max];
+      else if (c_min<=0 && c_max >= 0){
+        num_range = [color_range.min,0,c_max];
         col_range = ["green","white","red"];
-        diff= color_range.max - color_range.min;       
+        diff= c_max - color_range.min;       
         legend = [c_min,c_min*.50,0,c_max*.5,c_max];
+        legend_log = [c_min_log,c_min_log*.50,0,c_max_log*.5,c_max_log];
       }
       console.log(num_range);
       console.log(col_range);
@@ -93,6 +99,7 @@
       columns.append("text").attr("x", 6).attr("y", x.rangeBand() / 2).attr("dy", "-.5em").attr("dx", ".5em").attr("text-anchor", "start").attr("transform", "rotate(45)").text(function(d, i) {
         return conditionNames[i];
       });
+
       // Create the legend
       var root = "svg#"+this.el.getAttribute("id");
       d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
@@ -103,7 +110,7 @@
           return d;
         });
 
-       d3.select(root).selectAll(".legend").data(legend).enter().append("text").attr("class","legend").attr("x", function(d, i) {
+       d3.select(root).selectAll(".legend").data(legend_log).enter().append("text").attr("class","legend").attr("x", function(d, i) {
                       console.log(d);
                     return (i * cell_size) +15;
                 })
@@ -120,7 +127,7 @@
         if (val < 0) {sign = -1;}
         return sign * Math.log(Math.abs(val)) / Math.LN10;
       }
-
+     
      
       cur_row = -1;
       getRow = function(row) {
@@ -236,7 +243,7 @@ function generate_heatmaps() {
             }
           }
         }
-          return {"min": min, "max": max};
+          return {"min": min, "max": max };
        }
 
       color_log10 = function(val) {
