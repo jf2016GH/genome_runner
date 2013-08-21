@@ -24,12 +24,10 @@ username = 'anonymous'
 password = ''
 
 logger = logging.getLogger('genomerunner.dbcreator')
-hdlr = logging.FileHandler('genomerunner_dbcreator.log')
-hdlr_std = StreamHandler()
+hdlr = logging.FileHandler('genomerunner_dbcreator')
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
-logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
 ftp = ""
@@ -397,12 +395,11 @@ def convert_bed_to_bigbed(organism):
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in ../downloads.  Converted files are placed in ../released. To use database in GenomeRunner, place contents of /released into ../../data')
-	parser.add_argument('--organism','-g', help="The UCSC code of the organism to be downloaded (example:'hg19' for (human))")
+	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
+	parser.add_argument('--organism','-g', help="The UCSC code of the organism to be installed (example:'hg19' for (human))")
 	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
 	parser.add_argument('--bigbed','-b', help="Convert all .gz files to .bb files.  Deletes old .gz files after conversion. Requires --organism.", action='store_true')
 	parser.add_argument('--max','-m',help="Limit the number of each feature type to install",type=int)
-	parser.add_argument('--set_data_dir',"-d",help="Set the data_dir in grsnp config file",action="store_true")
 
 
 	args = vars(parser.parse_args())
@@ -411,7 +408,7 @@ if __name__ == "__main__":
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server)
 	ftp.login(username,password)
-	outputdir=os.path.join(os.getcwd(),'released')
+	outputdir=os.path.join(os.getcwd(),'grsnp_db')
 	if args['bigbed'] == True and args['organism'] is not None:
 		convert_bed_to_bigbed(args['organism'])
 		sys.exit()
@@ -426,6 +423,10 @@ if __name__ == "__main__":
 	else:
 		print "Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
-	if args["set_data_dir"]:
-		server.modify_config("data_dir",outputdir,server.config_path)
-	print "FINISHED: Downloaded files from UCSC are placed in /downloads.  Converted files are placed in /released. To use database in GenomeRunner, place contents of /Released into ../../data"
+
+
+	root_dir = os.path.dirname(os.path.realpath(__file__))
+	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
+	with open("grsnp_db_readme.txt","wb") as writer:
+		writer.write(readme)
+	print "FINISHED: Downloaded files from UCSC are placed in ./downloads.  Database created in ./grsnp_db"

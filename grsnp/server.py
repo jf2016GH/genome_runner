@@ -63,8 +63,8 @@ class WebUI(object):
 		self._index_html = {}
 
 	@cherrypy.expose
-	def index(self):
-		organism = sett["default_organism"]
+	def index(self,organism=None):
+		if not organism: organism = sett["default_organism"]
 		if DEBUG_MODE or not organism in self._index_html:
 			paths = PathNode()
 			paths.name = "Root"
@@ -93,15 +93,15 @@ class WebUI(object):
 				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=None, default_background = "",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
-		while (os.path.exists(os.path.join("uploads",id))):
+		while (os.path.exists(os.path.join(uploads_dir,id))):
 			id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
-
-		upload_dir = os.path.join("uploads",str(id))
+		res_dir = os.path.join(results_dir,str(id))
+		upload_dir = os.path.join(uploads_dir,str(id))
 		os.mkdir(upload_dir)
 		os.mkdir(os.path.join(upload_dir,"fois"))
 		os.mkdir(os.path.join(upload_dir,"gfs"))
-		results_dir = os.path.join("results",str(id))
-		os.mkdir(results_dir)
+		res_dir = os.path.join(results_dir,str(id))
+		os.mkdir(res_dir)
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
 		list_gfs = []
@@ -278,7 +278,7 @@ class WebUI(object):
 
 
 		# write the enrichment settings.
-		path = os.path.join(results_dir, ".settings")
+		path = os.path.join(res_dir, ".settings")
 		set_info = {"Jobname:": str(id),
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
 					"Background:": background_name,
@@ -292,17 +292,18 @@ class WebUI(object):
 		# We know it is done when a file appears in the "results" directory
 		# with the appropriate ID.
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,results_dir,runset['job_name'],True))				
+				args=(fois,gfs,b,res_dir,runset['job_name'],True))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
 	@cherrypy.expose
 	def result(self, id):
-		path = os.path.join("results", id)
+		path = os.path.join(results_dir, id)
 		params = {}
 		params["run_id"] = id
 		params["detailed"] = "Results not yet available"
 		params["matrix"] = "Results not yet available"
+		print "PATH ",path
 		if not os.path.exists(path):  #If file is empty...
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)
@@ -338,7 +339,7 @@ class WebUI(object):
 				params["detailed"] = f.read()
 
 		
-		foi_names_path = os.path.join(os.path.join("uploads", id),".fois")
+		foi_names_path = os.path.join(os.path.join(uploads_dir, id),".fois")
 		if os.path.exists(foi_names_path):
 			with open(foi_names_path) as f:
 				params["fois"] = [basename(x).split(".")[0] for x in f.read().split("\n") if x != ""]
@@ -371,7 +372,7 @@ class WebUI(object):
 		cherrypy.response.headers['Content-Type'] = 'application/json'
 		trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
 		results = {}
-		path = os.path.join("results", run_id)
+		path = os.path.join(results_dir, run_id)
 		matrix_path = os.path.join(path,"matrix.txt")
 		# Load clustered matrix
 		matrix_clust_path  = os.path.join(path,"clustered.txt")
@@ -439,7 +440,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
-		annotation_path = os.path.join(os.path.join("results",run_id,"annotations",foi_name + ".txt"))
+		annotation_path = os.path.join(os.path.join(results_dir,run_id,"annotations",foi_name + ".txt"))
 		results = []
 		if os.path.exists(annotation_path):
 			with open(annotation_path) as f:
@@ -456,7 +457,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_enrichment(self,run_id,foi_name):
-		enrichment_path = os.path.join(os.path.join("results",run_id,"enrichment",foi_name + ".txt"))
+		enrichment_path = os.path.join(os.path.join(results_dir,run_id,"enrichment",foi_name + ".txt"))
 		results = []
 		if os.path.exists(enrichment_path):
 			with open(enrichment_path) as f:
@@ -488,7 +489,7 @@ class WebUI(object):
 	def get_detailed(self,run_id):
 		""" loads results from detailed results file
 		"""
-		detailed_path,results = os.path.join("results", run_id,"detailed.txt"),{"detailed": ""}		 
+		detailed_path,results = os.path.join(results_dir, run_id,"detailed.txt"),{"detailed": ""}		 
 		if os.path.exists(detailed_path):
 			with open(detailed_path) as f:
 				results["detailed"] = f.read()
@@ -498,7 +499,8 @@ class WebUI(object):
 	def get_progress(self, run_id):
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
-		progress_path = os.path.join(os.path.join("results", run_id),".prog")
+		print results_dir
+		progress_path = os.path.join(os.path.join(results_dir, run_id),".prog")
 		if os.path.exists(progress_path):
 			with open(progress_path) as f:
 				p = json.loads(f.read())
@@ -507,7 +509,7 @@ class WebUI(object):
 	@cherrypy.expose
 	def get_log(sefl,run_id):
 		results = {"log": ""}
-		log_path = os.path.join(os.path.join("results", run_id),"gr_log.txt")
+		log_path = os.path.join(os.path.join(results_dir, run_id),"gr_log.txt")
 		if os.path.exists(log_path):
 			with open(log_path) as f:
 				results["log"] = f.read()
@@ -515,7 +517,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def enrichment_log(self, id):
-		with open(os.path.join("results",id+".log")) as sr:
+		with open(os.path.join(results_dir,id+".log")) as sr:
 			x = sr.read()
 			return "<p>{}</p>".format(x.replace("\n","<br/>"))
 
@@ -543,93 +545,49 @@ class WebUI(object):
 def base_name(path):
     return ".".join(os.path.basename(path).split(".")[:-1])
 
-def create_default_config(config_path):
-	'''Create a default config file'''
-	logger.info("Creating default config file at {}".format(config_path))
-	default = {"data_dir":"",
-				"run_files_dir":"",
-				"default_organism":"hg19",
-				"custom_dir": os.path.join(os.path.dirname(config_path),"custom_data")
-				}	
-
-	with open(config_path,"wb") as writer:
-		for k,v in default.items():
-			writer.write(k +"\t"+v+ "\n")
-
-def load_config(config_path):
-	global sett
-	config = [x.split("\t") for x in  open(config_path).read().split("\n") if x !=""]
-	for k,v in config:
-		sett[k] = v
-
-def modify_config(key,value,config_path):
-	'''Reads in the config file. Modifies 
-	'''
-	global sett
-	load_config(config_path)
-	old_val = sett[key]
-	sett[key] = value
-	with open(config_path,"wb")as writer:
-		for k,v in sett.items():
-			writer.write(k+"\t"+v+"\n")
-	print "Config file modified: \"{}\" changed from \"{}\" to \"{}\"".format(key,old_val,value)
-
-# read in config file
-config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"GRCONFIG")
-if not os.path.exists(config_path): create_default_config(config_path)
-load_config(config_path)
 
 if __name__ == "__main__":
-	global static_dir,results,media,root_dir
+	global static_dir,results_dir,media,root_dir,sett,uploads_dir
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
-	parser = argparse.ArgumentParser(description="Starts the GenomeRunner server.")
+	parser = argparse.ArgumentParser(description="Starts the GenomeRunner server. Run from the directory containing the database (/grsnp_db) or use --data_dir")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Required to start server.") 
-	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database" )
-	parser.add_argument("--run_files_dir","-r", nargs="?", help="Set the directory containing the results and uploads for all of the analysis")
-	parser.add_argument("--default_organism","-o", nargs="?", help="The UCSC code of the default organism (i.e. 'hg19')")
-	parser.add_argument("--config","-c",action="store_true",help="Print the config settings")
+	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database (/grsnp_db). Use absolute path.", default="")
+	parser.add_argument("--default_organism" , "-o", nargs="?", help="UCSC code for the default organism to use. Data for the organism must exist in the local GRSNP database.", default="hg19")
 	args = vars(parser.parse_args())
 	port = args["port"]
 
+	data_dir = args["data_dir"]
 
-	# read in config file
-	config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"GRCONFIG")
-	if not os.path.exists(config_path): create_default_config(config_path)
-	load_config(config_path)
-	if args["config"]:
-		print "Config file located at: {}".format(config_path)
-		print "Config values: ", sett
-	# modifies the config file with values provided by user
-	for k in ["data_dir","run_files_dir","default_organism"]:
-		v = args[k] 
-		if v:
-			modify_config(k,v,config_path)
+	# global settings used by GR
+	sett = {"data_dir":os.path.join(data_dir,"grsnp_db"),
+				"run_files_dir": os.path.join(data_dir,"run_files_dir"),
+				"default_organism":"hg19",
+				"custom_dir": os.path.join(data_dir,"custom_data")
+				}	
+
 
 
 	#validate data directory
-	if sett["data_dir"] == "":
-		print "ERROR: Database directory not set. Run bedfilecreator in directory that the database should be located in or use --data_dir to set directory."
-		sys.exit()
 	if not os.path.exists(sett["data_dir"]):
-		print "ERROR: {} does not exist.".format(sett["default_organism"],sett["data_dir"],os.path.join(sett["data_dir"],sett["default_organism"]))
+		print "ERROR: {} does not exist.".format(os.path.join(sett["data_dir"]))
 		sys.exit()
 	if not os.path.exists(os.path.join(sett["data_dir"],sett["default_organism"])):
 		print "ERROR: Database for default organism {} does not exist. Either change the default organism or add data for that organism to the database at {} using the bedfilecreator".format(sett["default_organism"],sett["data_dir"])
 		sys.exit()
 
 	# validate run_files directory
-	results = os.path.join(sett["run_files_dir"],"results")
-	uploads = os.path.join(sett["run_files_dir"],"uploads")
-	if sett["run_files_dir"] == "":
-		print "ERROR: Run Files directory not set. Use --run_files_dir to set."		
-	if not os.path.exists(results):
-		os.mkdir(results)
-	if not os.path.exists(uploads):
-		os.mkdir(uploads)
-
-
+	if not os.path.exists(sett["run_files_dir"]): os.mkdir(sett["run_files_dir"])
+	results_dir = os.path.join(sett["run_files_dir"],"results")
+	uploads_dir = os.path.join(sett["run_files_dir"],"uploads")	
+	if not os.path.exists(results_dir):
+		os.mkdir(results_dir)
+	if not os.path.exists(uploads_dir):
+		os.mkdir(uploads_dir)
+	print uploads_dir
+	print "result_dir", results_dir
+	print "result_dir_abs", os.path.abspath(results_dir)
 	if port:
 		cherrypy.server.max_request_body_size = 0
 		cherrypy.config.update({
@@ -638,13 +596,12 @@ if __name__ == "__main__":
 		conf = {os.path.join(root_dir,"/static"): 
 					{"tools.staticdir.on": True,
 					"tools.staticdir.dir": static_dir},
-				os.path.join(root_dir,"/results"): 
+				results_dir: 
 					{"tools.staticdir.on": True,
-					"tools.staticdir.dir": os.path.join(sett["run_files_dir"],"results")},
-				os.path.join(root_dir,"/media"):
-					{"tools.staticdir.on": True,
-					"tools.staticdir.dir": media},
+					"tools.staticdir.dir": os.path.abspath(results_dir)}
 				}
+
+		print conf
 			
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 

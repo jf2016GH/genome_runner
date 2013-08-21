@@ -169,7 +169,7 @@
 						document.getElementById("inputbackgrounddata").disabled=true;
 					}
 					else {
-						document.getElementById("inputbedfile").disabled=true;
+						document.getElementById("inputbackgroundfile").disabled=true;
 						var control = $("#inputbackgroundfile");
 						control.replaceWith( control = control.clone( true ) );
 						document.getElementById("inputbackgroundfile").disabled=true;
@@ -327,6 +327,7 @@
 			<div class="well">
 				<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Default genome annotation features:</h3>
 				${custom_gfs}
+				<br>
 			
 				<div class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;"> 
 	             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>

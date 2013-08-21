@@ -1,2 +1,3 @@
 recursive-include grsnp/frontend *
 recursive-include grsnp/custom_data *
+include grsnp/grsnp_db_readme.txt
