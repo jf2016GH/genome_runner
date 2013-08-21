@@ -107,7 +107,7 @@ def extract_bed6(outputpath,datapath,colnames):
 
 		logger.info( "Outpath is: {}".format(outputpath))
 		with gzip.open(datapath) as dr:
-			with gzip.open(outputpath,"wb") as bed:
+			with open(outputpath,"wb") as bed:
 				while True:
 						line = dr.readline().strip('\r').rstrip('\n')
 						if line == "":
@@ -123,7 +123,7 @@ def extract_bed6(outputpath,datapath,colnames):
 def extract_bed5(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score']
 	if _check_cols(colnames,colstoextract):
-		with gzip.open(outputpath,"wb") as bed:
+		with open(outputpath,"wb") as bed:
 			with gzip.open(datapath) as dr:
 				while True:
 					line = dr.readline().rstrip('\r').rstrip('\n')
@@ -139,7 +139,7 @@ def extract_bed5(outputpath,datapath,colnames):
 def extract_bed4(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name']
 	if _check_cols(colnames,colstoextract):
-		with gzip.open(outputpath,"wb") as bed:
+		with open(outputpath,"wb") as bed:
 			with gzip.open(datapath) as dr:
 				while True:
 					line = dr.readline().rstrip('\r').rstrip('\n')
@@ -154,7 +154,7 @@ def extract_bed4(outputpath,datapath,colnames):
 
 def extract_bed3(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd']
-	with gzip.open(outputpath,"wb") as bed:
+	with open(outputpath,"wb") as bed:
 		with gzip.open(datapath) as dr:
 			while True:
 				line = dr.readline().strip('\r').rstrip('\n')
@@ -166,11 +166,13 @@ def extract_bed3(outputpath,datapath,colnames):
 
 def extract_genepred(outputpath,datapath,colnames):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
-	exonpath = outputpath.split(".")[0]+"_exon.gz"
+	exonpath = outputpath.split(".")[0]+"_exon"
+	# removes the .temp file of the exon, to prevent duplicate data from being written
+	if os.path.exists(exonpath+".temp"): 
+		os.remove(exonpath+".temp")
 	with gzip.open(datapath) as dr:
-		with gzip.open(outputpath,"wb") as bed:
-			from os.path import basename
-			with gzip.open(exonpath+".temp","wb") as exonbed:
+		with open(outputpath,"wb") as bed:
+			with open(exonpath+".temp","wb") as exonbed:				
 				while True:
 					line = dr.readline().rstrip('\r').rstrip('\n')
 					if line == "":
@@ -179,18 +181,27 @@ def extract_genepred(outputpath,datapath,colnames):
 					# extract the gene data inserts a blank for score
 					row = [r['chrom'],r['txStart'],r['txEnd'],''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
 					bed.write("\t".join(map(str,row))+"\n")
+					
 					# extract the exon data
 					for (s,e) in zip(r["exonStarts"].split(","),r["exonEnds"].split(",")):
 						if s != '':
 							rowexon = [r['chrom'],s,e,''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
 							exonbed.write("\t".join(map(str,rowexon))+"\n")
-	# remove the .temp extension from the exon file 
-	os.rename(exonpath+".temp",exonpath)
+	# sort the file and convert to bgzip format
+	sort_convert_to_bgzip(exonpath+".temp",exonpath + ".bed.gz")
+
+def sort_convert_to_bgzip(path,outpath):
+	logger.info("Converting {} to bgzip format.".format(path))
+	script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
+	out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+	out.wait()
+	os.remove(path)# remove the .temp file extension to activate the GF		
+	os.rename(outpath+".gz.temp",outpath)
 
 def extract_rmsk(outputpath,datapath,colnames):
 	colstoextract = ['genoName','genoStart','genoEnd','repClass', 'strand','swScore']
-	with gzip.open(outputpath,"wb") as bed:
-		with gzip.open(datapath) as dr:
+	with open(outputpath,"wb") as bed:
+		with open(datapath) as dr:
 			while True:
 				line = dr.readline().strip('\r').rstrip('\n')
 				if line == "":
@@ -251,6 +262,8 @@ preparebed = {"bed 6" : extract_bed6,
 				
 numdownloaded = collections.defaultdict(int)
 
+
+
 def create_feature_set(trackdbpath,organism,max_install):
 	outputdir = os.path.dirname(trackdbpath)
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
@@ -267,22 +280,24 @@ def create_feature_set(trackdbpath,organism,max_install):
 				if sqlpath != '':
 					logger.info( "converting"+row['tableName']+ " into proper bed format")
 					try:
-						outpath = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"]+".gz")
-						outpath_bb = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"]+".bb")
+						outpath = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"])
 						if not os.path.exists(os.path.dirname(outpath)):
 							os.makedirs(os.path.dirname(outpath))
-						if os.path.exists(outpath) == False and os.path.exists(outpath_bb) == False:
+						if os.path.exists(outpath) == False:
 							# removes the .temp file, to prevent duplicate data from being written
 							if os.path.exists(outpath+".temp"):
 								os.remove(outpath+".temp")
 							# converts the ucsc data into propery bed format
-							logger.info( "Converting into proper bed format. {}".format(os.path.splitext(sqlpath)[0] + ".txt.gz"))
+							logger.info( "Converting into proper bed format. {}".format(os.path.splitext(sqlpath)[0]))
 							preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
-							# remove the .temp file extension to activate the GF
-							os.rename(outpath+".temp",outpath)
+
+							# sort the file and convert to bgzip format
+							o_dir = os.path.dirname(outpath)
+							new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+							sort_convert_to_bgzip(outpath+".temp",new_path)
 							added_features.append(outpath)
 						else:
-							logger.info( "{} already exists as .bb or .gz, skipping extraction".format(outpath.replace(".gz","")))							
+							logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))							
 						numdownloaded[row["type"]] += 1
 					except Exception, e:
 						exc = trace.format_exc()
@@ -322,7 +337,7 @@ def create_single_feature(trackdbpath,organism,feature):
 			if sqlpath != '':
 				logger.info( "converting"+f_info['tableName']+ " into proper bed format")
 				try:
-					outpath = os.path.join(outputdir,f_info["grp"],'Tier' + f_info["visibility"],f_info["tableName"]+".gz")
+					outpath = os.path.join(outputdir,f_info["grp"],'Tier' + f_info["visibility"],f_info["tableName"])
 					if not os.path.exists(os.path.dirname(outpath)):
 						os.makedirs(os.path.dirname(outpath))
 					# if the feature is not in the database, add it
@@ -330,11 +345,14 @@ def create_single_feature(trackdbpath,organism,feature):
 						# removes the .temp file, to prevent duplicate data from being written
 						if os.path.exists(outpath+".temp"):
 							os.remove(outpath+".temp")
-						# converts the ucsc data into propery bed format
-						logger.info( "Converting {} into proper bed format.".format(os.path.splitext(sqlpath)[0] + ".txt.gz"))
+						# converts the ucsc data into proper bed format
+						logger.info( "Converting {} into proper bed format.".format(os.path.splitext(sqlpath)[0]))
 						preparebed[f_info["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
-						# remove the .temp file extension to activate the GF
-						os.rename(outpath+".temp",outpath)
+
+						# sort the file and convert to bgzip format
+						o_dir = os.path.dirname(outpath)
+						new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+						sort_convert_to_bgzip(outpath+".temp",new_path)
 					else:
 						logger.info( "{} already exists, skipping extraction".format(outpath))
 					numdownloaded[f_info["type"]] += 1
@@ -375,33 +393,13 @@ def load_tabledata_dumpfiles(datapath):
 			data.append(row)
 	return data
 
-def convert_bed_to_bigbed(organism):
-	""" Converts all .gz files, in the current organism's GF directory, into BigBed format and deletes the original .gz after conversion.
-	"""
-	path_chrominfo_gz = download_ucsc_file(organism,"chromInfo.txt.gz",outputdir)
-	out_dir = os.path.join("released",organism)
-	path_chrominfo = os.path.join(out_dir,"chromInfo.txt")
-	script = """for file in `find . -type f -name '*gz'`; do d=`dirname $file`;  f=`basename $file`;  f=${f%.gz};  gunzip $file && sort -k1,1 -k2,2n $d"/"$f -o $d"/"$f &&  ../../../bedToBigBed $d"/"$f ../chromInfo.txt $d"/"$f".bb" && rm $d"/"$f; done """
-	with open(path_chrominfo, "wb") as writer:
-		writer.write(gzip.open(path_chrominfo_gz, 'rb').read())
 
-	dirs = [name for name in os.listdir(os.path.join("released",organism))
-		if os.path.isdir(os.path.join(out_dir, name))]
-	for d in dirs:
-		logger.info("Converting all .gz to .bb in {}".format(d))
-		os.chdir(os.path.join(out_dir,d))
-		out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
-		out.wait()		
-		tmp =  out.stdout.read()
-		logger.info("BigBed Converter: " + tmp)
-		os.chdir("../../../")
 
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument('--organism','-g', help="The UCSC code of the organism to be installed (example:'hg19' for (human))")
 	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
-	parser.add_argument('--bigbed','-b', help="Convert all .gz files to .bb files.  Deletes old .gz files after conversion. Requires --organism.", action='store_true')
 	parser.add_argument('--max','-m',help="Limit the number of each feature type to install",type=int)
 
 
@@ -412,9 +410,6 @@ if __name__ == "__main__":
 	ftp = ftplib.FTP(ftp_server)
 	ftp.login(username,password)
 	outputdir=os.path.join(os.getcwd(),'grsnp_db')
-	if args['bigbed'] == True and args['organism'] is not None:
-		convert_bed_to_bigbed(args['organism'])
-		sys.exit()
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		create_feature_set(trackdbpath,args['organism'],args["max"])

@@ -600,4 +600,4 @@ if __name__ == "__main__":
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
 	else:
-		print "No socket given. Server not started."
+		print "WARNING: No port given. Server not started. Use --port flag to set port."
