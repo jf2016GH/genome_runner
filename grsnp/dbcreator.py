@@ -283,7 +283,7 @@ def create_feature_set(trackdbpath,organism,max_install):
 						outpath = os.path.join(outputdir,row["grp"],'Tier' + row["visibility"],row["tableName"])
 						if not os.path.exists(os.path.dirname(outpath)):
 							os.makedirs(os.path.dirname(outpath))
-						if os.path.exists(outpath) == False:
+						if os.path.exists(outpath + ".bed.gz") == False:
 							# removes the .temp file, to prevent duplicate data from being written
 							if os.path.exists(outpath+".temp"):
 								os.remove(outpath+".temp")
@@ -341,7 +341,7 @@ def create_single_feature(trackdbpath,organism,feature):
 					if not os.path.exists(os.path.dirname(outpath)):
 						os.makedirs(os.path.dirname(outpath))
 					# if the feature is not in the database, add it
-					if os.path.exists(outpath) == False:
+					if os.path.exists(outpath + ".bed.gz") == False:
 						# removes the .temp file, to prevent duplicate data from being written
 						if os.path.exists(outpath+".temp"):
 							os.remove(outpath+".temp")
