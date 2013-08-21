@@ -1,0 +1,2 @@
+recursive-include grsnp/frontend *
+recursive-include grsnp/custom_data *

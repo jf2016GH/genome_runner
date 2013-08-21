@@ -1,4 +1,7 @@
 test
+build
+dist
+*egg*
 matrix.txt
 TestMatrix.txt
 pcc_matrix.txt

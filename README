@@ -1,35 +1,3 @@
 # Setup
-# Installing dependencies
-pacman -S blas lapack gcc-fortran python2-pip r tcl tk
-pip2 install -r requirements.txt
 
-# Tuning pyBedTools
-
-BEDTools also creates LOTS of tempfiles.
-Open /etc/security/limits.conf and add:
-	*	hard	nofile	1000000
-	*	soft	nofile	1000000
-
-# Project structure
-* data/ contains the BED files and hg19.genome (chromosome lengths) used in analyses
-* genome_runner contains actual Python code:
-	* server.py accepts user input and renders results.
-	* query.py runs analyses.
-* templates/ contains HTML templates. Their data is filled in by Python code before being returned to the user.
-* static/ contains css, js, images, etc.
-* results/ stores user's analysis results in Python "Pickle" format.
-* uploads/ stores user's uploaded BED files.
-
-# Starting the server
-Navigate to the project directory (the same one that this README is in).
-Run
-	python -m genome_runner.server [optional port#]
-
-By default the server is run on port 8081..
-
-
-# Unit testing
-Unit testing done with Nose
-Run from /genome_runner/genom_runner
-nosetests --exe
 

@@ -1,0 +1,4 @@
+default_organism	hg19
+data_dir	/home/lukas/Documents/grdata/released/
+run_files_dir	/home/lukas/Documents/grdata/
+custom_dir	/home/lukas/Documents/grdata/
