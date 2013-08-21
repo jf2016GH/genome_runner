@@ -370,7 +370,7 @@ class WebUI(object):
 		'organism': is used to load detailed labels for the GFs.
 		"""
 		cherrypy.response.headers['Content-Type'] = 'application/json'
-		trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join("data",organism,"trackDb"))
+		trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"],organism,"trackDb"))
 		results = {}
 		path = os.path.join(results_dir, run_id)
 		matrix_path = os.path.join(path,"matrix.txt")
@@ -499,7 +499,6 @@ class WebUI(object):
 	def get_progress(self, run_id):
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
-		print results_dir
 		progress_path = os.path.join(os.path.join(results_dir, run_id),".prog")
 		if os.path.exists(progress_path):
 			with open(progress_path) as f:
@@ -571,7 +570,7 @@ if __name__ == "__main__":
 
 	#validate data directory
 	if not os.path.exists(sett["data_dir"]):
-		print "ERROR: {} does not exist.".format(os.path.join(sett["data_dir"]))
+		print "ERROR: {} does not exist. Please run grsnp.dbcreator or use --data_dir.".format(os.path.join(sett["data_dir"]))
 		sys.exit()
 	if not os.path.exists(os.path.join(sett["data_dir"],sett["default_organism"])):
 		print "ERROR: Database for default organism {} does not exist. Either change the default organism or add data for that organism to the database at {} using the bedfilecreator".format(sett["default_organism"],sett["data_dir"])
@@ -585,9 +584,6 @@ if __name__ == "__main__":
 		os.mkdir(results_dir)
 	if not os.path.exists(uploads_dir):
 		os.mkdir(uploads_dir)
-	print uploads_dir
-	print "result_dir", results_dir
-	print "result_dir_abs", os.path.abspath(results_dir)
 	if port:
 		cherrypy.server.max_request_body_size = 0
 		cherrypy.config.update({
@@ -600,8 +596,6 @@ if __name__ == "__main__":
 					{"tools.staticdir.on": True,
 					"tools.staticdir.dir": os.path.abspath(results_dir)}
 				}
-
-		print conf
 			
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 

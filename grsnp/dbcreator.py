@@ -24,10 +24,12 @@ username = 'anonymous'
 password = ''
 
 logger = logging.getLogger('genomerunner.dbcreator')
-hdlr = logging.FileHandler('genomerunner_dbcreator')
+hdlr = logging.FileHandler('genomerunner_dbcreator.log')
+hdlr_std = StreamHandler()
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
+logger.addHandler(hdlr_std)
 logger.setLevel(logging.INFO)
 
 ftp = ""

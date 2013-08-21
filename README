@@ -1,3 +1,14 @@
-# Setup
+===========
+GRSNP Readme
+===========
+
+There are two important modules in this package:
+
+1) grsnp.server
+2) grsnp.dbcreator
+
+
+Installing the database
+=========
 
 
