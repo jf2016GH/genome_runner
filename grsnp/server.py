@@ -10,7 +10,7 @@ from multiprocessing import Process
 import cPickle
 from path import PathNode
 from operator import itemgetter
-from path import basename
+from path import base_name as basename
 import logging
 from logging import FileHandler,StreamHandler
 import json
@@ -69,12 +69,13 @@ class WebUI(object):
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			paths.traverse(os.path.join(sett["data_dir"],sett["default_organism"]))
+			paths.traverse(os.path.join(sett["data_dir"],organism))
 			tmpl = lookup.get_template("index.html")
 			# Load default backgrounds
 
 
-			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]))
+			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
+									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]))
 		return self._index_html[organism]
 
 
@@ -148,6 +149,9 @@ class WebUI(object):
 												break
 											out.write(data)			
 										out_fois.write(f+"\n")
+								script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
+								out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+								out.wait()
 							else:
 								logger.error("id={} Upload file already exists at {}".format(id,f))
 								print "id={} Upload file already exists at {}".format(id,f)
@@ -473,10 +477,14 @@ class WebUI(object):
 		return simplejson.dumps(results)
 
 	@cherrypy.expose
-	def meta(self, tbl,organism="hg19"):
+	def meta(self, tbl,organism):
+		"""Returns the html description from the trackDb file for the specified organism.
+		"""
 		try:
-			trackdb = uscsreader.load_tabledata_dumpfiles("data/{}/trackDb".format(organism))
+			trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"],organism,"trackDb"))
 			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
+			print html 
+			print tbl
 		except Exception, e:
 			print traceback.format_exc()
 			return "<h3>(No data found for {}.)</h3>".format(tbl)
@@ -541,8 +549,9 @@ class WebUI(object):
 		return tmpl.render()
 
 
-def base_name(path):
-    return ".".join(os.path.basename(path).split(".")[:-1])
+def base_name(k):
+    return os.path.basename(k).split(".")[0]
+
 
 
 if __name__ == "__main__":

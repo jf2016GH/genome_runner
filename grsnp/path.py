@@ -3,8 +3,7 @@ import os, fnmatch,json
 from collections import defaultdict
 from collections import Set
 from collections import namedtuple
-def basename(k):
-	return os.path.basename(os.path.splitext(k)[0])
+	
 
 
 
@@ -22,6 +21,7 @@ class PathNode(defaultdict):
 		defaultdict.__init__(self, PathNode)
 		self.files = []
 		self.organisms = []
+		self.cur_org = "hg19"
 
 	# for the autocomplete text box
 	def traverse(self, base):
@@ -51,7 +51,7 @@ class PathNode(defaultdict):
 			# used for the auto-complete text box
 			for f in node.files:
 				if base_name(f) not in blacklist:
-					 gfs.append({"caption": str(basename(os.path.splitext(f)[0])),"value":f})
+					 gfs.append({"caption": str(base_name(os.path.splitext(f)[0])),"value":f})
 		f = open(os.path.join(self.static_dir,"gfs.php"),"wb")
 		f.write(json.dumps(gfs))
 		f.close()
@@ -59,21 +59,21 @@ class PathNode(defaultdict):
     
 	def _li(self, k):
 		if k.startswith("file:"):
-			label = basename(k)
+			label = base_name(k)
 			name = k
 		else:
 			label = name = k
 		s = """\t<li><input name="%s" type="checkbox">
 			<label>%s</label>\n""" % (name,label)
 		if k.startswith("file:"):
-			s = """<a target="_blank" href="meta?tbl=%s">%s</a>""" % \
-				(label, s)
+			s = """<a target="_blank" href="meta?tbl=%s&organism=%s">%s</a>""" % \
+				(label,self.cur_org, s)
 
 		s = """\t<li><input name="%s" type="checkbox">
 			<label>%s</label>\n""" % (name,label)
 		if k.startswith("file:"):
-			s = """<a target="_blank" href="meta?tbl=%s">%s</a>""" % \
-				(label, s)
+			s = """<a target="_blank" href="meta?tbl=%s&organism=%s">%s</a>""" % \
+				(label,self.cur_org, s)
 		return s
 
 	def as_html(self, id=None,):
@@ -112,9 +112,9 @@ class PathNode(defaultdict):
 			return html
 		for snp_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
 			tooltip = "Includes the following files:\n"
-			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f))]:
-				tooltip += "\t"+basename(s) + "\n" 
-			html = html + """<button type="button" onclick="clear_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,basename(snp_dir))
+			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f)) and not f.endswith(".tbi")]:
+				tooltip += "\t"+base_name(s) + "\n" 
+			html = html + """<button type="button" onclick="clear_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,base_name(snp_dir))
 		return html
 
 	def get_backgrounds_combo(self,organism,custom_dir):
@@ -126,7 +126,7 @@ class PathNode(defaultdict):
 		background_dir = os.path.join(custom_dir,"backgrounds",organism)
 		if not os.path.exists(background_dir):
 			return html + "</select>"
-		for bk in [ f for f in os.listdir(background_dir) if os.path.isfile(os.path.join(background_dir,f))]:
+		for bk in [ f for f in os.listdir(background_dir) if os.path.isfile(os.path.join(background_dir,f)) and not f.endswith(".tbi")]:
 			tmp = os.path.join(background_dir,bk)			
 			html = html + "<option value='{}'>{}</option>".format(tmp,tmp.split("/")[-1].split(".")[0])
 		html  = html + "</select>"
@@ -139,11 +139,11 @@ class PathNode(defaultdict):
 			return ""
 		for gfs_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
 			tooltip = "Includes the following files:\n"
-			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f))]:
-				tooltip += "\t"+basename(s) + "\n" 
+			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f)) and not f.endswith(".tbi")]:
+				tooltip += "\t"+base_name(s) + "\n" 
 			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" style="margin: 10px">{}</input>
-						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,basename(gfs_dir),tooltip)
+						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,base_name(gfs_dir),tooltip)
 		return html
 
-def base_name(path):
-    return ".".join(os.path.basename(path).split(".")[:-1])
+def base_name(k):
+    return os.path.basename(k).split(".")[0]

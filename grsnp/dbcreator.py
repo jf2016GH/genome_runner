@@ -430,4 +430,4 @@ if __name__ == "__main__":
 	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
 	with open("grsnp_db_readme.txt","wb") as writer:
 		writer.write(readme)
-	print "FINISHED: Downloaded files from UCSC are placed in ./downloads.  Database created in ./grsnp_db"
+	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))

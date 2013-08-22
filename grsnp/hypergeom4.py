@@ -48,10 +48,13 @@ def get_overlap_statistics(gf,fois):
     out = ""
     try:
         # Runs overlapStatistics with preprocessed background stats if they exist
-
         out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE)
         out.wait()
         tmp = out.stdout.read()
+        if tmp[:6] == "ERROR:": 
+            logger.error(tmp[7:])
+            raise Exception(tmp)
+
         for x in tmp.split("\n")[1:]:
             if x != "":
                 tmp = x.split("\t")
@@ -75,6 +78,7 @@ def get_bgobs(bg,gf,bkg_overlap_path):
             bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
             if len(bg_obs) != 0:
                 return bg_obs[0]
+
     result = get_overlap_statistics(bg,[gf])
     try:
         result = int(result[0]["intersectregions"])
@@ -223,8 +227,8 @@ def read_lines(path):
                 elems.append(line.strip())
     return elems
 
-def base_name(path):
-    return ".".join(os.path.basename(path).split(".")[:-1])
+def base_name(k):
+    return os.path.basename(k).split(".")[0]
 
 def _write_progress(line):
     """Saves the current progress to the progress file
@@ -261,7 +265,7 @@ def check_background_foi_overlap(bg,fois):
             isgood = False
             logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
         if isgood:
-            good_fois.append([x for x in fois if os.path.split(x)[-1] == f["queryfile"]][0])
+            good_fois.append([x for x in fois if base_name(x) == f["queryfile"]][0])
         if foi_in < n_fois:
             logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
@@ -305,7 +309,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True):
     global formatter
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
     sett_path = os.path.join(outdir,".settings")
@@ -339,21 +343,26 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
         logger.addHandler(hdlr)
         logger.propagate = False
 
-        fois = read_lines(fois)
-        gfs = read_lines(gfs)
+        # Read in the paths
+        fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
+        gfs = [line for line in read_lines(gfs) if not line.endswith(".tbi")]
+        if bg_path.endswith(".tbi"):
+            logger.error("Background has invalid extension (.tbi). Terminating run.")
+            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
+            return
 
         foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type']) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         _write_progress("Performing calculations on the background.")
-
         for gf in gfs: 
             current_gf = base_name(gf)      
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf))) 
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
-
+            print "OVERLAPSTATS _GF FOI"
             res = get_overlap_statistics(gf,good_fois) 
+            print "FINISH: OVERLAPSTATS _GF FOI"
 
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
             if bg_obs == None: 
