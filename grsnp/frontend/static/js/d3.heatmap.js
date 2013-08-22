@@ -84,7 +84,7 @@
       margin = {
         top: conditionNamesMargin * textScaleFactor,
         right: 150,
-        bottom: conditionNamesMargin * textScaleFactor,
+        bottom: conditionNamesMargin * textScaleFactor +100,
         left: geneNamesMargin * textScaleFactor
       };
       cell_size = 40;
@@ -102,20 +102,24 @@
 
       // Create the legend
       var root = "svg#"+this.el.getAttribute("id");
+      var legend_y = height + margin.bottom -10
+      var legend_c_size = 50
+      // Draw the boxes
       d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
-             return i*cell_size+10;
-        }).attr("y",200).attr("width",cell_size).attr("height",cell_size).style("fill", function(d) {
+             return i*legend_c_size+40;
+        }).attr("y", legend_y).attr("width",legend_c_size).attr("height",legend_c_size).style("fill", function(d) {
           return heatmapColor(d);
         }).attr("value",function(d){
           return d;
         });
 
+      // Creates the value labels 
        d3.select(root).selectAll(".legend").data(legend_log).enter().append("text").attr("class","legend").attr("x", function(d, i) {
                       console.log(d);
-                    return (i * cell_size) +15;
+                    return (i * legend_c_size) +45;
                 })
-                .attr("y", 200+cell_size + 20)
-                .attr("font-size", "10px")
+                .attr("y", legend_y + legend_c_size + 30)
+                .attr("font-size", "13px")
                 .text(function(d){
                     return d.toPrecision(3);
                 });
