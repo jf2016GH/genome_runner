@@ -274,7 +274,7 @@ def create_feature_set(trackdbpath,organism,max_install):
 		logger.info( 'Processing files {} of {}'.format(prog,num))
 		if row['type'] in preparebed:
 			# this line limits the number of GRF to download
-			if numdownloaded[row["type"]] <= max_install:
+			if numdownloaded[row["type"]] <= max_install or max_install == None:
 				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql","downloads")
 				download_ucsc_file(organism,row["tableName"] + ".txt.gz","downloads")
 				if sqlpath != '':
