@@ -346,7 +346,7 @@ class WebUI(object):
 		else:
 			params["fois"] = ""
 
-		params["zipfile"] = os.path.join(path,"GR_{}.tar.gz").format(id)
+		params["zipfile"] = os.path.join("results",id,"GR_{}.tar.gz").format(id)
 
 		params.update(p)
 		try:
@@ -589,14 +589,14 @@ if __name__ == "__main__":
 		cherrypy.config.update({
 			"server.socket_port": int(port),
 			"server.socket_host":"0.0.0.0"})
-		conf = {os.path.join(root_dir,"/static"): 
+		conf = {"/static": 
 					{"tools.staticdir.on": True,
 					"tools.staticdir.dir": static_dir},
-				results_dir: 
+				"/results": 
 					{"tools.staticdir.on": True,
 					"tools.staticdir.dir": os.path.abspath(results_dir)}
 				}
-			
+		print conf
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
 	else:
