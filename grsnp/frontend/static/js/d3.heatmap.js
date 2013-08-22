@@ -100,29 +100,33 @@
         return conditionNames[i];
       });
 
-      // Create the legend
-      var root = "svg#"+this.el.getAttribute("id");
-      var legend_y = height + margin.bottom -10
-      var legend_c_size = 50
-      // Draw the boxes
-      d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
-             return i*legend_c_size+40;
-        }).attr("y", legend_y).attr("width",legend_c_size).attr("height",legend_c_size).style("fill", function(d) {
-          return heatmapColor(d);
-        }).attr("value",function(d){
-          return d;
-        });
 
-      // Creates the value labels 
-       d3.select(root).selectAll(".legend").data(legend_log).enter().append("text").attr("class","legend").attr("x", function(d, i) {
-                      console.log(d);
-                    return (i * legend_c_size) +45;
-                })
-                .attr("y", legend_y + legend_c_size + 30)
-                .attr("font-size", "13px")
-                .text(function(d){
-                    return d.toPrecision(3);
-                });
+         // Create the legend
+         // NOTE: only works for the #heatmap NOT the #heatmap_cor
+          var root = "svg#"+this.el.getAttribute("id");
+          var legend_y = height + margin.bottom -10
+          var legend_c_size = 50
+          // Draw the boxes
+          d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
+                 return i*legend_c_size+40;
+            }).attr("y", legend_y).attr("width",legend_c_size).attr("height",legend_c_size).style("fill", function(d) {
+              return heatmapColor(d);
+            }).attr("value",function(d){
+              return d;
+            });
+
+          // Creates the value labels 
+           d3.select(root).selectAll(".legend").data(legend_log).enter().append("text").attr("class","legend").attr("x", function(d, i) {
+                          console.log(d);
+                        return (i * legend_c_size) +45;
+                    })
+                    .attr("y", legend_y + legend_c_size + 30)
+                    .attr("font-size", "13px")
+                    .text(function(d){
+                        return d.toPrecision(3);
+                    });
+
+
 
        
       color_log10 = function(val) {
@@ -195,9 +199,12 @@
                 .duration(50)      
                 .style("opacity", 0)});          
       };
+
+
       var divtooltip = d3.select("body").append("div")   
                         .attr("class", "tooltip")               
                         .style("opacity", 0);   
+
       rows = heatmap.selectAll(".row").data(geneExpressions).enter().append("g").attr("class", "row").attr("name", function(d, i) {
         return "gene_" + i;
       }).attr("transform", function(d, i) {
@@ -226,7 +233,12 @@
                 .duration(50)      
                 .style("opacity", 0)}
               }); 
+
+
+
           }
+
+
   });
 
 function generate_heatmaps() {
@@ -266,11 +278,36 @@ function generate_heatmaps() {
         log10_tt_value = false;
         matrix_cor = d3.tsv.parse(matrix_cor)
         matrix = matrix_cor;
-        color_range = matrix_range(matrix_cor,false); // Sets the color max to the largest value in the matrix
+        color_range = {"min": -1,"max": 1}; // Sets the color max to the largest value in the matrix
         console.log("range cor: "+ color_range.min + " : "+ color_range.max);
+
         cur_heatmap = "heatmap_cor";
         cur_tooltip_matrix = matrix_cor_pvalues;    
         create_heatmap("#heatmap_cor", matrix,matrix_cor);
+        // NOTE: Draw the legend for the PCC heatmap. In the future, this should be done in the same place as  the legend for the "#heatmap"
+        var root = "#heatmap_cor svg";
+        var legend_y = $(root).attr("height") -300
+        var legend_c_size = 50
+        // Draw the boxes
+        var PCC_color =  d3.scale.linear().domain([-1,0,1]).range(["green","white","red"]);
+        d3.select(root).selectAll(".l_cell").data([-1,-.5,0,.5,1]).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
+               return i*legend_c_size+40;
+          }).attr("y", legend_y).attr("width",legend_c_size).attr("height",legend_c_size).style("fill", function(d) {
+            return PCC_color(d);
+          }).attr("value",function(d){
+            return d;
+          });
+
+        // Creates the value labels 
+         d3.select(root).selectAll(".legend").data([-1,-.5,0,.5,1]).enter().append("text").attr("class","legend").attr("x", function(d, i) {
+                        console.log(d);
+                      return (i * legend_c_size) +45;
+                  })
+                  .attr("y", legend_y + legend_c_size + 30)
+                  .attr("font-size", "13px")
+                  .text(function(d){
+                      return d.toPrecision(3);
+                  });
 
         matrix_enrich_data = d3.tsv.parse(matrix_data);
         matrix = matrix_enrich_data
@@ -354,7 +391,6 @@ function generate_heatmaps() {
         model: geneExpressionModel
       });
     }
-
 
 
 
