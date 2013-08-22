@@ -401,15 +401,18 @@ if __name__ == "__main__":
 	parser.add_argument('--organism','-g', help="The UCSC code of the organism to be installed (example:'hg19' for (human))")
 	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
 	parser.add_argument('--max','-m',help="Limit the number of each feature type to install",type=int)
+	parser.add_argument("--data_dir" , "-d",  help="Set the directory where the database is to be created. Use absolute path.")
 
 
 	args = vars(parser.parse_args())
 
-
+	if not args["data_dir"]:
+		print "ERROR: --data_dir is not optional"
+		sys.exit()
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server)
 	ftp.login(username,password)
-	outputdir=os.path.join(os.getcwd(),'grsnp_db')
+	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		create_feature_set(trackdbpath,args['organism'],args["max"])
@@ -419,7 +422,7 @@ if __name__ == "__main__":
 	elif args['organism'] is None and args['featurename'] is not None: # Warning in case of only feature name is supplied
 		print "To add a specific feature to the local database, please supply an organism assembly name"
 	else:
-		print "Requires UCSC organism code.  Use --help for more information"
+		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
 
 
