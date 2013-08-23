@@ -79,7 +79,7 @@ def get_bgobs(bg,gf,bkg_overlap_path):
         if len(d_gf) != 0:
             bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
             if len(bg_obs) != 0:
-                logger.info("Pre-calculated values found for and background {} ".format(base_name(gf)))
+                logger.info("Pre-calculated values found for background and {} ".format(base_name(gf)))
                 return bg_obs[0]
 
 

@@ -28,8 +28,10 @@ class PathNode(defaultdict):
 		''' Reads the data directory for GenomicFeatures
 		'''
 		blacklist = []
-		if os.path.exists("blacklistedgf.txt"):
-			with open("blacklistedgf.txt") as f:
+		blacklist_path = os.path.join(base,"blacklist.txt")
+		print "BLACKLISt:" ,blacklist_path
+		if os.path.exists(blacklist_path):
+			with open(blacklist_path) as f:
 				blacklist = [line.strip() for i,line in enumerate(f)]
 		# used to generate a json list of gfs
 		gfs = []
