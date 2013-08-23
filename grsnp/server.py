@@ -270,8 +270,7 @@ class WebUI(object):
 				background_name = "custom.bed"
 				with open(b, "wb") as out:
 					logger.info('Received raw text background data (id={})'.format(id))
-					data = background_file
-					data = os.linesep.join([s for s in data.splitlines() if s])
+					data = os.linesep.join([s for s in background_data.split("\n") if s != ""])
 					out.write(data)
 			else:				
 				background_name = default_background.split("/")[-1].split(".")[0] 
