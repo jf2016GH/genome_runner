@@ -69,15 +69,17 @@ def get_overlap_statistics(gf,fois):
 def get_bgobs(bg,gf,bkg_overlap_path): 
 
     # Used if pre-calculated values exist
+    _write_progress("Getting overlap stats on background and {}".format(base_name(gf)))
+    logger.info("Getting overlap stats on background and {}".format(base_name(gf)))
+    print bkg_overlap_path
     if os.path.exists(bkg_overlap_path):
-        _write_progress("Getting overlap stats on background and {}".format(gf))
-        logger.info("Getting overlap stats on background and {}".format(gf))
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
         d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
         if len(d_gf) != 0:
             bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
             if len(bg_obs) != 0:
+                logger.info("Pre-calculated values found for and background {} ".format(base_name(gf)))
                 return bg_obs[0]
 
 
@@ -315,15 +317,15 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",run_annotation=False):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
     sett_path = os.path.join(outdir,".settings")
     fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
-    fh.setLevel(logging.INFO)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+    logger.setLevel(logging.INFO)
     output_dir = outdir
     curprog,progmax = 0,1
     organism = ""
@@ -366,12 +368,10 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             current_gf = base_name(gf)      
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf))) 
             write_output("###"+base_name(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
-            print "OVERLAPSTATS _GF FOI"
             res = get_overlap_statistics(gf,good_fois) 
-            print "FINISH: OVERLAPSTATS _GF FOI"
 
             # calculate bg_obs
-            bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
+            bg_obs = get_bgobs(bg_path,gf,bkg_overlaps_path)
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue

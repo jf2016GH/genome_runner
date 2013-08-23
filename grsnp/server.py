@@ -289,15 +289,14 @@ class WebUI(object):
 					"Background:": background_name,
 					"Organism:": organism}
 
-		with open(path, 'wb') as sett:
+		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():
-				sett.write(k+"\t"+v+"\n")
+				sett_files.write(k+"\t"+v+"\n")
 		print "server.jobname: ", runset['job_name']
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
-		# with the appropriate ID.
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,res_dir,runset['job_name'],True))				
+				args=(fois,gfs,b,res_dir,runset['job_name'],True,os.path.join(sett["data_dir"],runset['organism'],"bkg_overlaps.gr")))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
