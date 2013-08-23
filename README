@@ -1,6 +1,6 @@
-===========
+************
 GRSNP Readme
-===========
+************
 
 There are two important modules in this package:
 
@@ -9,6 +9,26 @@ There are two important modules in this package:
 
 
 Installing the database
-=========
+=======================
+
+The grsnp.dbcreator automatically generates the database needed to GRSNP.
+
+Quickstart version
+------------------
+
+The GRSNP database can be generated with the following command:
+
+.. code-block:: bash
+
+    python -m grsnp.dbcreator -g hg19 -d ~/Documents/gr_data
+
+The -d argument designates where the database is to be installed. This exact path should be passed to grsnp.server.
+
+The dbcreator works in several steps:
+
+* Download required files from USCS and place in ~/Documents/gr_data/downloads
+* Convert files into standard bed format.  Unsupported data formats are skipped. Converted files are placed in /gr_data/grsnp_db/[organism]. 
+* 
+
 
 
