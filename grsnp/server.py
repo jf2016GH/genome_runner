@@ -123,7 +123,7 @@ class WebUI(object):
 		bed_filename = ""
 
 		data = ""
-		demo_fois_dir = kwargs["demo_fois"] # If the user selects a demo set of FOIs to run, this will contain the directory
+		demo_fois_dir =  kwargs["demo_fois"] if "demo_fois" in kwargs else ""  # If the user selects a demo set of FOIs to run, this will contain the directory
 		if demo_fois_dir == "":
 			try:
 				with open(fois,"wb") as out_fois:
@@ -149,9 +149,9 @@ class WebUI(object):
 												break
 											out.write(data)			
 										out_fois.write(f+"\n")
-								script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
-								out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
-								out.wait()
+								#script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
+								#out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+								#out.wait()
 							else:
 								logger.error("id={} Upload file already exists at {}".format(id,f))
 								print "id={} Upload file already exists at {}".format(id,f)
@@ -169,6 +169,7 @@ class WebUI(object):
 						return "upload a file please"
 
 			except Exception, e:
+				print "ERROR FOUND"
 				logger.error("id={}".format(id) + str(e))
 				return "ERROR: upload a file please"
 			runset["fois"] = bed_filename

@@ -68,6 +68,7 @@ def get_overlap_statistics(gf,fois):
 
 def get_bgobs(bg,gf,bkg_overlap_path): 
 
+    # Used if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):
         _write_progress("Getting overlap stats on background and {}".format(gf))
         logger.info("Getting overlap stats on background and {}".format(gf))
@@ -79,7 +80,9 @@ def get_bgobs(bg,gf,bkg_overlap_path):
             if len(bg_obs) != 0:
                 return bg_obs[0]
 
-    result = get_overlap_statistics(bg,[gf])
+
+    # manually get overlap values
+    result = get_overlap_statistics(gf,[bg])
     try:
         result = int(result[0]["intersectregions"])
     except Exception, e:
@@ -97,6 +100,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
+
 
     # Ensure there are no negative values in the ctable
     do_chi_square = True
@@ -140,7 +144,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
     if pval < 1E-307:
         # set to value obtained from sys.float_info.min_10_exp
-        pval = 1E-306
+        pval = 1E-306   
     return sign * pval
 
 
@@ -206,7 +210,7 @@ def get_annotation(foi,gfs):
     gfs: filepaths for GF
     """
     results = []
-    out = subprocess.Popen(["annotationAnalysis"] + ["--print-region-name"] + [foi] + gfs,stdout=subprocess.PIPE)
+    out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE) # TODO enable ["--print-region-name"]
     out.wait()
     return out.stdout.read()
 
@@ -254,6 +258,7 @@ def check_background_foi_overlap(bg,fois):
     Removes FOIs that are poorly formed with the background.
     """
     good_fois = []
+    # Runs overlapStatistics on background and FOIs
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
@@ -265,7 +270,8 @@ def check_background_foi_overlap(bg,fois):
             isgood = False
             logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
         if isgood:
-            good_fois.append([x for x in fois if base_name(x) == f["queryfile"]][0])
+            # ensure that overlapStatistics output filename with extension for queryFile field
+            good_fois.append([x for x in fois if os.path.basename(x) == f["queryfile"]][0])
         if foi_in < n_fois:
             logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
@@ -309,15 +315,15 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=True):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_annotation=False):
     global formatter
+    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
     sett_path = os.path.join(outdir,".settings")
     fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
-    fh.setLevel(logging.ERROR)
+    fh.setLevel(logging.INFO)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
-    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     output_dir = outdir
     curprog,progmax = 0,1
     organism = ""
@@ -351,7 +357,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
             return
 
-        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)
+        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type']) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
@@ -364,12 +370,15 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
             res = get_overlap_statistics(gf,good_fois) 
             print "FINISH: OVERLAPSTATS _GF FOI"
 
+            # calculate bg_obs
             bg_obs = get_bgobs(bg_path,gf,os.path.join("data",organism,"bkg_overlaps.gr"))
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue
+
+            n_bgs = foi_bg[0]["indexregions"]
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,foi_bg[0]["indexregions"] ,os.path.basename(good_fois[i]),os.path.basename(gf))) for i in range(len(good_fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,os.path.basename(good_fois[i]),os.path.basename(gf))) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
@@ -394,7 +403,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,run_
                     for a in anot[1:]:
                         if a != "":
                             cur_row = a.split("\t")
-                            wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:]]))]))
+                            wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))
                             ind += 1
                 curprog += 1
 
