@@ -128,8 +128,8 @@ class WebUI(object):
 			try:
 				with open(fois,"wb") as out_fois:
 					# bed files uploaded
-					if bed_file:
-						if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
+					if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
+					if bed_file[0]:						
 						for b in bed_file:
 							bed_filename = b.filename
 							f = os.path.join(upload_dir, "fois",bed_filename)
@@ -156,7 +156,7 @@ class WebUI(object):
 								logger.error("id={} Upload file already exists at {}".format(id,f))
 								print "id={} Upload file already exists at {}".format(id,f)
 					# custom data entered	
-					elif bed_data!="":
+					elif bed_data:
 						f = os.path.join(upload_dir,"fois", "custom.bed")
 						with open(f, "wb") as out:
 							bed_filename = "custom.bed"
@@ -166,21 +166,21 @@ class WebUI(object):
 							out.write(data)		
 						out_fois.write(f+"\n")	
 					else:
-						return "upload a file please"
+						return "Feature of Interest files not detected."
 
 			except Exception, e:
-				print "ERROR FOUND"
 				logger.error("id={}".format(id) + str(e))
 				return "ERROR: upload a file please"
 			runset["fois"] = bed_filename
-		else:
+		elif demo_fois_dir != "":
 
 			# gather the FOI files in the demo directory
 			ls_foi = [os.path.join(demo_fois_dir,f) for f in os.listdir(demo_fois_dir) if os.path.isfile(os.path.join(demo_fois_dir,f))]
 			with open(fois,"wb") as writer:
 				for f in ls_foi:
 					writer.write(f+"\n")					
-
+		else:
+			return "Feature of Interest files not detected.  Please upload or choose Feature of Interest to run."
 
 		# uploads custom genomic features
 		try:
@@ -292,6 +292,8 @@ class WebUI(object):
 			for k,v in set_info.iteritems():
 				sett_files.write(k+"\t"+v+"\n")
 		print "server.jobname: ", runset['job_name']
+
+		if open(gfs).read() == "": return "ERROR: No Genomic Features selected/uploaded."
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		p = Process(target=grquery.run_hypergeom,
