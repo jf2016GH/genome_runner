@@ -21,7 +21,6 @@ class PathNode(defaultdict):
 		defaultdict.__init__(self, PathNode)
 		self.files = []
 		self.organisms = []
-		self.cur_org = "hg19"
 
 	# for the autocomplete text box
 	def traverse(self, base):
@@ -68,14 +67,16 @@ class PathNode(defaultdict):
 		s = """\t<li><input name="%s" type="checkbox">
 			<label>%s</label>\n""" % (name,label)
 		if k.startswith("file:"):
+			org= k.split(os.sep)[k.split(os.sep).index("grsnp_db")+1]
 			s = """<a target="_blank" href="meta?tbl=%s&organism=%s">%s</a>""" % \
-				(label,self.cur_org, s)
+				(label,org, s)
 
 		s = """\t<li><input name="%s" type="checkbox">
 			<label>%s</label>\n""" % (name,label)
 		if k.startswith("file:"):
+			org= k.split(os.sep)[k.split(os.sep).index("grsnp_db")+1]
 			s = """<a target="_blank" href="meta?tbl=%s&organism=%s">%s</a>""" % \
-				(label,self.cur_org, s)
+				(label,org, s)
 		return s
 
 	def as_html(self, id=None,):
