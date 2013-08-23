@@ -68,10 +68,10 @@ def get_overlap_statistics(gf,fois):
 
 def get_bgobs(bg,gf,bkg_overlap_path): 
 
-    # Used if pre-calculated values exist
     _write_progress("Getting overlap stats on background and {}".format(base_name(gf)))
     logger.info("Getting overlap stats on background and {}".format(base_name(gf)))
     print bkg_overlap_path
+    # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]

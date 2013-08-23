@@ -42,13 +42,11 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 		for g in gfs:
 			gf_bg_stats[g] = []
 		all_gfs += gfs
-		print gf_bg_stats
 		# Run overlap analysis for each GF (g) and save to results in dictionary with key equal to 'g'
-		for bg in backgrounds:
-			for g in gfs:	
+		for g in gfs:	
+			for bg in backgrounds:
 				print g	
 				gf_bg_stats[g] += hpgm.get_overlap_statistics(g,[bg])
-		print gf_bg_stats
 	# output overlap statistics
 	dp_path = os.path.join(gf_dir,"bkg_overlaps.gr")
 	logger.info("Outputing results to {}".format(dp_path))
@@ -57,16 +55,15 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 			out.write(g+"\t")
 			if g in gf_bg_stats:	# check if the current GF was run successfully	
 				for res in gf_bg_stats[g]: # lookup the results for the current GF
-					print res
-					print "GF",g
-					print res["queryfile"]
 					out.write(os.path.join(background_dir,res["queryfile"])+":"+str(res["intersectregions"])+":"+str(res["queryregions"])+",")
 				out.write("\n")
 
 
 if __name__ == "__main__":
 	global logger
-	parser = argparse.ArgumentParser(description='GenomeRunner GF database utilities')
+	parser = argparse.ArgumentParser(description="""Pre calculates the overlapStatistics for each of the backgrounds in /custom_data/backgrounds/[organism] 
+												 and genomic features in /grsnp_db/[organism]. Creates a file in the database called called bkg_overlap.gr which is used
+												 by the server in hypergeom4.""")
 	parser.add_argument('--organism','-g',required=True, help='The UCSC code of the organism to be downloaded (example: hg19 (human))')
 	parser.add_argument('--data_dir','-d', required=True, help="Directory containing of the GRSNP database. Use ABSOLUTE path.")
 	args = vars(parser.parse_args())

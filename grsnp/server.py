@@ -291,9 +291,9 @@ class WebUI(object):
 		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():
 				sett_files.write(k+"\t"+v+"\n")
-		print "server.jobname: ", runset['job_name']
 
 		if open(gfs).read() == "": return "ERROR: No Genomic Features selected/uploaded."
+		
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		p = Process(target=grquery.run_hypergeom,
@@ -484,10 +484,7 @@ class WebUI(object):
 		try:
 			trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"],organism,"trackDb"))
 			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
-			print html 
-			print tbl
 		except Exception, e:
-			print traceback.format_exc()
 			return "<h3>(No data found for {}.)</h3>".format(tbl)
 		if html=='':
 			return "<h3>(No data found for {}.)</h3>".format(tbl)
@@ -606,7 +603,6 @@ if __name__ == "__main__":
 					{"tools.staticdir.on": True,
 					"tools.staticdir.dir": os.path.abspath(results_dir)}
 				}
-		print conf
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
 	else:
