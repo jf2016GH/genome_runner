@@ -317,8 +317,6 @@ def create_feature_set(trackdbpath,organism,max_install):
 	logger.info("A count of features added by type: ")
 	for k,d in numdownloaded.iteritems():
 		logger.info( k + ":" + str(d))
-
-	logger.inf("")
 	return "created database"
 	
 def create_single_feature(trackdbpath,organism,feature):

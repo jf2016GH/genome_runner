@@ -293,11 +293,11 @@ class WebUI(object):
 				sett_files.write(k+"\t"+v+"\n")
 
 		if open(gfs).read() == "": return "ERROR: No Genomic Features selected/uploaded."
-		
+
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,res_dir,runset['job_name'],True,os.path.join(sett["data_dir"],runset['organism'],"bkg_overlaps.gr")))				
+				args=(fois,gfs,b,res_dir,runset['job_name'],True,os.path.join(sett["data_dir"],"bkg_overlaps.gr"),sett["data_dir"]))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
@@ -308,7 +308,6 @@ class WebUI(object):
 		params["run_id"] = id
 		params["detailed"] = "Results not yet available"
 		params["matrix"] = "Results not yet available"
-		print "PATH ",path
 		if not os.path.exists(path):  #If file is empty...
 			tmpl = lookup.get_template("enrichment_not_ready.html")
 			return tmpl.render(id=id)
