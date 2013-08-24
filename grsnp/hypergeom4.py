@@ -101,7 +101,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-
+              
     # Ensure there are no negative values in the ctable
     do_chi_square = True
     for i in ctable:
@@ -315,7 +315,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=False):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
