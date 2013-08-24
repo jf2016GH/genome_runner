@@ -19,44 +19,68 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	default backgrounds.
 	"""
 
-	gf_bg_stats = {}
+	gf_bg_stats,list_completed_gfs = {},[]
 	all_gfs = []
 	backgrounds,gfs=[],[]
+	db_path = os.path.join(gf_dir,"bkg_overlaps.gr")
+	db_path_tmp = db_path + ".tmp"
+
+
+	# Read in all completed GF in the partially completed bkg_overlaps file
+	if os.path.exists(db_path_tmp):
+		list_completed_gfs = [x.split("\t")[0] for x in open(db_path_tmp).read().split("\n")] 
+
+	# gather all directories (groups) in the database
 	dirs = [name for name in os.listdir(gf_dir)
 		if os.path.isdir(os.path.join(gf_dir, name))]
-
-	print "DRIS: ",dirs
 
 	# Gather backgrounds paths
 	backgrounds = [os.path.join(background_dir, f) for f in os.listdir(background_dir) if f.endswith(('.gz', '.bb',".txt",".bed"))]
 
+	cur_prog,prog_max = 1,_count_gfs(gf_dir)
 	# Process each category of GFs
 	for d in dirs:
 		logger.info("Running overlapStatistics for all GFs in {}".format(d))
 		# Gather gfs paths
 		gfs = []
-		for base, dirs, files in os.walk(os.path.join(gf_dir,d)):
+		for base, d, files in os.walk(os.path.join(gf_dir,d)):
 				gfs += [os.path.join(base, f) for f 
 					in files if f.endswith(('.gz', '.bb'))]
 		# create empty list entries for each gf
 		for g in gfs:
 			gf_bg_stats[g] = []
 		all_gfs += gfs
+		prog_gf  = 1
 		# Run overlap analysis for each GF (g) and save to results in dictionary with key equal to 'g'
-		for g in gfs:	
-			for bg in backgrounds:
-				print g	
-				gf_bg_stats[g] += hpgm.get_overlap_statistics(g,[bg])
-	# output overlap statistics
-	dp_path = os.path.join(gf_dir,"bkg_overlaps.gr")
-	logger.info("Outputing results to {}".format(dp_path))
-	with open(dp_path,"wb") as out:
-		for g in all_gfs: # cycle through all of the GFs in the database
-			out.write(g+"\t")
-			if g in gf_bg_stats:	# check if the current GF was run successfully	
-				for res in gf_bg_stats[g]: # lookup the results for the current GF
-					out.write(os.path.join(background_dir,res["queryfile"])+":"+str(res["intersectregions"])+":"+str(res["queryregions"])+",")
-				out.write("\n")
+		for g in gfs:
+			if g not in list_completed_gfs:	
+				_write(g+"\t",db_path_tmp)
+				for bg in backgrounds:
+					res = hpgm.get_overlap_statistics(g,[bg])
+					_write(os.path.join(background_dir,res[0]["queryfile"])+":"+str(res[0]["intersectregions"])+":"+str(res[0]["queryregions"])+",",db_path_tmp)  # write out bg_obs
+				logger.info("Processed {}".format(g))
+				print "Processed {} of {}.".format(cur_prog,prog_max)
+				_write("\n",db_path_tmp)
+			else:
+				logger.info("Stats already exist for {}, skipping.".format(g))
+			cur_prog += 1
+
+	if os.path.exists(db_path): os.remove(db_path) # remove old bgs_overlap
+	os.rename(db_path_tmp,db_path) # release new bgs_overlap to GRSNP
+	logger.info("Completed.")
+
+
+def _count_gfs(grsnp_db):
+	x = 0
+	for root, dirs, files in os.walk(grsnp_db):
+		for f in files:
+			if f.endswith(".bed.gz"):
+				x = x+1
+	return x
+
+def _write(line,path):
+	with open(path,"a") as wr:
+		wr.write(line)	
 
 
 if __name__ == "__main__":
@@ -73,9 +97,17 @@ if __name__ == "__main__":
 	hdlr_std = StreamHandler()
 	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 	hdlr.setFormatter(formatter)
+	hdlr_std.setFormatter(formatter)
 	logger.addHandler(hdlr)
 	logger.addHandler(hdlr_std)
 	logger.setLevel(logging.INFO)
+
+	# Ask if use wants to continue partially run optimization
+	path_tmp = os.path.join(args["data_dir"],"grsnp_db",args["organism"],"bkg_overlaps.gr") + ".tmp"
+	if os.path.exists(path_tmp):
+		in_var = raw_input("Temporary file exists at {}. Do you want to continue (yes) or start from scratch (no)?".format(path_tmp))
+		if in_var.lower() == "no": 
+			os.remove(path_tmp)
 
 	background_dir = os.path.join(args["data_dir"],"custom_data","backgrounds",args["organism"])
 	gfs_dir = os.path.join(args["data_dir"],"grsnp_db",args["organism"])
