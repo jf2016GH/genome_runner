@@ -90,7 +90,7 @@
       cell_size = 40;
       width = cell_size * geneExpressions[0].length;
       height = cell_size * geneNames.length;
-      heatmap = d3.select(this.el).append("svg").attr("width", width + margin.right + margin.left).attr("height", height + margin.top + margin.bottom).attr("id", "heatmap").append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      heatmap = d3.select(this.el).append("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", width + margin.right + margin.left).attr("height", height + margin.top + margin.bottom).attr("id", "heatmap").append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
       x = d3.scale.ordinal().domain(d3.range(geneExpressions[0].length)).rangeBands([0, width]);
       y = d3.scale.ordinal().domain(d3.range(geneNames.length)).rangeBands([0, height]);
       columns = heatmap.selectAll(".column").data(conditionNames).enter().append("g").attr("class", "column").attr("transform", function(d, i) {
@@ -319,14 +319,18 @@ function generate_heatmaps() {
         console.log("range: "+ color_range.min + " : "+ color_range.max);
         create_heatmap("#heatmap",matrix);
         // Creates links to download the svg file
+        var svg = d3.selectAll("#heatmap_cor").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg"); // or whatever you call it
+        var serializer = new XMLSerializer();
+        var str = serializer.serializeToString(svg);
+        console.log(str);
+       $("heatmap").remove()
         d3.selectAll("#heatmap_download")
             .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
               btoa(unescape(encodeURIComponent(
-                d3.selectAll("#heatmap").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
-               .node().parentNode.innerHTML)
+                  d3.selectAll("#heatmap svg").node().parentNode.innerHTML
                 )
               )
-            );
+            ));
         d3.selectAll("#heatmap_cor_download")
             .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
               btoa(unescape(encodeURIComponent(
