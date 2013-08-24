@@ -122,6 +122,21 @@
 		        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
 		    }
 		} );
+
+		// Sorting functions for annotation results
+		jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+		    "annotation-pre": function ( a ) {
+		        return parseInt(a.split("|")[0]);
+		    },
+		 
+		    "annotation-asc": function ( a, b ) {
+		        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+		    },
+		 
+		    "annotation-desc": function ( a, b ) {
+		        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+		    }
+		} );
 		
 		function get_annotation(foi_name){
 			$.post("/gr/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
@@ -139,9 +154,15 @@
 
 					// Get column names
 					var cols = []
+					var cols = []
 					var c = data.shift()
 					for(var k in c){
-						cols.push({"sTitle": c[k]})
+						if (c[k] == "Region"){
+							cols.push({"sTitle": c[k], "sType": "annotation"})
+						}
+						else {
+							cols.push({"sTitle": c[k]})
+						}
 					}
 					// Create data table
 					$('#dt_'+foi_name).dataTable({
