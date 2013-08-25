@@ -24,6 +24,8 @@ import traceback
 import dbcreator as uscsreader
 import argparse
 
+os.environ['GR_COMPATIBILITY_MODE'] = 'y'
+
 root_dir = os.path.dirname(os.path.realpath(__file__))
 lookup = TemplateLookup(directories=[os.path.join(root_dir,"frontend/templates")])
 
