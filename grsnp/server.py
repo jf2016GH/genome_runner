@@ -297,7 +297,7 @@ class WebUI(object):
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,res_dir,runset['job_name'],True,os.path.join(sett["data_dir"],"bkg_overlaps.gr"),sett["data_dir"]))				
+				args=(fois,gfs,b,res_dir,runset['job_name'],True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"]))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
