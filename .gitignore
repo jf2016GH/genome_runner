@@ -46,3 +46,4 @@ results_cmd
 *.Sync*
 GenomeRunnerTODO
 cbio_test
+gfs.php

@@ -39,8 +39,8 @@
 
       // Sets the color range
       var num_range, col_range,legend;
-      c_max_log = sign(color_range.max) * Math.pow(10,Math.abs(color_range.max));
-      c_min_log = sign(color_range.min) * Math.pow(10,Math.abs(color_range.min));
+      c_max_log = sign(color_range.max) * 1/(Math.pow(10,Math.pow(10,Math.abs(color_range.max))));
+      c_min_log = sign(color_range.min) * 1/(Math.pow(10,Math.pow(10,Math.abs(color_range.min))));
       c_max = color_range.max
       c_min = color_range.min
       // case of complete over representation
@@ -123,7 +123,7 @@
                     .attr("y", legend_y + legend_c_size + 30)
                     .attr("font-size", "13px")
                     .text(function(d){
-                        return d.toPrecision(3);
+                        return d.toExponential(2); // toPrecision(3);
                     });
 
 
