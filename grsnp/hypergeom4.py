@@ -156,8 +156,7 @@ def cluster_matrix(input_path,output_path):
     Takes the matrix file outputted by genomerunner and clusters it in R
     '''        
     pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
-    r_script = """library(gplots)
-                    t5 = as.matrix(read.table("{}")) 
+    r_script = """t5 = as.matrix(read.table("{}")) 
                     t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.05) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
                         # Log transform matrix and keep correct sign
@@ -167,10 +166,13 @@ def cluster_matrix(input_path,output_path):
                           }}
                         }}
                         if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
-                           pdf(file="{}")
-                           h = heatmap.2(t5,  hclustfun=function(e) hclust(e,method="average"),margins=c(15,15),  distfun=function(x) dist(x,method="euclidean"), cexCol=1, cexRow=1)
-                           dev.off()
-                           write.table(t(h$carpet),"{}",sep="\t")
+                            library(gplots)
+                            library(RColorBrewer)
+                            color<-colorRampPalette(c("blue","yellow"))
+                            pdf(file="{}")
+                            h = heatmap.2(t5, margins=c(20,20), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(t5)),cexCol=1/log10(nrow(t5)))
+                            dev.off()
+                            write.table(t(h$carpet),"{}",sep="\t")
                         }} else {{
                             write.table(paste("ERROR: Cannot run clustering on",nrow(t5),"x",ncol(t5),"matrix. Should be at least 2 x 2. Analyze more sets of SNPs and select more genomic features"),"{}",sep="\t", row.names=F, col.names=F)
                         }}
@@ -188,13 +190,15 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     #pcc = open(output_path).read() 
     #if "PCC can't be performed" not in pcc:
     r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\")) 
-        library(Hmisc)
-        library(gplots)
         t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
-        if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
+            if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
+            library(Hmisc)
+            library(gplots)
+            library(RColorBrewer)
+            color<-colorRampPalette(c("blue","yellow"))
             p5<-rcorr(t5)
             pdf(file=\"""" + pdf_outpath +"""\")
-            h<-heatmap.2(as.matrix(p5[[1]]),margins=c(15,15)) # [[1]] element contains actual PCCs, we cluster them
+            h<-heatmap.2(as.matrix(p5[[1]]),margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
             dev.off()
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
