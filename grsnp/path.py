@@ -129,7 +129,7 @@ class PathNode(defaultdict):
 		background_dir = os.path.join(custom_dir,"backgrounds",organism)
 		if not os.path.exists(background_dir):
 			return html + "</select>"
-		for bk in [ f for f in os.listdir(background_dir) if os.path.isfile(os.path.join(background_dir,f)) and not f.endswith(".tbi")]:
+		for bk in [ f for f in sorted(os.listdir(background_dir)) if os.path.isfile(os.path.join(background_dir,f)) and not f.endswith(".tbi")]:
 			tmp = os.path.join(background_dir,bk)			
 			html = html + "<option value='{}'>{}</option>".format(tmp,tmp.split("/")[-1].split(".")[0])
 		html  = html + "</select>"
