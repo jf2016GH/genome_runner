@@ -104,7 +104,6 @@ def extract_bed6(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score','strand']
 	# Checks if all of the columns exist in the table.  If not extract_bed5 is tried instead
 	if _check_cols(colnames,colstoextract):
-
 		logger.info( "Outpath is: {}".format(outputpath))
 		with gzip.open(datapath) as dr:
 			with open(outputpath,"wb") as bed:
@@ -164,6 +163,24 @@ def extract_bed3(outputpath,datapath,colnames):
 				row = [r["chrom"],r["chromStart"],r["chromEnd"],"","0"] # Can't use strand as "."
 				bed.write("\t".join(map(str,row))+"\n")
 
+def extract_psl(outputpath,datapath,colnames):
+	colstoextract = ['tName','tStart','tEnd','qName','qSize','strand']
+	# Checks if all of the columns exist in the table.  If not
+	if _check_cols(colnames,colstoextract):
+		logger.info( "Outpath is: {}".format(outputpath))
+		with gzip.open(datapath) as dr:
+			with open(outputpath,"wb") as bed:
+				while True:
+						line = dr.readline().strip('\r').rstrip('\n')
+						if line == "":
+							break
+						r  = dict(zip(colnames,line.split('\t')))
+						row = []
+						row = [r["tName"],r["tStart"],r["tEnd"],''.join(e for e in r["qName"] if e.isalnum()),r["qSize"] if r["qSize"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
+						bed.write("\t".join(map(str,row))+"\n")
+	else:
+		logger.warning("Nonstandard PSL format")
+		
 def extract_genepred(outputpath,datapath,colnames):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
 	exonpath = outputpath.split(".")[0]+"_exon"
@@ -257,6 +274,11 @@ preparebed = {"bed 6" : extract_bed6,
 				"genePred acemblyPep acemblyMrn": extract_genepred,
 				"genePred acemblyPep acemblyMrna": extract_genepred,
 				"genePred" : extract_genepred,
+				"psl" : extract_psl,
+				"psl ." : extract_psl,
+				"psl est" : extract_psl,
+				"psl protein" : extract_psl,
+				"psl xeno" : extract_psl,
 				"rmsk" : extract_rmsk,
 				"factorSource" : extract_bed6}
 				
@@ -395,12 +417,11 @@ def load_tabledata_dumpfiles(datapath):
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Creates the GenomeRunner Database.  Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
-	parser.add_argument('--organism','-g', help="The UCSC code of the organism to be installed (example:'hg19' for (human))")
-	parser.add_argument('--featurename','-f', help='The name of the specific genomic feature track to create (example: knownGene)')
-	parser.add_argument('--max','-m',help="Limit the number of each feature type to install",type=int)
-	parser.add_argument("--data_dir" , "-d",  help="Set the directory where the database is to be created. Use absolute path.")
-
+	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grs_db/ -g mm9', epilog='IMPORTANT: Execude DBCreator from the database folder, e.g., /home/username/grs_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
+	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Required. Use absolute path. Example: /home/username/grs_db/.", required=True)
+	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human).", default="hg19", required=True)
+	parser.add_argument('--featurename','-f', nargs="?", help='The name of the specific genomic feature track to create (Example: knownGene)')
+	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
 
 	args = vars(parser.parse_args())
 

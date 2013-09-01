@@ -85,13 +85,11 @@ def _write(line,path):
 
 if __name__ == "__main__":
 	global logger
-	parser = argparse.ArgumentParser(description="""Pre calculates the overlapStatistics for each of the backgrounds in /custom_data/backgrounds/[organism] 
-												 and genomic features in /grsnp_db/[organism]. Creates a file in the database called called bkg_overlap.gr which is used
-												 by the server in hypergeom4.""")
-	parser.add_argument('--organism','-g',required=True, help='The UCSC code of the organism to be downloaded (example: hg19 (human))')
-	parser.add_argument('--data_dir','-d', required=True, help="Directory containing of the GRSNP database. Use ABSOLUTE path.")
-	args = vars(parser.parse_args())
+	parser = argparse.ArgumentParser(prog="python -m grsnp.optimizer", description="""Pre calculates the overlapStatistics for each of the backgrounds in <db_path>/custom_data/backgrounds/<organism> and genomic features in <db_path>/grsnp_db/<organism>. Example: python -m grsnp.optimizer -d /home/username/grs_db/ -g mm9""", epilog="""Creates a file  <db_path>/grsnp_db/<organism>/bkg_overlap.gr, automatically used by the server to speed up the analyses""")
+	parser.add_argument('--data_dir','-d', nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", required=True)
+	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", required=True, default="hg19")
 
+	args = vars(parser.parse_args())
 
 	hdlr = logging.FileHandler(os.path.join(args["data_dir"],'genomerunner_dbcreator.log'))
 	hdlr_std = StreamHandler()
