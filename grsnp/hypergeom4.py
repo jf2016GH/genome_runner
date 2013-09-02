@@ -129,7 +129,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval if type(pval) != type("") else pval,
-                "Chi-squaredquared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)
+                "Chi-squared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)
 
     # write out to the enrichment result file
     er_result_path = os.path.join(output_dir,"enrichment")
@@ -423,16 +423,14 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 if __name__ == "__main__":
     global print_progress
     print_progress = True
-    parser = argparse.ArgumentParser(description="Analysis of several FOI files against several GFs using Fisher's exact test or Chi-square. Best used for SNP set analysis, using whole SNP database as a spot background.")
-    parser.add_argument("fois", nargs=1, help="Text file with FOI file names (SNPs only).") 
-    parser.add_argument("gfs" ,nargs=1, help="Text file with GF file names, gzipped.") 
-    parser.add_argument("bg_path", nargs=1, help="Path to spot background file (SNPs only).")
+    parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
+    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files. Required") 
+    parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files. GF files may be gzipped. Required") 
+    parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
-    parser.add_argument("--output_dir","-d", help="Directory to output the result to", default="")
+    parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
     args = vars(parser.parse_args())
-    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"])
-
-
+    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"]) 
 
 class front_appender:
     '''
