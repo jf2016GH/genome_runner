@@ -252,10 +252,10 @@
 	<div id="content">
 		<form action="query" method="post" enctype="multipart/form-data">
 			<div class="well" style="margin-top: 20px;">
-			<h3>GenomeRunnerSNP: Annotation, enrichment, and similarity analyses of sets of SNPs</h3>
-			<label >
-			More that 80&#37; of phenotype-associated SNPs fall in non-coding regions &#40;Hindorff, L. A. et al. Potential etiologic and functional implications of genome-wide association loci for human diseases and traits. Proc. Natl Acad. Sci. USA 106, 9362&#45;9367 &#40;2009&#41;&#41;, making their functional impact less clear. GenomeRunnerSNP is a tool for automating functional interpretation of individual SNPs and a set of SNPs as a whole by considering their co-localization with functional genome annotation data. The data are mirrored from the UCSC genome database and contain >6,000 tracks for the human genome. <br><br>First, GenomeRunnerSNP annotates each SNP by its overlap with genome annotation features. Second, GenomeRunnerSNP calculates enrichment p-values for each set of SNPs - genome annotation feature, and visualize the results as a heatmap. Third, GenomeRunnerSNP calculates pair-wise correlation coefficients among sets of SNPs, based on their enrichment similarity.
-			</label>
+			<h3>GenomeRunnerSNP: Epigenomic enrichment and similarity analyses of sets of SNPs</h3>
+			<p>
+			GenomeRunner SNP is a tool for automating functional interpretation of sets of SNPs by considering their co-localization with functional&#47;regulatory genome annotation data &#40;epigenomic elements&#41;. GenomeRunner SNP is agnostic to the location of protein-coding regions, considering instead epigenomic marks across the whole genome. Instead of focusing on common SNPs, GenomeRunner SNP permits the analysis of rare variants and SNPs in non-coding regions, by assessing their collective effect upon epigenomic landscape.<br><br>GenomeRunner SNP calculates enrichment p-values for each set of SNPs - epigenomic element, and visualizes the results as a heatmap. For two or more sets of SNPs, GenomeRunner SNP performs epigenomic similarity analysis and plots a heatmap of Pearson&#39;s correlation coefficients among set-specific epigenomic profiles.
+			</p>
 			</div>
 			<div class="well">
 				<div style="float:right;margin-top: 10px;">
@@ -263,7 +263,7 @@
 					${paths.org_as_html(id="org")} 
 			<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</div> 
-				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload sorted .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3>
 				<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 					<h4 style="float:left;">Bed Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
@@ -287,7 +287,7 @@
 									</td>
 									<td>
 										<label stlye="float:left">
-											Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Example&#58; chr17   7579222   7579223   &#91;Optional: rs104255   .   .&#93;. Note that the end coordinate should be the start coordinate + 1. If a SNP has the same start and end coordinates, the end coordinate will set to start + 1. If a region has length &#62;1, coordinates of its middle point will be used. Pasting the data restricts the analysis to one set of SNPs&#59; to analyze multiple sets, upload them as separate files using 'Choose Files' button.
+											Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Pasting the data, or submitting one set of SNPs, restricts the analysis to the enrichment results only. To get the enrichment and epigenomic similarity heatmaps, upload multiple sets of SNPs as separate files using 'Choose Files' button.
 										</label>
 									</td>
 								</tr>
@@ -296,7 +296,7 @@
 					</div>
 			</div>	
 			<div class="well">
-				<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'universe', used to calculate the probability of SNPs in a set to overlap a genome annotation feature" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'population', used to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3>
 				<b style="font-size:120%; margin-left: 10px"></b>
 					<div class="accordion" style="padding-bottom: 1em;list-style:none">        
@@ -314,8 +314,8 @@
 											</td>
 											<td>
 												<label stlye="float:left">
-													The background selection is critical for the correct p-value calculation using hypergeometric distribution. We are calculating the probability of k SNPs co-localizing with a genomic feature out of n in a set, drawn from the population of SNPs of size N &#40;background&#41; containing exactly K SNPs co-localized with that genomic feature. A set of SNPs being analyzed should be a subset of the background, or 'universe' of all SNPs. If that is not the case, non-background SNPs are appended to the background, generating a warning.<br><br>
-													Default background selection &#40;all SNPs from the latest organism-specific database&#41; is suitable when genome-wide study was performed. When using SNPs identified by a microarray, it is advisable to use all SNPs on that array as a background.
+													The background, or population selection is critical for the correct p-value calculation. The background represents all SNPs being negotiated in user's study. A set of SNPs being analyzed should be a subset of the background. If that is not the case, a warning is generated.<br><br>
+													Default background selection &#40;all SNPs from the latest organism-specific database&#41; is suitable when a genome-wide study was performed. When a microarray was used for ANPs profiling, it is advisable to use all SNPs on that array as a background.
 												</label>
 											</td>
 										</tr>
@@ -367,7 +367,7 @@
 									</div>
 								</div>
 								<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
-										<label style="">Functional genome annotation data are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run annotation&#47;enrichment analyses with, use search box to find them. It is also advisable to search for functional genomic elements of interest to see which tracks are available, like 'H3K4me1'. Use checkboxes in the collapsible treeview to select groups of functional genomic elements</label>
+										<label style="">Genome annotation data (epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label>
 								</div>
 								
 						</div>
@@ -383,7 +383,7 @@
 
 						<td id="td_submit" style="width:90px">
 							<button class="btn btn-primary" type="submit" >Submit job</button>
-	<img class="helptooltip" title="Run annotation and enrichment analyses for each set of SNPs" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+	<img class="helptooltip" title="Submits the job for enrichment analysis" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</td>
 						<td id="td_submit" style="width:170px">
 							
@@ -391,10 +391,10 @@
 					</tr>
 				</table>
 				<br>
-				<div class="ui-state-highlight ui-corner-all">
+<!-- 				<div class="ui-state-highlight ui-corner-all">
 					<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
 					</span>GenomeRunner works best in Chrome (Windows) or Internet Explorer 9+ (no compatibility mode). Mac users, use Safari.</p>
-				</div>
+				</div> -->
 
 			</div>
 		</form>
