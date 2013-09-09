@@ -72,7 +72,8 @@ def get_bgobs(bg,gf,bkg_overlap_path):
     logger.info("Getting overlap stats on background and {}".format(base_name(gf)))
 
     # See if pre-calculated values exist
-    if os.path.exists(bkg_overlap_path):
+    if os.path.exists(bkg_overlap_path):       
+        print "BKG_path:", bkg_overlap_path, "BKG:", bg, "GF:", gf
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
         d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
@@ -157,7 +158,7 @@ def cluster_matrix(input_path,output_path):
     '''        
     pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
     r_script = """t5 = as.matrix(read.table("{}")) 
-                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.05) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.0001) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
                         # Log transform matrix and keep correct sign
                         for (i in 1:nrow(t5)) {{
