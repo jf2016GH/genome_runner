@@ -28,7 +28,8 @@ class PathNode(defaultdict):
 		'''
 		blacklist = []
 		blacklist_path = os.path.join(base,"blacklist.txt")
-		print "BLACKLISt:" ,blacklist_path
+		gfs_path = os.path.join(base,"gfs.php")
+
 		if os.path.exists(blacklist_path):
 			with open(blacklist_path) as f:
 				blacklist = [line.strip() for i,line in enumerate(f)]
@@ -53,7 +54,7 @@ class PathNode(defaultdict):
 			for f in node.files:
 				if base_name(f) not in blacklist:
 					 gfs.append({"caption": str(base_name(os.path.splitext(f)[0])),"value":f})
-		f = open(os.path.join(self.static_dir,"gfs.php"),"wb")
+		f = open(gfs_path,"wb")
 		f.write(json.dumps(gfs))
 		f.close()
 
@@ -79,7 +80,7 @@ class PathNode(defaultdict):
 				(label,org, s)
 		return s
 
-	def as_html(self, id=None,):
+	def _treeview_html(self, id=None,):
 		s = '<ul '
 		if id:
 			s += 'id="%s"' % str(id)
@@ -91,8 +92,15 @@ class PathNode(defaultdict):
 			if "trackDb" not in f and "chromInfo" not in f:
 				s += "<ul>" + self._li(f) + "</ul>"
 		for _,child in sorted(self.items()):
-			s += child.as_html()
+			s += child._treeview_html()		
 		return s + "</ul>"
+
+
+	def write_treeview_html(self,base,organism):
+		html_path = os.path.join(base,organism,"treeview.html")
+		html = self._treeview_html(id="ucsc") # generate the treeview html code
+		with open(html_path,"wb") as writer:
+			writer.write(html)
 
 	# for the organism combobox
 	def org_as_html(self,id=None):

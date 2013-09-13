@@ -51,33 +51,40 @@ class WebUI(object):
 	def __init__(self):
 		
 		
-		orgs = self.get_org()
+		organisms = self.get_org()
 		# create all directories in the custom_data dir if they do not already exist
-		for o in orgs:
+		for org in organisms:
+			logger.info("Processing genomic features for {}".format(org))
 			if not os.path.exists(sett["custom_dir"]): os.mkdir(sett["custom_dir"])
 			cust_sub_dir = ["backgrounds","gfs","fois"]
 			for c in cust_sub_dir:
 				tmp = os.path.join(sett["custom_dir"],c)
 				if not os.path.exists(tmp): os.mkdir(tmp)
-				c_dir = os.path.join(sett["custom_dir"],c,o)
+				c_dir = os.path.join(sett["custom_dir"],c,org)
 				if not os.path.exists(c_dir): os.mkdir(c_dir)
-
+			# Read the genomic feature files and generate html files
+			paths = PathNode()
+			paths.name = "Root"
+			paths.organisms = self.get_org() 
+			paths.traverse(os.path.join(sett["data_dir"],org))
+			paths.write_treeview_html(sett["data_dir"],org)
 		self._index_html = {}
 
 	@cherrypy.expose
 	def index(self,organism=None):
 		if not organism: organism = sett["default_organism"]
-		if DEBUG_MODE or not organism in self._index_html:
+		if DEBUG_MODE or not organism in self._index_html:			
+			tmpl = lookup.get_template("index.html")
+			# Load default backgrounds
+			print "tree_view INDEX:", os.path.join(sett["data_dir"],"gfs.php")
+
+			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
+			print tree_html[:100]
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			paths.traverse(os.path.join(sett["data_dir"],organism))
-			tmpl = lookup.get_template("index.html")
-			# Load default backgrounds
-
-
 			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
-									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]))
+									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),tree_view_html=tree_html)
 		return self._index_html[organism]
 
 
