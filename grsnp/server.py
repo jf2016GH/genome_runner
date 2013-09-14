@@ -79,12 +79,13 @@ class WebUI(object):
 			print "tree_view INDEX:", os.path.join(sett["data_dir"],"gfs.php")
 
 			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
-			print tree_html[:100]
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
 			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
-									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),tree_view_html=tree_html)
+									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]))
+
+			self._index_html[organism] = self._index_html[organism].replace("python_tree_view_html",tree_html)
 		return self._index_html[organism]
 
 
