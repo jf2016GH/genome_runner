@@ -76,16 +76,17 @@ class WebUI(object):
 		if DEBUG_MODE or not organism in self._index_html:			
 			tmpl = lookup.get_template("index.html")
 			# Load default backgrounds
-			print "tree_view INDEX:", os.path.join(sett["data_dir"],"gfs.php")
 
 			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
-			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
-									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]))
 
-			self._index_html[organism] = self._index_html[organism].replace("python_tree_view_html",tree_html)
+			# Use mako to render index.html
+			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
+									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),data_dir=os.path.join(sett["data_dir"],organism))
+
+			self._index_html[organism] = self._index_html[organism].replace("python_tree_view_html",tree_html)  # Insert the very large treeview html code using Python's find and replace.  Mako takes too long.
 		return self._index_html[organism]
 
 
@@ -611,7 +612,10 @@ if __name__ == "__main__":
 					"tools.staticdir.dir": static_dir},
 				"/results": 
 					{"tools.staticdir.on": True,
-					"tools.staticdir.dir": os.path.abspath(results_dir)}
+					"tools.staticdir.dir": os.path.abspath(results_dir)},
+				"/data":
+					{"tools.staticdir.on": True,
+					"tools.staticdir.dir": os.path.abspath(sett["data_dir"])}
 				}
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
