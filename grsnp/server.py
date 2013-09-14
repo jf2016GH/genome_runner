@@ -84,7 +84,7 @@ class WebUI(object):
 
 			# Use mako to render index.html
 			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
-									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),data_dir=os.path.join(sett["data_dir"],organism))
+									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),data_dir=os.path.join(sett["data_dir"],organism),default_organism=organism)
 
 			self._index_html[organism] = self._index_html[organism].replace("python_tree_view_html",tree_html)  # Insert the very large treeview html code using Python's find and replace.  Mako takes too long.
 		return self._index_html[organism]
