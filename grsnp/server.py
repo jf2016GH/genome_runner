@@ -75,8 +75,6 @@ class WebUI(object):
 		if not organism: organism = sett["default_organism"]
 		if DEBUG_MODE or not organism in self._index_html:			
 			tmpl = lookup.get_template("index.html")
-			# Load default backgrounds
-
 			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
 			paths = PathNode()
 			paths.name = "Root"
@@ -568,7 +566,7 @@ if __name__ == "__main__":
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
 	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/grs_db/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
-	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", required=True)
+	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
 	
@@ -576,15 +574,15 @@ if __name__ == "__main__":
 	port = args["port"]
 
 	data_dir = args["data_dir"]
+	if data_dir == "":
+		data_dir = os.path.abspath(os.getcwd())
 
 	# global settings used by GR
 	sett = {"data_dir":os.path.join(data_dir,"grsnp_db"),
 				"run_files_dir": os.path.join(data_dir,"run_files_dir"),
 				"default_organism":args["organism"],
 				"custom_dir": os.path.join(data_dir,"custom_data")
-				}	
-
-
+				}
 
 	#validate data directory
 	if not os.path.exists(sett["data_dir"]):
