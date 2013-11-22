@@ -385,7 +385,10 @@ def create_single_feature(trackdbpath,organism,feature):
 			if sqlpath != '':
 				logger.info( "converting"+f_info['tableName']+ " into proper bed format")
 				try:
-					outpath = os.path.join(outputdir,f_info["grp"],'Tier' + f_info["visibility"],f_info["tableName"])
+					if f_info['tableName'].startswith("wgEncode"):
+						outpath = os.path.join(outputdir, encodePath(f_info["tableName"]))
+					else:
+						outpath = os.path.join(outputdir,f_info["grp"],f_info["tableName"]) #'Tier' + f_info["visibility"],
 					if not os.path.exists(os.path.dirname(outpath)):
 						os.makedirs(os.path.dirname(outpath))
 					# if the feature is not in the database, add it
@@ -446,15 +449,15 @@ def load_tabledata_dumpfiles(datapath):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grs_db/ -g mm9', epilog='IMPORTANT: Execude DBCreator from the database folder, e.g., /home/username/grs_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
-	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Required. Use absolute path. Example: /home/username/grs_db/.", required=True)
-	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human).", default="hg19", required=True)
+	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grs_db/. Required", required=True)
+	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19", required=True)
 	parser.add_argument('--featurename','-f', nargs="?", help='The name of the specific genomic feature track to create (Example: knownGene)')
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
 
 	args = vars(parser.parse_args())
 
 	if not args["data_dir"]:
-		print "ERROR: --data_dir is not optional"
+		print "ERROR: --data_dir is required"
 		sys.exit()
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server)
