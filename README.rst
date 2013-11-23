@@ -76,6 +76,7 @@ GenomeRunner uses a 'background', or universe, of all genomic regions for random
 By default, it is useful to use at least all currently reported as a background. For *Homo Sapiens*, place snp138.bed in the [dir]/custom_data/backgrounds/hg19/ folder. Note that it is important to ensure the end coordinate is larger that the start coordinate, so the processing steps may look like:
 
    .. code-block:: bash
+   
    awk 'BEGIN {OFS="\t"} { if ( $3 <= $2) { print $1, $2, $2+1, $4, $5, $6 } else { print $0 } }' snp138.bed | sort -k1,1 -k2,2n -k3,3n | uniq > snp138+.bed && bgzip snp138+.bed && tabix snp138+.bed.gz 
 
 The logic is, ensure the end coordinate is larger that the start coordinate, sort/unique, block compless, and tabix index the file. 
@@ -89,18 +90,21 @@ Sometimes it may be useful to have sets of features of interest readily accessib
 Some genome annotation tracks contain information about different biologically relevant features, lumped together. An example is ``wgEncodeRegTfbsClusteredV3`` track, containing experimentally detected transcription factor binding sites for 161 different transcription factors. The data for each TF can be extracted in separate files using ``extract_UCSC.py`` (see ``db`` subfolder in the source code folder). These files may be placed in [dir]/custom_data/gfs/hg19/tfbsEncode folder, and the 'tfbsEncode' gfs will be accessible through GenomeRunner's interface.
 
 It is a good idea to remove special characters from file names, if any:
+   
    .. code-block:: bash
+   
    for FILE in *.bed; do mv -v "$FILE" `echo $FILE | tr ' ' '_' | tr -d '[{}(),\!]' | tr -d "\'" | tr '[A-Z]' '[a-z]' | sed 's/_-_/_/g'`;done
 
 and bgzip- and tabix those files for faster processing
 
    .. code-block:: bash
+  
   for file in `find . -type f -name '*.bed'`; do sort -k1,1 -k2,2n -k3,3n $file | uniq > $file"a" && mv $file"a" $file && bgzip $file && tabix $file".gz";done
 
 FAQ
 ---
 
-* How do I install multiple organism?
+* How do I install databases for multiple organism?
   
    * Simply re-run the ``dbcreator`` and designate a different organism with the -g parameter.
 
@@ -119,10 +123,12 @@ FAQ
 * Can I simply download all UCSC data and let the ``dbcreator`` work with it?
   
    * Rsync can be used to mirror the USCS data files. Simply create [dir]/downloads/ folder and execute .. code-block:: bash
+
+      .. code-block:: bash
    
        rsync -avzP rsync://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ .
 
-   * Before downloading any files, the ``dbcreator`` checks it they exist in the [dir]/downloads/ folder.
+   Before downloading any files, the ``dbcreator`` checks it they exist in the [dir]/downloads/ folder.
    
 **optimizer** # A module to pre-calculate background overlaps with all genomic features
 ===================================================================================
@@ -142,17 +148,20 @@ FAQ
 
   * No. If ``bkg_overlaps.gr`` file was not created by the ``optimizer``, GenomeRunner will calculate overlap statistics on the fly. However, calculating overlaps of the background set vs. genomic features on the fly, instead of reading pre-calculated values from the file, takes significant amount of time. So be patient.
 
+
 * Does the ``optimizer`` do all of the organism at once?
   
-   * No, the ``optimizer`` must be run separately for each organism
+  * No, the ``optimizer`` must be run separately for each organism
+
      
 * I started the ``optimizer``, but it takes too long.  Can I terminate?
  
-   * Yes, you can safely terminate the process.  The partially completed file bkg_overlaps.gr.tmp will be re-used and appended, when the ``otpimizer`` is restarted.
+  * Yes, you can safely terminate the process.  The partially completed file bkg_overlaps.gr.tmp will be re-used and appended, when the ``otpimizer`` is restarted.
+
     
 * How is the bkg_overlaps.gr file structured?
   
-   [Absolute path to GF file]\t[Absolute path to default background_one]:[bgs_obs]:[n_bgs],[Absolute path to default background_two]:[bgs_obs]:[n_bgs]
+  * [Absolute path to GF file]\t[Absolute path to default background_one]:[bgs_obs]:[n_bgs],[Absolute path to default background_two]:[bgs_obs]:[n_bgs]
 
    where [n_bgs] is the total number of regions in the background file, and [bgs_obs] is the number of regions overlapping a genomic feature.
 
