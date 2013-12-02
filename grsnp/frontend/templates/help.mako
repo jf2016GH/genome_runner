@@ -1,0 +1,10 @@
+		<h1 dir="ltr" style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
+			<span id="docs-internal-guid-1dace67e-b4a2-2fb1-0362-aeddabb47807"><span style="font-size: 15px; font-family: Arial; vertical-align: baseline; white-space: pre-wrap;">How GenomeRunner Web can help me?</span></span></h1>
+		<p dir="ltr" style="line-height:1.15;margin-top:0pt;margin-bottom:0pt;">
+			<span id="docs-internal-guid-1dace67e-b4a2-2fb1-0362-aeddabb47807"><span style="font-size: 15px; font-family: Arial; vertical-align: baseline; white-space: pre-wrap;">GenomeRunner Web helps to interpret the regulatory effect of SNPs by identifying functional elements most statistically significantly co-localized with the SNPs of interest (link:Enrichment analysis). These regulatory elements may provide understanding which mechanisms (and in which cell type) may be affected by the SNPs of interest.</span></span></p>
+		<p dir="ltr" style="line-height:1.15;margin-top:0pt;margin-bottom:0pt;">
+			<span id="docs-internal-guid-1dace67e-b4a2-2fb1-0362-aeddabb47807"><span style="font-size: 15px; font-family: Arial; vertical-align: baseline; white-space: pre-wrap;">If one analyzes three or more sets of SNPs, GenomeRunner Web visualizes their epigenomic similarity (link: Epigenomic Similarity analysis). This information may be used to classify the sets of SNPs by their effect upon regulatory landscape.</span></span></p>
+		<h1>
+			<span style="font-family: Arial; font-size: 15px; white-space: pre-wrap; line-height: 1.15;">What is Enrichment analysis?</span></h1>
+		<p>
+			<span id="docs-internal-guid-1dace67e-b4a2-2fb1-0362-aeddabb47807"><span style="font-size: 15px; font-family: Arial; vertical-align: baseline; white-space: pre-wrap;">Enrichment analysis answers the question whether a set of SNPs of interest collectively enriched or depleted in regulatory regions, as compared with randomly selected set of SNPs. GenomeRunner Web performs this analysis versus each selected (group of) regulatory tracks, and prioritized over- and underrepresented associations by p-value.</span></span></p>
