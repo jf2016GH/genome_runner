@@ -536,23 +536,33 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def cite(self):
-		tmpl = lookup.get_template("cite.html")
-		return tmpl.render()
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("cite.mako").render())
 
 	@cherrypy.expose
 	def news(self):
-		tmpl = lookup.get_template("news.html")
-		return tmpl.render()
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("news.mako").render())
 
 	@cherrypy.expose
 	def overview(self):
-		tmpl = lookup.get_template("overview.html")
-		return tmpl.render()
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("overview.mako").render())
 
 	@cherrypy.expose
 	def demo(self):
-		tmpl = lookup.get_template("demo.html")
-		return tmpl.render()
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("demo.mako").render())
+
+	@cherrypy.expose
+	def roadmap(self):
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("roadmap.mako").render())
+
+	@cherrypy.expose
+	def help(self):
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("help.mako").render())
 
 
 def base_name(k):

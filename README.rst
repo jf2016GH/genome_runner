@@ -16,16 +16,16 @@ These installation instructions were tested on freshly installed Ubuntu Linux 13
     sudo apt-get install python-setuptools python-pip python-dev python-numpy python-scipy
     sudo apt-get upgrade gcc
     sudo pip install -U cython   
-    # Install R 3.0 (See http://stackoverflow.com/questions/16093331/how-to-install-r-version-3-0)
+    # Install R 3.0 (Try sudo apt-get install -f r-base=3.0.1-3ubuntu1)
     # Within R, install packages Hmisc and RColorBrewer by running:
     #    source("http://bioconductor.org/biocLite.R")
-    #    biocLite(c("Hmisc", "RCColorBrewer"))
-    cd grsnp # Go to grsnp folder, to install the rest of the packages from the file
+    #    biocLite(c("Hmisc", "RColorBrewer", "gplots"))
+    cd genome-runner # Go to the package folder, to install the rest of the packages from the file
     sudo pip install -r requirements.txt    
     sudo easy_install simplejson
     # Install GRTK per instructions on https://bitbucket.org/wrenlab/grtk
-    python setup.py develop install --user
-    # Copy 'frontend' folder and all subfolders into package installation folder.
+    sudo python setup.py develop install
+    # Create 'frontend' folder in the package location, and copy the content of the cloned 'frontend' folder into it.
     # Example: sudo cp -r genome_runner/grsnp/frontend/* .local/lib/python2.7/site-packages/GenomeRunner_SNP-0.1.0-py2.7.egg/grsnp/frontend/
 
 Fixme: Simplify installation steps. Work on eliminating manually copying 'frontend' folder
