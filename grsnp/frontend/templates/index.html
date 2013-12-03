@@ -257,7 +257,7 @@
 			<div class="" s="well" style="margin-top: 40px;">
 			<h3>GenomeRunner WEB: Epigenomic enrichment and similarity analyses of sets of SNPs</h3>
 			<p>
-			GenomeRunner WEB is a tool for automating functional interpretation of sets of SNPs by considering their co-localization with functional&#47;regulatory genome annotation data &#40;epigenomic elements&#41;. GenomeRunner WEB is agnostic to the location of protein-coding regions, utilizing whole-genome nature of genome annotation data. Instead of focusing on common SNPs, GenomeRunner WEB permits the analysis of rare variants and SNPs in non-coding regions by assessing their collective effect upon epigenomic landscape.<br><br>As an output, GenomeRunner WEB calculates enrichment p-values for each set of SNPs - epigenomic element, and visualizes the results as <a href="result?id=example#cormatrixresults">a heatmap</a>. For two or more sets of SNPs, GenomeRunner WEB performs <a href="">&#39;epigenomic similarity&#39; analysis</a>, and plots <a href="">a heatmap</a> of sets of SNPs clustered by their <a href="">&#39;epigenomic connectivity&#39; coefficient</a>.
+			GenomeRunner WEB is a tool for automating functional interpretation of sets of SNPs by considering their co-localization with functional&#47;regulatory genome annotation data &#40;epigenomic elements&#41;. GenomeRunner WEB is agnostic to the location of protein-coding regions, utilizing whole-genome nature of genome annotation data. Instead of focusing on common SNPs, GenomeRunner WEB permits the analysis of rare variants and SNPs in non-coding regions by assessing their collective effect upon epigenomic landscape.<br><br>As an output, GenomeRunner WEB calculates enrichment p-values for each set of SNPs - epigenomic element, and visualizes the results as <a href="result?id=example">a heatmap</a>. For two or more sets of SNPs, GenomeRunner WEB performs <a href="">&#39;epigenomic similarity&#39; analysis</a>, and plots <a href="">a heatmap</a> of sets of SNPs clustered by their <a href="">&#39;epigenomic connectivity&#39; coefficient</a>.
 			</p>
 			</div>
 			<div class="well">
@@ -266,7 +266,7 @@
 					${paths.org_as_html(id="org")} 
 			<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</div> 
-				<h3>1. Upload sets of SNPs of interest <img class="helptooltip" title="Upload sorted .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload sorted .BED formatted files with genomic coordinates of SNPs of interest" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3>
 				<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 					<h4 style="float:left;">Bed Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
@@ -299,7 +299,7 @@
 					</div>
 			</div>	
 			<div class="well">
-				<h3>2. Default background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'population', used to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				<h3>2. Define the background: ${default_background}<img class="helptooltip" title="By default, all known SNPs are used as a 'population', used to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3>
 				<b style="font-size:120%; margin-left: 10px"></b>
 					<div class="accordion" style="padding-bottom: 1em;list-style:none">        
@@ -328,7 +328,7 @@
 					</div>	
 			</div>	
 			<div class="well">
-				<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Default genome annotation features:</h3>
+				<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Select genome annotation features:</h3>
 				${custom_gfs}
 				<br>
 			

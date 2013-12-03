@@ -25,8 +25,10 @@ These installation instructions were tested on freshly installed Ubuntu Linux 13
     sudo easy_install simplejson
     # Install GRTK per instructions on https://bitbucket.org/wrenlab/grtk
     sudo python setup.py develop install
-    # Create 'frontend' folder in the package location, and copy the content of the cloned 'frontend' folder into it.
-    # Example: sudo cp -r genome_runner/grsnp/frontend/* .local/lib/python2.7/site-packages/GenomeRunner_SNP-0.1.0-py2.7.egg/grsnp/frontend/
+    # Create 'frontend' folder in the package location
+    # sudo mkdir /usr/local/lib/python2.7/dist-packages/GenomeRunner_SNP-0.1.0-py2.7.egg/grsnp/frontend
+    # and copy the content of the cloned 'frontend' folder into it.
+    # sudo cp -r grsnp/frontend/* /usr/local/lib/python2.7/dist-packages/GenomeRunner_SNP-0.1.0-py2.7.egg/grsnp/frontend/
 
 Fixme: Simplify installation steps. Work on eliminating manually copying 'frontend' folder
     
