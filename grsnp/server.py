@@ -250,7 +250,7 @@ class WebUI(object):
 				ls_foi = [os.path.join(gp_gfs_dir,f) for f in os.listdir(gp_gfs_dir) if os.path.isfile(os.path.join(gp_gfs_dir,f))]
 				with open(gfs,"a") as writer:
 					for f in ls_foi:
-						if (base_name(f) not in list_gfs): writer.write(f+"\n")
+						if (base_name(f) not in list_gfs): writer.write(f.rstrip(".tbi")+"\n")
 						list_gfs.append(base_name(f))	
 
 		runset['organism']= organism	
