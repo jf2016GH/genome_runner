@@ -1,0 +1,16 @@
+Multiple_sclerosis
+Rheumatoid_arthritis
+Inflammatory_bowel_disease
+Ulcerative_colitis
+Alopecia_areata
+Psoriasis
+Crohns_disease
+Celiac_disease
+Kawasaki_disease
+Type_1_diabetes
+Systemic_lupus_erythematosus
+Primary_biliary_cirrhosis
+Bipolar_disorder_and_schizophrenia
+Myopia_pathological
+Insomnia_caffeineinduced
+Schizophrenia
