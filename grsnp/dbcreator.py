@@ -285,7 +285,11 @@ preparebed = {"bed 6" : extract_bed6,
 numdownloaded = collections.defaultdict(int)
 
 def encodePath(line): # Generating paths for the ENCODE data tables using groups, tiers, and cell types
-	ENCODE = re.compile('BroadHistone|BroadHmm|GisChiaPet|HaibMethyl450|HaibMethylRrbs|HaibTfbs|OpenChromSynth|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs')
+	ENCODE = re.compile('BroadHistone|BroadHmm|GisChiaPet|HaibMethyl450|HaibGenotype|HaibMethylRrbs|HaibTfbs|OpenChromSynth|RikenCage|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwAffyExonArray|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs|CshlLongRnaSeq|LicrHistone|LicrTfbs|PsuHistone')
+	
+
+
+
 	CELLS1 = re.compile('Gm12878|K562|H1hesc')
 	CELLS2 = re.compile('A549|Cd20ro01778|Cd20ro01794|Cd20|H1neurons|Helas3|Hepg2|Huvec|Imr90|Lhcnm2|Mcf7|Monocd14ro1746|Sknsh')
 	CELLS3 = re.compile('Ag04449|Ag04450|Ag09309|Ag09319|Ag10803|Aoaf|Aosmc|Be2c|Bj|Caco2|Cmk|Dnd41|Ecc1|Gm06990|Gm12801|Gm12864|Gm12865|Gm12872|Gm12873|Gm12875|Gm12891|Gm12892|Gm19239|H7es|Hac|Hae|Hah|Hasp|Hbmec|Hcfaa|Hcf|Hcm|Hcpe|Hct116|Hee|Hek293|Hffmyc|Hff|Hgf|Hipe|Hl60|Hmec|Hmf|Hmvecdblad|Hnpce|Hpae|Hpaf|Hpdlf|Hpf|Hrce|Hre|Hrpe|Hsmmfshd|Hsmmtubefshd|Hsmmt|Hsmm|Htr8|Hvmf|Jurkat|Lncap|M059j|Mcf10aes|Nb4|Nha|Nhbe|Nhdfad|Nhdfneo|Nhek|Nhlf|Nt2d1|Osteobl|Osteo|Ovcar3|Panc1|Panislets|Pfsk1|Prec|Progfib|Rpmi7951|Rptec|Saec|Skmc|Sknmc|Sknshra|T47d|Th1|Th2|U87|Werirb1|Wi38')
