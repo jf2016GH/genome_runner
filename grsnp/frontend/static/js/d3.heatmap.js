@@ -319,18 +319,29 @@ function generate_heatmaps() {
         console.log("range: "+ color_range.min + " : "+ color_range.max);
         create_heatmap("#heatmap",matrix);
         // Creates links to download the svg file
-        var svg = d3.selectAll("#heatmap_cor").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg"); // or whatever you call it
-        var serializer = new XMLSerializer();
-        var str = serializer.serializeToString(svg);
-        console.log(str);
-       $("heatmap").remove()
+        // Commented below is the code from 08/23/2013 commit 243f676. These changes broke SVG download.
+       //  var svg = d3.selectAll("#heatmap_cor").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg"); // or whatever you call it
+       //  var serializer = new XMLSerializer();
+       //  var str = serializer.serializeToString(svg);
+       //  console.log(str);
+       // $("heatmap").remove()
+       //  d3.selectAll("#heatmap_download")
+       //      .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
+       //        btoa(unescape(encodeURIComponent(
+       //            d3.selectAll("#heatmap svg").node().parentNode.innerHTML
+       //          )
+       //        )
+       //      ));
+        // Code before 243f676 commit, working download
         d3.selectAll("#heatmap_download")
             .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
               btoa(unescape(encodeURIComponent(
-                  d3.selectAll("#heatmap svg").node().parentNode.innerHTML
+                d3.selectAll("#heatmap").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
+               .node().parentNode.innerHTML)
                 )
               )
-            ));
+            );
+         // Code unchanged through the commits
         d3.selectAll("#heatmap_cor_download")
             .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
               btoa(unescape(encodeURIComponent(
