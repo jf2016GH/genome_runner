@@ -1,4 +1,3 @@
-
 		<h3 dir="ltr" style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
 			<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">Demo</span></span></h3>
 		<ol dir="ltr">
@@ -11,13 +10,19 @@
 			<li style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
 				<span style="font-family: Arial; font-size: 15px; white-space: pre-wrap; line-height: 1.15;">Hit &quot;Submit job&quot; - the analysis should take a minute</span></li>
 		</ol>
-		<h3>
+<br />
+<br />
+		<!-- <h3>
+
 			Video tutorial
+
 		</h3>
+
 		
+
 		<img src="static/images/coming_soon.png" /></p>
 
-
+		-->
 		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;"><span style="font-size:16px;">An overview of GenomeRunner&#39;s idea, October 2011</span></span></h3>
 		<p>
