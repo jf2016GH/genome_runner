@@ -31,9 +31,7 @@ lookup = TemplateLookup(directories=[os.path.join(root_dir,"frontend/templates")
 
 
 sett = {}
-
 DEBUG_MODE = True
-
 logger = logging.getLogger('genomerunner.server')
 hdlr = logging.FileHandler('genomerunner_server.log')
 hdlr_std = StreamHandler()
@@ -48,9 +46,7 @@ logger.setLevel(logging.INFO)
 
 # Each function in this class is a web page 
 class WebUI(object):
-	def __init__(self):
-		
-		
+	def __init__(self):			
 		organisms = self.get_org()
 		# create all directories in the custom_data dir if they do not already exist
 		for org in organisms:
@@ -73,20 +69,22 @@ class WebUI(object):
 	@cherrypy.expose
 	def index(self,organism=None):
 		if not organism: organism = sett["default_organism"]
-		if DEBUG_MODE or not organism in self._index_html:			
-			tmpl = lookup.get_template("index.html")
-			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
+		if DEBUG_MODE or not organism in self._index_html:		
+			tmpl = lookup.get_template("master.mako")
+			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read() # html is generated on server start in paths.write_treeview_html
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
 
 			# Use mako to render index.html
-			self._index_html[organism] = tmpl.render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
-									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),data_dir=os.path.join(sett["data_dir"],organism),default_organism=organism)
+			body = lookup.get_template("index.mako").render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
+									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),
+									data_dir=os.path.join(sett["data_dir"],organism),default_organism=organism)
+			script = lookup.get_template("index.js").render(default_organism=organism)
+			self._index_html[organism] = tmpl.render(body=body,script=script)
 
 			self._index_html[organism] = self._index_html[organism].replace("python_tree_view_html",tree_html)  # Insert the very large treeview html code using Python's find and replace.  Mako takes too long.
 		return self._index_html[organism]
-
 
 	def get_org(self):
 		organisms = []
@@ -94,9 +92,7 @@ class WebUI(object):
 		for f in files:
 			if f.find(".") == -1:
 				organisms.append(f)
-		return organisms
-
-	
+		return organisms	
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
@@ -125,13 +121,10 @@ class WebUI(object):
 			jobname = ""
 			logger.error("id={}".format(id) + str(e))
 		runset['job_name'] = id
-		runset['time'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-
+		runset['time'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())			
 			
 		# load the FOI data
-		bed_filename = ""
-
-		data = ""
+		bed_filename,data = "",""
 		demo_fois_dir =  kwargs["demo_fois"] if "demo_fois" in kwargs else ""  # If the user selects a demo set of FOIs to run, this will contain the directory
 		if demo_fois_dir == "":
 			try:
@@ -182,7 +175,6 @@ class WebUI(object):
 				return "ERROR: upload a file please"
 			runset["fois"] = bed_filename
 		elif demo_fois_dir != "":
-
 			# gather the FOI files in the demo directory
 			ls_foi = [os.path.join(demo_fois_dir,f) for f in os.listdir(demo_fois_dir) if os.path.isfile(os.path.join(demo_fois_dir,f))]
 			with open(fois,"wb") as writer:
@@ -290,7 +282,6 @@ class WebUI(object):
 			return "ERROR: unable to upload background"
 		runset['background'] = background_name
 
-
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
 		set_info = {"Jobname:": str(id),
@@ -311,17 +302,18 @@ class WebUI(object):
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
+
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("news.mako").render())
+
 	@cherrypy.expose
 	def result(self, id):
 		path = os.path.join(results_dir, id)
 		params = {}
 		params["run_id"] = id
 		params["detailed"] = "Results not yet available"
-		params["matrix"] = "Results not yet available"
-		if not os.path.exists(path):  #If file is empty...
-			tmpl = lookup.get_template("enrichment_not_ready.html")
-			return tmpl.render(id=id)
-		tmpl = lookup.get_template("results.html")
+		params["matrix"] = "Results not yet available"		
+		tmpl = lookup.get_template("master.mako")
 
 		# Loads the progress file if it exists
 		p = {"status":"","curprog":0,"progmax":0}
@@ -338,8 +330,6 @@ class WebUI(object):
 				params["log"] = params["log"]+ tmp
 				organism = [x.split("\t")[1] for x in tmp.split("\n") if x.split("\t")[0] == "Organism:"][0]
 		params["organism"] = organism
-		
-
 		params["log"] = params["log"] + "\n###Run Log###\n"
 		debug_path = os.path.join(path,".log")
 		if os.path.exists(debug_path):
@@ -351,7 +341,6 @@ class WebUI(object):
 		if os.path.exists(detailed_path):
 			with open(detailed_path) as f:
 				params["detailed"] = f.read()
-
 		
 		foi_names_path = os.path.join(os.path.join(uploads_dir, id),".fois")
 		if os.path.exists(foi_names_path):
@@ -364,7 +353,9 @@ class WebUI(object):
 
 		params.update(p)
 		try:
-			rend_template = tmpl.render(**params)
+
+			rend_template = tmpl.render(body=lookup.get_template("results.mako").render(**params),script= lookup.get_template("results.js").render(**params))
+			print "LOADED TEMPLATE"
 		except Exception, e:
 			traceback = MakoTraceback()
 			str_error = ""
@@ -376,7 +367,6 @@ class WebUI(object):
 			print str_error
 			rend_template = str_error
 		return rend_template
-
 
 	@cherrypy.expose
 	def get_heatmaps(self, run_id, organism):
@@ -450,7 +440,6 @@ class WebUI(object):
 		else: 
 			results["matrix_cor_pvalues"] = ""
 		return simplejson.dumps(results)
-
 
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
@@ -565,11 +554,8 @@ class WebUI(object):
 		tmpl = lookup.get_template("master.mako")
 		return tmpl.render(body=lookup.get_template("help.mako").render())
 
-
 def base_name(k):
     return os.path.basename(k).split(".")[0]
-
-
 
 if __name__ == "__main__":
 	global static_dir,results_dir,media,root_dir,sett,uploads_dir
@@ -579,11 +565,9 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/grs_db/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
-	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
-	
+	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 	
 	args = vars(parser.parse_args())
 	port = args["port"]
-
 	data_dir = args["data_dir"]
 	if data_dir == "":
 		data_dir = os.path.abspath(os.getcwd())

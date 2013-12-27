@@ -68,9 +68,6 @@
         legend = [c_min,c_min*.50,0,c_max*.5,c_max];
         legend_log = [c_min_log,c_min_log*.50,0,c_max_log*.5,c_max_log];
       }
-      console.log(num_range);
-      console.log(col_range);
-      console.log(legend);
       heatmapColor = d3.scale.linear().domain(num_range).range(col_range);
       
 
@@ -81,10 +78,12 @@
       geneNamesMargin = d3.max(geneNames.map(function(geneName) {
         return geneName.length;
       }));
+
+      // The buffer zone
       margin = {
         top: conditionNamesMargin * textScaleFactor,
         right: 150,
-        bottom: conditionNamesMargin * textScaleFactor +100,
+        bottom: conditionNamesMargin * textScaleFactor +150,
         left: geneNamesMargin * textScaleFactor
       };
       cell_size = 40;
@@ -104,7 +103,7 @@
          // Create the legend
          // NOTE: only works for the #heatmap NOT the #heatmap_cor
           var root = "svg#"+this.el.getAttribute("id");
-          var legend_y = height + margin.bottom -10
+          var legend_y = height + margin.bottom -  100
           var legend_c_size = 50
           // Draw the boxes
           d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
@@ -122,6 +121,10 @@
                     })
                     .attr("y", legend_y + legend_c_size + 30)
                     .attr("font-size", "13px")
+                    .attr("text-anchor", "start")
+                    .attr("transform", function(d,i){
+                      return "rotate(45,"+String((i * legend_c_size) +45) + "," + String(legend_y + legend_c_size + 30)+")";
+                    })
                     .text(function(d){
                         return d.toExponential(2); // toPrecision(3);
                     });
@@ -286,7 +289,7 @@ function generate_heatmaps() {
         create_heatmap("#heatmap_cor", matrix,matrix_cor);
         // NOTE: Draw the legend for the PCC heatmap. In the future, this should be done in the same place as  the legend for the "#heatmap"
         var root = "#heatmap_cor svg";
-        var legend_y = $(root).attr("height") -300
+        var legend_y = $(root).attr("height") -100
         var legend_c_size = 50
         // Draw the boxes
         var PCC_color =  d3.scale.linear().domain([-1,0,1]).range(["green","white","red"]);
