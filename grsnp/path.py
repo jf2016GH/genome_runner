@@ -3,7 +3,7 @@ import os, fnmatch,json
 from collections import defaultdict
 from collections import Set
 from collections import namedtuple
-	
+import re	
 
 
 
@@ -137,9 +137,9 @@ class PathNode(defaultdict):
 		background_dir = os.path.join(custom_dir,"backgrounds",organism)
 		if not os.path.exists(background_dir):
 			return html + "</select>"
-		for bk in [ f for f in sorted(os.listdir(background_dir), reverse=True) if os.path.isfile(os.path.join(background_dir,f)) and not f.endswith(".tbi")]:
+		for bk in [ f for f in sorted(os.listdir(background_dir)) if os.path.isfile(os.path.join(background_dir,f)) and not f.endswith(".tbi")]:
 			tmp = os.path.join(background_dir,bk)			
-			html = html + "<option value='{}'>{}</option>".format(tmp,tmp.split("/")[-1].split(".")[0])
+			html = html + "<option value='{}'>{}</option>".format(tmp,re.sub("^\d+",'',tmp.split("/")[-1].split(".")[0]))
 		html  = html + "</select>"
 		return html
 
