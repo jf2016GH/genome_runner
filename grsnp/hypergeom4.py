@@ -66,6 +66,29 @@ def get_overlap_statistics(gf,fois):
     return results
 
 
+def generate_randomsnps(foi_path,background,n_fois,num=10):
+    paths = []
+    tmp = ""
+    out_dir = os.path.join(os.path.dirname(foi_path),"random")
+    if not os.path.exists(out_dir): os.mkdir(out_dir)
+    for n in range(num):        
+        # generate random snps from background
+        if background.endswith('.gz'):
+            out = subprocess.Popen(["zcat {} | shuf -n {}".format(background,str(n_fois))],stdout=subprocess.PIPE,shell=True)
+            out.wait()
+            tmp = out.stdout.read()
+        else:        
+            out = subprocess.Popen(["shuf","-n",str(n_fois),background],stdout=subprocess.PIPE)
+            out.wait()
+            tmp = out.stdout.read()
+        
+        rnd_snp_path = os.path.join(out_dir,"random{}_".format(n)+base_name(foi_path))
+        with open(rnd_snp_path,"wb") as writer:
+            writer.write(tmp)
+            paths.append(rnd_snp_path)
+    return paths
+
+
 def get_bgobs(bg,gf,bkg_overlap_path): 
 
     _write_progress("Getting overlap stats on background and {}".format(base_name(gf)))
@@ -139,15 +162,24 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     # writes the first line as the header line
     if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
     if sign == 1 or str(odds_ratio) == "inf":
-        direction  = "overrepresented"    
+        direction  = "overrepresented" 
     else: direction =  "underrepresented"
+
+    # calculate the p_rand
+    prnd = [1,1]
     if pval > 0.05:
         direction = "nonsignificant"
+    else:
+        prnd = p_rand()
     write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
     if pval < 1E-307:
         # set to value obtained from sys.float_info.min_10_exp
         pval = 1E-306   
     return sign * pval
+
+def p_rand():
+    pmin, pmax = 1,1
+    return [pmin,pmax]
 
 
 
