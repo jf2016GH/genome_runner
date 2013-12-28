@@ -8,7 +8,7 @@ import logging
 from logging import FileHandler,StreamHandler
 from bx.intervals.intersection import IntervalTree
 from scipy.stats import hypergeom
-import numpy
+import numpy as np
 import scipy
 import pdb
 import os
@@ -22,6 +22,7 @@ import dbcreator as bedfilecreator
 import textwrap
 import subprocess
 import sys
+import commands
 
 
 
@@ -66,28 +67,6 @@ def get_overlap_statistics(gf,fois):
     return results
 
 
-def generate_randomsnps(foi_path,background,n_fois,num=10):
-    paths = []
-    tmp = ""
-    out_dir = os.path.join(os.path.dirname(foi_path),"random")
-    if not os.path.exists(out_dir): os.mkdir(out_dir)
-    for n in range(num):        
-        # generate random snps from background
-        if background.endswith('.gz'):
-            out = subprocess.Popen(["zcat {} | shuf -n {}".format(background,str(n_fois))],stdout=subprocess.PIPE,shell=True)
-            out.wait()
-            tmp = out.stdout.read()
-        else:        
-            out = subprocess.Popen(["shuf","-n",str(n_fois),background],stdout=subprocess.PIPE)
-            out.wait()
-            tmp = out.stdout.read()
-        
-        rnd_snp_path = os.path.join(out_dir,"random{}_".format(n)+base_name(foi_path))
-        with open(rnd_snp_path,"wb") as writer:
-            writer.write(tmp)
-            paths.append(rnd_snp_path)
-    return paths
-
 
 def get_bgobs(bg,gf,bkg_overlap_path): 
 
@@ -119,10 +98,65 @@ def get_bgobs(bg,gf,bkg_overlap_path):
 
 
 
-def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):    
+def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randimization_test=True):    
     """Return the signed p-value of all FOIs against the GF.
     """
     global logger_path
+    foi_name = base_name(foi_path)
+    gf_name = base_name(gf_path)
+    sign,pval,odds_ratio,did_chi_square = calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path)
+
+
+    # write out to the enrichment result file
+    er_result_path = os.path.join(output_dir,"enrichment")
+    if not os.path.exists(er_result_path): os.mkdir(er_result_path)
+    er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
+    # writes the first line as the header line
+    if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
+    if sign == 1 or str(odds_ratio) == "inf":
+        direction  = "overrepresented" 
+    else: direction =  "underrepresented"
+
+    # calculate the p_rand
+    prnd = 1 # default prnd for non-significant results
+    if pval > 0.05:
+        direction = "nonsignificant"
+    else:
+        _write_progress("Running randomization test on {}".format(foi_name))
+        if run_randimization_test: prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)
+        prnd = prnd[1] if sign == 1 else prnd[0]       
+        
+    
+    pval_unmod = pval
+    pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
+    # write out to the detailed results file
+    write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
+                "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
+                "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
+                "Chi-squared" if did_chi_square else "Fisher-Exact",
+                prnd, "%.2e" % pval if type(pval) != type("") else pval])) + "\n",detailed_outpath)
+
+    write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
+    if pval < 1E-307:
+        # set to value obtained from sys.float_info.min_10_exp
+        pval = 1E-306   
+    return sign * pval
+
+def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
+    ''' Calculated by generating 'num' random feature files and running them against gf_path.
+    Calculates the mean of the p_values for the overrepresented and underrepresented random features separately.
+    '''
+    num = 10
+    rnds_paths = generate_randomsnps(foi_path,background_path,n_fois,gf_path,num)
+    rnd_stats = get_overlap_statistics(gf_path,rnds_paths)
+    l_over,l_under = [1],[1]
+    for r in rnd_stats:
+        sign,pval,odds_ratio,chi = calculate_p_value(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path)
+        if sign < 0: l_under.append(pval)
+        else: l_over.append(pval)
+    return [np.mean(l_under),np.mean(l_over)]
+
+def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
@@ -132,8 +166,8 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
     for i in ctable:
         for k in i:
             if k < 0:
-                logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
-                return 1
+                logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
+                return [1,1,1]
             if k < 11:
                 do_chi_square = False
 
@@ -148,40 +182,28 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_name):
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     sign = -1 if (odds_ratio < 1) else 1
-
-    # write out to the detailed results file
-    write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
-                "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
-                "%.2e" % pval if type(pval) != type("") else pval,
-                "Chi-squared" if do_chi_square else "Fisher-Exact"])) + "\n",detailed_outpath)
-
-    # write out to the enrichment result file
-    er_result_path = os.path.join(output_dir,"enrichment")
-    if not os.path.exists(er_result_path): os.mkdir(er_result_path)
-    er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
-    # writes the first line as the header line
-    if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
-    if sign == 1 or str(odds_ratio) == "inf":
-        direction  = "overrepresented" 
-    else: direction =  "underrepresented"
-
-    # calculate the p_rand
-    prnd = [1,1]
-    if pval > 0.05:
-        direction = "nonsignificant"
-    else:
-        prnd = p_rand()
-    write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
-    if pval < 1E-307:
-        # set to value obtained from sys.float_info.min_10_exp
-        pval = 1E-306   
-    return sign * pval
-
-def p_rand():
-    pmin, pmax = 1,1
-    return [pmin,pmax]
+    return [sign,pval,odds_ratio,do_chi_square]
 
 
+
+
+
+
+def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
+    paths = []
+    out_dir = os.path.join(os.path.dirname(foi_path),"random")
+    if not os.path.exists(out_dir): os.mkdir(out_dir)
+    for n in range(num):        
+        rnd_snp_path = os.path.join(out_dir,"random{}_".format(n)+base_name(foi_path)+".bed")
+        # generate random snps from background
+        if background.endswith('.gz'):
+            command = "zcat {} | shuf -n {} | cut -f 1-3 > {}".format(background,str(n_fois),rnd_snp_path)
+            out = commands.getstatusoutput(command)
+        else:        
+            command = "shuf -n {} {}  | cut -f 1-3 > {}".format(str(n_fois),str(background),rnd_snp_path)
+            out = commands.getstatusoutput(command)
+        paths.append(rnd_snp_path)
+    return paths
 
 
 def cluster_matrix(input_path,output_path):
@@ -398,7 +420,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
         foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type']) + "\n",detailed_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand','p_mod']) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         _write_progress("Performing calculations on the background.")
         for gf in gfs: 
@@ -413,9 +435,10 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 logger.error("Skipping {}".format(gf))
                 continue
 
-            n_bgs = foi_bg[0]["indexregions"]
+            n_bgs = foi_bg[0]["indexregions"]  
+
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,os.path.basename(good_fois[i]),os.path.basename(gf))) for i in range(len(good_fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))

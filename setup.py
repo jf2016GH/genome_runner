@@ -3,10 +3,7 @@ import setuptools
 import os
 
 # Create list of data files with paths relative to the base genome-runner directory
-package_data = []
-for root, dirs, files in os.walk("grsnp/frontend"):
-    for file in files:
-        package_data.append(os.path.relpath(os.path.join(root, file), "grsnp/frontend"))
+package_data = ["frontend/*"]
 
 setup(
     name='GenomeRunner SNP',
@@ -16,7 +13,7 @@ setup(
     data_files=[('grsnp', ['grsnp_db_readme.txt']),],
     packages=['grsnp'],
     package_dir={"grsnp": "grsnp"},
-    package_data={"": package_data},
+    package_data={"grsnp": package_data},
     scripts=[os.path.join(r,f) for r,d,fs in os.walk("grsnp/bin") for f in fs if f.endswith(".py") or f.endswith(".sh") or "bedToBigBed" in f],
     url='http://www.genomerunner.org',
     license='LICENSE.txt',
