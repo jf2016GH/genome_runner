@@ -1,10 +1,19 @@
 from distutils.core import setup
 import setuptools
 import os
+import commands
 
 # Create list of data files with paths relative to the base genome-runner directory
 package_data = ["frontend/*"]
 
+class CustomInstallCommand(install):
+    def run(self):
+        # Install the R packages required by grsnp
+        r_packages_install = "wget http://cran.r-project.org/src/contrib/Hmisc_3.13-0.tar.gz\nwget http://cran.r-project.org/src/contrib/gplots_2.12.1.tar.gz\nwget http://cran.r-project.org/src/contrib/RColorBrewer_1.0-5.tar.gz\nsudo R CMD INSTALL Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz\nrm Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz"
+        commands.getstatusoutput(r_packages_install)
+        grtk_install = "curl http://bedops.googlecode.com/files/bedops_linux_x86_64-v2.2.0.tar.bz2 | sudo tar xvj -C /usr/local\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo curl -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"
+        commands.getstatusoutput(grtk_install)
+        
 setup(
     name='GenomeRunner SNP',
     version='0.1.0',
@@ -17,5 +26,9 @@ setup(
     scripts=[os.path.join(r,f) for r,d,fs in os.walk("grsnp/bin") for f in fs if f.endswith(".py") or f.endswith(".sh") or "bedToBigBed" in f],
     url='http://www.genomerunner.org',
     license='LICENSE.txt',
+    install_requires=["cherrypy","numpy","scipy","cython","pybedtools","bx-python","rpy2","mako"],
     description='GenomeRunner SNP: Interpreting genome veriation within epigenomic context',
-    long_description=open('README').read())
+    long_description=open('README').read(),
+    cmdclass={
+        'install': CustomInstallCommand
+    })
