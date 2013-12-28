@@ -35,6 +35,7 @@ function update_progress(){
 						max:  data['progmax']});
 		if (data['status'] != "") $("#status").html(data['status']);
 		if (data['status'] == "Analysis Completed"){
+			console.log("REFRESH heatmap")
 			clearInterval(refresh_progress);
 			$(".lblMat").remove()
 			add_heatmaps();

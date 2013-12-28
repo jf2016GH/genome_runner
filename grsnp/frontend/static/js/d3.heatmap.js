@@ -27,7 +27,7 @@
       return this.render();
     },
 
-    render: function() {    
+    render: function() {   
       var cell_size, clusterColor, clusters, columns, conditionNames, conditionNamesMargin, extent, geneExpressions, geneNames, geneNamesMargin, getRow, heatmap, heatmapColor, height, margin, rows, textScaleFactor, width, x, y, legend;
       geneExpressions = this.model.get("geneExpressions");
       conditionNames = this.model.get("conditionNames");
@@ -89,6 +89,8 @@
       cell_size = 40;
       width = cell_size * geneExpressions[0].length;
       height = cell_size * geneNames.length;
+      $(this.el).html("") // This clears out old heatmap, if it already exists. Used to fix 'multiple heatmap bug'
+      console.log("Creating heatmap at " + this.el.id)
       heatmap = d3.select(this.el).append("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg").attr("width", width + margin.right + margin.left).attr("height", height + margin.top + margin.bottom).attr("id", "heatmap").append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
       x = d3.scale.ordinal().domain(d3.range(geneExpressions[0].length)).rangeBands([0, width]);
       y = d3.scale.ordinal().domain(d3.range(geneNames.length)).rangeBands([0, height]);
@@ -100,36 +102,35 @@
       });
 
 
-         // Create the legend
-         // NOTE: only works for the #heatmap NOT the #heatmap_cor
-          var root = "svg#"+this.el.getAttribute("id");
-          var legend_y = height + margin.bottom -  100
-          var legend_c_size = 50
-          // Draw the boxes
-          d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
-                 return i*legend_c_size+40;
-            }).attr("y", legend_y).attr("width",legend_c_size).attr("height",legend_c_size).style("fill", function(d) {
-              return heatmapColor(d);
-            }).attr("value",function(d){
-              return d;
-            });
+     // Create the legend
+     // NOTE: only works for the #heatmap NOT the #heatmap_cor
+      var root = "svg#"+this.el.getAttribute("id");
+      var legend_y = height + margin.bottom -  100
+      var legend_c_size = 50
+      // Draw the boxes
+      d3.select(root).selectAll("rect").data(legend).enter().append("svg:rect").attr("class", "l_cell").attr("x", function(d, i) {
+             return i*legend_c_size+40;
+        }).attr("y", legend_y).attr("width",legend_c_size).attr("height",legend_c_size).style("fill", function(d) {
+          return heatmapColor(d);
+        }).attr("value",function(d){
+          return d;
+        });
 
-          // Creates the value labels 
-           d3.select(root).selectAll(".legend").data(legend_log).enter().append("text").attr("class","legend").attr("x", function(d, i) {
-                          console.log(d);
-                        return (i * legend_c_size) +45;
-                    })
-                    .attr("y", legend_y + legend_c_size + 30)
-                    .attr("font-size", "13px")
-                    .attr("text-anchor", "start")
-                    .attr("transform", function(d,i){
-                      return "rotate(45,"+String((i * legend_c_size) +45) + "," + String(legend_y + legend_c_size + 30)+")";
-                    })
-                    .text(function(d){
-                        return d.toExponential(2); // toPrecision(3);
-                    });
-
-
+      // Creates the value labels 
+       d3.select(root).selectAll(".legend").data(legend_log).enter().append("text").attr("class","legend").attr("x", function(d, i) {
+                      console.log(d);
+                    return (i * legend_c_size) +45;
+                })
+                .attr("y", legend_y + legend_c_size + 30)
+                .attr("font-size", "13px")
+                .attr("text-anchor", "start")
+                .attr("transform", function(d,i){
+                  return "rotate(45,"+String((i * legend_c_size) +45) + "," + String(legend_y + legend_c_size + 30)+")";
+                })
+                .text(function(d){
+                    return d.toExponential(2); // toPrecision(3);
+                });
+      
 
        
       color_log10 = function(val) {
