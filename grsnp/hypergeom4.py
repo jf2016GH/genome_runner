@@ -123,8 +123,9 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
         direction = "nonsignificant"
     else:
         _write_progress("Running randomization test on {}".format(foi_name))
-        if run_randimization_test: prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)
-        prnd = prnd[1] if sign == 1 else prnd[0]       
+        if run_randimization_test: 
+            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)
+            prnd = prnd[1] if sign == 1 else prnd[0]       
         
     
     pval_unmod = pval
