@@ -17,13 +17,13 @@ def scrip_installer(command_subclass):
     orig_run = command_subclass.run
 
     def modified_run(self):
-        # Install the R packages required by grsnp
-        #r_packages_install = "sudo Rscript installer.R"
-        #subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
-        # installs grtk
-
-        grtk_install = """wget -N https://github.com/bedops/bedops/releases/download/v2.3.0/bedops_linux_x86_64-v2.3.0.tar.bz2\nsudo tar xjvf -C /usr/local bedops_linux_x86_64-v2.3.0.tar.bz2\nsudo rm bedops_linux_x86_64-v2.2.0.tar.bz2\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo wget -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
+        # installs all prerequisites and GRTK
+        grtk_install = """mkdir downloads\ncd downloads\nsudo apt-get -y install python-setuptools python-pip python-dev parallel r-base-core bedtools samtools kyotocabinet-utils realpath\nsudo apt-get -y upgrade gcc\nsudo pip install -U cython\nwget -N https://github.com/bedops/bedops/releases/download/v2.3.0/bedops_linux_x86_64-v2.3.0.tar.bz2\nsudo tar xjvf bedops_linux_x86_64-v2.3.0.tar.bz2 -C /usr/local/\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo wget -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\ngit clone https://mdozmorov@bitbucket.org/wrenlab/grtk.git\ncd grtk\nsudo python setup.py install\ncd ../..\nsudo rm -r downloads"""
         subprocess.Popen(grtk_install,stdout=subprocess.PIPE,shell=True).wait()
+        # Install the R packages required by grsnp
+        r_packages_install = "sudo Rscript installer.R"
+        subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
+
         orig_run(self)
 
     command_subclass.run = modified_run
@@ -50,8 +50,8 @@ setup(
     url='http://www.genomerunner.org',
     license='LICENSE.txt',
     install_requires=["cherrypy","numpy","scipy","cython","pybedtools","bx-python","rpy2","mako","simplejson"],
-    description='GenomeRunner SNP: Interpreting genome veriation within epigenomic context',
-    long_description=open('README').read(),
+    description='GenomeRunner Web: Functional interpretation of SNPs within epigenomic context',
+    long_description=open('README.rst').read(),
     cmdclass={
         'install': CustomInstallCommand,
         'develop': CustomDevelopCommand

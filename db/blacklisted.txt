@@ -3,3 +3,4 @@ ntMito
 altSeqHaplotypesP10
 altSeqLiftOverPslP10
 altSeqPatchesP10
+cytoBand
