@@ -16,7 +16,7 @@ def scrip_installer(command_subclass):
     """
     orig_run = command_subclass.run
 
-   def modified_run(self):
+    def modified_run(self):
         # Install the R packages required by grsnp
         r_packages_install = "wget http://cran.r-project.org/src/contrib/Hmisc_3.13-0.tar.gz\nwget http://cran.r-project.org/src/contrib/gplots_2.12.1.tar.gz\nwget http://cran.r-project.org/src/contrib/RColorBrewer_1.0-5.tar.gz\nsudo R CMD INSTALL Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz\nrm Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz"
         out = subprocess.Popen(r_packages_install,stdout=subprocess.PIP,shell=True)
