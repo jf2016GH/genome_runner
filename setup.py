@@ -3,7 +3,7 @@ from distutils.command.install import install
 
 import setuptools
 import os
-import suprocess
+import subprocess
 
 # Create list of data files with paths relative to the base genome-runner directory
 package_data = ["frontend/*"]
@@ -18,20 +18,18 @@ def scrip_installer(command_subclass):
 
     def modified_run(self):
         # Install the R packages required by grsnp
-        r_packages_install = "wget http://cran.r-project.org/src/contrib/Hmisc_3.13-0.tar.gz\nwget http://cran.r-project.org/src/contrib/gplots_2.12.1.tar.gz\nwget http://cran.r-project.org/src/contrib/RColorBrewer_1.0-5.tar.gz\nsudo R CMD INSTALL Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz\nrm Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz"
-        out = subprocess.Popen(r_packages_install,stdout=subprocess.PIP,shell=True)
-        out.wait()
+        r_packages_install = "wget http://cran.r-project.org/src/contrib/Formula_1.1-1.tar.gz\nwget http://cran.r-project.org/src/contrib/Hmisc_3.13-0.tar.gz\nwget http://cran.r-project.org/src/contrib/gplots_2.12.1.tar.gz\nwget http://cran.r-project.org/src/contrib/RColorBrewer_1.0-5.tar.gz\nsudo R CMD INSTALL Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz\nrm Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz Formula_1.1-1.tar.gz"
+        subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
         # installs grtk
         grtk_install = """curl http://bedops.googlecode.com/files/bedops_linux_x86_64-v2.2.0.tar.bz2 | sudo tar xvj -C /usr/local\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo curl -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
-        out = subprocess.Popen(grtk_install,stdout=subprocess.PIP,shell=True)
-        out.wait()
+        osubprocess.Popen(grtk_install,stdout=subprocess.PIPE,shell=True).wait()
 
         orig_run(self)
 
     command_subclass.run = modified_run
     return command_subclass
 
-@friendly
+@scrip_installer
 class CustomInstallCommand(install):
     pass
 
