@@ -1,12 +1,12 @@
-from distutils.core import setup
-from distutils.command.install import install
-
-import setuptools
+from setuptools import setup
+from setuptools.command.install import develop as _develop 
+from setuptools.command.install import install as _install
 import os
 import subprocess
 
 # Create list of data files with paths relative to the base genome-runner directory
 package_data = ["frontend/*"]
+
 
 def scrip_installer(command_subclass):
     """A decorator for classes subclassing one of the setuptools commands.
@@ -18,19 +18,22 @@ def scrip_installer(command_subclass):
 
     def modified_run(self):
         # Install the R packages required by grsnp
-        r_packages_install = "Rscript installer.R"
+        r_packages_install = "sudo Rscript installer.R"
         subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
         # installs grtk
         grtk_install = """wget http://bedops.googlecode.com/files/bedops_linux_x86_64-v2.2.0.tar.bz2 | sudo tar xvj -C /usr/local\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo wget -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
         subprocess.Popen(grtk_install,stdout=subprocess.PIPE,shell=True).wait()
-
         orig_run(self)
 
     command_subclass.run = modified_run
     return command_subclass
 
 @scrip_installer
-class CustomInstallCommand(install):
+class CustomInstallCommand(_install):
+    pass
+
+@scrip_installer
+class CustomDevelopCommand(_develop)
     pass
 
 setup(
@@ -49,5 +52,6 @@ setup(
     description='GenomeRunner SNP: Interpreting genome veriation within epigenomic context',
     long_description=open('README').read(),
     cmdclass={
-        'install': CustomInstallCommand
+        'install': CustomInstallCommand,
+        'develop': CustomDevelopCommand
     })

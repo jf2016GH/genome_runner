@@ -1,2 +1,1 @@
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("Hmisc", "RColorBrewer", "gplots"))
+install.packages(c("Hmisc", "RColorBrewer", "gplots"),repos='http://cran.us.r-project.org')
