@@ -18,11 +18,11 @@ def scrip_installer(command_subclass):
 
     def modified_run(self):
         # Install the R packages required by grsnp
-        r_packages_install = "wget http://cran.r-project.org/src/contrib/Formula_1.1-1.tar.gz\nwget http://cran.r-project.org/src/contrib/Hmisc_3.13-0.tar.gz\nwget http://cran.r-project.org/src/contrib/gplots_2.12.1.tar.gz\nwget http://cran.r-project.org/src/contrib/RColorBrewer_1.0-5.tar.gz\nsudo R CMD INSTALL Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz\nrm Hmisc_3.13-0.tar.gz gplots_2.12.1.tar.gz RColorBrewer_1.0-5.tar.gz Formula_1.1-1.tar.gz"
+        r_packages_install = "Rscript installer.R"
         subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
         # installs grtk
-        grtk_install = """curl http://bedops.googlecode.com/files/bedops_linux_x86_64-v2.2.0.tar.bz2 | sudo tar xvj -C /usr/local\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo curl -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
-        osubprocess.Popen(grtk_install,stdout=subprocess.PIPE,shell=True).wait()
+        grtk_install = """wget http://bedops.googlecode.com/files/bedops_linux_x86_64-v2.2.0.tar.bz2 | sudo tar xvj -C /usr/local\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo wget -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
+        subprocess.Popen(grtk_install,stdout=subprocess.PIPE,shell=True).wait()
 
         orig_run(self)
 
