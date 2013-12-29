@@ -1,5 +1,5 @@
 from setuptools import setup
-from setuptools.command.install import develop as _develop 
+from setuptools.command.develop import develop as _develop
 from setuptools.command.install import install as _install
 import os
 import subprocess
@@ -18,10 +18,11 @@ def scrip_installer(command_subclass):
 
     def modified_run(self):
         # Install the R packages required by grsnp
-        r_packages_install = "sudo Rscript installer.R"
-        subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
+        #r_packages_install = "sudo Rscript installer.R"
+        #subprocess.Popen(r_packages_install,stdout=subprocess.PIPE,shell=True).wait()
         # installs grtk
-        grtk_install = """wget http://bedops.googlecode.com/files/bedops_linux_x86_64-v2.2.0.tar.bz2 | sudo tar xvj -C /usr/local\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo wget -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
+
+        grtk_install = """wget -N https://github.com/bedops/bedops/releases/download/v2.3.0/bedops_linux_x86_64-v2.3.0.tar.bz2\nsudo tar xjvf -C /usr/local bedops_linux_x86_64-v2.3.0.tar.bz2\nsudo rm bedops_linux_x86_64-v2.2.0.tar.bz2\nsudo wget -np -R -A "bedToBigBed" -A "bedGraphToBigWig" -A "bigWig*" -A "bigBed*" -N -e robots=off -r -P /usr/local/bin -nd "http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/"\nsudo wget -o /usr/local/bin/rowsToCols http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/rowsToCols\nsudo chmod a+x /usr/local/bin/*\nsudo apt-get install -y parallel bedtools tabix kyotocabinet-utils realpath\ngit clone git@bitbucket.org:wrenlab/grtk.git\ncd grtk\nsudo python setup.py install"""
         subprocess.Popen(grtk_install,stdout=subprocess.PIPE,shell=True).wait()
         orig_run(self)
 
@@ -33,7 +34,7 @@ class CustomInstallCommand(_install):
     pass
 
 @scrip_installer
-class CustomDevelopCommand(_develop)
+class CustomDevelopCommand(_develop):
     pass
 
 setup(
