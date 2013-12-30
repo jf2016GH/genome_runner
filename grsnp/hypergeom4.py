@@ -91,7 +91,7 @@ def get_bgobs(bg,gf,bkg_overlap_path):
         logger.error(traceback.format_exc())
     return result
 
-def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randimization_test=True):    
+def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randomization_test=True):    
     """Return the signed p-value of all FOIs against the GF.
     """
     global logger_path
@@ -116,17 +116,21 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
         direction = "nonsignificant"
     else:
         _write_progress("Running randomization test on {}".format(foi_name))
-        if run_randimization_test: 
+        if run_randomization_test: 
             prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)  
     
     pval_unmod = pval
     pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
     # write out to the detailed results file
+    strpval,strprnd = "","" 
+    if run_randomization_test:
+        strpval = "%.2e" % pval if type(pval) != type("") else pval 
+        strprnd = "%.2e" % prnd if type(prnd) != type("") else prnd 
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
                 "Chi-squared" if did_chi_square else "Fisher-Exact",
-                prnd, "%.2e" % pval if type(pval) != type("") else pval])) + "\n",detailed_outpath)
+                strprnd,strpval])) + "\n",detailed_outpath)
 
     write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
     if pval < 1E-307:
@@ -366,7 +370,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=False,run_randomization_test=False):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -411,7 +415,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
         foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand','p_mod']) + "\n",detailed_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         _write_progress("Performing calculations on the background.")
         for gf in gfs: 
@@ -429,7 +433,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             n_bgs = foi_bg[0]["indexregions"]  
 
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path)) for i in range(len(good_fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
             print("TEST:",matrix_outpath,outdir)
