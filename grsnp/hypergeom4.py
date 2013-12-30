@@ -67,9 +67,7 @@ def get_overlap_statistics(gf,fois):
     return results
 
 
-
 def get_bgobs(bg,gf,bkg_overlap_path): 
-
     _write_progress("Getting overlap stats on background and {}".format(base_name(gf)))
     logger.info("Getting overlap stats on background and {}".format(base_name(gf)))
 
@@ -84,8 +82,6 @@ def get_bgobs(bg,gf,bkg_overlap_path):
             if len(bg_obs) != 0:
                 logger.info("Pre-calculated values found for background and {} ".format(base_name(gf)))
                 return bg_obs[0]
-
-
     # manually get overlap values
     result = get_overlap_statistics(gf,[bg])
     try:
@@ -94,9 +90,6 @@ def get_bgobs(bg,gf,bkg_overlap_path):
         result = None
         logger.error(traceback.format_exc())
     return result
-
-
-
 
 def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randimization_test=True):    
     """Return the signed p-value of all FOIs against the GF.
@@ -124,9 +117,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     else:
         _write_progress("Running randomization test on {}".format(foi_name))
         if run_randimization_test: 
-            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)
-            prnd = prnd[1] if sign == 1 else prnd[0]       
-        
+            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)  
     
     pval_unmod = pval
     pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
@@ -150,12 +141,11 @@ def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     num = 10
     rnds_paths = generate_randomsnps(foi_path,background_path,n_fois,gf_path,num)
     rnd_stats = get_overlap_statistics(gf_path,rnds_paths)
-    l_over,l_under = [1],[1]
+    p_rand = [1]
     for r in rnd_stats:
         sign,pval,odds_ratio,chi = calculate_p_value(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path)
-        if sign < 0: l_under.append(pval)
-        else: l_over.append(pval)
-    return [np.mean(l_under),np.mean(l_over)]
+        p_rand.append(pval)
+    return np.min(p_rand)
 
 def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
@@ -442,6 +432,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
+            print("TEST:",matrix_outpath,outdir)
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
             if len(gfs) > 4:               
                 pearsons_cor_matrix(clust_path,outdir)
