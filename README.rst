@@ -7,22 +7,14 @@ Installing prerequisites
 ------------------------
 
 These installation instructions were tested on freshly installed Ubuntu Linux 13.10 (Saucy Salamander). 
-Please install R 3.0.1 before installing GRSNP by running:
-.. code-block:: bash
-
-    sudo apt-get install -f r-base=3.0.1-3ubuntu1 
-    
-
 
 .. code-block:: bash
 
-    git clone git@bitbucket.org:mdozmorov/grsnp.git # Clone GenomeRunner SNP repository 
-    sudo apt-get install python-setuptools python-pip python-dev python-numpy python-scipy
-    sudo apt-get upgrade gcc
-    sudo pip install -U cython   
+    sudo apt-get -y install git # Install Git code management system
+    git clone git@bitbucket.org:mdozmorov/grsnp.git # Clone GenomeRunner Web repository. Fixme: Make the repository public on GitHub, and change the command accordingly
     sudo python setup.py develop install
 
-Fixme: Simplify installation steps. Work on eliminating manually copying 'frontend' folder
+Fixme: error: can't copy 'grsnp/frontend/static': doesn't exist or not a regular file
     
 There are three important steps and modules in the grsnp package:
 
