@@ -112,16 +112,13 @@ class WebUI(object):
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
 		list_gfs = []
 
-		runset = {}
 		cherrypy.response.timeout = 3600
 
 		try:
 			jobname = kwargs["jobname"]
 		except Exception, e:
 			jobname = ""
-			logger.error("id={}".format(id) + str(e))
-		runset['job_name'] = id
-		runset['time'] = strftime("%Y-%m-%d %H:%M:%S", gmtime())			
+			logger.error("id={}".format(id) + str(e))		
 			
 		# load the FOI data
 		bed_filename,data = "",""
@@ -173,7 +170,6 @@ class WebUI(object):
 			except Exception, e:
 				logger.error("id={}".format(id) + str(e))
 				return "ERROR: upload a file please"
-			runset["fois"] = bed_filename
 		elif demo_fois_dir != "":
 			# gather the FOI files in the demo directory
 			ls_foi = [os.path.join(demo_fois_dir,f) for f in os.listdir(demo_fois_dir) if os.path.isfile(os.path.join(demo_fois_dir,f))]
@@ -221,7 +217,7 @@ class WebUI(object):
 		# have been checked.
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
-		organism,run = "",[]
+		organism,run,run_random = "",[],False
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		with open(gfs,"a") as out_gfs:
@@ -229,6 +225,7 @@ class WebUI(object):
 				if (base_name(g) not in list_gfs): out_gfs.write(g+"\n")
 				list_gfs.append(base_name(g))
 
+		print "KWARGS:::: ", kwargs
 		for k,v in kwargs.items():
 			# organism to use
 			if "organism:" in v:
@@ -244,9 +241,9 @@ class WebUI(object):
 					for f in ls_foi:
 						if (base_name(f) not in list_gfs): writer.write(f.rstrip(".tbi")+"\n")
 						list_gfs.append(base_name(f))	
-
-		runset['organism']= organism	
+			if k.startswith("run_random") and v == "on": run_random = True
 		
+
 		# load the background data if uploaded
 		background_name = ""
 		try:
@@ -280,7 +277,6 @@ class WebUI(object):
 		except Exception, e:
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
-		runset['background'] = background_name
 
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
@@ -298,7 +294,7 @@ class WebUI(object):
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,res_dir,runset['job_name'],True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"]))				
+				args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],False,run_random))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 

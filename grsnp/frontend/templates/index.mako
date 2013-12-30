@@ -62,7 +62,7 @@
 							<table>
 						    	<tr>
 								    <td>
-										<textarea id="inputbeddata" rows=5 cols=30 style="margin:10px" name="bed_data" disabled>
+										<textarea id="inputbeddata" rows=5 cols=30 style="margin:10px" name="bed_data" wrap="off" disabled>
 										</textarea>
 									</td>
 									<td>
@@ -76,10 +76,10 @@
 					</div>
 			</div>	
 			<div class="well">
-				<h3>2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'population' to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-				</h3>
+				<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'population' to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+				</h3><input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input>
 				<b style="font-size:120%; margin-left: 10px"></b>
-					<div class="accordion" style="padding-bottom: 1em;list-style:none">        
+					<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top:2em">        
 					<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
 						<div style="height=100px">       
 									Bed File:
@@ -89,7 +89,7 @@
 								    <table style="margin-bottom:0px; padding-bottom:0px">
 								    	<tr>
 										    <td>
-												<textarea id="inputbackgrounddata" rows=5 cols=30 style="margin:10px" name="background_data" disabled>
+												<textarea id="inputbackgrounddata" rows=5 cols=30 style="margin:10px" name="background_data" wrap="off" disabled>
 												</textarea>
 											</td>
 											<td>
