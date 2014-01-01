@@ -17,8 +17,9 @@ def scrip_installer(command_subclass):
         grtk_install = """
             mkdir downloads
             cd downloads
-            sudo apt-get -y install parallel r-base-core bedtools samtools tabix kyotocabinet-utils realpath
-            sudo apt-get -y install python-setuptools python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako
+            sudo apt-get -y install parallel
+            sudo apt-get -y install r-base-core bedtools samtools tabix kyotocabinet-utils realpath
+            sudo apt-get -y install python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako
             sudo apt-get -y upgrade gcc
             sudo pip install -U cython
             wget -N https://github.com/bedops/bedops/releases/download/v2.3.0/bedops_linux_x86_64-v2.3.0.tar.bz2
