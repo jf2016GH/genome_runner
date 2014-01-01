@@ -1,8 +1,0 @@
-cherrypy
-numpy
-scipy
-cython
-pybedtools
-bx-python
-rpy2
-mako
