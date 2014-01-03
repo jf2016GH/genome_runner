@@ -12,15 +12,20 @@ $(document).ready(function() {
 	$(".helptooltip").tooltip();	
 });
 
-	// generates both of the heatmaps
+	// generates both of the heatmap graphs
 function add_heatmaps(){
+
+
+	
 	$("#heatmap").heatmap({
 		ajaxuri: "/gr/get_cluster?run_id=${run_id}"		
-	});	
+	});
+		
 	$("#heatmap_cor").heatmap({
 		ajaxuri: "/gr/get_pcc?run_id=${run_id}"
 	});
-};
+	return false;
+}
 
 function update_progress(){
 	$.post('/gr/get_progress?run_id=${run_id}',function(data){

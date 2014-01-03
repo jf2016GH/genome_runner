@@ -22,10 +22,11 @@
 
         plugin.init = function() {
             plugin.settings = $.extend({}, defaults, options);   
-
+            console.log(plugin.settings.ajaxuri);
+            console.log(element);
             $.post(plugin.settings.ajaxuri, function(res){
                
-                console.log("TEST");
+                console.log("TEST" + res);
                 if (res.substring(0,6) == "ERROR:") { $(element).html("<h3>" + res + "</h3>"); }   // check if the server returned an error
                 data = jQuery.parseJSON(res);
                  // Insert the row_name column row name
@@ -327,14 +328,13 @@
                var geneExpressionModel, genes, heatmap, legend_c_size = 50, legend_y = $(target).attr("height") -100;
 
                 color_range = matrix_range(matrix_data,matrices[matrix_index].log);
-                console.log("range: "+ color_range.min + " : "+ color_range.max);
-                create_heatmap("#heatmap",matrices,plugin.settings.cur_index);
-               
+                create_heatmap(target,matrices,plugin.settings.cur_index);
+               /*
                 // Code before 243f676 commit, working download
-                d3.selectAll("#heatmap_download")
+                d3.selectAll("#"+ target.id + "heatmap_download")
                     .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
                       btoa(unescape(encodeURIComponent(
-                        d3.selectAll("#heatmap").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
+                        d3.selectAll(target).selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
                        .node().parentNode.innerHTML)
                         )
                       )
@@ -347,7 +347,7 @@
                        .node().parentNode.innerHTML)
                         )
                       )
-                );
+                );*/
 
         }
 
