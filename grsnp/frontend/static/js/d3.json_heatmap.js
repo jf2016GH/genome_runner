@@ -110,7 +110,6 @@
                 col_range = ["white","red"];
                 diff= c_max - c_min; 
                 legend_log = [c_min_log,diff*.25+c_min_log,diff*.50+c_min_log,diff*.75+c_min_log,c_max_log];
-                legend = [c_min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max];
                 
               } 
               // case of complete underrepresentation
@@ -120,19 +119,17 @@
                 diff= c_min + c_max;   
                 console.log("diff"+diff);
                 legend = [c_min,diff*.75+c_max,diff*.50+c_max,diff*.25+c_max,c_max];
-                legend_log = [c_min_log,diff*.75+c_max_log,diff*.50+c_max_log,diff*.25+c_max_log,c_max_log];
               }
               else if (c_min<=0 && c_max >= 0){
                 num_range = [color_range.min,0,c_max];
                 col_range = ["green","white","red"];
                 diff= c_max - color_range.min;       
                 legend = [c_min,c_min*.50,0,c_max*.5,c_max];
-                legend_log = [c_min_log,c_min_log*.50,0,c_max_log*.5,c_max_log];
               }
               // if using log transform, then we want the labels to be 
               if (use_log) {
-                legend_text = legend_log.map( function (d,i){ // the value used for the text of the legend
-                  console.log(i + ":" +d)
+                legend_text = legend.map( function (d,i){ // the value used for the text of the legend
+                  
                   return sign(d) * 1/(Math.pow(10,Math.pow(10,Math.abs(d)))) ;
                 });
                 legend_cell = legend;  // The value used for coloring the legend cells             
@@ -205,9 +202,9 @@
                           tip2 = ""   
                           if (alpha != "") {
 
-                          /* d  = parseFloat(d);
+                          d  = parseFloat(d);
                            if (d<0) { d = -1*(1/Math.pow(10,Math.abs(d))); }
-                           else { d = 1/Math.pow(10,Math.abs(d)); }*/
+                           else { d = 1/Math.pow(10,Math.abs(d)); }
                            
                            if (Math.abs(d) < alpha) { 
                               if (d<0) tip2 = "Underrepresented<br>";
@@ -303,16 +300,17 @@
               matrix_data  = matrices[matrix_index].matrix;
 
 
-              matrix_range = function(arr) {
+              matrix_range = function(arr,use_log) {
+
                 arr = getMatrixValues(arr,getColNames(matrix_data));
                 var max = -400;
                 var min = 400;
 
                 for (var i =0; i<arr.length;i++){
-                  for (var o in matrix_data[i]){
-                    var val = matrix_data[i][o];
+                  for (var o in arr[i]){
+                    var val = arr[i][o];
                     if (isNumber(val)){
-                      if(matrices[0].log){
+                      if(use_log){
                         val = color_log10(parseFloat(val));
                       } else { val = parseFloat(val);}
                       if (val > max){ max = val;}
