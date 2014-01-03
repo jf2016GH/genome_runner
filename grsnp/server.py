@@ -474,11 +474,19 @@ class WebUI(object):
 	@cherrypy.expose
 	def get_cluster(self,run_id):
 		mat_path = os.path.join(os.path.join(results_dir,run_id,"clustered.json"))
+		print "PROINTING RESAREDSA FDSA",open(mat_path).read()
 		if os.path.exists(mat_path):
 			with open(mat_path) as f:
 				return f.read()
 		return "ERROR: No Results"
-								
+	
+	@cherrypy.expose
+	def get_pcc(self,run_id):
+		mat_path = os.path.join(os.path.join(results_dir,run_id,"pcc_matrix.json"))
+		if os.path.exists(mat_path):
+			with open(mat_path) as f:
+				return f.read()
+		return "ERROR: No Results"				
 
 	@cherrypy.expose
 	def meta(self, tbl,organism):

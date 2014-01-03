@@ -266,8 +266,8 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     # write matrices in json format     
     mat = open(output_path).read()      
     mat_pval = open(pval_output_path).read()        
-    son_mat = []       
-    json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": mat})      
+    json_mat = []       
+    json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": mat})      
     json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": mat_pval})      
     with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:       
         simplejson.dump(json_mat,f)
@@ -491,14 +491,14 @@ if __name__ == "__main__":
     global print_progress
     print_progress = True
     parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
-    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required")   956 
+    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
     parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
     parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
     parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
     parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true") 
     args = vars(parser.parse_args())
-    if args["pass_paths"]:  968 
+    if args["pass_paths"]: 
         gf = args["gfs"][0].split(",")      
         foi = args["fois"][0].split(",")        
         args["gfs"][0],args["fois"][0] = os.path.join(args["output_dir"],".gfs"),os.path.join(args["output_dir"],".fois")       

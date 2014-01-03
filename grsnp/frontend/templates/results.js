@@ -12,26 +12,15 @@ $(document).ready(function() {
 	$(".helptooltip").tooltip();	
 });
 
-	// generates both of the heatmap graphs
+	// generates both of the heatmaps
 function add_heatmaps(){
-
 	$("#heatmap").heatmap({
 		ajaxuri: "/gr/get_cluster?run_id=${run_id}"		
-	})
-
-
-	$.post('/gr/get_heatmaps?run_id=${run_id}&organism=${organism}', function(data){
-	matrix_data  = data['matrix_data'];
-	if (matrix_data.substring(0,6) == "ERROR:") { $("#heatmap").html("<h3>" + matrix_data + "</h3>"); }
-	matrix_cor = data['matrix_cor'];
-	if (matrix_cor.substring(0,6) == "ERROR:") { $("#heatmap_cor").html("<h3>" + matrix_cor + "</h3>"); }
-	matrix_cor_pvalues = data['matrix_cor_pvalues'];
-	matrix_data_gf_description = data['matrix_data_gf_description'];
-	generate_heatmaps()  // Creates the heatmaps using the function in static/js/d3.heatmap.js
-
+	});	
+	$("#heatmap_cor").heatmap({
+		ajaxuri: "/gr/get_pcc?run_id=${run_id}"
 	});
-	return false;
-}
+};
 
 function update_progress(){
 	$.post('/gr/get_progress?run_id=${run_id}',function(data){

@@ -23,8 +23,10 @@
         plugin.init = function() {
             plugin.settings = $.extend({}, defaults, options);   
 
-            $.post(plugin.settings.ajaxuri,function(res){
-                console.log("TESTDATALOADED")
+            $.post(plugin.settings.ajaxuri, function(res){
+               
+                console.log("TEST");
+                if (res.substring(0,6) == "ERROR:") { $(element).html("<h3>" + res + "</h3>"); }   // check if the server returned an error
                 data = jQuery.parseJSON(res);
                  // Insert the row_name column row name
                 $.each(data, function(i,k){
@@ -36,7 +38,6 @@
                 $.each(data,function(i,k){
                   k.matrix = d3.tsv.parse(k.matrix);
                 });
-
                 render_heatmap(element,data,0);
             });
 

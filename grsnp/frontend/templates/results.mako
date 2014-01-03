@@ -33,11 +33,11 @@
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
-	<li class="active" ><a href="#matrixresults" onclick="change_active_heatmap('heatmap')" data-toggle="tab">Enrichment Heatmap<img class="helptooltip" title="Clustered heatmap of epigenomic elements significantly associated with sets of SNPs" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+	<li class="active" ><a href="#matrixresults" onclick="" data-toggle="tab">Enrichment Heatmap<img class="helptooltip" title="Clustered heatmap of epigenomic elements significantly associated with sets of SNPs" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li ><a href="#enrichmentresults" data-toggle="tab">Enrichment Results<img class="helptooltip" title="Sortable tables of enrichment p-values" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
-	<li ><a href="#cormatrixresults" onclick="change_active_heatmap('heatmap_cor')" data-toggle="tab">Epigenomic Similarity Heatmap<img class="helptooltip" title="Clustered heatmap of pairwise Pearson's correlation coefficients of enrichment profiles among sets of SNPs." style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+	<li ><a href="#cormatrixresults" onclick="" data-toggle="tab">Epigenomic Similarity Heatmap<img class="helptooltip" title="Clustered heatmap of pairwise Pearson's correlation coefficients of enrichment profiles among sets of SNPs." style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()" >Detailed Results<img class="helptooltip" title="P-value calculations" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
