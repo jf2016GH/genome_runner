@@ -10,12 +10,10 @@ These installation instructions were tested on freshly installed Ubuntu Linux 13
 
 .. code-block:: bash
 
-    sudo apt-get -y install git # Install Git code management system
+    sudo apt-get -y install git python-setuptools # Install Git code management system, and 'setuptools' python library
     git clone git@bitbucket.org:mdozmorov/grsnp.git # Clone GenomeRunner Web repository. Fixme: Make the repository public on GitHub, and change the command accordingly
-    sudo python setup.py develop install
+    sudo python setup.py install
 
-Fixme: error: can't copy 'grsnp/frontend/static': doesn't exist or not a regular file
-    
 There are three important steps and modules in the grsnp package:
 
 1) dbcreator # A module for creating organism-specific database
