@@ -6,7 +6,6 @@ import math
 import sys
 import logging
 from logging import FileHandler,StreamHandler
-from bx.intervals.intersection import IntervalTree
 from scipy.stats import hypergeom
 import numpy as np
 import scipy
@@ -23,6 +22,8 @@ import textwrap
 import subprocess
 import sys
 import commands
+import mako
+import simplejson
 
 
 
@@ -98,14 +99,13 @@ def get_bgobs(bg,gf,bkg_overlap_path):
 
 
 
-def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randimization_test=True):    
+def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randimization_test=False):    
     """Return the signed p-value of all FOIs against the GF.
     """
     global logger_path
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
     sign,pval,odds_ratio,did_chi_square = calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path)
-
 
     # write out to the enrichment result file
     er_result_path = os.path.join(output_dir,"enrichment")
@@ -118,7 +118,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     else: direction =  "underrepresented"
 
     # calculate the p_rand
-    prnd = 1 # default prnd for non-significant results
+    prnd = 1  # default prnd for non-significant results
     if pval > 0.05:
         direction = "nonsignificant"
     else:
@@ -130,12 +130,17 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     
     pval_unmod = pval
     pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
+    strpval,strprnd = "",""
+    if run_randimization_test:
+        strpval = "%.2e" % pval if type(pval) != type("") else pval 
+        strprnd = "%.2e" % prnd if type(prnd) != type("") else prnd 
     # write out to the detailed results file
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
                 "Chi-squared" if did_chi_square else "Fisher-Exact",
-                prnd, "%.2e" % pval if type(pval) != type("") else pval])) + "\n",detailed_outpath)
+                strprnd,strpval    
+                ])) + "\n",detailed_outpath)
 
     write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
     if pval < 1E-307:
@@ -236,11 +241,19 @@ def cluster_matrix(input_path,output_path):
                         write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
                     }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
     robjects.r(r_script)
+
+    # write matrices in json format
+    json_mat = []
+    mat = open(output_path).read()
+    json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha": 0.05,"matrix": mat})
+    with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:
+        simplejson.dump(json_mat,f)
     return output_path    
 
 def pearsons_cor_matrix(matrix_path,out_dir):
     global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
+    pval_output_path = output_path.split(".")[0]+"_pvalue.txt"
     pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
    
     #pcc = open(output_path).read() 
@@ -257,11 +270,20 @@ def pearsons_cor_matrix(matrix_path,out_dir):
             h<-heatmap.2(as.matrix(p5[[1]]),margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
             dev.off()
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
-            write.table(p5[[3]][h$rowInd, h$colInd],\""""+output_path.split(".")[0]+"_pvalue.txt"+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
+            write.table(p5[[3]][h$rowInd, h$colInd],\""""+pval_output_path+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
         } else {
             write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
         }"""
     robjects.r(r_script)
+
+    # write matrices in json format
+    mat = open(output_path).read()
+    mat_pval = open(pval_output_path).read()
+    json_mat = []
+    json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": mat})
+    json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": mat_pval})
+    with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:
+        simplejson.dump(json_mat,f)
     return output_path
 
 
@@ -376,7 +398,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=False,run_randimization_test=False):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -421,7 +443,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
         foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand','p_mod']) + "\n",detailed_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randimization_test else "",'p_mod' if run_randimization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         _write_progress("Performing calculations on the background.")
         for gf in gfs: 
@@ -439,10 +461,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             n_bgs = foi_bg[0]["indexregions"]  
 
             # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path)) for i in range(len(good_fois))])+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randimization_test)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
+
             if len(gfs) > 4:               
                 pearsons_cor_matrix(clust_path,outdir)
             else:
@@ -477,16 +500,28 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         write_output(traceback.format_exc(),logger_path)
         _write_progress("Run crashed. See end of log for details.")
 
+
+    
+
 if __name__ == "__main__":
     global print_progress
     print_progress = True
     parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
-    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files. Required") 
-    parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files. GF files may be gzipped. Required") 
+    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
+    parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required") 
     parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
     parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
+    parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
     args = vars(parser.parse_args())
+    if args["pass_paths"]:
+        gf = args["gfs"][0].split(",")
+        foi = args["fois"][0].split(",")
+        args["gfs"][0],args["fois"][0] = os.path.join(args["output_dir"],".gfs"),os.path.join(args["output_dir"],".fois")
+        with open(".gfs",'wb') as writer:
+            writer.write("\n".join(gf))
+        with open(".fois","wb") as writer:
+            writer.write("\n".join(foi))
     run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"]) 
 
 class front_appender:

@@ -62,7 +62,7 @@
 		<script type="text/javascript" src="static/js/underscore.js"></script>
       	<script type="text/javascript" src="static/js/backbone.js"></script>
       	<script src="static/js/d3.js" charset="utf-8"></script>
-      	<script src='static/js/d3.heatmap.js' type="text/javascript"></script>
+      	<script src='static/js/d3.json_heatmap.js' type="text/javascript"></script>
       	<script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
       	<script src="static/js/fcbkcomplete.min.js" type="text/javascript" charset="utf-8"></script>
 		<script src="static/js/jquery.slimScroll.js" type="text/javascript" charset="utf-8"></script>
