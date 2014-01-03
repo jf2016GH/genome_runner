@@ -16,7 +16,12 @@ import copy
 import traceback  as trace
 import pdb
 import server
+from xml.sax.saxutils import quoteattr as xml_quoteattr
 
+try:
+	import xml.etree.cElementTree as ET
+except ImportError:
+	import xml.etree.ElementTree as ET
 # connection information for the ucsc ftp server
 ftp_server = 'hgdownload.cse.ucsc.edu'
 directory = '/goldenPath/{}/database'
@@ -445,24 +450,75 @@ def load_tabledata_dumpfiles(datapath):
 	return data
 
 
+def create_galaxy_xml_files(db_dir,outputdir):
+	if not os.path.exists(db_dir):
+		logger.error("Database does not exist at {}".format(db_dir))
+		return
+	orgs = os.walk(db_dir).next()[1] # get organism names
+	xml_path = os.path.join(outputdir, "grsnp_gfs.xml")
+	with open(xml_path,"wb") as writer:
+		for o in orgs:
+			blacklist = []
+			# read in names of tracks to ignore
+			blacklist_path = os.path.join(db_dir,o,"blacklist.txt")
+			if os.path.exists(blacklist_path):
+				with open(blacklist_path) as f:
+					blacklist = [line.strip() for i,line in enumerate(f)]
+
+			# generate the xml file for galaxy's checkbox tree
+			writer.write("""<filter type="data_meta" data_ref="input_gfs" meta_key="dbkey" value="{}">\n\t<options>\n""".format(o))
+			tmp = dir_as_xml(os.path.join(db_dir,o),blacklist).split("\n")
+			tmp = "\n".join(tmp[1:-2]) # remove the first 'option' entry as this is the organism directory
+			writer.write(tmp + "</options>\n</filter>") 
+	logger.info("Created galaxy xml file {}".format(xml_path))		
+
+def base_name(k):
+    return os.path.basename(k).split(".")[0]		
+
+
+def dir_as_xml(path, blacklist):
+	''' Code adapted from
+	 from: http://stackoverflow.com/questions/2104997/os-walk-python-xml-representation-of-a-directory-structure-recursion
+	'''
+	result = '<option name={} value={}>\n'.format(xml_quoteattr(os.path.basename(path))
+													,xml_quoteattr(path))
+	for item in os.listdir(path):
+		itempath = os.path.join(path, item)
+		if os.path.isdir(itempath):
+			result += '\n'.join('  ' + line for line in 
+			dir_as_xml(os.path.join(path, item),blacklist).split('\n'))
+		elif os.path.isfile(itempath) and itempath.endswith(".bed.gz") and base_name not in blacklist:
+			result += '  <option name={} value={}/>\n'.format(xml_quoteattr(base_name(item)), xml_quoteattr(os.path.join(path,item)))
+	result += '</option>\n'
+	return result
+
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grs_db/ -g mm9', epilog='IMPORTANT: Execude DBCreator from the database folder, e.g., /home/username/grs_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
+	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grs_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grs_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grs_db/. Required", required=True)
-	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19", required=True)
+	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
 	parser.add_argument('--featurename','-f', nargs="?", help='The name of the specific genomic feature track to create (Example: knownGene)')
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
+	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 
 	args = vars(parser.parse_args())
 
 	if not args["data_dir"]:
 		print "ERROR: --data_dir is required"
 		sys.exit()
+
+
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server)
 	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
+
+	if args['galaxy']:
+		usrdir = raw_input("Enter directory of Galaxy. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
+		if usrdir == '': usrdir = os.getcwd()
+		create_galaxy_xml_files(outputdir,usrdir)		
+		sys.exit()
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
 		trackdbpath = download_trackdb(args['organism'],outputdir)
 		create_feature_set(trackdbpath,args['organism'],args["max"])
@@ -474,6 +530,8 @@ if __name__ == "__main__":
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
+	
+
 
 
 	root_dir = os.path.dirname(os.path.realpath(__file__))
