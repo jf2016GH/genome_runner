@@ -262,7 +262,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
         } else {
             write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
             write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + pval_output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
-            
+
         }"""
     robjects.r(r_script)
     # write matrices in json format     
@@ -270,7 +270,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     mat_pval = open(pval_output_path).read()        
     json_mat = []       
     json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": mat})      
-    json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": mat_pval})      
+    json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": mat_pval})      
     with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:       
         simplejson.dump(json_mat,f)
     return output_path

@@ -205,7 +205,7 @@
                     .attr("tt", function(d,iCol) {
                           alpha = matrices[matrix_index].alpha;
                           tip2 = ""   
-                          if (alpha != "") {
+                        if (alpha != "") {
 
                           d  = parseFloat(d);
                            if (d<0) { d = -1*(1/Math.pow(10,Math.abs(d))); }
@@ -220,12 +220,18 @@
                            }
                            // Cycles through matrices       
                            $.each(matrices, function(i,cur_mat){
-                               tip2 += cur_mat.name + ": " + cur_mat.matrix[row_index][colNames[iCol]] + "</br>";
+                                if (cur_mat.log){
+                                   tip2 += cur_mat.name +":"
+                                   tip2 += (1/Math.pow(10,Math.abs(cur_mat.matrix[row_index][colNames[iCol]]))).toExponential(2) + "</br>"
+                                }                                  
+                                else {
+                                  tip2 += cur_mat.name + ": " + parseFloat(cur_mat.matrix[row_index][colNames[iCol]]).toExponential(2) + "</br>";
+                                }
                            })              
                          }
                          else {
                            $.each(matrices, function(i,cur_mat){
-                               tip2 += cur_mat.name + ": " + cur_mat.matrix[row_index][colNames[iCol]] + "</br>";
+                               tip2 += cur_mat.name + ": " + parseFloat(cur_mat.matrix[row_index][colNames[iCol]]).toFixed(2) + "</br>";
                            }) 
                          }
                          return  tip2;
@@ -290,7 +296,12 @@
                                 return "rotate(45,"+String(i * legend_c_size) + "," + String( y(rowNames.length-1) + legend_c_size + legend_margin + legend_c_size)+")";
                               })
                               .text(function(d){
-                                  return d.toExponential(2); // toPrecision(3);
+                                if(use_log){
+                                  return d.toExponential(2);
+                                }
+                                else{
+                                  return d.toPrecision(3);
+                                }
                       });
 
               } // End Render
