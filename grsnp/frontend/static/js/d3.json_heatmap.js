@@ -25,10 +25,13 @@
             console.log(plugin.settings.ajaxuri);
             console.log(element);
             $.post(plugin.settings.ajaxuri, function(res){
-               
-                console.log("TEST" + res);
-                if (res.substring(0,6) == "ERROR:") { $(element).html("<h3>" + res + "</h3>"); }   // check if the server returned an error
+
                 data = jQuery.parseJSON(res);
+                // check if the server returned an error
+                if (data[plugin.settings.cur_index].matrix.substring(0,7) == "\"ERROR:") {  
+                  $(element).html("<h3>" + data[plugin.settings.cur_index].matrix + "</h3>"); 
+                  return;
+                }   
                  // Insert the row_name column row name
                 $.each(data, function(i,k){
                    var lines_matrix = k.matrix.split("\n");

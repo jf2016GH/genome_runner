@@ -261,6 +261,8 @@ def pearsons_cor_matrix(matrix_path,out_dir):
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+pval_output_path+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
         } else {
             write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
+            write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + pval_output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
+            
         }"""
     robjects.r(r_script)
     # write matrices in json format     
