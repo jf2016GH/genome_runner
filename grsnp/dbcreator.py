@@ -466,7 +466,7 @@ def create_galaxy_xml_files(db_dir,outputdir):
 					blacklist = [line.strip() for i,line in enumerate(f)]
 
 			# generate the xml file for galaxy's checkbox tree
-			writer.write("""<filter type="data_meta" data_ref="input_gfs" meta_key="dbkey" value="{}">\n\t<options>\n""".format(o))
+			writer.write("""<filter type="data_meta" data_ref="background" meta_key="dbkey" value="{}">\n\t<options>\n""".format(o))
 			tmp = dir_as_xml(os.path.join(db_dir,o),blacklist).split("\n")
 			tmp = "\n".join(tmp[1:-2]) # remove the first 'option' entry as this is the organism directory
 			writer.write(tmp + "</options>\n</filter>") 
@@ -515,8 +515,14 @@ if __name__ == "__main__":
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
 	if args['galaxy']:
-		usrdir = raw_input("Enter directory of Galaxy. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
-		if usrdir == '': usrdir = os.getcwd()
+		usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
+		if usrdir == '': 
+			usrdir = os.getcwd()
+		else:
+			usrdir = os.path.join(usrdir,"tool-data")
+			if not os.path.exists(usrdir):
+				logger.error("Galaxy tool-data does not exist")
+				sys.exist()
 		create_galaxy_xml_files(outputdir,usrdir)		
 		sys.exit()
 	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
