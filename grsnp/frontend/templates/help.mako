@@ -221,6 +221,14 @@
 				<span style="font-family: arial, helvetica, sans-serif;">Supports local installation and command line usage in 3 easy steps (work in progress)</span></li>
 		</ul>
 		<h3>
+			<span style="font-family: arial, helvetica, sans-serif;">​Will the <a href="http://sourceforge.net/projects/genomerunner/" target="_blank">old </a>version be updated?</span></h3>
+		<p>
+			<span style="font-family: arial, helvetica, sans-serif;">The old version is in stable alpha status now. However, the databases will be updated periodically, to incorporate the growing amount of multi-organism genome annotation d</span><span style="font-family: arial, helvetica, sans-serif;">ata. Currently, the updated and reorganized databases for hg19 human genome assembly (December 2013) are available for download (Warning: large files):</span></p>
+		<p>
+			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/hg19encode.sqlite">hg19encode.sqlite</a>&nbsp;(87Gb) - the ENCODE project data from the UCSC genome browser (table names starting with <em>wgEncode...</em>). The data are organized as &quot;Source-type/Tier/Cell&quot; hierarchy, to better reflect the UCSC theme and make navigation/selection of groups of epigenomic elements easier;</span></p>
+		<p>
+			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/hg19new.sqlite">hg19new.sqlite</a>&nbsp;(127Gb) - non-ENCODE genome annotation data from the UCSC genome browser. Manually organized into tiers.</span></p>
+		<h3>
 			<span style="font-family: arial, helvetica, sans-serif;">I still have questions/suggestions/bug report...</span></h3>
 		<p>
 			<font face="arial, helvetica, sans-serif">Please, contact&nbsp;</font><br />
