@@ -539,32 +539,32 @@ class WebUI(object):
 	@cherrypy.expose
 	def cite(self):
 		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("cite.mako").render())
+		return tmpl.render(body=lookup.get_template("cite.mako").render(),script="")
 
 	@cherrypy.expose
 	def news(self):
 		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("news.mako").render())
+		return tmpl.render(body=lookup.get_template("news.mako").render(),script="")
 
 	@cherrypy.expose
 	def overview(self):
 		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("overview.mako").render())
+		return tmpl.render(body=lookup.get_template("overview.mako").render(),script="")
 
 	@cherrypy.expose
 	def demo(self):
 		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("demo.mako").render())
+		return tmpl.render(body=lookup.get_template("demo.mako").render(),script="")
 
 	@cherrypy.expose
 	def roadmap(self):
 		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("roadmap.mako").render())
+		return tmpl.render(body=lookup.get_template("roadmap.mako").render(),script="")
 
 	@cherrypy.expose
 	def help(self):
 		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("help.mako").render())
+		return tmpl.render(body=lookup.get_template("help.mako").render(),script="")
 
 def base_name(k):
     return os.path.basename(k).split(".")[0]
