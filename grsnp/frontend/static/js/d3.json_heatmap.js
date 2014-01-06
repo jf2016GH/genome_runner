@@ -9,6 +9,7 @@
 
         var defaults = {
             ajaxuri: "/vis/get_data",
+            dwnl_link_id: "",
             onFoo: function() {},
             cur_index: 0
         }
@@ -21,9 +22,7 @@
              element = element;
 
         plugin.init = function() {
-            plugin.settings = $.extend({}, defaults, options);   
-            console.log(plugin.settings.ajaxuri);
-            console.log(element);
+            plugin.settings = $.extend({}, defaults, options);  
             $.post(plugin.settings.ajaxuri, function(res){
 
                 data = jQuery.parseJSON(res);
@@ -42,7 +41,20 @@
                 $.each(data,function(i,k){
                   k.matrix = d3.tsv.parse(k.matrix);
                 });
-                render_heatmap(element,data,0);
+                render_heatmap(element,data,0);  // Create heatmap
+
+                // Create download link
+                dwnl_link_id = plugin.settings.dwnl_link_id;
+                if (dwnl_link_id != ""){
+                  d3.selectAll("#" + dwnl_link_id)
+                    .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
+                      btoa(unescape(encodeURIComponent(
+                        d3.selectAll("#"+element.id).selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
+                       .node().parentNode.innerHTML)
+                        )
+                      )
+                  );  
+                }
             });
 
         }
@@ -342,26 +354,8 @@
                var geneExpressionModel, genes, heatmap, legend_c_size = 50, legend_y = $(target).attr("height") -100;
 
                 color_range = matrix_range(matrix_data,matrices[matrix_index].log);
-                create_heatmap(target,matrices,plugin.settings.cur_index);
-               /*
-                // Code before 243f676 commit, working download
-                d3.selectAll("#"+ target.id + "heatmap_download")
-                    .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
-                      btoa(unescape(encodeURIComponent(
-                        d3.selectAll(target).selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
-                       .node().parentNode.innerHTML)
-                        )
-                      )
-                    );
-                 // Code unchanged through the commits
-                d3.selectAll("#heatmap_cor_download")
-                    .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
-                      btoa(unescape(encodeURIComponent(
-                        d3.selectAll("#heatmap_cor").selectAll("svg").attr("version", "1.1").attr("xmlns", "http://www.w3.org/2000/svg")
-                       .node().parentNode.innerHTML)
-                        )
-                      )
-                );*/
+                create_heatmap(target,matrices,plugin.settings.cur_index);               
+              
 
         }
 

@@ -18,14 +18,19 @@ function add_heatmaps(){
 
 	
 	$("#heatmap").heatmap({
-		ajaxuri: "/gr/get_cluster?run_id=${run_id}"		
+		ajaxuri: "/gr/get_cluster?run_id=${run_id}",
+		dwnl_link_id: "heatmap_download"		
 	});
-		
+	
 	$("#heatmap_cor").heatmap({
-		ajaxuri: "/gr/get_pcc?run_id=${run_id}"
+		ajaxuri: "/gr/get_pcc?run_id=${run_id}",
+		dwnl_link_id: "heatmap_cor_download"		
 	});
+
 	return false;
 }
+
+
 
 function update_progress(){
 	$.post('/gr/get_progress?run_id=${run_id}',function(data){

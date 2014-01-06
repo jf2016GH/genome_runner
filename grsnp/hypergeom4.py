@@ -73,7 +73,6 @@ def get_bgobs(bg,gf,bkg_overlap_path):
 
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
-        print "BKG_path:", bkg_overlap_path, "BKG:", bg, "GF:", gf
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
         d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
