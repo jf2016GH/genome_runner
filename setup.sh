@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # Installing prerequisites
-sudo apt-get -y install parallel r-base-core bedtools tabix kyotocabinet-utils realpath bedops
+sudo apt-get install parallel 
+sudo apt-get install r-base-core 
+sudo apt-get install bedtools 
+sudo apt-get install tabix 
+sudo apt-get install kyotocabinet-utils 
+sudo apt-get install realpath
 # Ubuntu-specific installation of Python packages
 sudo apt-get -y install python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako
-sudo apt-get -y upgrade gcc 
+sudo apt-get upgrade gcc 
 sudo pip install -U cython
 # Manual download and installation of required binaries
 mkdir downloads
