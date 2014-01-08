@@ -23,6 +23,7 @@ import random
 import traceback
 import dbcreator as uscsreader
 import argparse
+import shutil
 
 os.environ['GR_COMPATIBILITY_MODE'] = 'y'
 
@@ -96,7 +97,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=None, default_background = "",**kwargs):
+				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=False, default_background = "",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -179,6 +180,8 @@ class WebUI(object):
 		else:
 			return "Feature of Interest files not detected.  Please upload or choose Feature of Interest to run."
 
+		
+
 		# uploads custom genomic features
 		try:
 			with open(gfs,"a") as out_gfs:
@@ -217,7 +220,7 @@ class WebUI(object):
 		# have been checked.
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
-		organism,run,run_random = "",[],False
+		organism,run,run_random,run_annotation = "",[],False,False
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 		with open(gfs,"a") as out_gfs:
@@ -242,6 +245,7 @@ class WebUI(object):
 						if (base_name(f) not in list_gfs): writer.write(f.rstrip(".tbi")+"\n")
 						list_gfs.append(base_name(f))	
 			if k.startswith("run_random") and v == "on": run_random = True
+			if k.startswith("run_annot") and v == "on": run_annotation = True
 		
 
 		# load the background data if uploaded
@@ -291,10 +295,13 @@ class WebUI(object):
 
 		if open(gfs).read() == "": return "ERROR: No Genomic Features selected/uploaded."
 
+		# copy over .foi to results folder, used for the enrichment results
+		shutil.copy(fois,os.path.join(res_dir,".fois"))
+
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
 		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],False,run_random))				
+				args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random))				
 		p.start()
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
@@ -338,7 +345,7 @@ class WebUI(object):
 			with open(detailed_path) as f:
 				params["detailed"] = f.read()
 		
-		foi_names_path = os.path.join(os.path.join(uploads_dir, id),".fois")
+		foi_names_path = os.path.join(os.path.join(results_dir, id),".fois")
 		if os.path.exists(foi_names_path):
 			with open(foi_names_path) as f:
 				params["fois"] = [basename(x).split(".")[0] for x in f.read().split("\n") if x != ""]

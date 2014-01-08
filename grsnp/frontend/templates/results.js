@@ -124,6 +124,7 @@ function get_annotation(foi_name){
 				}
 			}
 			// Create data table
+			debugger;
 			$('#dt_'+foi_name).dataTable({
 				"sDom": 'T<"clear">lfrtip',
 				"bProcessing": true,
