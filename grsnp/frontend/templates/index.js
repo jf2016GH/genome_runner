@@ -79,19 +79,7 @@ $(document).ready(function() {
 	    	width: '400px',
 	    	alwaysVisible: true
 	});
-
-	$.post('/gr/get_checkboxtree?organism='+$("select[name='organism']").text(),function(data){
-		$('#divCheckBox').html(data)
-		$('#ucsc').checkboxTree({
-			initializeChecked: 'collapsed',
-			initializeUnchecked: 'collapsed',
-			collapseEffect: '',
-			expandEffect: ''
-		});
-		// Make the checkbox tree visible
-		$('#divCheckBox').css('visibility','visible')
-		$('#gfselheader').text('Choose genome annotation features')
-	});
+	
 
 
 	$("#accfoi").bind('accordionchange',
@@ -131,7 +119,24 @@ $(document).ready(function() {
 			});
 		
 	});
+	
+	
+	function renderCheckBoxTree() { 		
+		$('#gfselheader').text('Choose genome annotation features (Loading ...)');
+		$.post('/gr/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text(),function(data){
+			$('#treeview-inner').html(data);
+			$('#ucsc').checkboxTree({
+				initializeChecked: 'collapsed',
+				initializeUnchecked: 'collapsed',
+				collapseEffect: '',
+				expandEffect: ''
+			});
+			// Make the checkbox tree visible
+			$('#divCheckBox').css('visibility','visible');
+			$('#gfselheader').text('Choose genome annotation features');
+		});
 
+	}
 	function viewBoxClick(){
 		var minHeight = 300;
 		var maxHeight = 500;			

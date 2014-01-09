@@ -75,7 +75,7 @@
 						</div>
 					</div>
 			</div>	
-			<div class="well">
+			
 				<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'population' to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 				</h3><input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input>
 				<b style="font-size:120%; margin-left: 10px"></b>
@@ -110,7 +110,7 @@
 				<br>
 			
 				<div class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;"> 
-	             <h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose genome annotation features (Loading...)</a></h3>
+	             <h3  id="accordionheader"><a id='gfselheader' onClick="renderCheckBoxTree()" href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
 	             <div >	
 					<ul>
 						<li id="list-bedbackground">					
@@ -142,7 +142,7 @@
 										</div>
 									<div id="treeview-outer" style="padding-top:10px;">
 										<div id="treeview-inner" onClick="viewBoxClick()">
-											<h3>Loading selection control...</h3>
+
 										</div>
 									</div>
 								</div>
