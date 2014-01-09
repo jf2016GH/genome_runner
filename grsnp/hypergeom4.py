@@ -25,6 +25,7 @@ import sys
 import commands
 import mako
 import simplejson
+import zipfile
 
 # Logging configuration
 logger = logging.getLogger()
@@ -361,6 +362,24 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     '''
     File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
     '''    
+
+    # zip enrichment folder
+    en_dir = os.path.join(outdir,'enrichment')
+    z_en = zipfile.ZipFile(os.path.join(outdir,'enrichment.zip'),'a')
+    for f in os.listdir(en_dir):
+        z_en.write(os.path.join(en_dir,f),f)
+    z_en.close()
+
+    # zip annotation result folder if it exists
+    anno_dir = os.path.join(outdir,'annotations')
+    if os.path.exists(anno_dir):
+        z_ano = zipfile.ZipFile(os.path.join(outdir,'annotations.zip'),'a')
+        for f in os.listdir(anno_dir):
+            z_ano.write(os.path.join(anno_dir,f),f)
+        z_ano.close()
+
+        
+
     f = open(os.path.join(outdir,"gr_log.txt"))
     f_log = f.read()
     f.close()
@@ -375,7 +394,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     new_log.close()
     tar_path = os.path.join(outdir,'GR_{}.tar'.format(id))
     tar = tarfile.TarFile(tar_path,"a")    
-    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt") or x.endswith(".pdf")]
+    output_files =  [os.path.join(outdir,x) for x in os.listdir(outdir) if x.endswith(".txt") or x.endswith(".pdf") or x.endswith('.zip')]
     fls = output_files
     for f in fls:
         tar.add(f,os.path.basename(f))
