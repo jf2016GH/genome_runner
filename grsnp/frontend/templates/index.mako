@@ -109,8 +109,8 @@
 				${custom_gfs}
 				<br>
 			
-				<div class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;"> 
-	             <h3  id="accordionheader"><a id='gfselheader' onClick="renderCheckBoxTree()" href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
+				<div id="accordGFS" class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;" onClick="renderCheckBoxTree()"> 
+	             <h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
 	             <div >	
 					<ul>
 						<li id="list-bedbackground">					

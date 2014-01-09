@@ -134,6 +134,7 @@ $(document).ready(function() {
 			// Make the checkbox tree visible
 			$('#divCheckBox').css('visibility','visible');
 			$('#gfselheader').text('Choose genome annotation features');
+			$('#accordGFS').attr('onclick','').unbind('click');
 		});
 
 	}
