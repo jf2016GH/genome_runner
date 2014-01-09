@@ -243,6 +243,12 @@ class WebUI(object):
 						list_gfs.append(base_name(f))	
 			if k.startswith("run_random") and v == "on": run_random = True
 			if k.startswith("run_annot") and v == "on": run_annotation = True
+
+
+		# Create annotation folder, used by the server to check if annotation is going to be run
+		if run_annotation:
+			annot_outdir = os.path.join(res_dir,"annotations")
+			if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
 		
 
 		# load the background data if uploaded
@@ -350,7 +356,7 @@ class WebUI(object):
 			params["fois"] = ""
 
 		params["zipfile"] = os.path.join("results",id,"GR_{}.tar.gz").format(id)
-
+		params["run_annotation"] = True if os.path.exists(os.path.join(results_dir,id,"annotations")) else  False
 		params.update(p)
 		try:
 			rend_template = tmpl.render(body=lookup.get_template("results.mako").render(**params),script= lookup.get_template("results.js").render(**params))

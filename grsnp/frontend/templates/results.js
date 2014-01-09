@@ -145,7 +145,7 @@ function get_annotation(foi_name){
 			});
 		}
 		else{
-			$("#dt_"+foi_name).html("<h3>Table could not be created.  Data does not exist?</h3>") 
+			$("#dt_"+foi_name).html("<h3>Table could not be created.  Does the data exist?</h3>") 
 		}
 	});
 }

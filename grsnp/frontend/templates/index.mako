@@ -77,7 +77,7 @@
 					<div class="well">
 						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'population' to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3><input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input>
-						<b style="font-size:120%; margin-left: 10px"></b>
+						<b style=" font-size:120%; margin-left: 10px"></b>
 						<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top:2em">        
 							<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
 							<div style="height=100px">       
