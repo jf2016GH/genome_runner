@@ -147,7 +147,8 @@
 									</div>
 								</div>
 								<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
-										<label style="">Genome annotation data (functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label>
+										<label style="">Genome annotation data (functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
+										<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input>
 								</div>
 								
 						</div>

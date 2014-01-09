@@ -43,7 +43,7 @@
 
 	<li ><a href="#debugresults" data-toggle="tab" onclick="get_log()">Analysis Log<img class="helptooltip" title="Log, warning, and error messages" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 	
-<!-- 	<li><a href="#annotationresults" data-toggle="tab">Annotation Results<img class="helptooltip" title="Contains Annotation Results" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li> -->
+ 	<li><a href="#annotationresults" data-toggle="tab">Annotation Results<img class="helptooltip" title="Contains Annotation Results" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li> 
 
 	<li ><a href="#heatmapdownload" data-toggle="tab">Download Results<img class="helptooltip" title="Download tab-delimited results, and heatmaps" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
@@ -94,7 +94,7 @@
 			<textarea id="txtLog" cols="150" rows="30"></textarea><br>
 		</div>
 	</div>
-<!-- 	<div class="tab-pane" id="annotationresults">
+ 	<div class="tab-pane" id="annotationresults">
 			<ul class="tabs" id="annotationtab" data-tabs="tabs">
 				% for i,item in enumerate(fois):
 				  <li><a href="#ano_tab_${item}" data-toggle="tab" onclick="get_annotation('${item}')">${item}</a></li>
@@ -109,7 +109,7 @@
 				</div>
 				% endfor
 			</div>	
-	</div> -->
+	</div>
 	<div class="tab-pane" id="heatmapdownload">
 		<div id="wellDownloads" class="well">
 			<div id="divDownload" style="margin: 20px">

@@ -330,6 +330,7 @@ def check_background_foi_overlap(bg,fois):
     """
     good_fois = []
     # Runs overlapStatistics on background and FOIs
+    print "BG:FOIS ",bg,fois
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
@@ -386,7 +387,7 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=False,run_randomization_test=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -462,6 +463,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         else:
             with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
                 wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
+        print("ANNOTATION STATUS: ",run_annotation)
+        writer = open(os.path.join(outdir,"out.txt"),'wb')
         if run_annotation:
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
@@ -470,13 +473,12 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
                     anot = get_annotation(f,gfs).split("\n")
+                    anot[0] = anot[0].replace("Region\t\t","Region\t")
                     wr.write("\t".join(base_name(x) for x in anot[0].split("\t")) + "\tTotal")
-                    ind = 1
-                    for a in anot[1:]:
-                        if a != "":
+                    for ind, a in enumerate(anot[1:]):
+                        if a.strip() != "":
                             cur_row = a.split("\t")
-                            wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))
-                            ind += 1
+                            wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))                            
                 curprog += 1
 
         if zip_run_files:
