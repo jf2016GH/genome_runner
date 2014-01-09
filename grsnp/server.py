@@ -225,8 +225,7 @@ class WebUI(object):
 			for g in gfeatures:
 				if (base_name(g) not in list_gfs): out_gfs.write(g+"\n")
 				list_gfs.append(base_name(g))
-
-		print "KWARGS:::: ", kwargs
+				
 		for k,v in kwargs.items():
 			# organism to use
 			if "organism:" in v:
@@ -354,7 +353,6 @@ class WebUI(object):
 
 		params.update(p)
 		try:
-
 			rend_template = tmpl.render(body=lookup.get_template("results.mako").render(**params),script= lookup.get_template("results.js").render(**params))
 			print "LOADED TEMPLATE"
 		except Exception, e:

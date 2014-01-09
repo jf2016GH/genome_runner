@@ -330,7 +330,6 @@ def check_background_foi_overlap(bg,fois):
     """
     good_fois = []
     # Runs overlapStatistics on background and FOIs
-    print "BG:FOIS ",bg,fois
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
@@ -387,6 +386,19 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     tar_file.close()
     if os.path.exists(tar_path): os.remove(tar_path)
 
+def validate_filenames(file_paths):
+    ''' Checks if there are spaces before or after the file extension.
+    EX. 'dir1/dir2/test .bed' is not valid. 'dir1/dir2/test.bed is valid.
+    'dir1/dir2/test.bed .gz' is not valid.
+    '''
+    invalid = []
+    for file in file_paths:
+        for t in os.path.basename(file).split("."):
+            if len(t.strip()) != len(t):
+                # there are spaces before or after the '.'. Add the file to the list of invalids.
+                invalid.append(os.path.basename(file))
+    return invalid
+
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
@@ -425,6 +437,12 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # Read in the paths
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
         gfs = [line for line in read_lines(gfs) if not line.endswith(".tbi")]
+        # check if there are spaces in invalid parts of the file name
+        invalid_names = validate_filenames(fois + gfs + [bg_path])
+        if len(invalid_names) != 0:
+            logger.error("The following file(s) have invalid file names, cannot have space before/in file extension:\n" + "\n".join(invalid_names))
+            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run.")
+            return         
         if bg_path.endswith(".tbi"):
             logger.error("Background has invalid extension (.tbi). Terminating run.")
             _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
@@ -453,7 +471,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         if len(gfs) > 1 and len(good_fois) > 1:
-            print("TEST:",matrix_outpath,outdir)
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
             if len(gfs) > 4:               
                 pearsons_cor_matrix(clust_path,outdir)
@@ -463,7 +480,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         else:
             with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
                 wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
-        print("ANNOTATION STATUS: ",run_annotation)
         writer = open(os.path.join(outdir,"out.txt"),'wb')
         if run_annotation:
             annot_outdir = os.path.join(outdir,"annotations")
