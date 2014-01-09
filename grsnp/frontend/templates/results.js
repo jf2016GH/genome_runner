@@ -39,7 +39,7 @@ function update_progress(){
 						value: data['curprog'],
 						max:  data['progmax']});
 		if (data['status'] != "") $("#status").html(data['status']);
-		if (data['status'] == "Analysis Completed"){
+		if (data['status'] == "Analysis Completed" || data['status'].substring(0,18) == "Running Annotation"){ 
 			console.log("REFRESH heatmap")
 			clearInterval(refresh_progress);
 			$(".lblMat").remove()
