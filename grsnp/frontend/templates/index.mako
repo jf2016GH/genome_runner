@@ -110,7 +110,7 @@
 				<br>
 			
 				<div class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 14px;"> 
-	             <h3  id="accordionheader"><a href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
+	             <h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose genome annotation features (Loading...)</a></h3>
 	             <div >	
 					<ul>
 						<li id="list-bedbackground">					
@@ -132,7 +132,7 @@
 							</div>
 						</ol>	
 							<div style="display: table-row;">
-					            <div id="divCheckBox" style="margin:10px; display: table-cell; verticle-align: top;">
+					            <div id="divCheckBox" style="margin:10px; display: table-cell; verticle-align: top; visibility: hidden">
 									<label >Select genome annotation features: </label>
 										<div>
 											<a class="btn" style="margin-top: 9px;"onClick="changeCheckedStateTreeView(true)">Expand All</a>
@@ -142,7 +142,7 @@
 										</div>
 									<div id="treeview-outer" style="padding-top:10px;">
 										<div id="treeview-inner" onClick="viewBoxClick()">
-												python_tree_view_html
+											<h3>Loading selection control...</h3>
 										</div>
 									</div>
 								</div>

@@ -71,7 +71,6 @@ class WebUI(object):
 		if not organism: organism = sett["default_organism"]
 		if DEBUG_MODE or not organism in self._index_html:		
 			tmpl = lookup.get_template("master.mako")
-			tree_html = open(os.path.join(sett["data_dir"],organism,"treeview.html")).read() # html is generated on server start in paths.write_treeview_html
 			paths = PathNode()
 			paths.name = "Root"
 			paths.organisms = self.get_org() 
@@ -83,7 +82,6 @@ class WebUI(object):
 			script = lookup.get_template("index.js").render(default_organism=organism)
 			self._index_html[organism] = tmpl.render(body=body,script=script)
 
-			self._index_html[organism] = self._index_html[organism].replace("python_tree_view_html",tree_html)  # Insert the very large treeview html code using Python's find and replace.  Mako takes too long.
 		return self._index_html[organism]
 
 	def get_org(self):
@@ -522,13 +520,18 @@ class WebUI(object):
 		return simplejson.dumps(p)
 
 	@cherrypy.expose
-	def get_log(sefl,run_id):
+	def get_log(self,run_id):
 		results = {"log": ""}
 		log_path = os.path.join(os.path.join(results_dir, run_id),"gr_log.txt")
 		if os.path.exists(log_path):
 			with open(log_path) as f:
 				results["log"] = f.read()
 		return simplejson.dumps(results)
+
+	@cherrypy.expose
+	def get_checkboxtree(self,organism):
+		return open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
+
 
 	@cherrypy.expose
 	def enrichment_log(self, id):
