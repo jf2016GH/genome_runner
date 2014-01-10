@@ -126,7 +126,7 @@
                 num_range = [color_range.min,color_range.max];
                 col_range = ["white","red"];
                 diff= c_max - c_min; 
-                legend_log = [c_min_log,diff*.25+c_min_log,diff*.50+c_min_log,diff*.75+c_min_log,c_max_log];
+                legend = [c_min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max_log];
                 
               } 
               // case of complete underrepresentation
