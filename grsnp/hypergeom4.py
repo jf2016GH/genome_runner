@@ -494,6 +494,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             if len(gfs) > 4:               
                 pearsons_cor_matrix(clust_path,outdir)
             else:
+                json_mat = []
+                json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": "ERROR:PCC matrix requires at least a 5 X 2 matrix."})      
+                json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": "ERROR:PCC matrix requires at least a 5 X 2 matrix."})      
+                with open(os.path.join(outdir,"pcc_matrix.json"),'wb') as f:   
+                    simplejson.dump(json_mat,f)
                 with open(os.path.join(os.path.join(outdir,"pcc_matrix.txt")),"wb") as wb:
                     wb.write("ERROR:PCC matrix requires at least a 5 X 2 matrix.")
         else:
@@ -535,7 +540,7 @@ if __name__ == "__main__":
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
     parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
     parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true") 
-    args = vars(parser.parse_args())
+    args = vars(parser.parse_args())  
     if args["pass_paths"]: 
         gf = args["gfs"][0].split(",")      
         foi = args["fois"][0].split(",")        
@@ -544,7 +549,7 @@ if __name__ == "__main__":
             writer.write("\n".join(gf))     
         with open(".fois","wb") as writer:      
             writer.write("\n".join(foi))
-    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"]) 
+    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"])
 
 class front_appender:
     '''
