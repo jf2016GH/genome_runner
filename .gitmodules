@@ -1,0 +1,3 @@
+[submodule "grtk"]
+	path = grtk
+	url = https://mdozmorov@bitbucket.org/mdozmorov/grtk.git
