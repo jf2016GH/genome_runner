@@ -1,0 +1,10 @@
+Type_2_diabetes	P-value	Direction
+Deletion	6.83e-01	nonsignificant
+Gain	3.90e-01	nonsignificant
+Loss	1.53e-01	nonsignificant
+Insertion	2.11e-01	nonsignificant
+Gain+Loss	9.31e-01	nonsignificant
+Inversion	5.45e-01	nonsignificant
+Duplication	7.82e-02	nonsignificant
+Complex	7.14e-01	nonsignificant
+CNV	6.80e-02	nonsignificant

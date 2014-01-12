@@ -1,0 +1,10 @@
+Rheumatoid_arthritis	P-value	Direction
+Deletion	2.22e-02	overrepresented
+Gain	3.91e-01	nonsignificant
+Loss	1.85e-01	nonsignificant
+Insertion	1.79e-02	overrepresented
+Gain+Loss	7.49e-02	nonsignificant
+Inversion	1.00e+00	nonsignificant
+Duplication	1.03e-01	nonsignificant
+Complex	6.53e-02	nonsignificant
+CNV	1.00e+00	nonsignificant

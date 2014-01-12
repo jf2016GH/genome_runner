@@ -1,0 +1,10 @@
+Agerelated_macular_degeneration_CNV	P-value	Direction
+Deletion	1.00e+00	nonsignificant
+Gain	4.17e-01	nonsignificant
+Loss	3.13e-02	overrepresented
+Insertion	1.00e+00	nonsignificant
+Gain+Loss	1.18e-02	overrepresented
+Inversion	1.00e+00	nonsignificant
+Duplication	1.29e-01	nonsignificant
+Complex	3.17e-02	overrepresented
+CNV	2.19e-01	nonsignificant

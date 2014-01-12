@@ -1,0 +1,10 @@
+Psoriatic_arthritis	P-value	Direction
+Deletion	9.09e-02	nonsignificant
+Gain	1.00e+00	nonsignificant
+Loss	1.00e+00	nonsignificant
+Insertion	1.00e+00	nonsignificant
+Gain+Loss	3.76e-01	nonsignificant
+Inversion	1.00e+00	nonsignificant
+Duplication	1.09e-01	nonsignificant
+Complex	4.99e-01	nonsignificant
+CNV	1.86e-01	nonsignificant

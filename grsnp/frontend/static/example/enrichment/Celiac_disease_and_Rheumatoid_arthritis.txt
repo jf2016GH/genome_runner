@@ -1,0 +1,10 @@
+Celiac_disease_and_Rheumatoid_arthritis	P-value	Direction
+Deletion	1.00e+00	nonsignificant
+Gain	8.00e-01	nonsignificant
+Loss	2.03e-01	nonsignificant
+Insertion	1.31e-01	nonsignificant
+Gain+Loss	3.90e-01	nonsignificant
+Inversion	1.74e-01	nonsignificant
+Duplication	1.00e+00	nonsignificant
+Complex	7.10e-01	nonsignificant
+CNV	1.00e+00	nonsignificant

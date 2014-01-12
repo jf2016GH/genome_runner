@@ -1,0 +1,10 @@
+Systemic_lupus_erythematosus	P-value	Direction
+Deletion	9.46e-03	overrepresented
+Gain	6.36e-01	nonsignificant
+Loss	6.95e-03	overrepresented
+Insertion	5.07e-01	nonsignificant
+Gain+Loss	1.64e-02	overrepresented
+Inversion	4.85e-02	overrepresented
+Duplication	1.00e+00	nonsignificant
+Complex	5.79e-01	nonsignificant
+CNV	1.00e+00	nonsignificant

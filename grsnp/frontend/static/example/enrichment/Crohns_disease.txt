@@ -1,0 +1,10 @@
+Crohns_disease	P-value	Direction
+Deletion	6.24e-02	nonsignificant
+Gain	4.22e-04	underrepresented
+Loss	3.92e-01	nonsignificant
+Insertion	9.22e-01	nonsignificant
+Gain+Loss	5.68e-01	nonsignificant
+Inversion	7.08e-01	nonsignificant
+Duplication	2.68e-01	nonsignificant
+Complex	1.94e-02	underrepresented
+CNV	2.92e-01	nonsignificant
