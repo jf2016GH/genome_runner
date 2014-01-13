@@ -25,14 +25,16 @@
 </div>
 <form name="frmQuery" action="query" method="post" enctype="multipart/form-data">
 	<div id="content">
-		<div class="well" style="margin-top: 40px;">
-			This website is free and open to all users and there is no login requirement.
+		<div class="well" style="margin-top: 40px; padding: 0px">
+			This website is free and open to all users and there is no login requirement. <br>
+					<p>
+			<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">News: GenomeRunner will be presented on a software demonstration session at <a href="http://agbt.org/about.html" style="font-family: arial, helvetica, sans-serif; font-size: 14px;" target="_blank">AGBT 2014</a>, February 12-15.</span></span></p>
 			<h3>GenomeRunner Web: Functional interpretation of SNPs within epigenomic context</h3>
 			<p>
 				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional interpretation of sets of SNPs&nbsp;</span></span><span style="font-family: arial, helvetica, sans-serif; font-size: 16px;">by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for the interpretation of functional roles of SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>), where it identified RFX5 transcription factor binding site as strongly associated with the disease&#39; SNPs.</span></p>
 				<p>
 					<br />
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As an <a href="result?id=y8jy8biuyltlxq9al8g0u5zbhbywphb2">output</a>, GenomeRunner Web calculates <a href="help#enrichment">enrichment p-values</a>&nbsp;by evaluating whether a&nbsp;set of SNPs co-localizes with regulatory elements more often that could happen by chance. For three or more sets of SNPs, GenomeRunner Web performs <a href="help#episimilarity">&#39;epigenomic similarity&#39; analysis</a>&nbsp;by correlating set-specific profiles of enrichment p-values. Downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
+					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As an <a href="result?id=example">output</a>, GenomeRunner Web calculates <a href="help#enrichment">enrichment p-values</a>&nbsp;by evaluating whether a&nbsp;set of SNPs co-localizes with regulatory elements more often that could happen by chance. For three or more sets of SNPs, GenomeRunner Web performs <a href="help#episimilarity">&#39;epigenomic similarity&#39; analysis</a>&nbsp;by correlating set-specific profiles of enrichment p-values. Downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
 					<p>
 						&nbsp;</p>
 					</div>
@@ -76,7 +78,8 @@
 					</div>	
 					<div class="well">
 						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'population' to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-						</h3><input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input>
+						</h3>
+						<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input> -->
 						<b style=" font-size:120%; margin-left: 10px"></b>
 						<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top:2em">        
 							<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background</a></h3>
@@ -147,7 +150,7 @@
 										</div>
 										<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
 											<label style="">Genome annotation data (functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
-											<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input>
+											<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input> -->
 										</div>
 
 									</div>

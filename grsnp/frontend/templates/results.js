@@ -35,19 +35,19 @@ function add_heatmaps(){
 function update_progress(){
 	$.post('/gr/get_progress?run_id=${run_id}',function(data){
 		data = jQuery.parseJSON( data );
+		// update progress bar
 		$("#progressbar").progressbar({
 						value: data['curprog'],
 						max:  data['progmax']});
 		if (data['status'] != "") $("#status").html(data['status']);
 		if (data['status'] == "Analysis Completed" || data['status'].substring(0,18) == "Running Annotation"){ 
-			console.log("REFRESH heatmap")
-			clearInterval(refresh_progress);
+			// draw the heatmaps		
 			$(".lblMat").remove()
 			add_heatmaps();
 			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>"						)
 			$("#wellDownloads").append("<div style='margin:10px'><a style='font-size: 19px;margin-top:10px;' id='heatmap_download' >Download Clustered 	Enrichment Matrix as SVG File (Right click - 'Save As' to save) </a><br></div><div style='margin:10px'><a style='font-size: 19px' id='heatmap_cor_download' >Download Pearson's Correlation 	Matrix as SVG File (Right click - 'Save As' to save) </a></div>")
 		}
-		else if(data['status'] == "Run crashed. See end of log for details."){
+		if(data['status'] == "Analysis Completed"  || data['status'] == "Run crashed. See end of log for details."){
 			clearInterval(refresh_progress);
 		}
 	});
