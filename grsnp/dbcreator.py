@@ -442,7 +442,7 @@ def create_feature_set(trackdbpath,organism,max_install):
 
 				except Exception, e:
 					exc = trace.format_exc()
-					write_line("\t".join([gf_name,"Failed,"None"]),summary_path)
+					write_line("\t".join([gf_name,"Failed","None"]),summary_path)
 					logger.warning( "Unable to convert {} into bed".format(gf_name))
 					logger.warning(exc)
 					prog += 1
