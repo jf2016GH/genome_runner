@@ -25,8 +25,7 @@
 </div>
 <form name="frmQuery" action="query" method="post" enctype="multipart/form-data">
 	<div id="content">
-		<div class="well" style="margin-top: 40px; padding: 0px">
-			This website is free and open to all users and there is no login requirement. <br>
+		<div class="well" style="margin-top: -15px; padding: 0px">This website is free and open to all users. There is no login requirement. <br>
 					<p>
 			<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">News: GenomeRunner will be presented on a software demonstration session at <a href="http://agbt.org/about.html" style="font-family: arial, helvetica, sans-serif; font-size: 14px;" target="_blank">AGBT 2014</a>, February 12-15.</span></span></p>
 			<h3>GenomeRunner Web: Functional interpretation of SNPs within epigenomic context</h3>
