@@ -17,6 +17,8 @@ import traceback  as trace
 import pdb
 import server
 from xml.sax.saxutils import quoteattr as xml_quoteattr
+import BeautifulSoup
+import urllib2
 
 try:
 	import xml.etree.cElementTree as ET
@@ -113,16 +115,17 @@ def extract_bed6(outputpath,datapath,colnames):
 		with gzip.open(datapath) as dr:
 			with open(outputpath,"wb") as bed:
 				while True:
-						line = dr.readline().strip('\r').rstrip('\n')
-						if line == "":
-							break
-						r  = dict(zip(colnames,line.split('\t')))
-						row = []
-						row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
-						bed.write("\t".join(map(str,row))+"\n")
+					line = dr.readline().strip('\r').rstrip('\n')
+					if line == "":
+						break
+					r  = dict(zip(colnames,line.split('\t')))
+					row = []
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
+					bed.write("\t".join(map(str,row))+"\n")
+		return "bed 6"
 	else:
 		logger.warning("Nonstandard bed6, attempting extraction as bed5")
-		extract_bed5(outputpath,datapath,colnames)
+		return extract_bed5(outputpath,datapath,colnames)
 
 def extract_bed5(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score']
@@ -136,9 +139,10 @@ def extract_bed5(outputpath,datapath,colnames):
 					r  = dict(zip(colnames,line.split('\t')))
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0"] # Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
+		return "bed 5"
 	else:
 		logger.warning("Nonstandard bed5, attempting extraction as bed4")
-		extract_bed4(outputpath,datapath,colnames)
+		return extract_bed4(outputpath,datapath,colnames)
 	
 def extract_bed4(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name']
@@ -152,21 +156,27 @@ def extract_bed4(outputpath,datapath,colnames):
 					r  = dict(zip(colnames,line.split('\t')))
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()).replace(": ",""),"0"] # Can't use strand as ".". Replace ": " is needed for cpgIslandExt
 					bed.write("\t".join(map(str,row))+"\n")
+		return "bed 4"
 	else:
 		logger.warning("Nonstandard bed4, attempting extraction as bed3")
-		extract_bed3(outputpath,datapath,colnames)
+		return extract_bed3(outputpath,datapath,colnames)
 
 def extract_bed3(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd']
-	with open(outputpath,"wb") as bed:
-		with gzip.open(datapath) as dr:
-			while True:
-				line = dr.readline().strip('\r').rstrip('\n')
-				if line == "":
-					break
-				r  = dict(zip(colnames,line.split('\t')))
-				row = [r["chrom"],r["chromStart"],r["chromEnd"],"","0"] # Can't use strand as "."
-				bed.write("\t".join(map(str,row))+"\n")
+	if _check_cols(colnames, colstoextract):
+		with open(outputpath,"wb") as bed:
+			with gzip.open(datapath) as dr:
+				while True:
+					line = dr.readline().strip('\r').rstrip('\n')
+					if line == "":
+						break
+					r  = dict(zip(colnames,line.split('\t')))
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],"","0"] # Can't use strand as "."
+					bed.write("\t".join(map(str,row))+"\n")
+		return "bed 3"
+	else:
+		logger.warning("bed3 failed.")
+		return "failed"
 
 def extract_psl(outputpath,datapath,colnames):
 	colstoextract = ['tName','tStart','tEnd','qName','qSize','strand']
@@ -183,34 +193,39 @@ def extract_psl(outputpath,datapath,colnames):
 						row = []
 						row = [r["tName"],r["tStart"],r["tEnd"],''.join(e for e in r["qName"] if e.isalnum()),r["qSize"] if r["qSize"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
 						bed.write("\t".join(map(str,row))+"\n")
+		return "psl"
 	else:
-		logger.warning("Nonstandard PSL format")
+		return "failed"
 		
 def extract_genepred(outputpath,datapath,colnames):
 	colstoextract = ['chrom','txStart','txEnd','name','strand']
 	exonpath = outputpath.split(".")[0]+"_exon"
-	# removes the .temp file of the exon, to prevent duplicate data from being written
-	if os.path.exists(exonpath+".temp"): 
-		os.remove(exonpath+".temp")
-	with gzip.open(datapath) as dr:
-		with open(outputpath,"wb") as bed:
-			with open(exonpath+".temp","wb") as exonbed:				
-				while True:
-					line = dr.readline().rstrip('\r').rstrip('\n')
-					if line == "":
-						break
-					r = dict(zip(colnames,line.split('\t')))
-					# extract the gene data inserts a blank for score
-					row = [r['chrom'],r['txStart'],r['txEnd'],''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
-					bed.write("\t".join(map(str,row))+"\n")
-					
-					# extract the exon data
-					for (s,e) in zip(r["exonStarts"].split(","),r["exonEnds"].split(",")):
-						if s != '':
-							rowexon = [r['chrom'],s,e,''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
-							exonbed.write("\t".join(map(str,rowexon))+"\n")
-	# sort the file and convert to bgzip format
-	sort_convert_to_bgzip(exonpath+".temp",exonpath + ".bed.gz")
+	if _check_cols(colnames,colstoextract):
+		# removes the .temp file of the exon, to prevent duplicate data from being written
+		if os.path.exists(exonpath+".temp"): 
+			os.remove(exonpath+".temp")
+		with gzip.open(datapath) as dr:
+			with open(outputpath,"wb") as bed:
+				with open(exonpath+".temp","wb") as exonbed:				
+					while True:
+						line = dr.readline().rstrip('\r').rstrip('\n')
+						if line == "":
+							break
+						r = dict(zip(colnames,line.split('\t')))
+						# extract the gene data inserts a blank for score
+						row = [r['chrom'],r['txStart'],r['txEnd'],''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
+						bed.write("\t".join(map(str,row))+"\n")
+						
+						# extract the exon data
+						for (s,e) in zip(r["exonStarts"].split(","),r["exonEnds"].split(",")):
+							if s != '':
+								rowexon = [r['chrom'],s,e,''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
+								exonbed.write("\t".join(map(str,rowexon))+"\n")
+		# sort the file and convert to bgzip format
+		sort_convert_to_bgzip(exonpath+".temp",exonpath + ".bed.gz")
+		return "genepred"
+	else:
+		return "failed"
 
 def sort_convert_to_bgzip(path,outpath):
 	logger.info("Converting {} to bgzip format.".format(path))
@@ -231,6 +246,7 @@ def extract_rmsk(outputpath,datapath,colnames):
 				r = dict(zip(colnames,line.split('\t')))
 				row = [r["genoName"],r["genoStart"],r["genoEnd"],''.join(e for e in r["repClass"] if e.isalnum()),r["swScore"],r["strand"]]
 				bed.write("\t".join(map(str,row))+"\n")
+	return "rmsk"
 
 def get_column_names(sqlfilepath):
 	''' extracts the column names from the .sql file and returns them
@@ -318,50 +334,120 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 
 def create_feature_set(trackdbpath,organism,max_install):
 	outputdir = os.path.dirname(trackdbpath)
+	download_dir = os.path.join(os.path.split(os.path.split(outputdir)[0])[0],"downloads")
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
-	prog, num = 0,len(trackdb)
 	added_features = [] 
 	notsuptypes, outpath = set([]),""
-	for row in trackdb:
-		logger.info( 'Processing files {} of {}'.format(prog,num))
-		if row['type'] in preparebed:
-			# this line limits the number of GRF to download
-			if numdownloaded[row["type"]] <= max_install or max_install == None:
-				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql","downloads")
-				download_ucsc_file(organism,row["tableName"] + ".txt.gz","downloads")
-				if sqlpath != '':
-					logger.info( "converting"+row['tableName']+ " into proper bed format")
-					try:
-						if row["tableName"].startswith("wgEncode"):
-							outpath = os.path.join(outputdir, encodePath(row["tableName"]))
-						else:
-							outpath = os.path.join(outputdir,row["grp"],row["tableName"]) # ,'Tier' + row["visibility"]
-						if not os.path.exists(os.path.dirname(outpath)):
-							os.makedirs(os.path.dirname(outpath))
-						if os.path.exists(outpath + ".bed.gz") == False:
-							# removes the .temp file, to prevent duplicate data from being written
-							if os.path.exists(outpath+".temp"):
-								os.remove(outpath+".temp")
-							# converts the ucsc data into propery bed format
-							logger.info( "Converting into proper bed format. {}".format(os.path.splitext(sqlpath)[0]))
-							preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
 
-							# sort the file and convert to bgzip format
-							o_dir = os.path.dirname(outpath)
-							new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-							sort_convert_to_bgzip(outpath+".temp",new_path)
-							added_features.append(outpath)
-						else:
-							logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))							
-						numdownloaded[row["type"]] += 1
-					except Exception, e:
-						exc = trace.format_exc()
-						logger.warning( "Unable to convert {} into bed".format(row["tableName"]))
-						logger.warning(exc)
-						continue
+	# get list of GFs files on server
+	html = urllib2.urlopen('http://hgdownload.cse.ucsc.edu/goldenPath/{}/database/'.format(organism)).read()
+	soup = BeautifulSoup.BeautifulSoup(html)
+	gfs = [x.get('href')[:-4] for x in soup.findAll('a') if 'sql' in x.get('href')]
+	prog, num = 0,len(gfs)
+	summary_path = os.path.join(outputdir,"summary.log")
+
+	for gf_name in gfs:
+		# check if GF is listed in trackdb
+		row = [x for x in trackdb if x['tableName'] == gf_name] 
+		# if in trackdb, process using type provided
+		if len(row) != 0:
+			row = row[0] # convert from list to dictionary
+			logger.info( 'Processing files {} of {}'.format(prog,num))
+			if row['type'] in preparebed:
+				# this line limits the number of GFs to download, note that this check only occurs for GFs in tracdb
+				if numdownloaded[row["type"]] <= max_install or max_install == None:
+					sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql",download_dir)
+					download_ucsc_file(organism,row["tableName"] + ".txt.gz",download_dir)
+					if sqlpath != '':
+						try:
+							gf_type = ""
+							if row["tableName"].startswith("wgEncode"):
+								outpath = os.path.join(outputdir, encodePath(row["tableName"]))
+							else:
+								outpath = os.path.join(outputdir,row["grp"],row["tableName"]) # ,'Tier' + row["visibility"]
+							if not os.path.exists(os.path.dirname(outpath)):
+								os.makedirs(os.path.dirname(outpath))
+							if os.path.exists(outpath + ".bed.gz") == False:
+								# removes the .temp file, to prevent duplicate data from being written
+								if os.path.exists(outpath+".temp"):
+									os.remove(outpath+".temp")
+								# converts the ucsc data into propery bed format
+								logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
+								gf_type = preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
+
+								# sort the file and convert to bgzip format
+								o_dir = os.path.dirname(outpath)
+								new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+								sort_convert_to_bgzip(outpath+".temp",new_path)
+								added_features.append(outpath)
+							else:
+								logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))
+							write_line("\t".join([gf_name,gf_type,row["longLabel"]]),summary_path)
+							numdownloaded[row["type"]] += 1
+
+						except Exception, e:
+							write_line("\t".join([gf_name,"Failed",row["longLabel"]]),summary_path)
+							exc = trace.format_exc()
+							logger.warning( "Unable to convert {} into bed".format(row["tableName"]))
+							logger.warning(exc)
+							prog += 1
+							continue
+			else:
+				write_line("\t".join([gf_name,"{} Not Supported".format(row["type"]),row["longLabel"]]),summary_path)
+				if 'big' not in row['type']:
+					notsuptypes.add(row['type'])				
+		# not in trackdb
 		else:
-			if 'big' not in row['type']:
-				notsuptypes.add(row['type'])
+			logger.info( 'Processing files {} of {}'.format(prog,num))
+			gf_type = ""
+			# download files
+			sqlpath = download_ucsc_file(organism,gf_name + ".sql",download_dir)
+			download_ucsc_file(organism,gf_name + ".txt.gz",download_dir)			
+			if sqlpath != '':
+				try:
+					if gf_name.startswith("wgEncode"):
+						outpath = os.path.join(outputdir, encodePath(gf_name))
+					else:
+						outpath = os.path.join(outputdir,'unsorted',gf_name)
+						if not os.path.exists(os.path.dirname(outpath)):
+								os.makedirs(os.path.dirname(outpath))
+					# check if GF already extracted
+					if os.path.exists(outpath + ".bed.gz") == False:
+						# removes the .temp file, to prevent duplicate data from being written
+						if os.path.exists(outpath+".temp"):
+							os.remove(outpath+".temp")
+						# try guessing the GFs type based on column names
+						logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
+						colnames = get_column_names(os.path.splitext(sqlpath)[0]+".sql")
+						gf_type = extract_bed6(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
+						if gf_type == "failed": gf_type = extract_psl(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
+						if gf_type == "failed": gf_type = extract_genepred(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
+						# cannot detect type, skip
+						if gf_type == "failed":
+							write_line("\t".join([gf_name,"Not supported","None"]),summary_path)
+							logger.warning( "Unable to convert {} into bed".format(gf_name))
+							prog += 1
+							continue
+
+						# sort the file and convert to bgzip format
+						o_dir = os.path.dirname(outpath)
+						new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+						sort_convert_to_bgzip(outpath+".temp",new_path)
+						added_features.append(outpath)
+					else:
+						logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))							
+					write_line("\t".join([gf_name,gf_type,"None"]),summary_path)
+					numdownloaded[gf_type] += 1
+
+
+				except Exception, e:
+					exc = trace.format_exc()
+					write_line("\t".join([gf_name,"Failed,"None"]),summary_path)
+					logger.warning( "Unable to convert {} into bed".format(gf_name))
+					logger.warning(exc)
+					prog += 1
+					continue
+		
 
 		prog += 1
 		# cleanup the temporary files
@@ -374,6 +460,11 @@ def create_feature_set(trackdbpath,organism,max_install):
 		logger.info( k + ":" + str(d))
 	return "created database"
 	
+
+def write_line(line,path):
+	with open(path, 'a') as writer:
+		writer.write(line+"\n")
+
 def create_single_feature(trackdbpath,organism,feature):
 	''' Downloads a single feature and adds it to the genomerunner flat file database'''
 
