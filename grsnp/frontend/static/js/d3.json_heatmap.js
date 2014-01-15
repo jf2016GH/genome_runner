@@ -162,6 +162,10 @@
               conditionNamesMargin = d3.max(colNames.map(function(conditionName) {
                 return conditionName.length;
               }));
+              // If file names are too long, cap them to 20 characters
+              if (conditionNamesMargin > 20) {
+                conditionNamesMargin = 20;
+              }
               geneNamesMargin = d3.max(rowNames.map(function(geneName) {
                 return geneName.length;
               }));

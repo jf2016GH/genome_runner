@@ -134,7 +134,7 @@
 										</div>
 									</ol>	
 									<div style="display: table-row;">
-										<div id="divCheckBox" style="margin:10px; display: table-cell; verticle-align: top; visibility: hidden">
+										<div id="divCheckBox" style="width: 70%; margin:10px; display: table-cell; verticle-align: top; visibility: hidden">
 											<label >Select genome annotation features: </label>
 											<div>
 												<a class="btn" style="margin-top: 9px;"onClick="changeCheckedStateTreeView(true)">Expand All</a>
@@ -149,7 +149,7 @@
 											</div>
 										</div>
 										<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
-											<label style="">Genome annotation data (functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
+											<label style="width: 100%; margin: 5px;">Genome annotation data (functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
 											<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input> -->
 										</div>
 

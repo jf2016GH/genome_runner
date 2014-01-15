@@ -227,7 +227,7 @@
 		<p>
 			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/hg19encode.sqlite">hg19encode.sqlite</a>&nbsp;(87Gb) - the ENCODE project data from the UCSC genome browser (table names starting with <em>wgEncode...</em>). The data are organized as &quot;Source-type/Tier/Cell&quot; hierarchy, to better reflect the UCSC theme and make navigation/selection of groups of epigenomic elements easier;</span></p>
 		<p>
-			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/hg19new.sqlite">hg19new.sqlite</a>&nbsp;(127Gb) - non-ENCODE genome annotation data from the UCSC genome browser. Manually organized into tiers.</span></p>
+			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/style.css">hg19new.sqlite</a>&nbsp;(127Gb) - non-ENCODE genome annotation data from the UCSC genome browser. Manually organized into tiers.</span></p>
 		<h3>
 			<span style="font-family: arial, helvetica, sans-serif;">I still have questions/suggestions/bug report...</span></h3>
 		<p>

@@ -81,7 +81,7 @@
 
       // The buffer zone
       margin = {
-        top: conditionNamesMargin * textScaleFactor,
+        top: 0, //conditionNamesMargin * textScaleFactor,
         right: 150,
         bottom: conditionNamesMargin * textScaleFactor +150,
         left: geneNamesMargin * textScaleFactor
