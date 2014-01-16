@@ -76,7 +76,7 @@ $(document).ready(function() {
 	// the viewport for the treeview
 	$("#treeview-inner").slimScroll({
 	    	height: $("#ucsc").height(),
-	    	width: '400px',
+	    	width: '100%',
 	    	alwaysVisible: true
 	});
 	

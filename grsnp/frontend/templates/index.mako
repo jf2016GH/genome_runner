@@ -122,6 +122,7 @@
 								</ul>
 								<div id="grfdroplist" style="display: table;">	
 									<label>Enter genome annotation names:</label>
+									<img class="helptooltip" title="Fuzzy search, case sensitive (e.g., H3k4me3, Dnase)" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="Fuzzy search"/>
 									<ol style="left: 9px;position: relative; padding-top:10px;padding-bottom:10px;">        
 										<li id="grf-list" class="input-text">
 											<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
@@ -129,9 +130,10 @@
 										<div id="grfs-auto">
 											<div class="default">Type the names of the genome annotation features to run</div>
 											<ul id="feed">
-											</ul>
-										</div>
+											</ul>											
+										</div>										
 									</ol>	
+
 									<div style="display: table-row;">
 										<div id="divCheckBox" style="width: 70%; margin:10px; display: table-cell; verticle-align: top; visibility: hidden">
 											<label >Select genome annotation features: </label>
