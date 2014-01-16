@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 import sys
+import errno
 import logging
 from logging import FileHandler,StreamHandler
 import os
@@ -74,10 +75,15 @@ def download_ucsc_file(organism,filename,downloaddir):
 				logger.info( 'Finished downloading {} from UCSC'.format(filename))
 		else:
 			logger.info( '{} already exists, skipping download'.format(outputpath))
-	except Exception, e:
-		logger.warning( e)
-		logger.warning("Could not download the {} sql file. Names ARE case sensitive.".format(filename))
-		return '' 
+	# except Exception, e:
+	# 	logger.warning( e)
+	# 	logger.warning("Could not download the {} sql file. Names ARE case sensitive.".format(filename))
+	# 	return '' 
+	except IOError as e:
+		if e.errno == errno.EPIPE:
+			logger.error('FTP download error. Restart the dbcreator. Exiting now...')
+			ftp.quit()
+			sys.exit(2)
 
 	return outputpath 
 
