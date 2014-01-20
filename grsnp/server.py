@@ -15,7 +15,7 @@ import logging
 from logging import FileHandler,StreamHandler
 import json
 import pdb
-import hypergeom4 as grquery
+import grsnp.worker_hypergeom4
 from time import gmtime, strftime
 import simplejson
 import string
@@ -24,6 +24,8 @@ import traceback
 import dbcreator as uscsreader
 import argparse
 import shutil
+import subprocess
+import celeryconfiguration
 
 os.environ['GR_COMPATIBILITY_MODE'] = 'y'
 
@@ -296,16 +298,31 @@ class WebUI(object):
 			for k,v in set_info.iteritems():
 				sett_files.write(k+"\t"+v+"\n")
 
-		if open(gfs).read() == "": return "ERROR: No Genomic Features selected/uploaded."
+		gfs_count = 0
+		if open(gfs).read() == "": 
+			return "ERROR: No Genomic Features selected/uploaded."
+		else:
+			gfs_count = len([x for x in open(gfs).read().split("\n") if x != ""])
 
 		# copy over .foi to results folder, used for the enrichment results
 		shutil.copy(fois,os.path.join(res_dir,".fois"))
 
 		# This starts the enrichment analysis in another OS process.
 		# We know it is done when a file appears in the "results" directory
-		p = Process(target=grquery.run_hypergeom,
-				args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random))				
-		p.start()
+		#p = Process(target=grquery.run_hypergeom,
+		#		args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random))				
+		#p.start()
+
+		# run using celery
+
+		if gfs_count > 10:
+			print "LONG RUN STARTED"
+			grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
+																  queue='long_runs')
+		else:
+			print "SHORT RUN STARTED"
+			grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
+																  queue='short_runs')
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
 
@@ -591,7 +608,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/grs_db/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
-	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 	
+	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
+	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)	
 	args = vars(parser.parse_args())
 	port = args["port"]
 	data_dir = args["data_dir"]
@@ -636,6 +654,21 @@ if __name__ == "__main__":
 					{"tools.staticdir.on": True,
 					"tools.staticdir.dir": os.path.abspath(sett["data_dir"])}
 				}
+
+		# start redis server
+		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
+		fh = open("NUL","w")
+		out = subprocess.Popen(script,stdout=fh,stderr=fh)
+
+		# start the workers
+		for i in range(args["num_workers"]):
+			if i == 0:
+				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","short_runs"]
+				out = subprocess.Popen(script,stdout=fh,stderr=fh)
+			else:
+				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
+				out = subprocess.Popen(script,stdout=fh,stderr=fh)
+
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
 	else:

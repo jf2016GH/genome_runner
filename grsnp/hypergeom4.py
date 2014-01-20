@@ -27,6 +27,7 @@ import mako
 import simplejson
 import zipfile
 
+
 # Logging configuration
 logger = logging.getLogger()
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -40,6 +41,9 @@ output_dir = None
 console_output = False 
 print_progress = False
 logger_path = "gr_log.txt"
+
+
+
 
 def get_overlap_statistics(gf,fois):
     """Returns a dictionary with indicating how many hits exist for each foi against the gf
@@ -539,7 +543,8 @@ if __name__ == "__main__":
     parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
     parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
-    parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true") 
+    parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
+        
     args = vars(parser.parse_args())  
     if args["pass_paths"]: 
         gf = args["gfs"][0].split(",")      
