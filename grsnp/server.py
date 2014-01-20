@@ -313,21 +313,22 @@ class WebUI(object):
 		#		args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random))				
 		#p.start()
 
-		# run using celery
-
-		if gfs_count > 10:
-			print "LONG RUN STARTED"
-			grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
-																  queue='long_runs')
-		else:
-			print "SHORT RUN STARTED"
-			grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
-																  queue='short_runs')
+		# run using celery queues.  Uncomment to use.  Also uncomment in celeryconfiguration.
+		# TODO find out why all jobs are getting sent to one worker.
+		#if gfs_count > 10:
+		#	print "LONG RUN STARTED"
+		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
+		#														  queue='long_runs')
+		#else:
+		#	print "SHORT RUN STARTED"
+		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
+		#														  queue='short_runs')
+		try:
+			print "RUNNING Jobname"
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random)
+		except:
+			print "ERRORR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
-
-
-		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("news.mako").render())
 
 	@cherrypy.expose
 	def result(self, id):
@@ -609,7 +610,7 @@ if __name__ == "__main__":
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
-	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=2)	
+	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)	
 	args = vars(parser.parse_args())
 	port = args["port"]
 	data_dir = args["data_dir"]
@@ -659,16 +660,24 @@ if __name__ == "__main__":
 		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
 		fh = open("NUL","w")
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-
-		# start the workers
+		# start the workers using queue system,
+		#for i in range(args["num_workers"]):
+		#	if i== 0  and args["num_workers"] <=1:
+		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
+		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		#	elif i == 0:
+		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","short_runs"]
+		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		#	else:
+		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
+		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		script = "ps auxww | grep  -E 'worker.*grsnp' | awk '{print $2}' | xargs kill -9"
+		out = subprocess.Popen(script,shell=True)
+		out.wait()
 		for i in range(args["num_workers"]):
-			if i == 0:
-				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","short_runs"]
-				out = subprocess.Popen(script,stdout=fh,stderr=fh)
-			else:
-				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
-				out = subprocess.Popen(script,stdout=fh,stderr=fh)
-
+			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
+			out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
 	else:
