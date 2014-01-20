@@ -129,7 +129,7 @@ class WebUI(object):
 				with open(fois,"wb") as out_fois:
 					# bed files uploaded
 					if not isinstance(bed_file,(list)): bed_file = [bed_file] # makes a list if only one file uploaded
-					if bed_file[0]:						
+					if bed_file[0] and bed_file[0].filename != "":						
 						for b in bed_file:
 							bed_filename = b.filename
 							f = os.path.join(upload_dir, "fois",bed_filename)
@@ -166,7 +166,7 @@ class WebUI(object):
 							out.write(data)		
 						out_fois.write(f+"\n")	
 					else:
-						return "Feature of Interest files not detected."
+						return "ERROR: Please upload a feature of interest file."
 
 			except Exception, e:
 				logger.error("id={}".format(id) + str(e))
