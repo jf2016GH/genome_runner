@@ -75,15 +75,15 @@ def download_ucsc_file(organism,filename,downloaddir):
 				logger.info( 'Finished downloading {} from UCSC'.format(filename))
 		else:
 			logger.info( '{} already exists, skipping download'.format(outputpath))
-	# except Exception, e:
-	# 	logger.warning( e)
-	# 	logger.warning("Could not download the {} sql file. Names ARE case sensitive.".format(filename))
-	# 	return '' 
 	except IOError as e:
-		if e.errno == errno.EPIPE:
+		if e.errno == errno.EPIPE: # Broken pipe error handling
 			logger.error('FTP download error. Restart the dbcreator. Exiting now...')
 			ftp.quit()
 			sys.exit(2)
+	except Exception, e:
+		logger.warning(e)
+		logger.warning("Could not download the {} sql file. Names ARE case sensitive.".format(filename))
+		return '' 
 
 	return outputpath 
 
@@ -115,7 +115,7 @@ def _check_cols(colnames,colstoextract):
 
 def extract_bed6(outputpath,datapath,colnames):
 	colstoextract = ['chrom','chromStart','chromEnd','name','score','strand']
-	# Checks if all of the columns exist in the table.  If not extract_bed5 is tried instead
+	# Checks if all of the columns exist in the table.  If not extract_bed5 is tried i
 	if _check_cols(colnames,colstoextract):
 		logger.info( "Outpath is: {}".format(outputpath))
 		with gzip.open(datapath) as dr:
@@ -227,7 +227,7 @@ def extract_genepred(outputpath,datapath,colnames):
 							if s != '':
 								rowexon = [r['chrom'],s,e,''.join(e for e in r['name'] if e.isalnum()),'0',r['strand']]
 								exonbed.write("\t".join(map(str,rowexon))+"\n")
-		# sort the file and convert to bgzip format
+		# sort the exon file and convert to bgzip format
 		sort_convert_to_bgzip(exonpath+".temp",exonpath + ".bed.gz")
 		return "genepred"
 	else:
@@ -244,7 +244,7 @@ def sort_convert_to_bgzip(path,outpath):
 def extract_rmsk(outputpath,datapath,colnames):
 	colstoextract = ['genoName','genoStart','genoEnd','repClass', 'strand','swScore']
 	with open(outputpath,"wb") as bed:
-		with open(datapath) as dr:
+		with gzip.open(datapath) as dr:
 			while True:
 				line = dr.readline().strip('\r').rstrip('\n')
 				if line == "":
@@ -338,27 +338,34 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 		Cell = ''
 	return os.path.join('ENCODE', grp, Tier, Cell, line.strip())		
 
-def create_feature_set(trackdbpath,organism,max_install):
+def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
 	outputdir = os.path.dirname(trackdbpath)
 	download_dir = os.path.join(os.path.split(os.path.split(outputdir)[0])[0],"downloads")
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
 	added_features = [] 
 	notsuptypes, outpath = set([]),""
-
-	# get list of GFs files on server
-	html = urllib2.urlopen('http://hgdownload.cse.ucsc.edu/goldenPath/{}/database/'.format(organism)).read()
-	soup = BeautifulSoup.BeautifulSoup(html)
-	gfs = [x.get('href')[:-4] for x in soup.findAll('a') if 'sql' in x.get('href')]
 	prog, num = 0,len(gfs)
 	summary_path = os.path.join(outputdir,"summary.log")
+	gfs = [x for x in gfs if x != ""]
+	# get list of GFs files on server
+	if len(gfs) == 0:
+		html = urllib2.urlopen('http://hgdownload.cse.ucsc.edu/goldenPath/{}/database/'.format(organism)).read()
+		soup = BeautifulSoup.BeautifulSoup(html)
+		gfs = [x.get('href')[:-4] for x in soup.findAll('a') if 'sql' in x.get('href')]
 
 	for gf_name in gfs:
 		# check if GF is listed in trackdb
-		row = [x for x in trackdb if x['tableName'] == gf_name] 
+		row = [x for x in trackdb if x['tableName'] == gf_name]
 		# if in trackdb, process using type provided
 		if len(row) != 0:
 			row = row[0] # convert from list to dictionary
 			logger.info( 'Processing files {} of {}'.format(prog,num))
+			# if table name has Raw, in it, it is likely raw reads, skip
+			if _exclude(gf_name):
+				write_line("\t".join([gf_name,"Raw signal",row["longLabel"]]),summary_path)
+				logger.info('Raw signal detected: {}, skipping...'.format(gf_name))
+				prog +=1
+				continue
 			if row['type'] in preparebed:
 				# this line limits the number of GFs to download, note that this check only occurs for GFs in tracdb
 				if numdownloaded[row["type"]] <= max_install or max_install == None:
@@ -392,20 +399,26 @@ def create_feature_set(trackdbpath,organism,max_install):
 							numdownloaded[row["type"]] += 1
 
 						except Exception, e:
-							write_line("\t".join([gf_name,"Failed",row["longLabel"]]),summary_path)
+							write_line("\t".join([gf_name,"Failed",str(e)]),summary_path)
 							exc = trace.format_exc()
 							logger.warning( "Unable to convert {} into bed".format(row["tableName"]))
 							logger.warning(exc)
 							prog += 1
 							continue
 			else:
-				write_line("\t".join([gf_name,"{} Not Supported".format(row["type"]),row["longLabel"]]),summary_path)
+				write_line("\t".join([gf_name,"{} Not supported".format(row["type"]),row["longLabel"]]),summary_path)
 				if 'big' not in row['type']:
 					notsuptypes.add(row['type'])				
 		# not in trackdb
 		else:
 			logger.info( 'Processing files {} of {}'.format(prog,num))
 			gf_type = ""
+			# if table name has Raw, in it, it is likely raw reads, skip
+			if _exclude(gf_name):
+				write_line("\t".join([gf_name,"Raw signal",""]),summary_path)
+				logger.info('Raw signal detected: {}, skipping...'.format(gf_name))
+				prog +=1
+				continue
 			# download files
 			sqlpath = download_ucsc_file(organism,gf_name + ".sql",download_dir)
 			download_ucsc_file(organism,gf_name + ".txt.gz",download_dir)			
@@ -415,8 +428,8 @@ def create_feature_set(trackdbpath,organism,max_install):
 						outpath = os.path.join(outputdir, encodePath(gf_name))
 					else:
 						outpath = os.path.join(outputdir,'unsorted',gf_name)
-						if not os.path.exists(os.path.dirname(outpath)):
-								os.makedirs(os.path.dirname(outpath))
+					if not os.path.exists(os.path.dirname(outpath)):
+						os.makedirs(os.path.dirname(outpath))
 					# check if GF already extracted
 					if os.path.exists(outpath + ".bed.gz") == False:
 						# removes the .temp file, to prevent duplicate data from being written
@@ -448,7 +461,7 @@ def create_feature_set(trackdbpath,organism,max_install):
 
 				except Exception, e:
 					exc = trace.format_exc()
-					write_line("\t".join([gf_name,"Failed","None"]),summary_path)
+					write_line("\t".join([gf_name,"Failed",str(e)]),summary_path)
 					logger.warning( "Unable to convert {} into bed".format(gf_name))
 					logger.warning(exc)
 					prog += 1
@@ -459,8 +472,8 @@ def create_feature_set(trackdbpath,organism,max_install):
 		# cleanup the temporary files
 		if os.path.exists(outpath + ".temp"): os.remove(outpath+".temp")
 
-	logger.info( "The following types are not supported (includes all 'big' file types):\n " + str(notsuptypes))
-	logger.info("The following features were added to the database: \n{}".format(added_features))
+	# logger.info( "The following types are not supported (includes all 'big' file types):\n " + str(notsuptypes))
+	# logger.info("The following features were added to the database: \n{}".format(added_features))
 	logger.info("A count of features added by type: ")
 	for k,d in numdownloaded.iteritems():
 		logger.info( k + ":" + str(d))
@@ -471,52 +484,6 @@ def write_line(line,path):
 	with open(path, 'a') as writer:
 		writer.write(line+"\n")
 
-def create_single_feature(trackdbpath,organism,feature):
-	''' Downloads a single feature and adds it to the genomerunner flat file database'''
-
-	outputdir = os.path.dirname(trackdbpath)
-	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
-	f_type = _gettype(feature,trackdb)
-	f_info = _get_info(feature,trackdb)
-	# is the feature in trackDb
-	if f_info != False:
-		# is the feature type supported by the dbcreator
-		if  f_type in preparebed:
-			sqlpath = download_ucsc_file(organism,f_info["tableName"] + ".sql","downloads")
-			download_ucsc_file(organism,f_info["tableName"] + ".txt.gz","downloads")
-			if sqlpath != '':
-				logger.info( "converting"+f_info['tableName']+ " into proper bed format")
-				try:
-					if f_info['tableName'].startswith("wgEncode"):
-						outpath = os.path.join(outputdir, encodePath(f_info["tableName"]))
-					else:
-						outpath = os.path.join(outputdir,f_info["grp"],f_info["tableName"]) #'Tier' + f_info["visibility"],
-					if not os.path.exists(os.path.dirname(outpath)):
-						os.makedirs(os.path.dirname(outpath))
-					# if the feature is not in the database, add it
-					if os.path.exists(outpath + ".bed.gz") == False:
-						# removes the .temp file, to prevent duplicate data from being written
-						if os.path.exists(outpath+".temp"):
-							os.remove(outpath+".temp")
-						# converts the ucsc data into proper bed format
-						logger.info( "Converting {} into proper bed format.".format(os.path.splitext(sqlpath)[0]))
-						preparebed[f_info["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
-
-						# sort the file and convert to bgzip format
-						o_dir = os.path.dirname(outpath)
-						new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-						sort_convert_to_bgzip(outpath+".temp",new_path)
-					else:
-						logger.info( "{} already exists, skipping extraction".format(outpath))
-					numdownloaded[f_info["type"]] += 1
-				except Exception, e:
-					exc = trace.format_exc()
-					logger.warning( "Unable to convert {} into bed".format(f_info["tableName"]))
-					logger.warning(exc)
-		else:
-			logger.warning("{} is a type {}, which is not supported".format(feature,f_type))
-	else:
-		logger.warning( "Could not find {} in trackDb".format(feature))
 
 def _gettype(feature,trackdb):
 	'''Returns the type of feature from the trackdb'''
@@ -570,7 +537,16 @@ def create_galaxy_xml_files(db_dir,outputdir):
 	logger.info("Created galaxy xml file {}".format(xml_path))		
 
 def base_name(k):
-    return os.path.basename(k).split(".")[0]		
+	return os.path.basename(k).split(".")[0]
+
+def _exclude(x):
+	ls = ["Raw","Align","Signal"]
+	for l in ls:
+		if l in x:
+			return True
+	if x.startswith("chr"):
+		return True
+	return False
 
 
 def dir_as_xml(path, blacklist):
@@ -595,7 +571,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grs_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grs_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grs_db/. Required", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
-	parser.add_argument('--featurename','-f', nargs="?", help='The name of the specific genomic feature track to create (Example: knownGene)')
+	parser.add_argument('--featurenames','-f', nargs="?", help='The names of the specific genomic feature tracks to create, comma separated (Example: knownGene, evoFold)', default="")
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 
@@ -607,7 +583,7 @@ if __name__ == "__main__":
 
 
 	global ftp, max_install_num
-	ftp = ftplib.FTP(ftp_server)
+	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
 	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
@@ -622,14 +598,10 @@ if __name__ == "__main__":
 				sys.exist()
 		create_galaxy_xml_files(outputdir,usrdir)		
 		sys.exit()
-	if args['organism'] is not None and args['featurename'] is None: # Only organism is specified. Download all organism-specific features
+	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
+		gfs = args["featurenames"].split(",")
 		trackdbpath = download_trackdb(args['organism'],outputdir)
-		create_feature_set(trackdbpath,args['organism'],args["max"])
-	elif args['organism'] is not None and args['featurename'] is not None: # Both organism and feature name are specified. Download this feature for a given organism
-		trackdbpath = download_trackdb(args['organism'],outputdir)
-		create_single_feature(trackdbpath,args['organism'],args['featurename'])
-	elif args['organism'] is None and args['featurename'] is not None: # Warning in case of only feature name is supplied
-		print "To add a specific feature to the local database, please supply an organism assembly name"
+		create_feature_set(trackdbpath,args['organism'],args["max"],gfs)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()

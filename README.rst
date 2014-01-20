@@ -108,7 +108,8 @@ FAQ
 
       .. code-block:: bash
    
-       rsync -avzP rsync://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ .
+       rsync -avzP rsync://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/* .
+       use --ignore-existing and --size-only flags, if resuming terminated download session
 
    Before downloading any files, the ``dbcreator`` checks it they exist in the [dir]/downloads/ folder.
    
