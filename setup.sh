@@ -10,6 +10,7 @@ sudo apt-get install realpath
 sudo apt-get -y install python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako python-beautifulsoup python-celery python-redis
 sudo apt-get upgrade gcc 
 sudo pip install -U cython
+sudo pip install flower # Tool to monitor Celery jobs
 # Manual download and installation of required binaries
 mkdir downloads
 cd downloads
