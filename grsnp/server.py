@@ -658,7 +658,7 @@ if __name__ == "__main__":
 
 		# start redis server
 		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
-		fh = open("NUL","w")
+		fh = open(os.path.join(sett["data_dir"],"redis.log"),"w")
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		# start the workers using queue system,
 		#for i in range(args["num_workers"]):
@@ -675,6 +675,7 @@ if __name__ == "__main__":
 		out = subprocess.Popen(script,shell=True)
 		out.wait()
 		for i in range(args["num_workers"]):
+			fh = open(os.path.join(sett["data_dir"],"worker{}.log".format(i)),"w")
 			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
 			out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND

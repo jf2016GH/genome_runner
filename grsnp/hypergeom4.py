@@ -31,6 +31,7 @@ import zipfile
 # Logging configuration
 logger = logging.getLogger()
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+logger.propagate = 0
 # This line outputs logging info to the console
 
 
