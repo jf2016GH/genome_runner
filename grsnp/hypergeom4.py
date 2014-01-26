@@ -26,6 +26,7 @@ import commands
 import mako
 import simplejson
 import zipfile
+import inspect
 
 
 # Logging configuration
@@ -55,9 +56,11 @@ def get_overlap_statistics(gf,fois):
     out = ""
     try:
         # Runs overlapStatistics with preprocessed background stats if they exist
-        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE)
+        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         out.wait()
         tmp = out.stdout.read()
+	tmp_er = out.stderr.read()
+	if tmp_er != "": logger.error(tmp_er)
         if tmp[:6] == "ERROR:": 
             logger.error(tmp[7:])
             raise Exception(tmp)
@@ -211,6 +214,8 @@ def cluster_matrix(input_path,output_path):
     Takes the matrix file outputted by genomerunner and clusters it in R
     '''        
     pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
+    saved_stdout, saved_stderr = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = open(os.devnull, "w")
     r_script = """t5 = as.matrix(read.table("{}")) 
                     t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.0001) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
@@ -235,6 +240,7 @@ def cluster_matrix(input_path,output_path):
                         write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
                     }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
     robjects.r(r_script)
+    sys.stdout, sys.stderr = saved_stdout, saved_stderr
     # write matrices in json format     
     json_mat = []       
     mat = open(output_path).read()      
@@ -249,6 +255,8 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     pval_output_path = output_path.split(".")[0]+"_pvalue.txt"
     pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
    
+    saved_stdout, saved_stderr = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = open(os.devnull, "w")
     #pcc = open(output_path).read() 
     #if "PCC can't be performed" not in pcc:
     r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\")) 
@@ -270,6 +278,7 @@ def pearsons_cor_matrix(matrix_path,out_dir):
 
         }"""
     robjects.r(r_script)
+    sys.stdout, sys.stderr = saved_stdout, saved_stderr
     # write matrices in json format     
     mat = open(output_path).read()      
     mat_pval = open(pval_output_path).read()        

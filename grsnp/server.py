@@ -641,6 +641,7 @@ if __name__ == "__main__":
 	if not os.path.exists(uploads_dir):
 		os.mkdir(uploads_dir)
 	if port:
+		print grsnp.worker_hypergeom4.__file__
 		cherrypy.server.max_request_body_size = 0
 		cherrypy.config.update({
 			"server.socket_port": int(port),

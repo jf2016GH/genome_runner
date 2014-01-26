@@ -1,6 +1,8 @@
 		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;"><span style="font-size:16px;">News</span></span></h3>
 		<p>
+			<span style="font-family: arial, helvetica, sans-serif; font-size: 14px;">01/25/2014: Parallelized version of GenomeRunner is deployed, resulting in optimized job runs and better responsiveness.</span></p>
+		<p>
 			<span style="font-size:14px;"><span style="font-family:arial,helvetica,sans-serif;">01/12/2014: GenomeRunner is selected for a software demonstration at <a href="http://agbt.org/about.html" target="_blank">AGBT 2014</a>.</span></span></p>
 		<p>
 			<span style="font-size:14px;"><span style="font-family:arial,helvetica,sans-serif;">01/12/2014: Interface optimizations</span></span></p>

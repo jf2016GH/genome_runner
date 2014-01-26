@@ -6,6 +6,7 @@ sudo apt-get install bedtools
 sudo apt-get install tabix 
 sudo apt-get install kyotocabinet-utils 
 sudo apt-get install realpath
+sudo apt-get install redis-server
 # Ubuntu-specific installation of Python packages. Can be installed using pip install or easy_install
 sudo apt-get -y install python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako python-beautifulsoup python-celery python-redis
 sudo apt-get upgrade gcc 

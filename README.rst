@@ -152,14 +152,27 @@ FAQ
 **server** # main module
 =========================
 
-GenomeRunner SNP can be started from any folder,but the **full** path to the database should be provided
+GenomeRunner SNP can be started from any folder,but the **full** path to the database should be provided. Optional arguments are available using `--help` argument.
 
 .. code-block:: bash
     
     python -m grsnp.server -d [dir]
 
+If the server needs to be accessed on port 80 (http), one can create a redirection rule, and start the server on the redirected port:
+
+.. code-block:: bash
+
+ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
+   python -m grsnp.server -d [dir] -p 8080
+
 The server can be access via the following address: 
 
-.. code-block::
+.. code-block:: bash
 
-    localhost:8000/gr/
+    localhost:8080/gr
+
+or, if redirection is in place:
+
+.. code-block:: bash
+
+    localhost/gr
