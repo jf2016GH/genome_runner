@@ -193,6 +193,12 @@
 		<div>
 			<span style="font-family:arial,helvetica,sans-serif;">Epigenomic similarity analysis visualizes similarity among enrichment profiles for three or more sets of SNPs of interest. It answers the question whether different sets of SNPs are enriched in similar epigenomic elements, hence, may affect similar regulatory networks. This analysis may be useful when comparing sets of SNPs from multiple GWA studies, or patient-specific variomes. It is particularly useful for the analysis of patient-specific rare variants, to observe whether patients can be classified by similar regulatory elements affected by their SNPs.</span></div>
 		<h3>
+			<span style="font-family: arial, helvetica, sans-serif;">What else can I do with the results?</span></h3>
+		<h3>
+			&nbsp;</h3>
+		<div>
+			<span style="font-family:arial,helvetica,sans-serif;"><span style="font-size:16px;">Head to&nbsp;<a href="https://github.com/mdozmorov/R.genomerunner" target="_blank">https://github.com/mdozmorov/R.genomerunner</a> for further ideas and the R code to explore and visualize GenomeRunner&#39;s results.&nbsp;</span></span></div>
+		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;">How to cite GenomeRunner?</span></h3>
 		<p>
 			<span style="font-family:arial,helvetica,sans-serif;">If you find GenomeRunner useful, please, cite:</span></p>
@@ -201,7 +207,7 @@
 			Bioinformatics. 2012 Feb 1;28(3):419-20.&nbsp;<a href="http://bioinformatics.oxfordjournals.org/content/28/3/419">doi:10.1093/bioinformatics/btr666.</a><br />
 			PubMed PMID: 22155868; PubMed Central PMCID: PMC3268239</span></p>
 		<p>
-			<span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web publication is currently in preparation</span></p>
+			<span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web publication is currently submitted. Please, check back for the updates</span></p>
 		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;">How GenomeRunner Web is different from previously published version?</span></h3>
 		<p>
@@ -233,5 +239,5 @@
 		<p>
 			<font face="arial, helvetica, sans-serif">Please, contact&nbsp;</font><br />
 			<img height="20%" src="static/images/e-mail.png" width="20%" /></p>
-		<div>
-			&nbsp;</div>
+		<p>
+			<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">with anything you may want to mention or discuss (don&#39;t be concerned with pleasantries), I will respond promptly. If you have a run crashed, please, send me the run ID (from the URL bar, like&nbsp;<em>result?id=example</em>) for troubleshooting.</span></span></p>
