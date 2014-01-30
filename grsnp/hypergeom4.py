@@ -170,7 +170,7 @@ def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         for k in i:
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
-                return [1,1,1]
+                return [1,1,1,False]
             if k < 11:
                 do_chi_square = False
 
