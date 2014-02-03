@@ -29,21 +29,33 @@
 					</tr>
 					<tr>
 						<td>
-							<span style="font-family:arial,helvetica,sans-serif;">gwasDemo - several disease-associated SNP sets from <a href="http://www.genome.gov/26525384" target="_blank">GWAScatalog</a>.</span></td>
+							<span style="font-family:arial,helvetica,sans-serif;">GWAS_vs_DGV - selected disease-associated SNP sets from <a href="http://www.genome.gov/26525384" target="_blank">GWAScatalog</a>.</span></td>
 						<td>
-							<span style="font-family:arial,helvetica,sans-serif;">Used for <a href="./demo">Demo</a> run</span></td>
+							<span style="font-family:arial,helvetica,sans-serif;">Used for <a href="./demo">Demo</a> run, to be run for enrichment vs. structural variants (dgvVariants)</span></td>
 					</tr>
 					<tr>
 						<td>
-							<span style="font-family:arial,helvetica,sans-serif;">gwasRand - randomly selected sets of SNPs from&nbsp;&nbsp;<a href="http://www.genome.gov/26525384" target="_blank">GWAScatalog</a>.</span></td>
+							<span style="font-family:arial,helvetica,sans-serif;">GWAS_vs_tfbsEncode</span><span style="font-family: arial, helvetica, sans-serif;">&nbsp;- selected disease-associated SNP sets from&nbsp;</span><a href="http://www.genome.gov/26525384" style="font-family: arial, helvetica, sans-serif;" target="_blank">GWAScatalog</a><span style="font-family: arial, helvetica, sans-serif;">.</span></td>
 						<td>
-							<span style="font-family:arial,helvetica,sans-serif;">Use them for <a href="./demo">Demo</a> run, to ensure random SNPs do not show significant associations</span></td>
+							<span style="font-family: arial, helvetica, sans-serif;">Used for&nbsp;</span><a href="./demo" style="font-family: arial, helvetica, sans-serif;">Demo</a><span style="font-family: arial, helvetica, sans-serif;">&nbsp;run, to be run for enrichment vs. 161 experimentally obtained transcription factor binding sites (tfbsEncode)</span></td>
 					</tr>
 					<tr>
 						<td>
 							<span style="font-family:arial,helvetica,sans-serif;">snp138Rand - randomly selected sets of SNPs from the <a href="http://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=354750109&amp;g=snp138&amp;hgTracksConfigPage=configure" target="_blank">snp138 </a>database.</span></td>
 						<td>
-							<span style="font-family:arial,helvetica,sans-serif;">Use for &#39;sanity check&#39;, with snp138+ background and any (category of) genome annotation elements, to ensure random SNPs do not show significant associations</span></td>
+							<span style="font-family:arial,helvetica,sans-serif;">Use with snp138+ background and any (category of) genome annotation elements, to ensure random SNPs do not show significant associations</span></td>
+					</tr>
+					<tr>
+						<td>
+							<span style="font-family: arial, helvetica, sans-serif;">gwasRand - randomly selected sets of SNPs from&nbsp;&nbsp;</span><a href="http://www.genome.gov/26525384" style="font-family: arial, helvetica, sans-serif;" target="_blank">GWAScatalog</a><span style="font-family: arial, helvetica, sans-serif;">.</span></td>
+						<td>
+							<span style="font-family: arial, helvetica, sans-serif;">Use with gwascatalog background and any (category of) genome annotation elements, to ensure random SNPs do not show significant associations</span></td>
+					</tr>
+					<tr>
+						<td>
+							<span style="font-family:arial,helvetica,sans-serif;">GWASmore15 - all&nbsp;</span><span style="font-family: arial, helvetica, sans-serif;">disease- or trait-associated SNP sets from&nbsp;</span><a href="http://www.genome.gov/26525384" style="font-family: arial, helvetica, sans-serif;" target="_blank">GWAScatalog</a><font face="arial, helvetica, sans-serif">&nbsp;having more than 15 SNPs in a set</font></td>
+						<td>
+							<span style="font-family:arial,helvetica,sans-serif;">Used for explorartory analyses vs. any (category of) genome annotation elements</span></td>
 					</tr>
 				</tbody>
 			</table>
@@ -195,7 +207,7 @@
 		<h3>
 			<span style="font-family: arial, helvetica, sans-serif;">What else can I do with the results?</span></h3>
 		<div>
-			<span style="font-family:arial,helvetica,sans-serif;">Head to&nbsp;<a href="https://github.com/mdozmorov/R.genomerunner" target="_blank">https://github.com/mdozmorov/R.genomerunner</a> for further ideas and the R code to explore and visualize GenomeRunner&#39;s results.&nbsp;</span></span></div>
+			<span style="font-family:arial,helvetica,sans-serif;">Head to&nbsp;<a href="https://github.com/mdozmorov/R.genomerunner" target="_blank">https://github.com/mdozmorov/R.genomerunner</a> for further ideas and the R code to explore and visualize GenomeRunner&#39;s results.&nbsp;</span></div>
 		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;">How to cite GenomeRunner?</span></h3>
 		<p>
@@ -238,4 +250,4 @@
 			<font face="arial, helvetica, sans-serif">Please, contact&nbsp;</font><br />
 			<img height="20%" src="static/images/e-mail.png" width="20%" /></p>
 		<p>
-			<span style="font-family:arial,helvetica,sans-serif;">with anything you may want to mention or discuss (don&#39;t be concerned with pleasantries), I will respond promptly. If you have a run crashed, please, send me the run ID (from the URL bar, like&nbsp;<em>result?id=example</em>) for troubleshooting.</span></span></p>
+			<span style="font-family:arial,helvetica,sans-serif;">with anything you may want to mention or discuss (don&#39;t be concerned with pleasantries), I will respond promptly. If you have a run crashed, please, send me the run ID (from the URL bar, like&nbsp;<em>result?id=example</em>) for troubleshooting.</span></p>
