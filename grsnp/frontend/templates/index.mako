@@ -183,5 +183,8 @@
 					</div>
 				</div>
 			</form>
+			<p style="text-align: center;">
+				<span style="font-family:arial,helvetica,sans-serif;">You are the&nbsp;<img alt="stats counter" border="0" src="http://www.easycounter.com/counter.php?mdozmorov" />&nbsp;visitor</span>
+			</p>
 		</div>		
 	</body>
