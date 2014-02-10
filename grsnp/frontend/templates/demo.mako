@@ -15,10 +15,17 @@
 		<p>
 			<span style="font-family: arial, helvetica, sans-serif;">Use &quot;GWASmore15&quot; to load all the disease- and trait-specific sets of SNPs from GWAScatalog. Experiment with (categories of) epigenomic elements.</span></p>
 		<p>
-			<span style="font-family:arial,helvetica,sans-serif;">To get individual disease- or trait-specific sets of SNPs, clone <a href="https://github.com/mdozmorov/gwas2bed" target="_blank">https://github.com/mdozmorov/gwas2bed</a> to your computer, or download the files individually. Use &quot;gwascatalog&quot; as the background when analyzing them.</span><br />
+			<span style="font-family:arial,helvetica,sans-serif;">To get individual disease- or trait-specific sets of SNPs, clone <a href="https://github.com/mdozmorov/gwas2bed" target="_blank">https://github.com/mdozmorov/gwas2bed</a> to your computer, or download the files individually. Use &quot;gwascatalog&quot; as the background when analyzing them.</span></p>
+		<p>
+			<span style="font-family: arial, helvetica, sans-serif;">A detailed tutorial of the analysis of disease-specific sets of SNPs is available in <a href="https://github.com/mdozmorov/R.genomerunner/blob/master/Analysis.pdf" target="_blank">Analysis.pdf (181kb)</a>, accompanied with the R code </span><span style="font-family:arial,helvetica,sans-serif;">on&nbsp;<a href="https://github.com/mdozmorov/R.genomerunner" target="_blank">https://github.com/mdozmorov/R.genomerunner</a>.</span></p>
+		<p>
+			<span style="font-family:arial,helvetica,sans-serif;">A software demonstration presentation about GenomeRunner&#39;s functionality from AGBT2014 is available <a href="static/Dozmorov_GR_software_demo_2014.pdf">here Dozmorov_GR_sofrware_demo_2014.pdf (1.8Mb)</a>.</span></p>
+		<p>
 			<br />
 			<!-- <h3>Video tutorial</h3>
+
 		<img src="static/images/coming_soon.png" /></p>
+
 		--></p>
 		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;">An overview of GenomeRunner&#39;s idea, October 2011</span></h3>
