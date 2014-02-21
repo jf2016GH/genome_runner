@@ -680,6 +680,7 @@ if __name__ == "__main__":
 			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
 			out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
+		cherrypy.config.update({'tools.sessions.timeout': 60})
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
 
 	else:
