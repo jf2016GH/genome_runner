@@ -8,6 +8,7 @@ import logging
 from logging import FileHandler,StreamHandler
 #from bx.intervals.intersection import IntervalTree
 from scipy.stats import hypergeom
+from __future__ import division
 import numpy as np
 import scipy
 import pdb
