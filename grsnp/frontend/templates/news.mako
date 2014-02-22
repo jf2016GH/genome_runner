@@ -1,7 +1,7 @@
 		<h3>
 			<span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
 		<p>
-			<span style="font-family:arial,helvetica,sans-serif;">02/09/2014: Coming soon: Database update and optimization from February 8, 2014. Adding mm10 genome annotations.</span></p>
+			<span style="font-family:arial,helvetica,sans-serif;">02/21/2014: Database update and optimization from February 8, 2014. Adding mm10 genome annotations.</span></p>
 		<p>
 			<span style="font-family:arial,helvetica,sans-serif;">02/09/2014: Software demo presentation is available&nbsp;<a href="static/Dozmorov_GR_software_demo_2014.pdf">Dozmorov_GR_software_demo_2014.pdf</a>.</span></p>
 		<p>
