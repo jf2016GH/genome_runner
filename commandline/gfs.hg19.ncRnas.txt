@@ -1,0 +1,4 @@
+/home/mikhail/test_db/custom_data/gfs/hg19/ncRnas/CDBox.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/ncRnas/HAcaBox.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/ncRnas/miRNA.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/ncRnas/scaRna.bed.gz

@@ -1,0 +1,4 @@
+/home/mikhail/test_db/custom_data/gfs/hg19/coriellVariants/Amniotic_fluid_cell_line.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/coriellVariants/B_Lymphocyte.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/coriellVariants/Chorionic_villus_cell_line.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/coriellVariants/Fibroblast.bed.gz

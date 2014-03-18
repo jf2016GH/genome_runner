@@ -1,0 +1,15 @@
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/10_Txn_Elongation.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/11_Weak_Txn.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/12_Repressed.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/13_Heterochromlo.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/14_RepetitiveCNV.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/15_RepetitiveCNV.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/1_Active_Promoter.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/2_Weak_Promoter.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/3_Poised_Promoter.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/4_Strong_Enhancer.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/5_Strong_Enhancer.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/6_Weak_Enhancer.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/7_Weak_Enhancer.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/8_Insulator.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/chromStates/9_Txn_Transition.bed.gz

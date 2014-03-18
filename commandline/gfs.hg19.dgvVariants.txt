@@ -1,0 +1,9 @@
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/CNV.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Complex.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Deletion.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Duplication.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Gain.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Gain+Loss.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Insertion.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Inversion.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/dgvVariants/Loss.bed.gz

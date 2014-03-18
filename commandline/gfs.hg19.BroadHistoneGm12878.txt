@@ -1,0 +1,16 @@
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878CtcfStdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878Ezh239875Pk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H2azStdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k04me1StdPkV2.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k04me3StdPkV2.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k27acStdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k27me3StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k27me3StdPkV2.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k36me3StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k4me1StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k4me2StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k4me3StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k79me2StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k9acStdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H3k9me3StdPk.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHistone/Tier1/Gm12878/wgEncodeBroadHistoneGm12878H4k20me1StdPk.bed.gz

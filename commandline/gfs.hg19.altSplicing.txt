@@ -1,0 +1,9 @@
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/altFinish.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/altFivePrime.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/altPromoter.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/altThreePrime.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/atacIntron.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/bleedingExon.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/cassetteExon.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/retainedIntron.bed.gz
+/home/mikhail/test_db/custom_data/gfs/hg19/altSplicing/strangeSplice.bed.gz
