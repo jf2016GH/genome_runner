@@ -38,7 +38,7 @@ Notes.txt
 logGRrun.txt
 test.txt
 *_live 
-*.bed
+#*.bed
 profile
 *.tmp
 results_cmd
