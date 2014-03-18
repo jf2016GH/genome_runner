@@ -123,8 +123,8 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     if pval > 0.05:
         direction = "nonsignificant"
     else:
-        _write_progress("Running randomization test on {}".format(foi_name))
         if run_randomization_test: 
+            _write_progress("Running randomization test on {}".format(foi_name))
             prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)  
     
     pval_unmod = pval
