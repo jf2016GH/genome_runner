@@ -131,6 +131,12 @@
 				<tbody>
 					<tr>
 						<td>
+							<span style="font-family:arial,helvetica,sans-serif;">H3K4me3 (Cell/tissue-specific H3K4me3 marks, from <a href="http://immunogenomics.hms.harvard.edu/PDFs/2013%20-%20EpiGWAS.pdf">Trynka-Raychaudhuri Nature Genetics paper</a>)</span></td>
+						<td>
+							<span style="font-family:arial,helvetica,sans-serif;">... enriched in H3K4me3 active promoters and encancers mark? In which cell/tissue type?</span></td>
+					</tr>
+					<tr>
+						<td>
 							<span style="font-family:arial,helvetica,sans-serif;">coriellVariants (<a href="http://genome.ucsc.edu/cgi-bin/hgTrackUi?hgsid=354750109&amp;g=coriellDelDup&amp;hgTracksConfigPage=configure" target="_blank">Coriell Cell Line Copy Number Variants</a>, split by cell types)</span></td>
 						<td>
 							<span style="font-family:arial,helvetica,sans-serif;">... enriched in CNVs, and in which cell type?</span></td>
@@ -241,6 +247,8 @@
 		<p>
 			<span style="font-family: arial, helvetica, sans-serif;">The old version is in stable alpha status now. However, the databases will be updated periodically, to incorporate the growing amount of multi-organism genome annotation d</span><span style="font-family: arial, helvetica, sans-serif;">ata. Currently, the updated and reorganized databases for hg19 human genome assembly (December 2013) are available for download (Warning: large files):</span></p>
 		<p>
+			<span style="color:#0000ff;"><span style="font-family:arial,helvetica,sans-serif;">Files temporarily unavailable due to ongoing data migration to a new server. Contact the developer if you need the database files immediately</span></span></p>
+		<p>
 			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/hg19encode.sqlite">hg19encode.sqlite</a>&nbsp;(87Gb) - the ENCODE project data from the UCSC genome browser (table names starting with <em>wgEncode...</em>). The data are organized as &quot;Source-type/Tier/Cell&quot; hierarchy, to better reflect the UCSC theme and make navigation/selection of groups of epigenomic elements easier;</span></p>
 		<p>
 			<span style="font-family: arial, helvetica, sans-serif;"><a href="static/hg19new.sqlite">hg19new.sqlite</a>&nbsp;(127Gb) - non-ENCODE genome annotation data from the UCSC genome browser. Manually organized into tiers.</span></p>
@@ -250,4 +258,4 @@
 			<font face="arial, helvetica, sans-serif">Please, contact&nbsp;</font><br />
 			<img height="20%" src="static/images/e-mail.png" width="20%" /></p>
 		<p>
-			<span style="font-family:arial,helvetica,sans-serif;">with anything you may want to mention or discuss (don&#39;t be concerned with pleasantries), I will respond promptly. If you have a run crashed, please, send me the run ID (from the URL bar, like&nbsp;<em>result?id=example</em>) for troubleshooting.</span></p>
+			<span style="font-family:arial,helvetica,sans-serif;">with anything you may want to mention or discuss and expect a prompt response. If you have a run crashed, please, send the run ID (from the URL bar, like&nbsp;<em>result?id=example</em>) for troubleshooting.</span></p>
