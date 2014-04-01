@@ -1,0 +1,2 @@
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunySwitchgear/wgEncodeSunySwitchgearHt1080Elavl1RbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunySwitchgear/wgEncodeSunySwitchgearHt1080Igf2bp1RbpAssocRna.bed.gz

@@ -1,0 +1,8 @@
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/Gm12878/wgEncodeSunyAlbanyTilingGm12878Pabpc1RbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/Gm12878/wgEncodeSunyAlbanyTilingGm12878RipinputRbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/Gm12878/wgEncodeSunyAlbanyTilingGm12878T7tagRbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/Gm12878/wgEncodeSunyAlbanyTilingGm12878Elavl1RbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/K562/wgEncodeSunyAlbanyTilingK562RipinputRbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/K562/wgEncodeSunyAlbanyTilingK562T7tagRbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/K562/wgEncodeSunyAlbanyTilingK562Elavl1RbpAssocRna.bed.gz
+/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyAlbanyTiling/Tier1/K562/wgEncodeSunyAlbanyTilingK562Pabpc1RbpAssocRna.bed.gz
