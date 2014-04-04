@@ -1,0 +1,33 @@
+foi_name	foi_obs	n_fois	bg_obs	n_bgs	odds_ratio	p_val	test_type		
+###wgEncodeBroadHistoneGm12878CtcfStdPk	No Description###
+13qq14_11	41	489	1311	14323	0.91	6.03e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878Ezh239875Pk	No Description###
+13qq14_11	321	489	8672	14323	1.25	2.14e-02	Chi-squared		
+###wgEncodeBroadHistoneGm12878H2azStdPk	No Description###
+13qq14_11	95	489	2413	14323	1.20	1.36e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k04me1StdPkV2	No Description###
+13qq14_11	64	489	1576	14323	1.23	1.54e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k04me3StdPkV2	No Description###
+13qq14_11	26	489	691	14323	1.11	6.82e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k27acStdPk	No Description###
+13qq14_11	8	489	228	14323	1.03	8.54e-01	Fisher-Exact		
+###wgEncodeBroadHistoneGm12878H3k27me3StdPk	No Description###
+13qq14_11	489	489	14323	14323	nan	1.00e+00	Fisher-Exact		
+###wgEncodeBroadHistoneGm12878H3k27me3StdPkV2	No Description###
+13qq14_11	489	489	14323	14323	nan	1.00e+00	Fisher-Exact		
+###wgEncodeBroadHistoneGm12878H3k36me3StdPk	No Description###
+13qq14_11	37	489	684	14323	1.67	4.55e-03	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k4me1StdPk	No Description###
+13qq14_11	52	489	1800	14323	0.82	2.14e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k4me2StdPk	No Description###
+13qq14_11	27	489	781	14323	1.01	9.73e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k4me3StdPk	No Description###
+13qq14_11	15	489	492	14323	0.89	7.43e-01	Chi-squared		
+###wgEncodeBroadHistoneGm12878H3k79me2StdPk	No Description###
+13qq14_11	4	489	94	14323	1.26	5.65e-01	Fisher-Exact		
+###wgEncodeBroadHistoneGm12878H3k9acStdPk	No Description###
+13qq14_11	10	489	609	14323	0.46	1.15e-02	Fisher-Exact		
+###wgEncodeBroadHistoneGm12878H3k9me3StdPk	No Description###
+13qq14_11	412	489	12726	14323	0.66	1.31e-03	Chi-squared		
+###wgEncodeBroadHistoneGm12878H4k20me1StdPk	No Description###
+13qq14_11	181	489	5715	14323	0.88	2.01e-01	Chi-squared		

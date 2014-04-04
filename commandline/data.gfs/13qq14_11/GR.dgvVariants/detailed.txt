@@ -1,0 +1,19 @@
+foi_name	foi_obs	n_fois	bg_obs	n_bgs	odds_ratio	p_val	test_type		
+###CNV	No Description###
+13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
+###Complex	No Description###
+13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
+###Deletion	No Description###
+13qq14_11	1	489	291	14323	0.10	8.50e-04	Fisher-Exact		
+###Duplication	No Description###
+13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
+###Gain	No Description###
+13qq14_11	215	489	4054	14323	2.04	7.70e-15	Chi-squared		
+###Gain+Loss	No Description###
+13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
+###Insertion	No Description###
+13qq14_11	0	489	780	14323	0.00	1.46e-12	Fisher-Exact		
+###Inversion	No Description###
+13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
+###Loss	No Description###
+13qq14_11	44	489	3048	14323	0.36	2.14e-11	Chi-squared		

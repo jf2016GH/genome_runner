@@ -1,0 +1,17 @@
+13qq14_11	P-value	Direction
+wgEncodeBroadHistoneGm12878CtcfStdPk	6.03e-01	nonsignificant
+wgEncodeBroadHistoneGm12878Ezh239875Pk	2.14e-02	overrepresented
+wgEncodeBroadHistoneGm12878H2azStdPk	1.36e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k04me1StdPkV2	1.54e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k04me3StdPkV2	6.82e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k27acStdPk	8.54e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k27me3StdPk	1.00e+00	nonsignificant
+wgEncodeBroadHistoneGm12878H3k27me3StdPkV2	1.00e+00	nonsignificant
+wgEncodeBroadHistoneGm12878H3k36me3StdPk	4.55e-03	overrepresented
+wgEncodeBroadHistoneGm12878H3k4me1StdPk	2.14e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k4me2StdPk	9.73e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k4me3StdPk	7.43e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k79me2StdPk	5.65e-01	nonsignificant
+wgEncodeBroadHistoneGm12878H3k9acStdPk	1.15e-02	underrepresented
+wgEncodeBroadHistoneGm12878H3k9me3StdPk	1.31e-03	underrepresented
+wgEncodeBroadHistoneGm12878H4k20me1StdPk	2.01e-01	nonsignificant

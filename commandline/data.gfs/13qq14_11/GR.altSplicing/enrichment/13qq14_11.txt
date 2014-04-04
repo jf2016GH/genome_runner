@@ -1,0 +1,10 @@
+13qq14_11	P-value	Direction
+altFinish	1.00e+00	nonsignificant
+altFivePrime	1.00e+00	nonsignificant
+altPromoter	1.00e+00	nonsignificant
+altThreePrime	1.00e+00	nonsignificant
+atacIntron	1.00e+00	nonsignificant
+bleedingExon	1.00e+00	nonsignificant
+cassetteExon	1.00e+00	nonsignificant
+retainedIntron	1.00e+00	nonsignificant
+strangeSplice	1.00e+00	nonsignificant
