@@ -148,14 +148,15 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
 
         if (filter.userfilter) {
             if (filter.casesensetive) {
-                if (caption.indexOf(input) != -1) {                    
+                if (caption.indexOf(input) != -1) {                  
                     item.html(caption.replace(input, '<em>' + input + '</em>'));
                     return true;
                 }
             }
             else {
-                if (caption.toLowerCase().indexOf(input) != -1) {
-                    item.html(caption.replace(input, '<em>' + input + '</em>'));
+                if (caption.toLowerCase().indexOf(input.toLowerCase()) != -1) {
+                    n_start = caption.toLowerCase().indexOf(input.toLowerCase());   
+                    item.html(caption.substring(0,n_start) + '<em>' + caption.substring(n_start,n_start+input.length) + '</em>' + caption.substring(n_start+input.length,caption.length));
                     return true;
                 }
             }
@@ -168,7 +169,7 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
     
     // modified to performa fuzzy search
     var addItemFeed = function(data, input){        
-        feed.children('li[fckb=2]').remove();
+        /*feed.children('li[fckb=2]').remove();
          var options = {
             keys: ['caption'],    // the keys to search
         }
@@ -196,9 +197,9 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
             $(li).html(newCaption)
             feed.append(li);
             counter++;
-        })
+        })*/
        
-        /*
+        
         feed.children('li[fckb=2]').remove();
         $.each(data, function(i, val){
             if (val.caption) {
@@ -212,7 +213,7 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
                     counter++;
                 }
             }
-        });*/
+        });
         defaultFilter(input);
     }    
     
@@ -338,7 +339,6 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
         });
         $(input).keyup(function(event){
             inputTime = setTimeout ( function() { inputPause = true; }, 500 );
-            console.log("PREFunction: " + inputPause);
             if (event.keyCode != 40 && event.keyCode != 38) {
                 counter = 0;
                 var etext = $(input).val();
@@ -362,7 +362,6 @@ jQuery.facebooklist = function(elem, list, complete, ajax, height, filter, newel
                 $('.default').hide();
                 feed.show();
                 inputPause = false;
-                console.log("Function: " + inputPause);
             }
         });
     }

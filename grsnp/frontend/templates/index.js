@@ -54,7 +54,7 @@ $(document).ready(function() {
 	else{$('#org').val("organism:${default_organism}");}
 
 	// Crete autocomplete text box 
-	$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:"data/"+$('#org').val().split(":")[1]+"/gfs.php",cache:1}, 10, {userfilter:1,casesensetive:1});
+	$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:"data/"+$('#org').val().split(":")[1]+"/gfs.php",cache:1}, 10, {userfilter:1,casesensetive:0});
 
 	$(function() {
 		$(".accordion").accordion({
