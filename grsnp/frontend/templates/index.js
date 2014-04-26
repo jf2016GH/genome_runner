@@ -21,7 +21,18 @@ function enable_foi_uploads(){
 	document.getElementById("inputbedfile").disabled=false;
 }
 
+function page_reload(){
+	var org = document.getElementById("org").value;
+	var temp = org.split(":");
+	var dbv = "&db_version="+encodeURIComponent($("#db_version").val());
+	var $url="index?organism=" + temp[1] + dbv;
+	window.location = $url;
+}
+
 $(document).ready(function() {
+
+	$( "#db_version" ).change(function() {page_reload();});
+
 	$( "#frmQuery" ).submit(function( event ) {
 		$("#modal_upload").modal()
 	});
@@ -42,11 +53,7 @@ $(document).ready(function() {
 	    });
 	});
 
-	$('#org').change(function() {;
-		var org = document.getElementById("org").value;
-		var temp = org.split(":");
-		var $url="index?organism=" + temp[1];
-		window.location = $url;})
+	$('#org').change(function() { page_reload();})
 
 	// Set organism value
 	if (getQueryVariable('organism') != null){
@@ -54,7 +61,7 @@ $(document).ready(function() {
 	else{$('#org').val("organism:${default_organism}");}
 
 	// Crete autocomplete text box 
-	$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:"data/"+$('#org').val().split(":")[1]+"/gfs.php",cache:1}, 10, {userfilter:1,casesensetive:0});
+	$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:$("#db_version").val()+"/"+$('#org').val().split(":")[1]+"/gfs.php",cache:1}, 10, {userfilter:1,casesensetive:0});
 
 	$(function() {
 		$(".accordion").accordion({
@@ -123,7 +130,7 @@ $(document).ready(function() {
 	
 	function renderCheckBoxTree() { 		
 		$('#gfselheader').text('Choose genome annotation features (Loading ...)');
-		$.post('/gr/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text(),function(data){
+		$.post('/gr/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text()+"&db_version="+$("#db_version").val(),function(data){
 			$('#treeview-inner').html(data);
 			$('#ucsc').checkboxTree({
 				initializeChecked: 'collapsed',

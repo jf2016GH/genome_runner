@@ -25,11 +25,9 @@
 </div>
 <form name="frmQuery" action="query" method="post" enctype="multipart/form-data">
 	<div id="content">
-		<div class="well" style="margin-top: -15px; padding: 0px">This website is free and open to all users. There is no login requirement. <br>
-					<p>			
-			<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">
-			
-			</span></span></p>			
+		<div class="well" style="margin-top: -15px; padding: 0px">
+			<h3>Select Database Version:</h3>
+			${database_versions}		
 			<h3>GenomeRunner Web: Functional interpretation of SNPs within epigenomic context</h3>
 			<p>
 				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional interpretation of sets of SNPs&nbsp;</span></span><span style="font-family: arial, helvetica, sans-serif; font-size: 16px;">by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for the interpretation of functional roles of SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>), where it identified RFX5 transcription factor binding site as strongly associated with the disease&#39; SNPs.</span></p>

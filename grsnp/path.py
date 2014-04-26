@@ -158,3 +158,18 @@ class PathNode(defaultdict):
 
 def base_name(k):
     return os.path.basename(k).split(".")[0]
+
+def get_database_versions_html(data_dir,db_version):
+	html = "<select id='db_version' name='db_version'>"
+	list_dir = data_dir.keys()
+	# sort so that the latest database is first
+	list_dir.sort()
+	list_dir.reverse()
+	if db_version == None: db_version = list_dir[0]
+	for v in list_dir:
+		selected = ""
+		if v == db_version: selected = " selected "
+		html += "<option value='"+v+"'" + selected +">" + v.split("_")[1] +" (" + v.split("_")[2].replace(".","-") + ")" +"</option>"
+	html += "</select>"
+	return [html,db_version]
+

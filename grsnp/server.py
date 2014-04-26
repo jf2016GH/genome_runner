@@ -9,6 +9,7 @@ from operator import attrgetter
 from multiprocessing import Process
 import cPickle
 from path import PathNode
+import path as grsnp_path
 from operator import itemgetter
 from path import base_name as basename
 import logging
@@ -48,48 +49,60 @@ logger.setLevel(logging.INFO)
 
 
 # Each function in this class is a web page 
+# TODO: Fix custom gfs directories.
 class WebUI(object):
-	def __init__(self):			
-		organisms = self.get_org()
-		# create all directories in the custom_data dir if they do not already exist
-		for org in organisms:
-			logger.info("Processing genomic features for {}".format(org))
-			if not os.path.exists(sett["custom_dir"]): os.mkdir(sett["custom_dir"])
-			cust_sub_dir = ["backgrounds","gfs","fois"]
-			for c in cust_sub_dir:
-				tmp = os.path.join(sett["custom_dir"],c)
-				if not os.path.exists(tmp): os.mkdir(tmp)
-				c_dir = os.path.join(sett["custom_dir"],c,org)
-				if not os.path.exists(c_dir): os.mkdir(c_dir)
-			# Read the genomic feature files and generate html files
-			paths = PathNode()
-			paths.name = "Root"
-			paths.organisms = self.get_org() 
-			paths.traverse(os.path.join(sett["data_dir"],org))
-			paths.write_treeview_html(sett["data_dir"],org)
+	def __init__(self):		
+		# go through each database directory and create custom_data if it does not exist.
+		for db_ver,db_dir in sett["data_dir"].items():
+			# create all directories in the custom_data dir if they do not already exist
+			for org in self.get_org(db_ver):
+				custom_dir = os.path.join(os.path.split(db_dir)[0],"custom_data")
+				logger.info("Processing genomic features for {}".format(org))
+				if not os.path.exists(custom_dir): os.mkdir(custom_dir)
+				cust_sub_dir = ["backgrounds","gfs","fois"]
+				for c in cust_sub_dir:
+					tmp = os.path.join(custom_dir,c)
+					if not os.path.exists(tmp): os.mkdir(tmp)
+					c_dir = os.path.join(custom_dir,c,org)
+					if not os.path.exists(c_dir): os.mkdir(c_dir)
+				# Read the genomic feature files and generate html files
+				paths = PathNode()
+				paths.name = "Root"
+				paths.organisms = self.get_org(db_ver) 
+				paths.traverse(os.path.join(db_dir,org))
+				paths.write_treeview_html(db_dir,org)
 		self._index_html = {}
 
 	@cherrypy.expose
-	def index(self,organism=None):
+	def index(self,organism=None,db_version=None):
+		
 		if not organism: organism = sett["default_organism"]
+
 		if DEBUG_MODE or not organism in self._index_html:		
 			tmpl = lookup.get_template("master.mako")
 			paths = PathNode()
 			paths.name = "Root"
-			paths.organisms = self.get_org() 
-
+			[html_dbversion, db_version] =  grsnp_path.get_database_versions_html(sett["data_dir"],db_version)
+			paths.organisms = self.get_org(db_version)
+			# Check if the organism actually exists in the current database.
+			# If it is not, select the default organism
+			if not organism in paths.organisms:
+				organism = sett["default_organism"]
+			custom_dir = os.path.join(os.path.split(sett["data_dir"][db_version])[0],"custom_data")
+			print "CUSTOM: ",sett["data_dir"]," : ",db_version
 			# Use mako to render index.html
-			body = lookup.get_template("index.mako").render(paths=paths,default_background=paths.get_backgrounds_combo(organism,sett["custom_dir"]),
-									custom_gfs=paths.get_custom_gfs(organism,sett["custom_dir"]),demo_snps=paths.get_custom_fois(organism,sett["custom_dir"]),
-									data_dir=os.path.join(sett["data_dir"],organism),default_organism=organism)
+			body = lookup.get_template("index.mako").render(paths=paths,default_background=paths.get_backgrounds_combo(organism,custom_dir),
+									custom_gfs=paths.get_custom_gfs(organism,custom_dir),demo_snps=paths.get_custom_fois(organism,custom_dir),
+									data_dir=os.path.join(sett["data_dir"][db_version],organism),default_organism=organism,
+									database_versions=html_dbversion)
 			script = lookup.get_template("index.js").render(default_organism=organism)
 			self._index_html[organism] = tmpl.render(body=body,script=script)
 
 		return self._index_html[organism]
 
-	def get_org(self):
+	def get_org(self,db_version):
 		organisms = []
-		files = os.listdir(sett["data_dir"])
+		files = os.listdir(sett["data_dir"][db_version])
 		for f in files:
 			if f.find(".") == -1:
 				organisms.append(f)
@@ -97,7 +110,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=False, default_background = "",**kwargs):
+				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=False, default_background = "",db_version=None,**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -292,7 +305,8 @@ class WebUI(object):
 		set_info = {"Jobname:": str(id),
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
 					"Background:": background_name,
-					"Organism:": organism}
+					"Organism:": organism,
+					"Database version:":db_version}
 
 		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():
@@ -324,10 +338,10 @@ class WebUI(object):
 		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
 		#														  queue='short_runs')
 		try:
-			print "RUNNING Jobname"
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random)
-		except:
-			print "ERRORR"
+			print "RUNNING Jobname ", db_version
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random)
+		except Exception, e:
+			print sys.exc_info()[0]
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
 	@cherrypy.expose
@@ -515,11 +529,11 @@ class WebUI(object):
 		return simplejson.dumps([{"matrix": "\"INFO: No Results for the matrix found. Were enough features analyzed?"}])			
 
 	@cherrypy.expose
-	def meta(self, tbl,organism):
+	def meta(self, tbl,organism,db_version):
 		"""Returns the html description from the trackDb file for the specified organism.
 		"""
 		try:
-			trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"],organism,"trackDb"))
+			trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"][db_version],organism,"trackDb"))
 			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
 		except Exception, e:
 			return "<h3>(No data found for {}.)</h3>".format(tbl)
@@ -558,8 +572,8 @@ class WebUI(object):
 		return simplejson.dumps(results)
 
 	@cherrypy.expose
-	def get_checkboxtree(self,organism):
-		return open(os.path.join(sett["data_dir"],organism,"treeview.html")).read()
+	def get_checkboxtree(self,organism,db_version):
+		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.html")).read()
 
 
 	@cherrypy.expose
@@ -607,30 +621,45 @@ if __name__ == "__main__":
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
 	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/grs_db/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
-	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", default="")
+	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", default="")
+	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
 	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)	
 	args = vars(parser.parse_args())
 	port = args["port"]
-	data_dir = args["data_dir"]
-	if data_dir == "":
-		data_dir = os.path.abspath(os.getcwd())
+	list_data_dir = args["data_dir"].split(",")
+
+
+	if list_data_dir == "":
+		print "ERROR: data_dir is a required argument"
+		sys.exit()
+
+	if args['run_files_dir'] == "":
+		print "ERROR: run_files_dir is a required argument"
+		sys.exit()
+	data_dir = {}
+	for db_dir in list_data_dir:
+		if db_dir.strip()[-1] == "/":
+			data_dir.update({os.path.split(db_dir[:-1])[1]:os.path.join(db_dir.strip(),"grsnp_db")})
+		else:
+			data_dir.update({os.path.split(db_dir)[1]:os.path.join(db_dir.strip(),"grsnp_db")})
 
 	# global settings used by GR
-	sett = {"data_dir":os.path.join(data_dir,"grsnp_db"),
-				"run_files_dir": os.path.join(data_dir,"run_files_dir"),
-				"default_organism":args["organism"],
-				"custom_dir": os.path.join(data_dir,"custom_data")
+	sett = {"data_dir":data_dir,
+				"run_files_dir": args["run_files_dir"],
+				"default_organism":args["organism"]			
 				}
 
+	
 	#validate data directory
-	if not os.path.exists(sett["data_dir"]):
-		print "ERROR: {} does not exist. Please run grsnp.dbcreator or use --data_dir.".format(os.path.join(sett["data_dir"]))
-		sys.exit()
-	if not os.path.exists(os.path.join(sett["data_dir"],sett["default_organism"])):
-		print "ERROR: Database for default organism {} does not exist. Either change the default organism or add data for that organism to the database at {} using the bedfilecreator".format(sett["default_organism"],sett["data_dir"])
-		sys.exit()
+	for k,v in data_dir.items():
+		if not os.path.exists(v):
+			print "ERROR: {} does not exist. Please run grsnp.dbcreator or use --data_dir.".format(v)
+			sys.exit()
+		if not os.path.exists(os.path.join(v,sett["default_organism"])):
+			print "ERROR: Database for default organism {} does not exist. Either change the default organism or add data for that organism to the database at {} using the bedfilecreator".format(sett["default_organism"],v)
+			sys.exit()
 
 	# validate run_files directory
 	if not os.path.exists(sett["run_files_dir"]): os.mkdir(sett["run_files_dir"])
@@ -641,7 +670,6 @@ if __name__ == "__main__":
 	if not os.path.exists(uploads_dir):
 		os.mkdir(uploads_dir)
 	if port:
-		print grsnp.worker_hypergeom4.__file__
 		cherrypy.server.max_request_body_size = 0
 		cherrypy.config.update({
 			"server.socket_port": int(port),
@@ -651,15 +679,17 @@ if __name__ == "__main__":
 					"tools.staticdir.dir": static_dir},
 				"/results": 
 					{"tools.staticdir.on": True,
-					"tools.staticdir.dir": os.path.abspath(results_dir)},
-				"/data":
-					{"tools.staticdir.on": True,
-					"tools.staticdir.dir": os.path.abspath(sett["data_dir"])}
+					"tools.staticdir.dir": os.path.abspath(results_dir)}
 				}
-
+		# gather all of the data directories and make them available as static directories
+		for k,v in data_dir.items():
+			conf.update({"/" + k: 
+							{"tools.staticdir.on": True,
+							"tools.staticdir.dir": v}}) 
+		
 		# start redis server
 		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
-		fh = open(os.path.join(sett["data_dir"],"redis.log"),"w")
+		fh = open(os.path.join(sett["run_files_dir"],"redis.log"),"w")
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		# start the workers using queue system,
 		#for i in range(args["num_workers"]):
@@ -676,7 +706,7 @@ if __name__ == "__main__":
 		out = subprocess.Popen(script,shell=True)
 		out.wait()
 		for i in range(args["num_workers"]):
-			fh = open(os.path.join(sett["data_dir"],"worker{}.log".format(i)),"w")
+			fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
 			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
 			out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND

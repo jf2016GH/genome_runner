@@ -581,7 +581,7 @@ if __name__ == "__main__":
 		print "ERROR: --data_dir is required"
 		sys.exit()
 
-
+		
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
 	ftp.login(username,password)
