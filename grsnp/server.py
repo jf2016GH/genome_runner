@@ -504,7 +504,7 @@ class WebUI(object):
 		if os.path.exists(mat_path):
 			with open(mat_path) as f:
 				return f.read()
-		return "ERROR: No Results"
+		return simplejson.dumps([{"matrix": "\"INFO: No Results for the matrix found. Were enough features analyzed?"}])
 	
 	@cherrypy.expose
 	def get_pcc(self,run_id):
@@ -512,7 +512,7 @@ class WebUI(object):
 		if os.path.exists(mat_path):
 			with open(mat_path) as f:
 				return f.read()
-		return "ERROR: No Results"				
+		return simplejson.dumps([{"matrix": "\"INFO: No Results for the matrix found. Were enough features analyzed?"}])			
 
 	@cherrypy.expose
 	def meta(self, tbl,organism):

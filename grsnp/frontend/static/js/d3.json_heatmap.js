@@ -27,10 +27,11 @@
 
                 data = jQuery.parseJSON(res);
                 // check if the server returned an error
-                if (data[plugin.settings.cur_index].matrix.substring(0,7) == "\"ERROR:") {  
-                  $(element).html("<h3>" + data[plugin.settings.cur_index].matrix + "</h3>"); 
+                if (data[plugin.settings.cur_index].matrix.substring(0,7) == "\"ERROR:" || 
+                    data[plugin.settings.cur_index].matrix.substring(0,6) == "\"INFO:" ) {  
+                  $(element).html("<h3>" + data[plugin.settings.cur_index].matrix.replace("\"","") + "</h3>"); 
                   return;
-                }   
+                }  
                  // Insert the row_name column row name
                 $.each(data, function(i,k){
                    var lines_matrix = k.matrix.split("\n");
@@ -45,6 +46,7 @@
 
                 // Create download link
                 dwnl_link_id = plugin.settings.dwnl_link_id;
+                debugger;
                 if (dwnl_link_id != ""){
                   d3.selectAll("#" + dwnl_link_id)
                     .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
