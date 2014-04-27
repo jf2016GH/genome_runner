@@ -258,9 +258,8 @@ def adjust_detailed_pvalue(input_path,method):
                 }
             }
 
-            write.table(rptemp,\""""+input_path+"""\",sep="\t",quotes=F)
+            write.table(rptemp,\""""+input_path+"""\",sep="\t",quote=F)
         """
-        logger.info(r_script)
         robjects.r(r_script)
         sys.stdout, sys.stderr = saved_stdout, saved_stderr
         
@@ -564,15 +563,9 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             curprog += 1
         # Adjust p values for the enrichment files
         enr_path =  os.path.join(output_dir,"enrichment")
-        logger.info("ENR")
-        logger.info(enr_path)
-        logger.info("LST")
         list_enr =  [x  for x in os.listdir(enr_path)]
-        logger.info(list_enr)
 
         for p in list_enr:
-            logger.info("ADJUSTIMG")
-            logger.info(p)
             adjust_detailed_pvalue(os.path.join(enr_path, p),padjust) 
 
         if len(gfs) > 1 and len(good_fois) > 1:
