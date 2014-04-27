@@ -27,7 +27,8 @@ import mako
 import simplejson
 import zipfile
 import inspect
-
+from rpy2.robjects.packages import importr
+from rpy2.robjects.vectors import FloatVector
 
 # Logging configuration
 logger = logging.getLogger()
@@ -208,6 +209,64 @@ def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
         paths.append(rnd_snp_path)
     return paths
 
+def adjust_pvalue(input_path,method):
+    ''' Uses R to adjust the pvalues
+    '''
+
+    try:
+        if method == "None": return
+        saved_stdout, saved_stderr = sys.stdout, sys.stderr
+        sys.stdout = sys.stderr = open(os.devnull, "w")
+        r_script = """
+            t5 = as.matrix(read.table(\""""+input_path+"""\",sep="\t", header=T, row.names=1))
+
+            rptemp <- t5
+
+            rp1 <- apply(abs(t5), 2, function(x) {p.adjust(x, \""""+method+"""\")})
+
+            for (i in 1:nrow(t5)){
+              for (j in (1:ncol(t5))) {
+                if (rptemp[i,j] < 0) { rp1[i,j] <- -1*rp1[i,j]}
+              }
+            }
+            write.table(rp1,\""""+input_path+"""\",sep="\t")
+        """
+        robjects.r(r_script)
+        sys.stdout, sys.stderr = saved_stdout, saved_stderr
+        
+    except Exception, e:
+        logger.error("R CRASHED")
+        logger.error(traceback.print_exc())
+
+def adjust_detailed_pvalue(input_path,method):   
+    try:
+        if method == "None": return
+        saved_stdout, saved_stderr = sys.stdout, sys.stderr
+        sys.stdout = sys.stderr = open(os.devnull, "w")
+        r_script = """
+            t5 = as.matrix(read.table(\""""+input_path+"""\",sep="\t", header=T, row.names=1))
+
+            rptemp <- t5
+
+            rp1 <- p.adjust(abs(as.numeric(rptemp[,1])), \""""+method+"""\")
+
+            for (i in 1:length(rp1)) {
+                if (rptemp[i,1] < 0) {
+                    rptemp[i,1] <- -1*rp1[i]
+                } else {
+                    rptemp[i,1] <- rp1[i]
+                }
+            }
+
+            write.table(rptemp,\""""+input_path+"""\",sep="\t",quotes=F)
+        """
+        logger.info(r_script)
+        robjects.r(r_script)
+        sys.stdout, sys.stderr = saved_stdout, saved_stderr
+        
+    except Exception, e:
+        logger.error("R CRASHED")
+        logger.error(traceback.print_exc())        
 
 def cluster_matrix(input_path,output_path):
     '''
@@ -216,7 +275,7 @@ def cluster_matrix(input_path,output_path):
     pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
     saved_stdout, saved_stderr = sys.stdout, sys.stderr
     sys.stdout = sys.stderr = open(os.devnull, "w")
-    r_script = """t5 = as.matrix(read.table("{}")) 
+    r_script = """t5 = as.matrix(read.table("{}"))                     
                     t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.0001) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
                         # Log transform matrix and keep correct sign
@@ -432,7 +491,7 @@ def validate_filenames(file_paths):
                 invalid.append(os.path.basename(file))
     return invalid
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None"):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -503,7 +562,23 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             # run the enrichment analysis and output the matrix line for the current gf
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
+        # Adjust p values for the enrichment files
+        enr_path =  os.path.join(output_dir,"enrichment")
+        logger.info("ENR")
+        logger.info(enr_path)
+        logger.info("LST")
+        list_enr =  [x  for x in os.listdir(enr_path)]
+        logger.info(list_enr)
+
+        for p in list_enr:
+            logger.info("ADJUSTIMG")
+            logger.info(p)
+            adjust_detailed_pvalue(os.path.join(enr_path, p),padjust) 
+
         if len(gfs) > 1 and len(good_fois) > 1:
+            # Adjust the pvalues
+            adjust_pvalue(matrix_outpath,padjust)
+            # Cluster the matrix
             clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
             if len(gfs) > 4:               
                 pearsons_cor_matrix(clust_path,outdir)

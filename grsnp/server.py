@@ -110,7 +110,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=False, default_background = "",db_version=None,**kwargs):
+				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -306,7 +306,8 @@ class WebUI(object):
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
 					"Background:": background_name,
 					"Organism:": organism,
-					"Database version:":db_version}
+					"Database version:":db_version,
+					"Multiple test correction:":padjust}
 
 		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():
@@ -337,11 +338,11 @@ class WebUI(object):
 		#	print "SHORT RUN STARTED"
 		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
 		#														  queue='short_runs')
+		
 		try:
-			print "RUNNING Jobname ", db_version
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random)
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust)
 		except Exception, e:
-			print sys.exc_info()[0]
+			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
 	@cherrypy.expose

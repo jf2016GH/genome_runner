@@ -173,6 +173,20 @@
 									<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
 								</td>
 							</tr>
+							<tr>
+								<td>
+									<select name="padjust" id="padjust">
+										<option value="None">none</option>
+										<option value="bonferroni" selected>bonferroni</option>
+										<option value="holm">holm</option>
+										<option value="hochberg">hochberg</option>
+										<option value="hommel">hommel</option>
+										<option value="BH">BH</option>
+										<option value="BY">BY</option>
+										<option value="fdr">fdr</option>
+									</select>
+								</td>
+							</tr>
 						</table>
 						<br>
 						<div class="ui-state-highlight ui-corner-all">
