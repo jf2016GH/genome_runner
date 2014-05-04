@@ -9,6 +9,7 @@ sudo apt-get install realpath
 sudo apt-get install redis-server
 # Ubuntu-specific installation of Python packages. Can be installed using pip install or easy_install
 sudo apt-get -y install python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako python-beautifulsoup python-celery python-redis
+sudo apt-get install -U Celery
 sudo apt-get upgrade gcc 
 sudo pip install -U cython
 sudo pip install redis-server # Needed together with the python-redis package
@@ -33,4 +34,4 @@ cd grtk
 sudo python setup.py install
 cd ..
 # Finally, installing GenomeRunner itself
-sudo python setup.py install
+python setup.py install develop
