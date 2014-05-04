@@ -132,8 +132,9 @@ class WebUI(object):
 			jobname = kwargs["jobname"]
 		except Exception, e:
 			jobname = ""
-			logger.error("id={}".format(id) + str(e))		
-			
+			logger.error("id={}".format(id) + str(e))	
+		kwargs['threshold_score'] = str(float(kwargs['threshold_score'])/100)
+
 		# load the FOI data
 		bed_filename,data = "",""
 		demo_fois_dir =  kwargs["demo_fois"] if "demo_fois" in kwargs else ""  # If the user selects a demo set of FOIs to run, this will contain the directory
@@ -307,7 +308,8 @@ class WebUI(object):
 					"Background:": background_name,
 					"Organism:": organism,
 					"Database version:":db_version,
-					"Multiple test correction:":padjust}
+					"Multiple test correction:":padjust,
+					"Score threshold:": str(kwargs['threshold_score']*100)+"%"}
 
 		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():

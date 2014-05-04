@@ -43,6 +43,43 @@ logger.setLevel(logging.INFO)
 ftp = ""
 illegal_chars = ['=',':']
 
+
+
+class MinMax:
+	"""Used to keep track of the min and max score. 
+	By Default the min and max score is None.  It is sufficient to create this class for GFs that lack a score field.
+	The class will return an NA string if the score is never updated"""
+	def __init__(self):
+		self.max,self.min = None, None
+
+	def update_minmax(self,n):
+		
+		if n == '.' or not n.isdigit():
+			return
+		else:
+			n = float(n)
+		# Assign the first value found to min and max
+		if self.max == None:
+			self.max = n
+		if self.min == None:
+			self.min = n
+		# Check if we have found a new min or max
+		if n < self.min:
+			self.min = n
+		elif n > self.max:
+			self.max = n
+	
+	def str_minmax(self):
+		n_max, n_min = 'NA','NA'
+		if self.max != None:
+			n_max = self.max
+		if self.min != None:
+			n_min = self.min
+		if n_min == n_max:
+			n_max, n_min = 'NA','NA'
+		return "{},{}".format(n_min,n_max)
+
+
 			
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
 def download_ucsc_file(organism,filename,downloaddir):
@@ -114,7 +151,7 @@ def _check_cols(colnames,colstoextract):
 
 
 def extract_bed6(outputpath,datapath,colnames):
-	colstoextract = ['chrom','chromStart','chromEnd','name','score','strand']
+	colstoextract,mm = ['chrom','chromStart','chromEnd','name','score','strand'],MinMax()
 	# Checks if all of the columns exist in the table.  If not extract_bed5 is tried i
 	if _check_cols(colnames,colstoextract):
 		logger.info( "Outpath is: {}".format(outputpath))
@@ -128,13 +165,15 @@ def extract_bed6(outputpath,datapath,colnames):
 					row = []
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
-		return "bed 6"
+					# check if new min or max score found
+					mm.update_minmax(r['score'])
+		return [mm.str_minmax(),"bed 6"]
 	else:
 		logger.warning("Nonstandard bed6, attempting extraction as bed5")
 		return extract_bed5(outputpath,datapath,colnames)
 
 def extract_bed5(outputpath,datapath,colnames):
-	colstoextract = ['chrom','chromStart','chromEnd','name','score']
+	colstoextract,mm = ['chrom','chromStart','chromEnd','name','score'],MinMax()
 	if _check_cols(colnames,colstoextract):
 		with open(outputpath,"wb") as bed:
 			with gzip.open(datapath) as dr:
@@ -145,13 +184,15 @@ def extract_bed5(outputpath,datapath,colnames):
 					r  = dict(zip(colnames,line.split('\t')))
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0"] # Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
-		return "bed 5"
+					# check if new min or max score found
+					mm.update_minmax(r['score'])
+		return [mm.str_minmax(),"bed 5"]
 	else:
 		logger.warning("Nonstandard bed5, attempting extraction as bed4")
 		return extract_bed4(outputpath,datapath,colnames)
 	
 def extract_bed4(outputpath,datapath,colnames):
-	colstoextract = ['chrom','chromStart','chromEnd','name']
+	colstoextract,mm = ['chrom','chromStart','chromEnd','name'],MinMax()
 	if _check_cols(colnames,colstoextract):
 		with open(outputpath,"wb") as bed:
 			with gzip.open(datapath) as dr:
@@ -162,13 +203,13 @@ def extract_bed4(outputpath,datapath,colnames):
 					r  = dict(zip(colnames,line.split('\t')))
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()).replace(": ",""),"0"] # Can't use strand as ".". Replace ": " is needed for cpgIslandExt
 					bed.write("\t".join(map(str,row))+"\n")
-		return "bed 4"
+		return [mm.str_minmax(),"bed 4"]
 	else:
 		logger.warning("Nonstandard bed4, attempting extraction as bed3")
 		return extract_bed3(outputpath,datapath,colnames)
 
 def extract_bed3(outputpath,datapath,colnames):
-	colstoextract = ['chrom','chromStart','chromEnd']
+	colstoextract,mm = ['chrom','chromStart','chromEnd'],MinMax()
 	if _check_cols(colnames, colstoextract):
 		with open(outputpath,"wb") as bed:
 			with gzip.open(datapath) as dr:
@@ -179,13 +220,13 @@ def extract_bed3(outputpath,datapath,colnames):
 					r  = dict(zip(colnames,line.split('\t')))
 					row = [r["chrom"],r["chromStart"],r["chromEnd"],"","0"] # Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
-		return "bed 3"
+		return [mm.str_minmax(),"bed 3"]
 	else:
 		logger.warning("bed3 failed.")
-		return "failed"
+		return [mm.str_minmax(),"failed"]
 
 def extract_psl(outputpath,datapath,colnames):
-	colstoextract = ['tName','tStart','tEnd','qName','qSize','strand']
+	colstoextract,mm = ['tName','tStart','tEnd','qName','qSize','strand'],MinMax()
 	# Checks if all of the columns exist in the table.  If not
 	if _check_cols(colnames,colstoextract):
 		logger.info( "Outpath is: {}".format(outputpath))
@@ -199,12 +240,12 @@ def extract_psl(outputpath,datapath,colnames):
 						row = []
 						row = [r["tName"],r["tStart"],r["tEnd"],''.join(e for e in r["qName"] if e.isalnum()),r["qSize"] if r["qSize"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
 						bed.write("\t".join(map(str,row))+"\n")
-		return "psl"
+		return [mm.str_minmax(),"psl"]
 	else:
-		return "failed"
+		return [mm.str_minmax(),"failed"]
 		
 def extract_genepred(outputpath,datapath,colnames):
-	colstoextract = ['chrom','txStart','txEnd','name','strand']
+	colstoextract,mm = ['chrom','txStart','txEnd','name','strand'],MinMax()
 	exonpath = outputpath.split(".")[0]+"_exon"
 	if _check_cols(colnames,colstoextract):
 		# removes the .temp file of the exon, to prevent duplicate data from being written
@@ -229,9 +270,9 @@ def extract_genepred(outputpath,datapath,colnames):
 								exonbed.write("\t".join(map(str,rowexon))+"\n")
 		# sort the exon file and convert to bgzip format
 		sort_convert_to_bgzip(exonpath+".temp",exonpath + ".bed.gz")
-		return "genepred"
+		return [mm.str_minmax(),"genepred"]
 	else:
-		return "failed"
+		return [mm.str_minmax(),"failed"]
 
 def sort_convert_to_bgzip(path,outpath):
 	logger.info("Converting {} to bgzip format.".format(path))
@@ -242,7 +283,7 @@ def sort_convert_to_bgzip(path,outpath):
 	os.rename(outpath+".gz.temp",outpath)
 
 def extract_rmsk(outputpath,datapath,colnames):
-	colstoextract = ['genoName','genoStart','genoEnd','repClass', 'strand','swScore']
+	colstoextract,mm = ['genoName','genoStart','genoEnd','repClass', 'strand','swScore'],MinMax()
 	with open(outputpath,"wb") as bed:
 		with gzip.open(datapath) as dr:
 			while True:
@@ -252,7 +293,8 @@ def extract_rmsk(outputpath,datapath,colnames):
 				r = dict(zip(colnames,line.split('\t')))
 				row = [r["genoName"],r["genoStart"],r["genoEnd"],''.join(e for e in r["repClass"] if e.isalnum()),r["swScore"],r["strand"]]
 				bed.write("\t".join(map(str,row))+"\n")
-	return "rmsk"
+				mm.update_minmax(r['swScore'])
+	return [mm.str_minmax(),"rmsk"]
 
 def get_column_names(sqlfilepath):
 	''' extracts the column names from the .sql file and returns them
@@ -341,6 +383,7 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
 	outputdir = os.path.dirname(trackdbpath)
 	download_dir = os.path.join(os.path.split(os.path.split(outputdir)[0])[0],"downloads")
+	min_max_path = os.path.join(outputdir,'minmax.txt')
 	trackdb = load_tabledata_dumpfiles(os.path.splitext(trackdbpath)[0])
 	added_features = [] 
 	notsuptypes, outpath = set([]),""
@@ -352,6 +395,8 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
 		html = urllib2.urlopen('http://hgdownload.cse.ucsc.edu/goldenPath/{}/database/'.format(organism)).read()
 		soup = BeautifulSoup.BeautifulSoup(html)
 		gfs = [x.get('href')[:-4] for x in soup.findAll('a') if 'sql' in x.get('href')]
+
+	min_max_scores = _load_minmax(min_max_path)
 
 	for gf_name in gfs:
 		# check if GF is listed in trackdb
@@ -386,8 +431,10 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
 									os.remove(outpath+".temp")
 								# converts the ucsc data into propery bed format
 								logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
-								gf_type = preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
-
+								[minmax_score,gf_type] = preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
+								# output minmax stats
+								min_max_scores[row['tableName']] = minmax_score
+								_save_minmax(min_max_scores,min_max_path)
 								# sort the file and convert to bgzip format
 								o_dir = os.path.dirname(outpath)
 								new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
@@ -438,15 +485,19 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
 						# try guessing the GFs type based on column names
 						logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
 						colnames = get_column_names(os.path.splitext(sqlpath)[0]+".sql")
-						gf_type = extract_bed6(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
-						if gf_type == "failed": gf_type = extract_psl(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
-						if gf_type == "failed": gf_type = extract_genepred(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
+						[minmax,gf_type] = extract_bed6(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
+						if gf_type == "failed": [minmax,gf_type] = extract_psl(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
+						if gf_type == "failed": [minmax,gf_type] = extract_genepred(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
 						# cannot detect type, skip
 						if gf_type == "failed":
 							write_line("\t".join([gf_name,"Not supported","None"]),summary_path)
 							logger.warning( "Unable to convert {} into bed".format(gf_name))
 							prog += 1
 							continue
+
+						# output minmax stats
+						min_max_scores[gf_name] = minmax
+						_save_minmax(min_max_scores,min_max_path)
 
 						# sort the file and convert to bgzip format
 						o_dir = os.path.dirname(outpath)
@@ -497,6 +548,24 @@ def _get_info(feature,trackdb):
 		if feature == t['tableName']:
 			return t
 	return False
+
+def _load_minmax(path):
+	data = {}
+	if not os.path.exists(path):
+		return data
+	score = [x for x in open(path).read().split("\n") if x != ""]
+	for s in score:
+		name,min_max = s.split('\t')
+		data[name] = min_max
+	return data
+
+def _save_minmax(data,path):
+	''' Saves the dictionary of key value pairs of minmax data to a text file.
+	'''
+	with open(path,'wb') as writer:
+		for k,v in data.items():
+			writer.write("{}\t{}\n".format(k,v))
+
 
 def load_tabledata_dumpfiles(datapath):
 	''' Loads the table data into memory from the sql file and the .txt.gz file
@@ -614,3 +683,5 @@ if __name__ == "__main__":
 	with open("grsnp_db_readme.txt","wb") as writer:
 		writer.write(readme)
 	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
+
+

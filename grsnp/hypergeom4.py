@@ -653,3 +653,13 @@ class front_appender:
         self.__f.writelines(self.__write_queue + [self.__old_content])
         self.__f.close()
 
+
+def _load_minmax(path):
+    data = {}
+    if not os.path.exists(path):
+        return data
+    score = [x for x in open(path).read().split("\n") if x != ""]
+    for s in score:
+        name,min_max = s.split('\t')
+        data[name] = min_max
+    return data

@@ -164,18 +164,8 @@
 					<div class="well">
 						<table width="100%">
 							<tr>
-
-								<td id="td_submit" style="width:90px">
-									<button class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
-									<img class="helptooltip" title="Submits the job for enrichment/epigenomic association analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-								</td>
-								<td id="td_submit" style="width:170px">
-									<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
-								</td>
-							</tr>
-							<tr>
 								<td>
-									<select name="padjust" id="padjust">
+									P-Value Adjustment:						<select name="padjust" id="padjust">
 										<option value="None">none</option>
 										<option value="bonferroni" selected>bonferroni</option>
 										<option value="holm">holm</option>
@@ -185,6 +175,21 @@
 										<option value="BY">BY</option>
 										<option value="fdr">fdr</option>
 									</select>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Percent score threshold in percent: <input type="number" name="threshold_score" min="1" max="100" value="100">								
+								</td>
+							</tr>
+							<tr>
+
+								<td id="td_submit" style="width:90px">
+									<button class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
+									<img class="helptooltip" title="Submits the job for enrichment/epigenomic association analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								</td>
+								<td id="td_submit" style="width:170px">
+									<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
 								</td>
 							</tr>
 						</table>
