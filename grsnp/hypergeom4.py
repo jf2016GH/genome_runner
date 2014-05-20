@@ -310,7 +310,7 @@ def cluster_matrix(input_path,output_path):
 def pearsons_cor_matrix(matrix_path,out_dir):
     global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
-    pval_output_path = output_path.split(".")[0]+"_pvalue.txt"
+    pval_output_path = os.path.join(os.path.split(output_path)[0], base_name(output_path)+"_pvalue.txt")
     pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
    
     saved_stdout, saved_stderr = sys.stdout, sys.stderr
