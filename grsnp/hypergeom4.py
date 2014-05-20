@@ -34,9 +34,8 @@ from rpy2.robjects.vectors import FloatVector
 logger = logging.getLogger()
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 logger.propagate = 0
+
 # This line outputs logging info to the console
-
-
 matrix_outpath = None
 detailed_outpath = None
 progress_outpath = None
@@ -545,9 +544,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
         gfs = [line for line in read_lines(gfs) if not line.endswith(".tbi")]
         # check if the GF exists in the database filtered by score
-        logger.info("GFS before score: {}".format(gfs))
         gfs = filter_score(gfs,pct_score)
-        logger.info("GFS after score: {}".format(gfs))
         # check if there are spaces in invalid parts of the file name
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:

@@ -37,13 +37,7 @@ lookup = TemplateLookup(directories=[os.path.join(root_dir,"frontend/templates")
 sett = {}
 DEBUG_MODE = True
 logger = logging.getLogger('genomerunner.server')
-hdlr = logging.FileHandler('genomerunner_server.log')
-hdlr_std = StreamHandler()
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.addHandler(hdlr_std)
-logger.setLevel(logging.INFO)
+
 
 
 
@@ -631,7 +625,6 @@ if __name__ == "__main__":
 	port = args["port"]
 	list_data_dir = args["data_dir"].split(",")
 
-
 	if list_data_dir == "":
 		print "ERROR: data_dir is a required argument"
 		sys.exit()
@@ -645,6 +638,15 @@ if __name__ == "__main__":
 			data_dir.update({os.path.split(db_dir[:-1])[1]:os.path.join(db_dir.strip(),"grsnp_db")})
 		else:
 			data_dir.update({os.path.split(db_dir)[1]:os.path.join(db_dir.strip(),"grsnp_db")})
+
+	# setup the logging
+	hdlr = logging.FileHandler(os.path.join(args['run_files_dir'], 'genomerunner_server.log'))
+	hdlr_std = StreamHandler()
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	hdlr.setFormatter(formatter)
+	logger.addHandler(hdlr)
+	logger.addHandler(hdlr_std)
+	logger.setLevel(logging.INFO)
 
 	# global settings used by GR
 	sett = {"data_dir":data_dir,
