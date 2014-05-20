@@ -16,7 +16,6 @@ import collections
 import copy
 import traceback  as trace
 import pdb
-import server
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 import BeautifulSoup
 import urllib2
@@ -32,13 +31,6 @@ username = 'anonymous'
 password = ''
 
 logger = logging.getLogger('genomerunner.dbcreator')
-hdlr = logging.FileHandler('genomerunner_dbcreator.log')
-hdlr_std = StreamHandler()
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.addHandler(hdlr_std)
-logger.setLevel(logging.INFO)
 
 ftp = ""
 illegal_chars = ['=',':']
@@ -670,6 +662,14 @@ if __name__ == "__main__":
 
 
 	args = vars(parser.parse_args())
+
+	hdlr = logging.FileHandler(os.path.join(args['data_dir'], 'genomerunner_dbcreator.log'))
+	hdlr_std = StreamHandler()
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	hdlr.setFormatter(formatter)
+	logger.addHandler(hdlr)
+	logger.addHandler(hdlr_std)
+	logger.setLevel(logging.INFO)
 
 	if not args["data_dir"]:
 		print "ERROR: --data_dir is required"
