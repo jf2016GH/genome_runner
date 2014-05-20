@@ -674,10 +674,10 @@ if __name__ == "__main__":
 	if not args["data_dir"]:
 		print "ERROR: --data_dir is required"
 		sys.exit()
-
+	pdb.set_trace()
 	if args['score'] == "":
 		args['score'] = ['25','50','75']
-	args['score'] = set(args['score']) # remove duplicate scores
+	args['score'] = set(args['score'].split(',')) # remove duplicate scores
 		
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
