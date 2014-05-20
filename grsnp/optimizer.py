@@ -40,7 +40,7 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	cur_prog,prog_max = 1,_count_gfs(gf_dir)
 	# Process each category of GFs
 	for d in dirs:
-		logger.info("Running overlapStatistics for all GFs in {}".format(d))
+		logger.info("Running overlapStatistics for all GFs in {}".format(gf_dir))
 		# Gather gfs paths
 		gfs = []
 		for base, d, files in os.walk(os.path.join(gf_dir,d)):
