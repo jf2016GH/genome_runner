@@ -45,13 +45,6 @@ function update_progress(){
 			$(".lblMat").remove()
 			add_heatmaps();			
 			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>")
-			
-			if($('#heatmap').children('svg').length > 0){
-				$("#wellDownloads").append("<div style='margin:10px'><a style='font-size: 19px;margin-top:10px;' id='heatmap_download' >Download Clustered 	Enrichment Matrix as SVG File (Right click - 'Save As' to save) </a><br></div>");
-			}
-			if($("#heatmap_cor").children('svg').length > 0){
-				$("#wellDownloads").append("<div style='margin:10px'><a style='font-size: 19px' id='heatmap_cor_download' >Download Pearson's Correlation 	Matrix as SVG File (Right click - 'Save As' to save) </a></div>");
-			}
 		}
 		if(data['status'] == "Analysis Completed"  || data['status'] == "Run crashed. See end of log for details."){
 			clearInterval(refresh_progress);

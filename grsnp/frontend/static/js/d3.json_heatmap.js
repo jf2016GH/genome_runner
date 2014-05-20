@@ -46,7 +46,12 @@
 
                 // Create download link
                 dwnl_link_id = plugin.settings.dwnl_link_id;
-                debugger;
+                if($('#heatmap').children('svg').length > 0 && $('#heatmap_download').length == 0){
+                  $("#wellDownloads").append("<div style='margin:10px'><a style='font-size: 19px;margin-top:10px;' id='heatmap_download' >Download Clustered  Enrichment Matrix as SVG File (Right click - 'Save As' to save) </a><br></div>");
+                }
+                if($("#heatmap_cor").children('svg').length > 0 && $('#heatmap_cor_download').length == 0){
+                  $("#wellDownloads").append("<div style='margin:10px'><a style='font-size: 19px' id='heatmap_cor_download' >Download Pearson's Correlation   Matrix as SVG File (Right click - 'Save As' to save) </a></div>");
+                }
                 if (dwnl_link_id != ""){
                   d3.selectAll("#" + dwnl_link_id)
                     .attr("href", "data:image/svg+xml;charset=utf-8;base64," + 
