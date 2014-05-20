@@ -380,7 +380,7 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 		Cell = ''
 	return os.path.join('ENCODE', grp, Tier, Cell, line.strip())		
 
-def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
+def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 	outputdir = os.path.dirname(trackdbpath)
 	download_dir = os.path.join(os.path.split(os.path.split(outputdir)[0])[0],"downloads")
 	min_max_path = os.path.join(outputdir,'minmax.txt')
@@ -396,8 +396,7 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[]):
 		soup = BeautifulSoup.BeautifulSoup(html)
 		gfs = [x.get('href')[:-4] for x in soup.findAll('a') if 'sql' in x.get('href')]
 
-	min_max_scores = _load_minmax(min_max_path)
-
+	min_max_scores,num = _load_minmax(min_max_path),len(gfs)
 	for gf_name in gfs:
 		# check if GF is listed in trackdb
 		row = [x for x in trackdb if x['tableName'] == gf_name]
@@ -559,6 +558,7 @@ def _load_minmax(path):
 		data[name] = min_max
 	return data
 
+
 def _save_minmax(data,path):
 	''' Saves the dictionary of key value pairs of minmax data to a text file.
 	'''
@@ -634,15 +634,37 @@ def dir_as_xml(path, blacklist):
 	result += '</option>\n'
 	return result
 
+def filter_by_score(gf_path_input,gf_path_output,thresh_score):
+	''' Read in the gf data from gf_path_input and filter out each GF that does not
+	have a score greater than the thresh_score threshold.
+	'''
+	count_in,count_out = 0,0
+	with gzip.open(gf_path_output,"wb") as bed:
+		with gzip.open(gf_path_input) as dr:
+			while True:
+				line = dr.readline().strip()
+				if line == "":
+					break
+				score  = line.split('\t')[4]
+				count_in += 1
+
+				# if the score is >= to the threshold, output that GF
+				if float(score) >= float(thresh_score):
+					bed.write(line+"\n")
+					count_out += 1
+	logger.info("{} count before score filtering: {}".format(base_name(gf_path_input),count_in))
+	logger.info("{} count after score filtering (thresh = {}): {}".format(base_name(gf_path_output),str(thresh_score),count_out))
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grs_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grs_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
-	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grs_db/. Required", required=True)
+	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
+	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
 	parser.add_argument('--featurenames','-f', nargs="?", help='The names of the specific genomic feature tracks to create, comma separated (Example: knownGene, evoFold)', default="")
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
+	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
+
 
 	args = vars(parser.parse_args())
 
@@ -650,6 +672,9 @@ if __name__ == "__main__":
 		print "ERROR: --data_dir is required"
 		sys.exit()
 
+	if args['score'] == "":
+		args['score'] = ['25','50','75']
+	args['score'] = set(args['score']) # remove duplicate scores
 		
 	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
@@ -670,12 +695,41 @@ if __name__ == "__main__":
 	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
 		gfs = args["featurenames"].split(",")
 		trackdbpath = download_trackdb(args['organism'],outputdir)
-		create_feature_set(trackdbpath,args['organism'],args["max"],gfs)
+		create_feature_set(trackdbpath,args['organism'],args["max"],gfs)			
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
-	
 
+	# load score from minmax.txt file created earlier
+	minmax = _load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
+
+	### Second Step: Create subdirectories for score and filter data by score percentile
+	# create sub directories for score percentiles and populate with score-filtered GF data
+	# gather all directories (groups) in the database
+	orgdir = os.path.join(outputdir,args['organism'])
+	dirs = [name for name in os.listdir(orgdir)
+		if os.path.isdir(os.path.join(orgdir, name))]
+	for d in dirs:
+		# gather all paths
+		gfs = []
+		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
+				gfs += [os.path.join(base,f) for f 	 
+					in files if f.endswith(('.gz', '.bb'))]
+		for gf_path in gfs: 
+			for pct_score in args['score']:		
+				[score_min,score_max] = minmax[base_name(gf_path)].split(",")
+				# calculate threshold score
+				if score_min == 'NA':
+					continue
+				score_min,score_max = float(score_min),float(score_max) 
+				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
+				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
+				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
+				gf_path_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+
+				if not os.path.exists(os.path.split(gf_path_out)[0]):
+					os.makedirs(os.path.split(gf_path_out)[0])
+				filter_by_score(gf_path, gf_path_out,thresh_score)
 
 
 	root_dir = os.path.dirname(os.path.realpath(__file__))

@@ -86,7 +86,7 @@ def _write(line,path):
 if __name__ == "__main__":
 	global logger
 	parser = argparse.ArgumentParser(prog="python -m grsnp.optimizer", description="""Pre calculates the overlapStatistics for each of the backgrounds in <db_path>/custom_data/backgrounds/<organism> and genomic features in <db_path>/grsnp_db/<organism>. Example: python -m grsnp.optimizer -d /home/username/grs_db/ -g mm9""", epilog="""Creates a file  <db_path>/grsnp_db/<organism>/bkg_overlap.gr, automatically used by the server to speed up the analyses""")
-	parser.add_argument('--data_dir','-d', nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grs_db/.", required=True)
+	parser.add_argument('--data_dir','-d', nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_2.00_6.26.2014/.", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", required=True, default="hg19")
 
 	args = vars(parser.parse_args())
@@ -100,21 +100,26 @@ if __name__ == "__main__":
 	logger.addHandler(hdlr_std)
 	logger.setLevel(logging.INFO)
 
-	# Ask if use wants to continue partially run optimization
-	path_tmp = os.path.join(args["data_dir"],"grsnp_db",args["organism"],"bkg_overlaps.gr") + ".tmp"
-	if os.path.exists(path_tmp):
-		in_var = raw_input("Temporary file exists at {}. Do you want to continue (yes) or start from scratch (no)?".format(path_tmp))
-		if in_var.lower() == "no": 
-			os.remove(path_tmp)
+	# find all the folders with GF data including those filtered by score
+	grdb_dirs = [os.path.join(args["data_dir"],name) for name in os.listdir(args["data_dir"])
+			if os.path.isdir(os.path.join(args["data_dir"], name)) and "grsnp_db" in name]
+	pdb.set_trace()
+	for gr_dir in grdb_dirs:
+		# Ask if use wants to continue partially run optimization
+		path_tmp = os.path.join(gr_dir,"grsnp_db",args["organism"],"bkg_overlaps.gr") + ".tmp"
+		if os.path.exists(path_tmp):
+			in_var = raw_input("Temporary file exists at {}. Do you want to continue (yes) or start from scratch (no)?".format(path_tmp))
+			if in_var.lower() == "no": 
+				os.remove(path_tmp)
 
-	background_dir = os.path.join(args["data_dir"],"custom_data","backgrounds",args["organism"])
-	gfs_dir = os.path.join(args["data_dir"],"grsnp_db",args["organism"])
-	if not os.path.exists(gfs_dir):
-		print "ERROR: grsnp_db does not exist.  Use grsnp.dbcreator to create a database."
-		sys.exit()
-	if not os.path.exists(background_dir):
-		print "ERROR: No backgrounds found in default background directory {}.  Please add backgrounds.".format(background_dir)
-		sys.exit()
-	logger.info("Pre calculating statistics for GR database in")
-	create_bkg_gf_overlap_db(gf_dir=gfs_dir,background_dir=background_dir)
+		background_dir = os.path.join(args["data_dir"],"custom_data","backgrounds",args["organism"])
+		gfs_dir = os.path.join(gr_dir,args["organism"])
+		if not os.path.exists(gfs_dir):
+			print "ERROR: grsnp_db does not exist.  Use grsnp.dbcreator to create a database."
+			sys.exit()
+		if not os.path.exists(background_dir):
+			print "ERROR: No backgrounds found in default background directory {}.  Please add backgrounds.".format(background_dir)
+			sys.exit()
+		logger.info("Pre calculating statistics for GR database in")
+		create_bkg_gf_overlap_db(gf_dir=gfs_dir,background_dir=background_dir)
 
