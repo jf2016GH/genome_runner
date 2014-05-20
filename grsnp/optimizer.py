@@ -103,7 +103,6 @@ if __name__ == "__main__":
 	# find all the folders with GF data including those filtered by score
 	grdb_dirs = [os.path.join(args["data_dir"],name) for name in os.listdir(args["data_dir"])
 			if os.path.isdir(os.path.join(args["data_dir"], name)) and "grsnp_db" in name]
-	pdb.set_trace()
 	for gr_dir in grdb_dirs:
 		# Ask if use wants to continue partially run optimization
 		path_tmp = os.path.join(gr_dir,"grsnp_db",args["organism"],"bkg_overlaps.gr") + ".tmp"
