@@ -179,7 +179,7 @@
 							</tr>
 							<tr>
 								<td>
-									Percent score threshold in percent: <input type="number" name="threshold_score" min="1" max="100" value="100">								
+									Percent score threshold in percent: ${pct_scores}							
 								</td>
 							</tr>
 							<tr>

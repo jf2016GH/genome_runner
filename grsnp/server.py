@@ -89,12 +89,11 @@ class WebUI(object):
 			if not organism in paths.organisms:
 				organism = sett["default_organism"]
 			custom_dir = os.path.join(os.path.split(sett["data_dir"][db_version])[0],"custom_data")
-			print "CUSTOM: ",sett["data_dir"]," : ",db_version
 			# Use mako to render index.html
 			body = lookup.get_template("index.mako").render(paths=paths,default_background=paths.get_backgrounds_combo(organism,custom_dir),
 									custom_gfs=paths.get_custom_gfs(organism,custom_dir),demo_snps=paths.get_custom_fois(organism,custom_dir),
 									data_dir=os.path.join(sett["data_dir"][db_version],organism),default_organism=organism,
-									database_versions=html_dbversion)
+									database_versions=html_dbversion,pct_scores=paths.get_scores(os.path.split(sett["data_dir"][db_version])[0]))
 			script = lookup.get_template("index.js").render(default_organism=organism)
 			self._index_html[organism] = tmpl.render(body=body,script=script)
 
@@ -133,7 +132,6 @@ class WebUI(object):
 		except Exception, e:
 			jobname = ""
 			logger.error("id={}".format(id) + str(e))	
-		kwargs['threshold_score'] = str(float(kwargs['threshold_score'])/100)
 
 		# load the FOI data
 		bed_filename,data = "",""
@@ -309,7 +307,7 @@ class WebUI(object):
 					"Organism:": organism,
 					"Database version:":db_version,
 					"Multiple test correction:":padjust,
-					"Score threshold:": str(kwargs['threshold_score']*100)+"%"}
+					"% Score threshold:": str(kwargs['pct_score'])+"%"}
 
 		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():
@@ -342,7 +340,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust)
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'])
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)

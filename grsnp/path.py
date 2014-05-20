@@ -156,6 +156,18 @@ class PathNode(defaultdict):
 						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,base_name(gfs_dir),tooltip)
 		return html
 
+	def get_scores(self,data_dir):
+		# find all the folders with GF data including those filtered by score
+		pct_scores = [base_name(name).split('_')[-1] for name in os.listdir(data_dir)
+				if os.path.isdir(os.path.join(data_dir, name)) and "grsnp_db_" in name]
+		html = """<select name="pct_score" style="margin-left: 5px; margin-top: 9px" id="pct_score">
+			   <option value=''>None</option>"""
+		pct_scores = sorted(pct_scores)
+		for pct in pct_scores:
+			html = html + "<option value='{}'>{}</option>".format(pct,pct)
+		html = html + "</select>"
+		return html
+
 def base_name(k):
     return os.path.basename(k).split(".")[0]
 

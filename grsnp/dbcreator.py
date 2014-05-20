@@ -637,9 +637,11 @@ def dir_as_xml(path, blacklist):
 def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 	''' Read in the gf data from gf_path_input and filter out each GF that does not
 	have a score greater than the thresh_score threshold.
+	gf_path_output should be WITHOUT file extension
 	'''
 	count_in,count_out = 0,0
-	with gzip.open(gf_path_output,"wb") as bed:
+	tmp_path = gf_path_output+'.temp'
+	with open(tmp_path,"wb") as bed:
 		with gzip.open(gf_path_input) as dr:
 			while True:
 				line = dr.readline().strip()
@@ -647,14 +649,13 @@ def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 					break
 				score  = line.split('\t')[4]
 				count_in += 1
-
 				# if the score is >= to the threshold, output that GF
 				if float(score) >= float(thresh_score):
 					bed.write(line+"\n")
 					count_out += 1
 	logger.info("{} count before score filtering: {}".format(base_name(gf_path_input),count_in))
 	logger.info("{} count after score filtering (thresh = {}): {}".format(base_name(gf_path_output),str(thresh_score),count_out))
-
+	sort_convert_to_bgzip(tmp_path,gf_path_output+'.bed.gz')
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
@@ -726,10 +727,10 @@ if __name__ == "__main__":
 				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
 				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
 				gf_path_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-
 				if not os.path.exists(os.path.split(gf_path_out)[0]):
 					os.makedirs(os.path.split(gf_path_out)[0])
-				filter_by_score(gf_path, gf_path_out,thresh_score)
+				gf_path_out_woext = os.path.join(os.path.split(gf_path_out)[0],base_name(gf_path_out))
+				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
 
 
 	root_dir = os.path.dirname(os.path.realpath(__file__))
