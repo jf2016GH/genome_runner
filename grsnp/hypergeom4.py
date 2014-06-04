@@ -113,7 +113,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     if not os.path.exists(er_result_path): os.mkdir(er_result_path)
     er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
     # writes the first line as the header line
-    if not os.path.exists(er_result_path): write_output(foi_name+"\tP-value\tDirection\n",er_result_path)
+    if not os.path.exists(er_result_path): write_output("GF Name\tP-value\tDirection\n",er_result_path)
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
     else: direction =  "underrepresented"
@@ -211,7 +211,6 @@ def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
 def adjust_pvalue(input_path,method):
     ''' Uses R to adjust the pvalues
     '''
-
     try:
         if method == "None": return
         saved_stdout, saved_stderr = sys.stdout, sys.stderr
@@ -236,6 +235,7 @@ def adjust_pvalue(input_path,method):
     except Exception, e:
         logger.error("R CRASHED")
         logger.error(traceback.print_exc())
+        logger.error(str(e))
 
 def adjust_detailed_pvalue(input_path,method):   
     try:
@@ -243,21 +243,19 @@ def adjust_detailed_pvalue(input_path,method):
         saved_stdout, saved_stderr = sys.stdout, sys.stderr
         sys.stdout = sys.stderr = open(os.devnull, "w")
         r_script = """
-            t5 = as.matrix(read.table(\""""+input_path+"""\",sep="\t", header=T, row.names=1))
+            t5 <- as.data.frame(read.table(\""""+input_path+"""\", sep="\t", header=TRUE))
 
-            rptemp <- t5
-
-            rp1 <- p.adjust(abs(as.numeric(rptemp[,1])), \""""+method+"""\")
-
-            for (i in 1:length(rp1)) {
-                if (rptemp[i,1] < 0) {
-                    rptemp[i,1] <- -1*rp1[i]
-                } else {
-                    rptemp[i,1] <- rp1[i]
-                }
+            rp1 <- p.adjust(abs(t5$P.value))
+            for (i in 1:length(t5$P.value)) {
+              if(t5$P.value[i] < 0) {
+                rp1[i] <- -1*rp1[i]
+              } 
             }
 
-            write.table(rptemp,\""""+input_path+"""\",sep="\t",quote=F)
+            t5 <- cbind(t5, P.adj=rp1)
+
+            write.table(t5, \""""+input_path+"""\", sep="\t", row.names=F,quote=F)
+
         """
         robjects.r(r_script)
         sys.stdout, sys.stderr = saved_stdout, saved_stderr
@@ -265,6 +263,7 @@ def adjust_detailed_pvalue(input_path,method):
     except Exception, e:
         logger.error("R CRASHED")
         logger.error(traceback.print_exc())        
+        logger.error(str(e))
 
 def cluster_matrix(input_path,output_path):
     '''
@@ -517,6 +516,9 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     output_dir = outdir
     curprog,progmax = 0,1
     organism = ""
+
+    logger.info("P_value adjustment used: {}".format(padjust))
+
     try:
         trackdb = []
         # loads the trackDb file data so that descriptions for the GF can be outputted
@@ -560,6 +562,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
+        # remove old detailed enrichment result files if they exit
+        enr_path =  os.path.join(output_dir,"enrichment")
+        for f in good_fois:
+            f_path = os.path.join(enr_path, base_name(f)+'.txt')
+            if os.path.exists(f_path): os.remove(f_path)
         _write_progress("Performing calculations on the background.")
         for gf in gfs: 
             current_gf = base_name(gf)      
@@ -582,7 +589,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)) for i in range(len(good_fois))])+"\n",matrix_outpath)
             curprog += 1
         # Adjust p values for the enrichment files
-        enr_path =  os.path.join(output_dir,"enrichment")
         list_enr =  [x  for x in os.listdir(enr_path)]
 
         for p in list_enr:
@@ -635,6 +641,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 if __name__ == "__main__":
     global print_progress
     print_progress = True
+    valid_pv_adjust = ['bonferroni', 'holm', 'hochberg', 'hommel', 'BH', 'BY', 'fdr','None']
     parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
     parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
     parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
@@ -642,8 +649,13 @@ if __name__ == "__main__":
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
     parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
     parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
+    parser.add_argument("--pv_adjust", "-v",type=str, help="Which p-value adjustment method to use. Default: 'fdr'. Available (case-sensitive): "+', '.join(valid_pv_adjust), default="fdr")
         
     args = vars(parser.parse_args())  
+    if args['pv_adjust'] not in valid_pv_adjust:
+        print "ERROR: {} is not a valid p-value adjustment method.".format(args['pv_adjust'])
+        sys.exit()
+
     if args["pass_paths"]: 
         gf = args["gfs"][0].split(",")      
         foi = args["fois"][0].split(",")        
@@ -652,7 +664,7 @@ if __name__ == "__main__":
             writer.write("\n".join(gf))     
         with open(".fois","wb") as writer:      
             writer.write("\n".join(foi))
-    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"])
+    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"],run_randomization_test=False,padjust=args['pv_adjust'])
 
 class front_appender:
     '''
