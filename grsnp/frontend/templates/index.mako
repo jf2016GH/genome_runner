@@ -167,13 +167,13 @@
 								<td>
 									P-Value Adjustment:						<select name="padjust" id="padjust">
 										<option value="None">none</option>
-										<option value="bonferroni" selected>bonferroni</option>
+										<option value="bonferroni">bonferroni</option>
 										<option value="holm">holm</option>
 										<option value="hochberg">hochberg</option>
 										<option value="hommel">hommel</option>
 										<option value="BH">BH</option>
 										<option value="BY">BY</option>
-										<option value="fdr">fdr</option>
+										<option value="fdr" selected>fdr</option>
 									</select>
 								</td>
 							</tr>
