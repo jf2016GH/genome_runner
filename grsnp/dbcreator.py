@@ -266,6 +266,13 @@ def extract_genepred(outputpath,datapath,colnames):
 	else:
 		return [mm.str_minmax(),"failed"]
 
+def guess_extract_type(outpath,datapath,colnames):
+	print 'ColNAMES: ',colnames
+	[minmax,gf_type] = extract_bed6(outpath,datapath,colnames)
+	if gf_type == "failed": [minmax,gf_type] = extract_psl(outpath,datapath,colnames)
+	if gf_type == "failed": [minmax,gf_type] = extract_genepred(outpath,datapath,colnames)
+	return [minmax,gf_type]
+
 def sort_convert_to_bgzip(path,outpath):
 	logger.info("Converting {} to bgzip format.".format(path))
 	script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
@@ -296,6 +303,7 @@ def get_column_names(sqlfilepath):
 	tbdcolumns = re.findall("\n\s\s`*(.+?)`*\s", tdbsql, re.DOTALL)
 	tbdcolumns = [c for c in tbdcolumns if not c=="KEY"]
 	return tbdcolumns	
+
 
 # The different file types that can be extracted.
 # To add a new type add a new entry into this dictionary along with 
@@ -341,7 +349,8 @@ preparebed = {"bed 6" : extract_bed6,
 				"psl protein" : extract_psl,
 				"psl xeno" : extract_psl,
 				"rmsk" : extract_rmsk,
-				"factorSource" : extract_bed6}
+				"factorSource" : extract_bed6,
+				None: guess_extract_type}
 				
 numdownloaded = collections.defaultdict(int)
 
@@ -394,125 +403,73 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 		row = [x for x in trackdb if x['tableName'] == gf_name]
 		# if in trackdb, process using type provided
 		if len(row) != 0:
+			#continue
 			row = row[0] # convert from list to dictionary
-			logger.info( 'Processing files {} of {}'.format(prog,num))
-			# if table name has Raw, in it, it is likely raw reads, skip
-			if _exclude(gf_name):
-				write_line("\t".join([gf_name,"Raw signal",row["longLabel"]]),summary_path)
-				logger.info('Raw signal detected: {}, skipping...'.format(gf_name))
-				prog +=1
-				continue
-			if row['type'] in preparebed:
-				# this line limits the number of GFs to download, note that this check only occurs for GFs in tracdb
-				if numdownloaded[row["type"]] <= max_install or max_install == None:
-					sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql",download_dir)
-					download_ucsc_file(organism,row["tableName"] + ".txt.gz",download_dir)
-					if sqlpath != '':
-						try:
-							gf_type = ""
-							if row["tableName"].startswith("wgEncode"):
-								outpath = os.path.join(outputdir, encodePath(row["tableName"]))
-							else:
-								outpath = os.path.join(outputdir,row["grp"],row["tableName"]) # ,'Tier' + row["visibility"]
-							if not os.path.exists(os.path.dirname(outpath)):
-								os.makedirs(os.path.dirname(outpath))
-							if os.path.exists(outpath + ".bed.gz") == False:
-								# removes the .temp file, to prevent duplicate data from being written
-								if os.path.exists(outpath+".temp"):
-									os.remove(outpath+".temp")
-								# converts the ucsc data into propery bed format
-								logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
-								[minmax_score,gf_type] = preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
-								# output minmax stats
-								min_max_scores[row['tableName']] = minmax_score
-								_save_minmax(min_max_scores,min_max_path)
-								# sort the file and convert to bgzip format
-								o_dir = os.path.dirname(outpath)
-								new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-								sort_convert_to_bgzip(outpath+".temp",new_path)
-								added_features.append(outpath)
-							else:
-								logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))
-							write_line("\t".join([gf_name,gf_type,row["longLabel"]]),summary_path)
-							numdownloaded[row["type"]] += 1
-
-						except Exception, e:
-							write_line("\t".join([gf_name,"Failed",str(e)]),summary_path)
-							exc = trace.format_exc()
-							logger.warning( "Unable to convert {} into bed".format(row["tableName"]))
-							logger.warning(exc)
-							prog += 1
-							continue
-			else:
-				write_line("\t".join([gf_name,"{} Not supported".format(row["type"]),row["longLabel"]]),summary_path)
-				if 'big' not in row['type']:
-					notsuptypes.add(row['type'])				
-		# not in trackdb
 		else:
+			#if 'chain' in gf_name: continue
+			row = {'type': None,'grp':'unsorted','tableName': gf_name,'longLabel':'None'}
 			logger.info( 'Processing files {} of {}'.format(prog,num))
-			gf_type = ""
-			# if table name has Raw, in it, it is likely raw reads, skip
-			if _exclude(gf_name):
-				write_line("\t".join([gf_name,"Raw signal",""]),summary_path)
-				logger.info('Raw signal detected: {}, skipping...'.format(gf_name))
-				prog +=1
-				continue
-			# download files
-			sqlpath = download_ucsc_file(organism,gf_name + ".sql",download_dir)
-			download_ucsc_file(organism,gf_name + ".txt.gz",download_dir)			
-			if sqlpath != '':
-				try:
-					if gf_name.startswith("wgEncode"):
-						outpath = os.path.join(outputdir, encodePath(gf_name))
-					else:
-						outpath = os.path.join(outputdir,'unsorted',gf_name)
-					if not os.path.exists(os.path.dirname(outpath)):
-						os.makedirs(os.path.dirname(outpath))
-					# check if GF already extracted
-					if os.path.exists(outpath + ".bed.gz") == False:
-						# removes the .temp file, to prevent duplicate data from being written
-						if os.path.exists(outpath+".temp"):
-							os.remove(outpath+".temp")
-						# try guessing the GFs type based on column names
-						logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
-						colnames = get_column_names(os.path.splitext(sqlpath)[0]+".sql")
-						[minmax,gf_type] = extract_bed6(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
-						if gf_type == "failed": [minmax,gf_type] = extract_psl(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
-						if gf_type == "failed": [minmax,gf_type] = extract_genepred(outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",colnames)
-						# cannot detect type, skip
-						if gf_type == "failed":
-							write_line("\t".join([gf_name,"Not supported","None"]),summary_path)
-							logger.warning( "Unable to convert {} into bed".format(gf_name))
-							prog += 1
-							continue
+		# if table name has Raw, in it, it is likely raw reads, skip
+		if _exclude(gf_name):
+			write_line("\t".join([gf_name,"Raw signal",row["longLabel"]]),summary_path)
+			logger.info('Raw signal detected: {}, skipping...'.format(gf_name))
+			prog +=1
+			continue
+		if row['type'] in preparebed:
+			# this line limits the number of GFs to download, note that this check only occurs for GFs in tracdb
+			if numdownloaded[row["type"]] <= max_install or max_install == None:
+				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql",download_dir)
+				download_ucsc_file(organism,row["tableName"] + ".txt.gz",download_dir)
+				if sqlpath != '':
+					try:
+						gf_type = ""
+						if row["tableName"].startswith("wgEncode"):
+							outpath = os.path.join(outputdir, encodePath(row["tableName"]))
+						else:
+							outpath = os.path.join(outputdir,row["grp"],row["tableName"]) # ,'Tier' + row["visibility"]
+						if not os.path.exists(os.path.dirname(outpath)):
+							os.makedirs(os.path.dirname(outpath))
+						if os.path.exists(outpath + ".bed.gz") == False:
+							# removes the .temp file, to prevent duplicate data from being written
+							if os.path.exists(outpath+".temp"):
+								os.remove(outpath+".temp")
+							# converts the ucsc data into propery bed format
+							logger.info( "Converting into proper bed format: {}".format(os.path.splitext(sqlpath)[0]))
+							[minmax_score,gf_type] = preparebed[row["type"]](outpath+".temp",os.path.splitext(sqlpath)[0]+".txt.gz",get_column_names(os.path.splitext(sqlpath)[0]+".sql"))
+							# cannot detect type, skip
+							if gf_type == "failed":
+								write_line("\t".join([gf_name,"Not supported","None"]),summary_path)
+								logger.warning( "Unable to convert {} into bed".format(gf_name))
+								prog += 1
+								continue
+							# output minmax stats
+							min_max_scores[row['tableName']] = minmax_score
+							_save_minmax(min_max_scores,min_max_path)
+							# sort the file and convert to bgzip format
+							o_dir = os.path.dirname(outpath)
+							new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+							sort_convert_to_bgzip(outpath+".temp",new_path)
+							added_features.append(outpath)
+						else:
+							logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))
+						write_line("\t".join([gf_name,gf_type,row["longLabel"]]),summary_path)
+						numdownloaded[row["type"]] += 1
 
-						# output minmax stats
-						min_max_scores[gf_name] = minmax
-						_save_minmax(min_max_scores,min_max_path)
+					except Exception, e:
+						write_line("\t".join([gf_name,"Failed",str(e)]),summary_path)
+						exc = trace.format_exc()
+						logger.warning( "Unable to convert {} into bed".format(row["tableName"]))
+						logger.warning(exc)
+						prog += 1
+						continue
+		else:
+			write_line("\t".join([gf_name,"{} Not supported".format(row["type"]),row["longLabel"]]),summary_path)
+			if 'big' not in row['type']:
+				notsuptypes.add(row['type'])	
 
-						# sort the file and convert to bgzip format
-						o_dir = os.path.dirname(outpath)
-						new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-						sort_convert_to_bgzip(outpath+".temp",new_path)
-						added_features.append(outpath)
-					else:
-						logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))							
-					write_line("\t".join([gf_name,gf_type,"None"]),summary_path)
-					numdownloaded[gf_type] += 1
-
-
-				except Exception, e:
-					exc = trace.format_exc()
-					write_line("\t".join([gf_name,"Failed",str(e)]),summary_path)
-					logger.warning( "Unable to convert {} into bed".format(gf_name))
-					logger.warning(exc)
-					prog += 1
-					continue
-		
-
-		prog += 1
-		# cleanup the temporary files
-		if os.path.exists(outpath + ".temp"): os.remove(outpath+".temp")
+	prog += 1
+	# cleanup the temporary files
+	if os.path.exists(outpath + ".temp"): os.remove(outpath+".temp")
 
 	# logger.info( "The following types are not supported (includes all 'big' file types):\n " + str(notsuptypes))
 	# logger.info("The following features were added to the database: \n{}".format(added_features))
