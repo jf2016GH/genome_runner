@@ -267,7 +267,6 @@ def extract_genepred(outputpath,datapath,colnames):
 		return [mm.str_minmax(),"failed"]
 
 def guess_extract_type(outpath,datapath,colnames):
-	print 'ColNAMES: ',colnames
 	[minmax,gf_type] = extract_bed6(outpath,datapath,colnames)
 	if gf_type == "failed": [minmax,gf_type] = extract_psl(outpath,datapath,colnames)
 	if gf_type == "failed": [minmax,gf_type] = extract_genepred(outpath,datapath,colnames)
@@ -403,10 +402,8 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 		row = [x for x in trackdb if x['tableName'] == gf_name]
 		# if in trackdb, process using type provided
 		if len(row) != 0:
-			#continue
 			row = row[0] # convert from list to dictionary
 		else:
-			#if 'chain' in gf_name: continue
 			row = {'type': None,'grp':'unsorted','tableName': gf_name,'longLabel':'None'}
 			logger.info( 'Processing files {} of {}'.format(prog,num))
 		# if table name has Raw, in it, it is likely raw reads, skip
@@ -656,14 +653,13 @@ if __name__ == "__main__":
 		if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
 			gfs = args["featurenames"].split(",")
 			trackdbpath = download_trackdb(args['organism'],outputdir)
-			create_feature_set(trackdbpath,args['organism'],args["max"],gfs)			
+			create_feature_set(trackdbpath,args['organism'],args["max"],gfs)
 		else:
 			print "ERROR: Requires UCSC organism code.  Use --help for more information"
 			sys.exit()
 	else:
 		# load score from minmax.txt file created earlier
-		minmax = _load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
-
+		minmax = _load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))
 		### Second Step: Create subdirectories for score and filter data by score percentile
 		# create sub directories for score percentiles and populate with score-filtered GF data
 		# gather all directories (groups) in the database
