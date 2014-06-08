@@ -399,7 +399,7 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 			continue
 		if row['type'] in preparebed:
 			# this line limits the number of GFs to download, note that this check only occurs for GFs in tracdb
-			if numdownloaded[row["type"]] <= max_install or max_install == None:
+			if numdownloaded[str(row["type"])] <= max_install or max_install == None:
 				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql",download_dir)
 				download_ucsc_file(organism,row["tableName"] + ".txt.gz",download_dir)
 				if sqlpath != '':
@@ -435,7 +435,7 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 						else:
 							logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))
 						write_line("\t".join([gf_name,gf_type,row["longLabel"]]),summary_path)
-						numdownloaded[row["type"]] += 1
+						numdownloaded[str(row["type"])] += 1
 
 					except Exception, e:
 						write_line("\t".join([gf_name,"Failed",str(e)]),summary_path)
@@ -625,7 +625,7 @@ if __name__ == "__main__":
 			sys.exit()
 	else:
 		# load score from minmax.txt file created earlier
-		minmax = _load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
+		minmax = load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
 
 		### Second Step: Create subdirectories for score and filter data by score percentile
 		# create sub directories for score percentiles and populate with score-filtered GF data
