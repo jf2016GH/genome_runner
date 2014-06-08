@@ -20,6 +20,7 @@ from xml.sax.saxutils import quoteattr as xml_quoteattr
 import BeautifulSoup
 import urllib2
 from grsnp.dbcreator_util import *
+from time import sleep
 
 logger = logging.getLogger('genomerunner.dbcreator')
 
@@ -120,8 +121,7 @@ def preparebed(organism,gf_grp,gf_file,download_dir,outputpath):
 		gf_file.endswith('.bedRrbs') or gf_file.endswith('.bedRrbs.gz') or
 		gf_file.endswith('.narrowPeak') or gf_file.endswith('.narrowPeak.gz') or
 		gf_file.endswith('.broadPeak') or gf_file.endswith('.broadPeak.gz') or
-		gf_file.endswith('.peptideMapping') or gf_file.endswith('.peptideMapping.gz') or
-		):		
+		gf_file.endswith('.peptideMapping') or gf_file.endswith('.peptideMapping.gz')):		
 		gf_file = download_file(organism,gf_grp,gf_file,download_dir)
 		return extract_bed(gf_file,outputpath,0)
 	elif gf_file.endswith('.bedRnaElements') or gf_file.endswith('.bedRnaElements.gz'):
@@ -132,8 +132,8 @@ def preparebed(organism,gf_grp,gf_file,download_dir,outputpath):
 
 def extract_bed(datapath,outputpath,chrom_index):
 	min_max = MinMax() # keep track of the min and max score
-	if datapath[:-3] == '.gz':
-		infile,outfile = gzip.open(datapath),gzip.open(outputpath,'wb')
+	if datapath.endswith('.gz'):
+		infile,outfile = gzip.open(datapath),open(outputpath,'wb')
 	else:
 		infile,outfile = open(datapath),open(outputpath,'wb')
 	while True:
@@ -150,13 +150,16 @@ def _format_bed(line,chrom_index,min_max):
 		line[3+chrom_index] = ''.join(e for e in line[3+chrom_index] if e.isalnum())
 		line[4+chrom_index] = line[4+chrom_index] if line[4+chrom_index] != "." else "0"
 		line[5+chrom_index] = line[5+chrom_index] if line[5+chrom_index] in ["+","-"] else ""
+		line = line[0+chrom_index:6]
 		min_max.update_minmax(line[4+chrom_index])
 	elif len(line) == 5+chrom_index:
 		line[3+chrom_index] = ''.join(e for e in line[3+chrom_index] if e.isalnum())
 		line[4+chrom_index] = line[4+chrom_index] if line[4+chrom_index] != "." else "0"
+		line = line[0+chrom_index:5]
 		min_max.update_minmax(line[4+chrom_index])
 	elif len(line) == 4+chrom_index:
 		line[3+chrom_index] = ''.join(e for e in line[3+chrom_index] if e.isalnum())
+		line = line[0+chrom_index:4]
 	return "\t".join(line)
 
 
@@ -168,6 +171,9 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 	outpath = ""
 	prog, num = 0,len(gfs)
 	summary_path = os.path.join(outputdir,"summary.log")
+	open(summary_path,'wb')
+
+
 	gf_groups = [x for x in gfs if x != ""]
 	# get list of GFs files on server
 	if len(gf_groups) == 0:
@@ -227,6 +233,9 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 		logger.info( k + ":" + str(d))
 	return "Created UCSC database"
 
+def update_progress(progress):
+    print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
@@ -256,10 +265,6 @@ if __name__ == "__main__":
 	if args['score'] == "":
 		args['score'] = "25,50,75"
 	args['score'] = set(args['score'].split(',')) # remove duplicate scores
-		
-	global ftp
-	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
-	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
 	if not args['scoreonly']:

@@ -19,6 +19,7 @@ import pdb
 from xml.sax.saxutils import quoteattr as xml_quoteattr
 import BeautifulSoup
 import urllib2
+from grsnp.dbcreator_util import *
 
 try:
 	import xml.etree.cElementTree as ET
@@ -34,42 +35,6 @@ logger = logging.getLogger('genomerunner.dbcreator')
 
 ftp = ""
 illegal_chars = ['=',':']
-
-
-
-class MinMax:
-	"""Used to keep track of the min and max score. 
-	By Default the min and max score is None.  It is sufficient to create this class for GFs that lack a score field.
-	The class will return an NA string if the score is never updated"""
-	def __init__(self):
-		self.max,self.min = None, None
-
-	def update_minmax(self,n):
-		
-		if n == '.' or not n.isdigit():
-			return
-		else:
-			n = float(n)
-		# Assign the first value found to min and max
-		if self.max == None:
-			self.max = n
-		if self.min == None:
-			self.min = n
-		# Check if we have found a new min or max
-		if n < self.min:
-			self.min = n
-		elif n > self.max:
-			self.max = n
-	
-	def str_minmax(self):
-		n_max, n_min = 'NA','NA'
-		if self.max != None:
-			n_max = self.max
-		if self.min != None:
-			n_min = self.min
-		if n_min == n_max:
-			n_max, n_min = 'NA','NA'
-		return "{},{}".format(n_min,n_max)
 
 
 			
@@ -267,18 +232,12 @@ def extract_genepred(outputpath,datapath,colnames):
 		return [mm.str_minmax(),"failed"]
 
 def guess_extract_type(outpath,datapath,colnames):
+	print 'ColNAMES: ',colnames
 	[minmax,gf_type] = extract_bed6(outpath,datapath,colnames)
 	if gf_type == "failed": [minmax,gf_type] = extract_psl(outpath,datapath,colnames)
 	if gf_type == "failed": [minmax,gf_type] = extract_genepred(outpath,datapath,colnames)
 	return [minmax,gf_type]
 
-def sort_convert_to_bgzip(path,outpath):
-	logger.info("Converting {} to bgzip format.".format(path))
-	script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
-	out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
-	out.wait()
-	os.remove(path)# remove the .temp file extension to activate the GF		
-	os.rename(outpath+".gz.temp",outpath)
 
 def extract_rmsk(outputpath,datapath,colnames):
 	colstoextract,mm = ['genoName','genoStart','genoEnd','repClass', 'strand','swScore'],MinMax()
@@ -396,14 +355,16 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 		soup = BeautifulSoup.BeautifulSoup(html)
 		gfs = [x.get('href')[:-4] for x in soup.findAll('a') if 'sql' in x.get('href')]
 
-	min_max_scores,num = _load_minmax(min_max_path),len(gfs)
+	min_max_scores,num = load_minmax(min_max_path),len(gfs)
 	for gf_name in gfs:
 		# check if GF is listed in trackdb
 		row = [x for x in trackdb if x['tableName'] == gf_name]
 		# if in trackdb, process using type provided
 		if len(row) != 0:
+			#continue
 			row = row[0] # convert from list to dictionary
 		else:
+			#if 'chain' in gf_name: continue
 			row = {'type': None,'grp':'unsorted','tableName': gf_name,'longLabel':'None'}
 			logger.info( 'Processing files {} of {}'.format(prog,num))
 		# if table name has Raw, in it, it is likely raw reads, skip
@@ -441,7 +402,7 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 								continue
 							# output minmax stats
 							min_max_scores[row['tableName']] = minmax_score
-							_save_minmax(min_max_scores,min_max_path)
+							save_minmax(min_max_scores,min_max_path)
 							# sort the file and convert to bgzip format
 							o_dir = os.path.dirname(outpath)
 							new_path = os.path.join(o_dir,''.join(e for e in os.path.basename(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
@@ -494,23 +455,6 @@ def _get_info(feature,trackdb):
 			return t
 	return False
 
-def _load_minmax(path):
-	data = {}
-	if not os.path.exists(path):
-		return data
-	score = [x for x in open(path).read().split("\n") if x != ""]
-	for s in score:
-		name,min_max = s.split('\t')
-		data[name] = min_max
-	return data
-
-
-def _save_minmax(data,path):
-	''' Saves the dictionary of key value pairs of minmax data to a text file.
-	'''
-	with open(path,'wb') as writer:
-		for k,v in data.items():
-			writer.write("{}\t{}\n".format(k,v))
 
 
 def load_tabledata_dumpfiles(datapath):
@@ -551,8 +495,6 @@ def create_galaxy_xml_files(db_dir,outputdir):
 			writer.write(tmp + "</options>\n</filter>") 
 	logger.info("Created galaxy xml file {}".format(xml_path))		
 
-def base_name(k):
-	return os.path.basename(k).split(".")[0]
 
 def _exclude(x):
 	ls = ["Raw","Align","Signal"]
@@ -653,13 +595,14 @@ if __name__ == "__main__":
 		if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
 			gfs = args["featurenames"].split(",")
 			trackdbpath = download_trackdb(args['organism'],outputdir)
-			create_feature_set(trackdbpath,args['organism'],args["max"],gfs)
+			create_feature_set(trackdbpath,args['organism'],args["max"],gfs)			
 		else:
 			print "ERROR: Requires UCSC organism code.  Use --help for more information"
 			sys.exit()
 	else:
 		# load score from minmax.txt file created earlier
-		minmax = _load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))
+		minmax = _load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
+
 		### Second Step: Create subdirectories for score and filter data by score percentile
 		# create sub directories for score percentiles and populate with score-filtered GF data
 		# gather all directories (groups) in the database

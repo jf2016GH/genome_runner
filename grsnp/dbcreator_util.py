@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 import os
 import subprocess
-
+import pdb
+import gzip
 
 def remove_headers(datapath):
 	''' Removes all lines that start with special characters, such as header lines.
@@ -9,7 +10,7 @@ def remove_headers(datapath):
 	Handles both gziped files and raw text (based on file extension)
 	'''
 	outputpath = datapath + ".tmp"
-	if datapath[:-3] == '.gz':
+	if datapath.endswith('.gz'):
 		infile,outfile = gzip.open(datapath),gzip.open(outputpath,'wb')
 	else:
 		infile,outfile = open(datapath),open(outputpath,'wb')
