@@ -38,6 +38,7 @@ def download_file(organism,gf_grp,gf_file,downloaddir):
 	''' Downloads the gf_file from the UCSC ftp server and saves it
 	in a folder with the same name as the organism.
 	'''
+
 	outputpath = ''
 	if downloaddir != None and downloaddir != '':
 		outputdir = os.path.join(downloaddir,organism)
@@ -111,57 +112,86 @@ def get_gf_filepaths(organism,gf_grp):
 	return gf_paths
 
 
-def preparebed(organism,gf_grp,gf_file,download_dir,outputpath):
-	''' Opens the bed file and ensures it is in a proper format for GR and extracts it. 
-	The 'chrom_index' should be the zero-based index of the column containing the chrom 
-	(i.e. 1 for bedRnaElements, where the 0 column is the 'bin' column.
-	'''
-	if (gf_file.endswith('.bed') or gf_file.endswith('.bed.gz') or
-		gf_file.endswith('.bed9') or gf_file.endswith('.bed9.gz') or
-		gf_file.endswith('.bedRrbs') or gf_file.endswith('.bedRrbs.gz') or
-		gf_file.endswith('.narrowPeak') or gf_file.endswith('.narrowPeak.gz') or
-		gf_file.endswith('.broadPeak') or gf_file.endswith('.broadPeak.gz') or
-		gf_file.endswith('.peptideMapping') or gf_file.endswith('.peptideMapping.gz')):		
-		gf_file = download_file(organism,gf_grp,gf_file,download_dir)
-		return extract_bed(gf_file,outputpath,0)
-	elif gf_file.endswith('.bedRnaElements') or gf_file.endswith('.bedRnaElements.gz'):
-		gf_file = download_file(organism,gf_grp,gf_file,download_dir)		
-		return extract_bed(gf_file,outputpath,1)
-	else:
-		return [MinMax(),'failed']
 
-def extract_bed(datapath,outputpath,chrom_index):
+def extract_bed(organism,gf_grp,gf_file,download_dir,outputpath):
+	if gf_file.replace(".gz",'').split(".")[-1] not in preparebed.keys():
+		return [MinMax(),'failed']
+	gf_file = download_file(organism,gf_grp,gf_file,download_dir)
 	min_max = MinMax() # keep track of the min and max score
-	if datapath.endswith('.gz'):
-		infile,outfile = gzip.open(datapath),open(outputpath,'wb')
+	if gf_file.endswith('.gz'):
+		infile,outfile = gzip.open(gf_file),open(outputpath,'wb')
 	else:
-		infile,outfile = open(datapath),open(outputpath,'wb')
+		infile,outfile = open(gf_file),open(outputpath,'wb')
 	while True:
 		line = infile.readline().strip()
 		if line == "":
 			break
-		outfile.write(_format_bed(line,chrom_index,min_max)+"\n")
+		line = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)+"\n"
+		outfile.write(line)
 	return [min_max.str_minmax(),'bed']
 
-def _format_bed(line,chrom_index,min_max):
-	line = line.split("\t")[chrom_index:]
+def _format_bed(line,min_max):
+	line = line.split("\t")
 	# removes special characters and the '.' used when a field is blank
-	if len(line) >= 6+chrom_index:
-		line[3+chrom_index] = ''.join(e for e in line[3+chrom_index] if e.isalnum())
-		line[4+chrom_index] = line[4+chrom_index] if line[4+chrom_index] != "." else "0"
-		line[5+chrom_index] = line[5+chrom_index] if line[5+chrom_index] in ["+","-"] else ""
-		line = line[0+chrom_index:6]
-		min_max.update_minmax(line[4+chrom_index])
-	elif len(line) == 5+chrom_index:
-		line[3+chrom_index] = ''.join(e for e in line[3+chrom_index] if e.isalnum())
-		line[4+chrom_index] = line[4+chrom_index] if line[4+chrom_index] != "." else "0"
-		line = line[0+chrom_index:5]
-		min_max.update_minmax(line[4+chrom_index])
-	elif len(line) == 4+chrom_index:
-		line[3+chrom_index] = ''.join(e for e in line[3+chrom_index] if e.isalnum())
-		line = line[0+chrom_index:4]
+	if len(line) >= 6:
+		line[3] = ''.join(e for e in line[3] if e.isalnum())
+		line[4] = line[4] if line[4] != "." else "0"
+		line[5] = line[5] if line[5] in ["+","-"] else ""
+		line = line[0:6]
+		min_max.update_minmax(line[4])
+	elif len(line) == 5:
+		line[3] = ''.join(e for e in line[3] if e.isalnum())
+		line[4] = line[4] if line[4] != "." else "0"
+		line = line[0:5]
+		min_max.update_minmax(line[4])
+	elif len(line) == 4:
+		line[3] = ''.join(e for e in line[3] if e.isalnum())
+		line = line[0:4]
 	return "\t".join(line)
 
+def _format_peak(line,min_max):
+	'''Handles broadPeak and narrowPeak
+	'''
+	line = line.split("\t")
+	# removes special characters and the '.' used when a field is blank
+	line[3] = ''.join(e for e in line[3] if e.isalnum())
+	line[4] = line[6] if line[6] != "." else "0" # for peak data we use the SignalValue column
+	line[5] = line[5] if line[5] in ["+","-"] else ""
+	line = line[0:6]
+	min_max.update_minmax(line[4])
+	return "\t".join(line)
+
+def _format_bedRNA(line,min_max):
+	offset = 1
+	line = line.split("\t")
+	# removes special characters and the '.' used when a field is blank
+	if len(line) >= 7:
+		line[4] = ''.join(e for e in line[4] if e.isalnum())
+		line[5] = line[5] if line[5] != "." else "0"
+		line[6] = line[6] if line[6] in ["+","-"] else ""
+		line = line[1:7]
+		min_max.update_minmax(line[5])
+	elif len(line) == 6:
+		line[4] = ''.join(e for e in line[4] if e.isalnum())
+		line[5] = line[5] if line[5] != "." else "0"
+		line = line[1:6]
+		min_max.update_minmax(line[5])
+	elif len(line) == 5:
+		line[4] = ''.join(e for e in line[4] if e.isalnum())
+		line = line[1:5]
+	return "\t".join(line)
+
+
+preparebed = {
+	"bed":_format_bed,
+	"bed9":_format_bed,
+	"bedRrbs":_format_bed,
+	"peptideMapping":_format_bed,
+	"broadPeak":_format_peak,
+	"narrowPeak":_format_peak,
+	"bedRnaElements":_format_bed
+
+}
 
 def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 	outputdir = os.path.join(data_dir,organism)
@@ -182,8 +212,7 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 
 	min_max_scores,num = load_minmax(min_max_path),len(gf_groups)
 	for gf_grp in gf_groups:
-		for gf_file in get_gf_filepaths(organism,gf_grp):
-			
+		for gf_file in get_gf_filepaths(organism,gf_grp):			
 			try:
 				gf_type = ""
 				outpath = os.path.join(outputdir,gf_grp,base_name(gf_file.replace(gf_grp,'')))
@@ -195,7 +224,7 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 						os.remove(outpath+".temp")
 					# converts the ucsc data into propery bed format
 					logger.info( "Converting into proper bed format: {}".format(gf_file))
-					[minmax_score,gf_type] = preparebed(organism,gf_grp,gf_file,download_dir,outpath+".temp")
+					[minmax_score,gf_type] = extract_bed(organism,gf_grp,gf_file,download_dir,outpath+".temp")
 					# cannot detect type, skip
 					if gf_type == "failed":
 						write_line("\t".join([gf_file,"Not supported","None"]),summary_path)
@@ -241,8 +270,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
-	parser.add_argument('--featuregroups','-f', nargs="?", help='The names of the specific genomic feature groups to download.', default="")
-	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory. List available for hg19 at ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/", action="store_true")
+	parser.add_argument('--featuregroups','-f', nargs="?", help='The names of the specific genomic feature groups to download.  List available for hg19 at ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/', default="")
+	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
 	parser.add_argument('--scoreonly','-o', help="Only filter by score. Skips downloading and installing new GFs.", action="store_true")
 
@@ -292,7 +321,7 @@ if __name__ == "__main__":
 		### Second Step: Create subdirectories for score and filter data by score percentile
 		# create sub directories for score percentiles and populate with score-filtered GF data
 		# gather all directories (groups) in the database
-		print "Filtering GFs by Score"
+		print "Filtering GFs by Score..."
 		orgdir = os.path.join(outputdir,args['organism'])
 		dirs = [name for name in os.listdir(orgdir)
 			if os.path.isdir(os.path.join(orgdir, name))]
