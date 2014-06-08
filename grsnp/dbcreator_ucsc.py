@@ -66,7 +66,9 @@ def download_ucsc_file(organism,filename,downloaddir):
 				ftp.cwd(directory.format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(filename),fhandle.write)
 				os.rename(outputpath+".temp",outputpath)
-				logger.info( 'Finished downloading {} from UCSC'.format(filename))
+				logger.info( 'Finished downloading {} from UCSC'.format(filename))			
+			# remove header lines
+			remove_headers(outputpath)
 		else:
 			logger.info( '{} already exists, skipping download'.format(outputpath))
 	except IOError as e:
@@ -545,30 +547,7 @@ def dir_as_xml(path, blacklist):
 			result += '  <option name={} value={}/>\n'.format(xml_quoteattr(base_name(item)), xml_quoteattr(os.path.join(path,item)))
 	result += '</option>\n'
 	return result
-
-def filter_by_score(gf_path_input,gf_path_output,thresh_score):
-	''' Read in the gf data from gf_path_input and filter out each GF that does not
-	have a score greater than the thresh_score threshold.
-	gf_path_output should be WITHOUT file extension
-	'''
-	count_in,count_out = 0,0
-	tmp_path = gf_path_output+'.temp'
-	with open(tmp_path,"wb") as bed:
-		with gzip.open(gf_path_input) as dr:
-			while True:
-				line = dr.readline().strip()
-				if line == "":
-					break
-				score  = line.split('\t')[4]
-				count_in += 1
-				# if the score is >= to the threshold, output that GF
-				if float(score) >= float(thresh_score):
-					bed.write(line+"\n")
-					count_out += 1
-	logger.info("{} count before score filtering: {}".format(base_name(gf_path_input),count_in))
-	logger.info("{} count after score filtering (thresh = {}): {}".format(base_name(gf_path_output),str(thresh_score),count_out))
-	sort_convert_to_bgzip(tmp_path,gf_path_output+'.bed.gz')
-
+	
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)

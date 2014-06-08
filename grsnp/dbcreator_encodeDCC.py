@@ -201,6 +201,7 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 	outpath = ""
 	prog, num = 0,len(gfs)
 	summary_path = os.path.join(outputdir,"summary.log")
+	if not os.path.exists(outputdir): os.makedirs(outputdir)
 	open(summary_path,'wb')
 
 
@@ -215,10 +216,13 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 		for gf_file in get_gf_filepaths(organism,gf_grp):			
 			try:
 				gf_type = ""
-				outpath = os.path.join(outputdir,gf_grp,base_name(gf_file.replace(gf_grp,'')))
+				new_gf_file =  base_name(gf_file.replace(gf_grp,''))
+				o_dir = os.path.dirname(outpath)
+				new_path = os.path.join(o_dir,''.join(e for e in base_name(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+				outpath = os.path.join(outputdir,gf_grp,new_gf_file)
 				if not os.path.exists(os.path.dirname(outpath)):
 					os.makedirs(os.path.dirname(outpath))
-				if os.path.exists(outpath) == False:
+				if os.path.exists(new_path) == False:
 					# removes the .temp file, to prevent duplicate data from being written
 					if os.path.exists(outpath+".temp"):
 						os.remove(outpath+".temp")
@@ -231,11 +235,9 @@ def create_feature_set(data_dir,organism,gf_groups,pct_score=None):
 						logger.warning( "Unable to convert {} into bed".format(gf_file))
 						continue
 					# output minmax stats
-					min_max_scores[gf_file] = minmax_score
+					min_max_scores[new_gf_file] = minmax_score
 					save_minmax(min_max_scores,min_max_path)
-					# sort the file and convert to bgzip format
-					o_dir = os.path.dirname(outpath)
-					new_path = os.path.join(o_dir,''.join(e for e in base_name(outpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+					# sort the file and convert to bgzip format					
 					sort_convert_to_bgzip(outpath+".temp",new_path)
 					added_features.append(outpath)
 				else:

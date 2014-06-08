@@ -55,6 +55,30 @@ def sort_convert_to_bgzip(path,outpath):
 	os.remove(path)# remove the .temp file extension to activate the GF		
 	os.rename(outpath+".gz.temp",outpath)
 
+
+
+def filter_by_score(gf_path_input,gf_path_output,thresh_score):
+	''' Read in the gf data from gf_path_input and filter out each GF that does not
+	have a score greater than the thresh_score threshold.
+	gf_path_output should be WITHOUT file extension
+	'''
+	count_in,count_out = 0,0
+	tmp_path = gf_path_output+'.temp'
+	with open(tmp_path,"wb") as bed:
+		with gzip.open(gf_path_input) as dr:
+			while True:
+				line = dr.readline().strip()
+				if line == "":
+					break
+				score  = line.split('\t')[4]
+				count_in += 1
+				# if the score is >= to the threshold, output that GF
+				if float(score) >= float(thresh_score):
+					bed.write(line+"\n")
+					count_out += 1	
+	sort_convert_to_bgzip(tmp_path,gf_path_output+'.bed.gz')
+
+
 class MinMax:
 	"""Used to keep track of the min and max score. 
 	By Default the min and max score is None.  It is sufficient to create this class for GFs that lack a score field.
