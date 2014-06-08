@@ -29,6 +29,7 @@ import zipfile
 import inspect
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
+import grsnp.dbcreator_util as grsnp_util
 
 # Logging configuration
 logger = logging.getLogger()
@@ -545,6 +546,9 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # Read in the paths
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
         gfs = [line for line in read_lines(gfs) if not line.endswith(".tbi")]
+        # check for comment lines in fois files
+        for f in fois:
+            grsnp_util.remove_headers(f)
         # check if the GF exists in the database filtered by score
         gfs = filter_score(gfs,pct_score)
         # check if there are spaces in invalid parts of the file name
