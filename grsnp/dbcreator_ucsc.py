@@ -39,7 +39,7 @@ illegal_chars = ['=',':']
 
 			
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
-def download_ucsc_file(organism,filename,downloaddir):
+def download_ucsc_file(organism,filename,downloaddir,remove_headers=True):
 	''' Downloads the filename from the UCSC ftp server and saves it
 	in a folder with the same name as the organism.
 	'''
@@ -68,7 +68,8 @@ def download_ucsc_file(organism,filename,downloaddir):
 				os.rename(outputpath+".temp",outputpath)
 				logger.info( 'Finished downloading {} from UCSC'.format(filename))			
 			# remove header lines
-			remove_headers(outputpath)
+			if remove_headers:
+				remove_headers(outputpath)
 		else:
 			logger.info( '{} already exists, skipping download'.format(outputpath))
 	except IOError as e:
@@ -88,8 +89,8 @@ def download_trackdb(organism,outputdir):
 	''' Downloads the trackdb.sql and trackDb.txt.gz from the UCSC ftp server and saves it in a folder with the same name as the organism.
 		Returns the path of the downloaded .sql file
 	'''
-	sqloutputpath = download_ucsc_file(organism,"trackDb.sql",outputdir)
-	dataoutpath = download_ucsc_file(organism,"trackDb.txt.gz",outputdir)
+	sqloutputpath = download_ucsc_file(organism,"trackDb.sql",outputdir,False)
+	dataoutpath = download_ucsc_file(organism,"trackDb.txt.gz",outputdir,False)
 	' replace all of the \\\n characters in the html column with <br />'
 	text = gzip.open(dataoutpath).read()
 	with gzip.open(dataoutpath,'wb') as sw:
@@ -402,8 +403,8 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 		if row['type'] in preparebed:
 			# this line limits the number of GFs to download, note that this check only occurs for GFs in tracdb
 			if numdownloaded[str(row["type"])] <= max_install or max_install == None:
-				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql",download_dir)
-				download_ucsc_file(organism,row["tableName"] + ".txt.gz",download_dir)
+				sqlpath = download_ucsc_file(organism,row["tableName"] + ".sql",download_dir,False)
+				download_ucsc_file(organism,row["tableName"] + ".txt.gz",download_dir,True)
 				if sqlpath != '':
 					try:
 						gf_type = ""
@@ -547,7 +548,7 @@ def dir_as_xml(path, blacklist):
 			result += '  <option name={} value={}/>\n'.format(xml_quoteattr(base_name(item)), xml_quoteattr(os.path.join(path,item)))
 	result += '</option>\n'
 	return result
-	
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)
