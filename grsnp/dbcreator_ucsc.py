@@ -584,6 +584,7 @@ if __name__ == "__main__":
 	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
+	# if scoreonly is passed, then skip adding new GFs
 	if not args['scoreonly']:
 		if args['galaxy']:
 			usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
@@ -603,38 +604,38 @@ if __name__ == "__main__":
 		else:
 			print "ERROR: Requires UCSC organism code.  Use --help for more information"
 			sys.exit()
-	else:
-		# load score from minmax.txt file created earlier
-		minmax = load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
 
-		### Second Step: Create subdirectories for score and filter data by score percentile
-		# create sub directories for score percentiles and populate with score-filtered GF data
-		# gather all directories (groups) in the database
-		print "Filtering GFs by Score"
-		orgdir = os.path.join(outputdir,args['organism'])
-		dirs = [name for name in os.listdir(orgdir)
-			if os.path.isdir(os.path.join(orgdir, name))]
-		for d in dirs:
-			# gather all paths
-			gfs = []
-			for base, tmp, files in os.walk(os.path.join(orgdir,d)):
-					gfs += [os.path.join(base,f) for f 	 
-						in files if f.endswith(('.gz', '.bb'))]
-			for gf_path in gfs: 
-				for pct_score in args['score']:		
-					[score_min,score_max] = minmax[base_name(gf_path)].split(",")
-					# calculate threshold score
-					if score_min == 'NA':
-						continue
-					score_min,score_max = float(score_min),float(score_max) 
-					thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
-					logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
-					# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
-					gf_path_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-					if not os.path.exists(os.path.split(gf_path_out)[0]):
-						os.makedirs(os.path.split(gf_path_out)[0])
-					gf_path_out_woext = os.path.join(os.path.split(gf_path_out)[0],base_name(gf_path_out))
-					filter_by_score(gf_path, gf_path_out_woext,thresh_score)
+	# load score from minmax.txt file created earlier
+	minmax = load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
+
+	### Second Step: Create subdirectories for score and filter data by score percentile
+	# create sub directories for score percentiles and populate with score-filtered GF data
+	# gather all directories (groups) in the database
+	print "Filtering GFs by Score"
+	orgdir = os.path.join(outputdir,args['organism'])
+	dirs = [name for name in os.listdir(orgdir)
+		if os.path.isdir(os.path.join(orgdir, name))]
+	for d in dirs:
+		# gather all paths
+		gfs = []
+		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
+				gfs += [os.path.join(base,f) for f 	 
+					in files if f.endswith(('.gz', '.bb'))]
+		for gf_path in gfs: 
+			for pct_score in args['score']:		
+				[score_min,score_max] = minmax[base_name(gf_path)].split(",")
+				# calculate threshold score
+				if score_min == 'NA':
+					continue
+				score_min,score_max = float(score_min),float(score_max) 
+				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
+				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
+				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
+				gf_path_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+				if not os.path.exists(os.path.split(gf_path_out)[0]):
+					os.makedirs(os.path.split(gf_path_out)[0])
+				gf_path_out_woext = os.path.join(os.path.split(gf_path_out)[0],base_name(gf_path_out))
+				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
 
 
 	root_dir = os.path.dirname(os.path.realpath(__file__))
