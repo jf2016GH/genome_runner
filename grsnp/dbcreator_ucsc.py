@@ -231,12 +231,35 @@ def extract_genepred(outputpath,datapath,colnames):
 	else:
 		return [mm.str_minmax(),"failed"]
 
+def extract_peak(outputpath,datapath,colnames):
+	colstoextract,mm = ['chrom','chromStart','chromEnd','name','signalValue','strand'],MinMax()
+	# Checks if all of the columns exist in the table.  If not extract_bed5 is tried i
+	if _check_cols(colnames,colstoextract):
+		logger.info( "Outpath is: {}".format(outputpath))
+		with gzip.open(datapath) as dr:
+			with open(outputpath,"wb") as bed:
+				while True:
+					line = dr.readline().strip('\r').rstrip('\n')
+					if line == "":
+						break
+					r  = dict(zip(colnames,line.split('\t')))
+					row = []
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["signalValue"] if r["signalValue"] != "." else "0",r["strand"] if r["strand"] in ["+","-"] else ""]# Can't use strand as "."
+					bed.write("\t".join(map(str,row))+"\n")
+					# check if new min or max score found
+					mm.update_minmax(r['signalValue'])
+		return [mm.str_minmax(),"peak"]
+	else:
+		return [mm.str_minmax(),"failed"]
+
+
 def guess_extract_type(outpath,datapath,colnames):
-	print 'ColNAMES: ',colnames
-	[minmax,gf_type] = extract_bed6(outpath,datapath,colnames)
+	[minmax,gf_type] = extract_peak(outpath,datapath,colnames)
+	if gf_type == "failed": [minmax,gf_type] = extract_bed6(outpath,datapath,colnames)
 	if gf_type == "failed": [minmax,gf_type] = extract_psl(outpath,datapath,colnames)
 	if gf_type == "failed": [minmax,gf_type] = extract_genepred(outpath,datapath,colnames)
 	return [minmax,gf_type]
+
 
 
 def extract_rmsk(outputpath,datapath,colnames):
@@ -267,7 +290,8 @@ def get_column_names(sqlfilepath):
 # To add a new type add a new entry into this dictionary along with 
 # the name of the function that should be used to extract the data.
 preparebed = {"bed 6" : extract_bed6,
-				"broadPeak": extract_bed6,
+				"broadPeak": extract_peak,
+				"narrowPeak": extract_peak,
 				"bed 6 +" : extract_bed6,
 				"bed 12 +": extract_bed6,
 				"bed 12 .": extract_bed6,
