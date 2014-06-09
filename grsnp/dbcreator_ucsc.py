@@ -362,7 +362,7 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 		Tier = 'Tier3'
 		Cell = m3.group()
 	else:
-		Tier = ''
+		Tier = 'Tier3'
 		Cell = ''
 	return os.path.join('ENCODE', grp, Tier, Cell, line.strip())		
 
