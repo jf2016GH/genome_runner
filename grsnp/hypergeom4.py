@@ -545,8 +545,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
         # Read in the paths
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
-        print fois
-        logger.error(fois)
         gfs = [line for line in read_lines(gfs) if not line.endswith(".tbi")]
         # check if the GF exists in the database filtered by score
         gfs = filter_score(gfs,pct_score)
