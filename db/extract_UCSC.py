@@ -5,7 +5,7 @@
 ##
 ## Usage: python extract_UCSC.py [table name] [field name] [output dir]
 ##
-## Example: python extract_UCSC.py wgEncodeBroadHmmGm12878HMM histoneMarks
+## Example: python extract_UCSC.py wgEncodeBroadHmmGm12878HMM name histoneMarks
 ## Example: python extract_UCSC.py wgEncodeRegTfbsClusteredV3 name tfbsEncode
 ## Example: python extract_UCSC.py gap type gapLocations
 ## Example: python extract_UCSC.py coriellDelDup cellType coriellCNVs
@@ -17,6 +17,7 @@
 ## Example: python extract_UCSC.py nestedRepeats repClass repeats
 ## Example: python extract_UCSC.py snp138Flagged func snpClinical
 ## =================================================================
+from __future__ import print_function
 import mysql.connector
 import itertools
 import operator
@@ -34,10 +35,10 @@ class UCSCDB(object):
             os.makedirs(out_dir)
 
         c = self.db.cursor()
-        q = """SELECT chrom, chromStart, chromEnd, name, %s FROM %s ORDER BY %s;""" % (tname, table, tname)
+        q = """SELECT chrom, chromStart, chromEnd, %s FROM %s ORDER BY %s;""" % (tname, table, tname)
         c.execute(q)
-        for grp, rows in itertools.groupby(c, operator.itemgetter(4)):
-            path = os.path.join(out_dir, grp.replace("/","")+".bed")
+        for grp, rows in itertools.groupby(c, operator.itemgetter(3)):
+            path = os.path.join(out_dir, grp.replace("/","").replace("$","_").replace("?","_")+".bed")
             with open(path, "w") as h:
                 for row in rows:
                     print(*row[:4], sep="\t", file=h)

@@ -1,1 +1,0 @@
-ERROR:Clustered matrix requires at least a 2 X 2 matrix.
