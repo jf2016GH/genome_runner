@@ -27,8 +27,6 @@ sudo rm -r downloads
 # Installing R packages
 sudo Rscript installer.R
 # Installing Genomic Region Tool Kit
-git submodule init # Initialize grtk submodule
-git submodule update # Pull in the actual code
 cd grtk
 sudo python setup.py install
 cd ..
