@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
 # Installing prerequisites
 sudo apt-get install parallel 
-sudo apt-get install r-base-core 
+sudo apt-get -y install r-base-core 
 sudo apt-get install bedtools 
 sudo apt-get install tabix 
-sudo apt-get install kyotocabinet-utils 
+sudo apt-get -y install kyotocabinet-utils 
 sudo apt-get install realpath
-sudo apt-get install redis-server
 # Ubuntu-specific installation of Python packages. Can be installed using pip install or easy_install
 sudo apt-get -y install python-pip python-dev python-cherrypy3 python-numpy python-scipy python-rpy2 python-simplejson python-mako python-beautifulsoup python-celery python-redis
-sudo apt-get install -U Celery
-sudo apt-get upgrade gcc 
+sudo apt-get -y upgrade gcc 
 sudo pip install -U cython
-sudo pip install redis-server # Needed together with the python-redis package
+sudo apt-get -y install redis-server
+sudo pip install celery
 sudo pip install flower # Tool to monitor Celery jobs
 # Manual download and installation of required binaries
 mkdir downloads
@@ -28,10 +27,11 @@ sudo rm -r downloads
 # Installing R packages
 sudo Rscript installer.R
 # Installing Genomic Region Tool Kit
-git submodule init # Initialize grtk submodule
-git submodule update # Pull in the actual code
 cd grtk
 sudo python setup.py install
 cd ..
-# Finally, installing GenomeRunner itself
-python setup.py install develop
+# Finally, installing GenomeRunner itself. Keep uncommented only one type of installation
+# Developmental mode. Changes made in github-cloned folder are immediately active
+# sudo python setup.py install develop -d /usr/local/lib/python2.7/dist-packages/
+# Standard mode, default. Changes made in github-cloned folder require reinstallation to be active
+sudo python setup.py install

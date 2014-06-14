@@ -1,5 +1,0 @@
-13qq14_11	P-value	Direction
-Amniotic_fluid_cell_line	1.00e+00	nonsignificant
-B_Lymphocyte	1.00e+00	nonsignificant
-Chorionic_villus_cell_line	1.00e+00	nonsignificant
-Fibroblast	1.00e+00	nonsignificant

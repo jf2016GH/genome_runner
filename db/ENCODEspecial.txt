@@ -1,4 +1,0 @@
-Gencode
-Mapability
-RegDnase
-RegTfbs

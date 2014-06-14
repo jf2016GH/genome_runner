@@ -16,7 +16,6 @@ nohup.out
 *.pyc
 lib
 data
-Makefile
 *.dblite
 bin
 *.hi

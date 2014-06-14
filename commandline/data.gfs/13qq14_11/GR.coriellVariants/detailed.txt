@@ -1,9 +1,0 @@
-foi_name	foi_obs	n_fois	bg_obs	n_bgs	odds_ratio	p_val	test_type		
-###Amniotic_fluid_cell_line	No Description###
-13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
-###B_Lymphocyte	No Description###
-13qq14_11	489	489	14323	14323	nan	1.00e+00	Fisher-Exact		
-###Chorionic_villus_cell_line	No Description###
-13qq14_11	0	489	0	14323	nan	1.00e+00	Fisher-Exact		
-###Fibroblast	No Description###
-13qq14_11	489	489	14323	14323	nan	1.00e+00	Fisher-Exact		
