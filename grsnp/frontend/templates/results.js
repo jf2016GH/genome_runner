@@ -165,7 +165,7 @@ function get_enrichment(foi_name){
 			var cols = []
 			var c = data.shift()
 			for(var k in c){
-				if (c[k] == "P-value"){
+				if (c[k] == "P.value" || c[k] == 'P.adj'){
 					cols.push({"sTitle": c[k], "sType": "scientific"})
 				}
 				else {
