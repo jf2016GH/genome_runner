@@ -39,7 +39,7 @@ illegal_chars = ['=',':']
 
 			
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
-def download_ucsc_file(organism,filename,downloaddir,remove_headers=True):
+def download_ucsc_file(organism,filename,downloaddir,rm_headers=True):
 	''' Downloads the filename from the UCSC ftp server and saves it
 	in a folder with the same name as the organism.
 	'''
@@ -68,7 +68,7 @@ def download_ucsc_file(organism,filename,downloaddir,remove_headers=True):
 				os.rename(outputpath+".temp",outputpath)
 				logger.info( 'Finished downloading {} from UCSC'.format(filename))			
 			# remove header lines
-			if remove_headers:
+			if rm_headers:
 				remove_headers(outputpath)
 		else:
 			logger.info( '{} already exists, skipping download'.format(outputpath))
@@ -79,6 +79,7 @@ def download_ucsc_file(organism,filename,downloaddir,remove_headers=True):
 			sys.exit(2)
 	except Exception, e:
 		logger.warning(e)
+		logger.warning(trace.print_exc())
 		logger.warning("Could not download the {} sql file. Names ARE case sensitive.".format(filename))
 		return '' 
 
@@ -206,7 +207,8 @@ def extract_psl(outputpath,datapath,colnames):
 		
 def extract_genepred(outputpath,datapath,colnames):
 	colstoextract,mm = ['chrom','txStart','txEnd','name','strand'],MinMax()
-	exonpath = outputpath.split(".")[0]+"_exon"
+	outdir,f_name = os.path.split(outputpath)[0], base_name(outputpath)
+	exonpath = os.path.join(outdir,f_name+"_exon")
 	if _check_cols(colnames,colstoextract):
 		# removes the .temp file of the exon, to prevent duplicate data from being written
 		if os.path.exists(exonpath+".temp"): 
@@ -362,7 +364,7 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 		Tier = 'Tier3'
 		Cell = m3.group()
 	else:
-		Tier = 'Tier3'
+		Tier = ''
 		Cell = ''
 	return os.path.join('ENCODE', grp, Tier, Cell, line.strip())		
 
@@ -429,6 +431,9 @@ def create_feature_set(trackdbpath,organism,max_install,gfs=[],pct_score=None):
 								continue
 							# output minmax stats
 							min_max_scores[row['tableName']] = minmax_score
+							# genepred creates an extra files containing exons, we need to add this
+							if gf_type == "genepred": 
+								min_max_scores[row['tableName']+"_exon"] = minmax_score
 							save_minmax(min_max_scores,min_max_path)
 							# sort the file and convert to bgzip format
 							o_dir = os.path.dirname(outpath)
