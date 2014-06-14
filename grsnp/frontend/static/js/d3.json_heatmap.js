@@ -133,7 +133,7 @@
                 num_range = [color_range.min,color_range.max];
                 col_range = ["white","red"];
                 diff= c_max - c_min; 
-                legend = [c_min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max_log];
+                legend = [c_min,diff*.25+c_min,diff*.50+c_min,diff*.75+c_min,c_max];
                 
               } 
               // case of complete underrepresentation
