@@ -52,6 +52,7 @@ def sort_convert_to_bgzip(path,outpath):
 	script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
 	out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
 	out.wait()
+	print 'remove ',path
 	os.remove(path)# remove the .temp file extension to activate the GF		
 	os.rename(outpath+".gz.temp",outpath)
 
@@ -62,7 +63,6 @@ def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 	have a score greater than the thresh_score threshold.
 	gf_path_output should be WITHOUT file extension
 	'''
-	count_in,count_out = 0,0
 	tmp_path = gf_path_output+'.temp'
 	with open(tmp_path,"wb") as bed:
 		with gzip.open(gf_path_input) as dr:
@@ -71,12 +71,43 @@ def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 				if line == "":
 					break
 				score  = line.split('\t')[4]
-				count_in += 1
 				# if the score is >= to the threshold, output that GF
 				if float(score) >= float(thresh_score):
 					bed.write(line+"\n")
-					count_out += 1	
 	sort_convert_to_bgzip(tmp_path,gf_path_output+'.bed.gz')
+
+def filter_by_strand(data_dir,gf_path):
+	''' Read in the gf data from gf_path and create new GFs for each strand.
+	gf_path should be the full path to the gf WITHOUT file extension.
+	data_dir should be the directory containing the database + grsnp_db_[score]
+	'''
+	sub_data_path = gf_path.replace(data_dir+"/","")
+	plus_path, minus_path = os.path.join(data_dir+"_plus/",sub_data_path+'.temp'),os.path.join(data_dir+"_minus/",sub_data_path+'.temp')
+	if not os.path.exists(os.path.split(plus_path)[0]): os.makedirs(os.path.split(plus_path)[0])
+	if not os.path.exists(os.path.split(minus_path)[0]): os.makedirs(os.path.split(minus_path)[0])
+	plus_file,minus_file = open(plus_path,'wb'),open(minus_path,'wb')
+	strand_file = {"+":plus_file,'-':minus_file}
+	with gzip.open(gf_path) as dr:
+		while True:
+			line = dr.readline().strip()
+			if line == "":
+				break
+			strand  = line.split('\t')[5]
+			# check if a valid strand exists and output to the appropriate file.
+			if strand in strand_file:
+				strand_file[strand].write(line+"\n")
+	print plus_path, "|||" ,minus_path
+	plus_file.close()
+	minus_file.close()
+	# remove the  strand filtered gf file if empty 
+	if os.stat(plus_path).st_size==0:
+		os.remove(plus_path)
+	else:
+		sort_convert_to_bgzip(plus_path,os.path.join(os.path.split(plus_path)[0],base_name(plus_path)+'.bed.gz'))
+	if os.stat(minus_path).st_size==0:
+		os.remove(minus_path)
+	else:
+		sort_convert_to_bgzip(minus_path,os.path.join(os.path.split(minus_path)[0],base_name(minus_path)+'.bed.gz'))
 
 
 class MinMax:

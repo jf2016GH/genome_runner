@@ -183,6 +183,16 @@
 								</td>
 							</tr>
 							<tr>
+								<td>
+									Strand selection: 
+									<select name="strand">
+										<option value="both" selected>Both</option>
+										<option value="plus">Plus</option>
+										<option value="minus">Minus</option>
+									</select>					
+								</td>
+							</tr>
+							<tr>
 
 								<td id="td_submit" style="width:90px">
 									<button class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>

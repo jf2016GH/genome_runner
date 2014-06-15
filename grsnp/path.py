@@ -159,7 +159,8 @@ class PathNode(defaultdict):
 	def get_scores(self,data_dir):
 		# find all the folders with GF data including those filtered by score
 		pct_scores = [base_name(name).split('_')[-1] for name in os.listdir(data_dir)
-				if os.path.isdir(os.path.join(data_dir, name)) and "grsnp_db_" in name]
+				if os.path.isdir(os.path.join(data_dir, name)) and "grsnp_db_" in name and 
+														("_plus" not in name and "_minus" not in name)]
 		html = """<select name="pct_score" style="margin-left: 5px; margin-top: 9px" id="pct_score">
 			   <option value=''>None</option>"""
 		pct_scores = sorted(pct_scores)

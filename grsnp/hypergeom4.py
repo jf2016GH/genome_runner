@@ -489,21 +489,20 @@ def validate_filenames(file_paths):
                 invalid.append(os.path.basename(file))
     return invalid
 
-def filter_score(gfs,pct_score):
-    ''' Check the list of GFs to see if they exist in the pct_score filtered database.
-    If it does not, then return the GF path to the non-filtered database. 
-    If pct_score == '', return the GF paths from the non-filtered database.
+
+def get_score_strand_settings(gf_path):
+    ''' Parses the gf_path and determines if gf is filtered by score and/or strand.
     '''
-    if pct_score == "":
-        return gfs
-    new_gfs = []
-    for gf_path in gfs:
-        gf_filtered_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-        if os.path.exists(gf_filtered_path):
-            new_gfs.append(gf_filtered_path)
-        else:
-            new_gfs.append(gf_path)
-    return new_gfs
+    str_strand,str_scorethresh = "Strand: Both","Score threshold: NA"
+    gfsplit = gf_path.split("/grsnp_db_")
+    if len(gfsplit) == 2:
+        str_score_strand = gfsplit[-1].split("/")[0].split("_")
+        for s in str_score_strand:
+            if s.isdigit():
+                str_scorethresh = "Score threshold: " + s
+            else:
+                str_strand = "Strand: " + s
+    return str_strand + "\t" + str_scorethresh
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score=""):
     global formatter
@@ -546,8 +545,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # Read in the paths
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
         gfs = [line for line in read_lines(gfs) if not line.endswith(".tbi")]
-        # check if the GF exists in the database filtered by score
-        gfs = filter_score(gfs,pct_score)
         # check if there are spaces in invalid parts of the file name
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:
@@ -572,10 +569,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         for gf in gfs: 
             current_gf = base_name(gf)      
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
-            str_pct_score = "Score threshold: NA"
-            if '/grsnp_db_{}/'.format(pct_score) in gf:
-                str_pct_score = "Score threshold: {}%".format(pct_score) 
-            write_output("###"+base_name(gf)+"\t"+str_pct_score+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
+            write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs

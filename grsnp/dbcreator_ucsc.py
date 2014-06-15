@@ -562,7 +562,7 @@ if __name__ == "__main__":
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
-	parser.add_argument('--scoreonly','-o', help="Only filter by score. Skips downloading and installing new GFs.", action="store_true")
+	parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
 
 
 
@@ -589,8 +589,8 @@ if __name__ == "__main__":
 	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
-	# if scoreonly is passed, then skip adding new GFs
-	if not args['scoreonly']:
+	# if filteronly is passed, then skip adding new GFs
+	if not args['filteronly']:
 		if args['galaxy']:
 			usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
 			if usrdir == '': 
@@ -616,7 +616,7 @@ if __name__ == "__main__":
 	### Second Step: Create subdirectories for score and filter data by score percentile
 	# create sub directories for score percentiles and populate with score-filtered GF data
 	# gather all directories (groups) in the database
-	print "Filtering GFs by Score"
+	print "Filtering GFs by strand and score..."
 	orgdir = os.path.join(outputdir,args['organism'])
 	dirs = [name for name in os.listdir(orgdir)
 		if os.path.isdir(os.path.join(orgdir, name))]
@@ -627,6 +627,9 @@ if __name__ == "__main__":
 				gfs += [os.path.join(base,f) for f 	 
 					in files if f.endswith(('.gz', '.bb'))]
 		for gf_path in gfs: 
+			print "Filtering {} ...".format(gf_path)
+			# filter the original GF by strand
+			filter_by_strand(outputdir,gf_path)
 			for pct_score in args['score']:		
 				[score_min,score_max] = minmax[base_name(gf_path)].split(",")
 				# calculate threshold score
@@ -636,11 +639,14 @@ if __name__ == "__main__":
 				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
 				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
 				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
-				gf_path_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-				if not os.path.exists(os.path.split(gf_path_out)[0]):
-					os.makedirs(os.path.split(gf_path_out)[0])
-				gf_path_out_woext = os.path.join(os.path.split(gf_path_out)[0],base_name(gf_path_out))
+				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
+					os.makedirs(os.path.split(gf_scorepath_out)[0])
+				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
+				# filter by score
 				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
+				# filter the score filtered GF by strand				
+				filter_by_strand(outputdir+"_{}".format(pct_score),gf_scorepath_out)
 
 
 	root_dir = os.path.dirname(os.path.realpath(__file__))

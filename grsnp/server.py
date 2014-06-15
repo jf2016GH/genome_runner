@@ -103,7 +103,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", score="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
+				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -231,7 +231,10 @@ class WebUI(object):
 			if k.startswith("file:") and v=="on"]
 		with open(gfs,"a") as out_gfs:
 			for g in gfeatures:
-				if (base_name(g) not in list_gfs): out_gfs.write(g+"\n")
+				if (base_name(g) not in list_gfs): 
+					# check if score and/or strand filtered GF data exists
+					g = verify_score_strand(g,kwargs['pct_score'],strand)
+					out_gfs.write(g+"\n")
 				list_gfs.append(base_name(g))
 				
 		for k,v in kwargs.items():
@@ -301,7 +304,8 @@ class WebUI(object):
 					"Organism:": organism,
 					"Database version:":db_version,
 					"Multiple test correction:":padjust,
-					"% Score threshold:": str(kwargs['pct_score'])+"%"}
+					"% Score threshold:": str(kwargs['pct_score'])+"%",
+					"Strand:": strand}
 
 		with open(path, 'wb') as sett_files:
 			for k,v in set_info.iteritems():
@@ -609,6 +613,22 @@ class WebUI(object):
 
 def base_name(k):
     return os.path.basename(k).split(".")[0]
+
+def verify_score_strand(gf_path,pct_score,strand):
+    ''' Checks if a score and/or strand filtered version of gf_path exists in the database and
+    returns the appropriate path if it does.
+    '''
+    gf_score_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}_{}/'.format(pct_score,strand))
+    gf_score_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+    gf_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(strand))
+    if os.path.exists(gf_score_strand_path):
+        return gf_score_strand_path
+    elif os.path.exists(gf_score_path):
+        return gf_score_path
+    elif os.path.exists(gf_strand_path):
+    	return gf_strand_path
+    else:
+    	return gf_path
 
 if __name__ == "__main__":
 	global static_dir,results_dir,media,root_dir,sett,uploads_dir
