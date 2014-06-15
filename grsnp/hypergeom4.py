@@ -18,7 +18,7 @@ import gzip
 import tarfile
 import traceback
 import StringIO
-import dbcreator as bedfilecreator
+import dbcreator_ucsc as bedfilecreator
 import textwrap
 import subprocess
 import sys

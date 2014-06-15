@@ -22,7 +22,7 @@ import simplejson
 import string
 import random
 import traceback
-import dbcreator as uscsreader
+import dbcreator_ucsc as uscsreader
 import argparse
 import shutil
 import subprocess
