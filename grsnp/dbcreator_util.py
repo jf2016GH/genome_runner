@@ -52,7 +52,6 @@ def sort_convert_to_bgzip(path,outpath):
 	script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
 	out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
 	out.wait()
-	print 'remove ',path
 	os.remove(path)# remove the .temp file extension to activate the GF		
 	os.rename(outpath+".gz.temp",outpath)
 
@@ -67,7 +66,7 @@ def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 	with open(tmp_path,"wb") as bed:
 		with gzip.open(gf_path_input) as dr:
 			while True:
-				line = dr.readline().strip()
+				line = dr.readline().rstrip('\n')
 				if line == "":
 					break
 				score  = line.split('\t')[4]
@@ -87,16 +86,15 @@ def filter_by_strand(data_dir,gf_path):
 	if not os.path.exists(os.path.split(minus_path)[0]): os.makedirs(os.path.split(minus_path)[0])
 	plus_file,minus_file = open(plus_path,'wb'),open(minus_path,'wb')
 	strand_file = {"+":plus_file,'-':minus_file}
-	with gzip.open(gf_path) as dr:
+	with gzip.open(gf_path) as dr:		
 		while True:
-			line = dr.readline().strip()
+			line = dr.readline().rstrip('\n')
 			if line == "":
 				break
 			strand  = line.split('\t')[5]
 			# check if a valid strand exists and output to the appropriate file.
 			if strand in strand_file:
 				strand_file[strand].write(line+"\n")
-	print plus_path, "|||" ,minus_path
 	plus_file.close()
 	minus_file.close()
 	# remove the  strand filtered gf file if empty 
@@ -119,10 +117,10 @@ class MinMax:
 
 	def update_minmax(self,n):
 		
-		if n == '.' or not n.isdigit():
-			return
-		else:
-			n = float(n)
+		try:
+			n = float(n)		
+		except ValueError:
+		    return
 		# Assign the first value found to min and max
 		if self.max == None:
 			self.max = n

@@ -143,7 +143,7 @@ def extract_bed5(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0"] # Can't use strand as "."
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()),r["score"] if r["score"] != "." else "0",""] # Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
 					# check if new min or max score found
 					mm.update_minmax(r['score'])
@@ -162,7 +162,7 @@ def extract_bed4(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()).replace(": ",""),"0"] # Can't use strand as ".". Replace ": " is needed for cpgIslandExt
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],''.join(e for e in r["name"] if e.isalnum()).replace(": ",""),"0",""] # Can't use strand as ".". Replace ": " is needed for cpgIslandExt
 					bed.write("\t".join(map(str,row))+"\n")
 		return [mm.str_minmax(),"bed 4"]
 	else:
@@ -179,7 +179,7 @@ def extract_bed3(outputpath,datapath,colnames):
 					if line == "":
 						break
 					r  = dict(zip(colnames,line.split('\t')))
-					row = [r["chrom"],r["chromStart"],r["chromEnd"],"","0"] # Can't use strand as "."
+					row = [r["chrom"],r["chromStart"],r["chromEnd"],"","0",""] # Can't use strand as "."
 					bed.write("\t".join(map(str,row))+"\n")
 		return [mm.str_minmax(),"bed 3"]
 	else:
@@ -559,7 +559,7 @@ if __name__ == "__main__":
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
 	parser.add_argument('--featurenames','-f', nargs="?", help='The names of the specific genomic feature tracks to create, comma separated (Example: knownGene, evoFold)', default="")
-	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int)
+	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created by type (i.e. bed4).",type=int)
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
 	parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
