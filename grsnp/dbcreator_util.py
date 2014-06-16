@@ -15,16 +15,16 @@ def remove_headers(datapath):
 	else:
 		infile,outfile = open(datapath),open(outputpath,'wb')
 	while True:
-		line = infile.readline().strip()
+		line = infile.readline().rstrip('\n')
 		if line == "":
 			break
+		if line[:5] == 'track':
+			continue
 		if line[0].isalnum():
 			outfile.write(line+"\n")
 	infile.close(),outfile.close()
 	os.remove(datapath)
 	os.rename(outputpath,datapath)
-
-
 
 def load_minmax(path):
 	data = {}
