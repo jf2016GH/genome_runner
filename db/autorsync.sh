@@ -8,6 +8,7 @@
 
 while [ 1 ]
 do
+    date
     rsync -avzP rsync://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/* $1
     if [ "$?" = "0" ] ; then
         echo "rsync completed normally"
