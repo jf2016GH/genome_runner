@@ -364,7 +364,7 @@ def encodePath(line): # Generating paths for the ENCODE data tables using groups
 		Tier = 'Tier3'
 		Cell = m3.group()
 	else:
-		Tier = ''
+		Tier = 'Tier3'
 		Cell = ''
 	return os.path.join('ENCODE', grp, Tier, Cell, line.strip())		
 
@@ -529,7 +529,7 @@ def create_galaxy_xml_files(db_dir,outputdir):
 
 
 def _exclude(x):
-	ls = ["Raw","Align","Signal"]
+	ls = ["Raw","Align","Signal","Contig"]
 	for l in ls:
 		if l in x:
 			return True
