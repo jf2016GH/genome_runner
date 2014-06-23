@@ -30,10 +30,10 @@
 			${database_versions}		
 			<h3>GenomeRunner Web: Functional interpretation of SNPs within epigenomic context</h3>
 			<p>
-				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional interpretation of sets of SNPs&nbsp;</span></span><span style="font-family: arial, helvetica, sans-serif; font-size: 16px;">by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for the interpretation of functional roles of SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>), where it identified RFX5 transcription factor binding site as strongly associated with the disease&#39; SNPs.</span></p>
+				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional interpretation of sets of SNPs&nbsp;</span></span><span style="font-family: arial, helvetica, sans-serif; font-size: 16px;">by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for SNPs in non-protein coding regions and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly associated with the disease&#39; SNPs.</span></p>
 				<p>
 					<br />
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As an <a href="result?id=example">output</a>, GenomeRunner Web calculates <a href="help#enrichment">enrichment p-values</a>&nbsp;by evaluating whether a&nbsp;set of SNPs co-localizes with regulatory elements more often that could happen by chance. For three or more sets of SNPs, GenomeRunner Web performs <a href="help#episimilarity">&#39;epigenomic similarity&#39; analysis</a>&nbsp;by correlating set-specific profiles of enrichment p-values. Downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
+					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As <a href="result?id=example">output</a>, GenomeRunner Web calculates <a href="help#enrichment">enrichment p-values</a>&nbsp;by evaluating whether a&nbsp;set of SNPs co-localizes with regulatory elements more often that could happen by chance. For three or more sets of SNPs, GenomeRunner Web performs <a href="help#episimilarity">&#39;epigenomic similarity&#39; analysis</a>&nbsp;by correlating set-specific profiles of enrichment p-values. Downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
 					<p>
 						&nbsp;</p>
 					</div>
@@ -69,6 +69,7 @@
 											<label stlye="float:left">
 												Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Pasting the data, or submitting one set of SNPs, restricts the analysis to the enrichment results only. To get the enrichment and epigenomic similarity heatmaps, upload multiple sets of SNPs as separate files using 'Choose Files' button.
 											</label>
+											<p style="font-size: 120%">Use <a href="https://www.ncbi.nlm.nih.gov/projects/SNP/dbSNP.cgi?list=rslist">NCBI conversion tool</a> to convert rsIDs of SNPs into genomic coordinates.</p>
 										</td>
 									</tr>
 								</table>
@@ -122,7 +123,7 @@
 								</ul>
 								<div id="grfdroplist" style="display: table;">	
 									<label>Enter genome annotation names:</label>
-									<img class="helptooltip" title="Fuzzy search, case sensitive (e.g., H3k4me3, Dnase)" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="Fuzzy search"/>
+									<img class="helptooltip" title="Fuzzy search, case insensitive" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="Fuzzy search"/>
 									<ol style="left: 9px;position: relative; padding-top:10px;padding-bottom:10px;">        
 										<li id="grf-list" class="input-text">
 											<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
@@ -150,8 +151,8 @@
 											</div>
 										</div>
 										<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
-											<label style="width: 100%; margin: 5px;">Genome annotation data (functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
-											<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input> -->
+											<label style="width: 100%; margin: 5px;">Genome annotation data (aka functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
+											<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input>
 										</div>
 
 									</div>
@@ -164,8 +165,9 @@
 					<div class="well">
 						<table width="100%">
 							<tr>
-								<td>
-									P-Value Adjustment:						<select name="padjust" id="padjust">
+								<th width=30% style="vertical-align:bottom">
+									P-Value Adjustment:	
+									<select name="padjust" id="padjust">
 										<option value="None">none</option>
 										<option value="bonferroni">bonferroni</option>
 										<option value="holm">holm</option>
@@ -175,28 +177,27 @@
 										<option value="BY">BY</option>
 										<option value="fdr" selected>fdr</option>
 									</select>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Percent score threshold in percent: ${pct_scores}							
-								</td>
-							</tr>
-							<tr>
-								<td>
+									<img class="helptooltip" title="Sets multiple tests correction method when testing a set of SNPs against multiple genomic features" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								</th>
+								<th width="30%" style="vertical-align:bottom">
+									Percent score threshold: ${pct_scores}
+									<img class="helptooltip" title="Increasing this number filters out more genomic features detected at low level. If a genomic feature does not have a score, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								</th>
+								<th width="30%" style="vertical-align:bottom">
 									Strand selection: 
 									<select name="strand">
 										<option value="both" selected>Both</option>
 										<option value="plus">Plus</option>
 										<option value="minus">Minus</option>
-									</select>					
-								</td>
+									</select>
+									<img class="helptooltip" title="Sets whether or not to use strand-specific genomic annotations, if available. If a genomic feature does not have a strand, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								</th>
 							</tr>
 							<tr>
 
 								<td id="td_submit" style="width:90px">
 									<button class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
-									<img class="helptooltip" title="Submits the job for enrichment/epigenomic association analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<img class="helptooltip" title="Submits the job for enrichment/epigenomic similarity analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								</td>
 								<td id="td_submit" style="width:170px">
 									<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
