@@ -274,7 +274,7 @@ def cluster_matrix(input_path,output_path):
     saved_stdout, saved_stderr = sys.stdout, sys.stderr
     sys.stdout = sys.stderr = open(os.devnull, "w")
     r_script = """t5 = as.matrix(read.table("{}"))                     
-                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.0001) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
                         # Log transform matrix and keep correct sign
                         for (i in 1:nrow(t5)) {{
