@@ -120,7 +120,6 @@ class WebUI(object):
 		list_gfs = []
 
 		cherrypy.response.timeout = 3600
-
 		try:
 			jobname = kwargs["jobname"]
 		except Exception, e:
@@ -229,6 +228,14 @@ class WebUI(object):
 		organism,run,run_random,run_annotation = "",[],False,False
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
+
+
+		# gather genomic features from autocomplete textbox
+		textbox_gfs = [v for k,v in kwargs.items() if k == 'gfs[]'] # find the 'gfs[]' item in kwargs (contains textbox gfs)
+		if len(textbox_gfs) >0:
+			gfeatures = gfeatures + [x[5:] for x in textbox_gfs[0]]
+		gfeatures = set(gfeatures) # remove GFs checked in checkbox tree and also added in textbox
+
 		with open(gfs,"a") as out_gfs:
 			for g in gfeatures:
 				if (base_name(g) not in list_gfs): 
