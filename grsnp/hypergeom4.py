@@ -353,9 +353,26 @@ def get_annotation(foi,gfs):
     gfs: filepaths for GF
     """
     results = []
-    out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE) # TODO enable ["--print-region-name"]
-    out.wait()
-    return out.stdout.read()
+    out = ""
+    try:
+        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+        out.wait()
+        tmp = out.stdout.read()
+        tmp_er = out.stderr.read()
+        if tmp_er != "": logger.error(tmp_er)
+        if tmp[:6] == "ERROR:": 
+            logger.error(tmp[7:])
+            raise Exception(tmp)
+
+    except Exception, e:
+        logger.error(traceback.format_exc())
+        return tmp
+    return tmp
+
+
+
+
+
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
@@ -504,6 +521,23 @@ def get_score_strand_settings(gf_path):
                 str_strand = "Strand: " + s
     return str_strand + "\t" + str_scorethresh
 
+def sort_fois(fois):
+    out = ""
+    try: 
+        for f in fois:    
+            script =  "sort -k1,1 -k2,2n " + '-o ' +f+' '+ f
+            out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+            out.wait()
+            tmp = out.stdout.read()
+            tmp_er = out.stderr.read()
+            if tmp_er != "":
+                logger.error(tmp_er)
+                raise Exception(tmp_er) 
+
+    except Exception, e:
+        logger.error(traceback.format_exc())
+
+
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score=""):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
@@ -556,6 +590,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
             return
 
+        # sort FOIs
+        sort_fois(fois)
         foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
@@ -607,7 +643,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         else:
             with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
                 wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
-        writer = open(os.path.join(outdir,"out.txt"),'wb')
+
         if run_annotation:
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
