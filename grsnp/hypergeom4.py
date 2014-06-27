@@ -55,6 +55,9 @@ def get_overlap_statistics(gf,fois):
     """
     results = []
     out = ""
+    logger.info("gfs "+str(gf)
+        )
+    logger.info(fois)
     try:
         # Runs overlapStatistics with preprocessed background stats if they exist
         out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -466,7 +469,13 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
             z_ano.write(os.path.join(anno_dir,f),f)
         z_ano.close()
 
-        
+    # zip processed FOIs directory
+    proc_dir = os.path.join(outdir,'processed_fois')
+    if os.path.exists(proc_dir):
+        z_ano = zipfile.ZipFile(os.path.join(outdir,'processed_fois.zip'),'a')
+        for f in os.listdir(proc_dir):
+            z_ano.write(os.path.join(proc_dir,f),f)
+        z_ano.close()
 
     f = open(os.path.join(outdir,"gr_log.txt"))
     f_log = f.read()
@@ -521,11 +530,28 @@ def get_score_strand_settings(gf_path):
                 str_strand = "Strand: " + s
     return str_strand + "\t" + str_scorethresh
 
-def sort_fois(fois):
+def preproces_fois(fois,output_dir):
+    processed_fois = []
+    output_dir = os.path.join(output_dir,'processed_fois')
+
+    # Sort the fois 
     out = ""
     try: 
         for f in fois:    
-            script =  "sort -k1,1 -k2,2n " + '-o ' +f+' '+ f
+            # copy the FOI to the output_dir
+            out_f = os.path.join(output_dir,os.path.split(f)[1]) # the processed foi file
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+            out.wait()             
+            tmp_er = out.stderr.read()
+            if tmp_er != "":
+                logger.error(tmp_er)
+                raise Exception(tmp_er) 
+            # remove the header from the files
+            grsnp_util.remove_headers(out_f)
+            # Sort the FOI
+            script =  "sort -k1,1 -k2,2n " + '-o ' +out_f+' '+ out_f
             out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
             out.wait()
             tmp = out.stdout.read()
@@ -533,9 +559,14 @@ def sort_fois(fois):
             if tmp_er != "":
                 logger.error(tmp_er)
                 raise Exception(tmp_er) 
+            processed_fois.append(out_f)
 
     except Exception, e:
+        logger.error("Error while sorting the FOIs")
         logger.error(traceback.format_exc())
+        raise Exception(e)
+    return processed_fois
+
 
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score=""):
@@ -590,9 +621,13 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
             return
 
-        # sort FOIs
-        sort_fois(fois)
-        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
+        # pre-process the FOIs
+        logger.info('Starting pre processing')
+        fois = preproces_fois(fois,output_dir)
+        logger.info('Finished pre processing')
+        logger.info(fois)
+        # Validate FOIs against background. Also get the size of the background (n_bgs)
+        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
