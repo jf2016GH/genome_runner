@@ -53,7 +53,7 @@ class WebUI(object):
 				custom_dir = os.path.join(os.path.split(db_dir)[0],"custom_data")
 				logger.info("Processing genomic features for {}".format(org))
 				if not os.path.exists(custom_dir): os.mkdir(custom_dir)
-				cust_sub_dir = ["backgrounds","gfs","fois"]
+				cust_sub_dir = ["backgrounds","gfs","fois","rsid_conversion"]
 				for c in cust_sub_dir:
 					tmp = os.path.join(custom_dir,c)
 					if not os.path.exists(tmp): os.mkdir(tmp)

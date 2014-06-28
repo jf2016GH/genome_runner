@@ -55,9 +55,6 @@ def get_overlap_statistics(gf,fois):
     """
     results = []
     out = ""
-    logger.info("gfs "+str(gf)
-        )
-    logger.info(fois)
     try:
         # Runs overlapStatistics with preprocessed background stats if they exist
         out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -421,6 +418,8 @@ def check_background_foi_overlap(bg,fois):
     Removes FOIs that are poorly formed with the background.
     """
     good_fois = []
+    if len(fois) == 0:
+        return [[],[]]
     # Runs overlapStatistics on background and FOIs
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
@@ -530,7 +529,30 @@ def get_score_strand_settings(gf_path):
                 str_strand = "Strand: " + s
     return str_strand + "\t" + str_scorethresh
 
-def preproces_fois(fois,output_dir):
+def validate_rsids(foi_path):
+    ''' Checks if the first line is contains an rsIDs. If it does, the file is sorted
+    '''   
+    if foi_path.endswith('.gz'):
+        infile = gzip.open(foi_path)
+    else:
+        infile = open(foi_path)
+    line = infile.readline().rstrip('\n')
+    infile.close()
+    if line[:2] == 'rs':
+        # sort the rsIDs in place
+        script =  "sort -k1,1 " + '-o ' +foi_path+' '+ foi_path
+        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out.wait()
+        tmp = out.stdout.read()
+        tmp_er = out.stderr.read()
+        if tmp_er != "":
+            logger.error(tmp_er)
+            raise Exception(tmp_er) 
+        return True
+    else:
+        return False
+
+def preprocess_fois(fois,output_dir,gr_data_dir,organism):
     processed_fois = []
     output_dir = os.path.join(output_dir,'processed_fois')
 
@@ -542,17 +564,41 @@ def preproces_fois(fois,output_dir):
             out_f = os.path.join(output_dir,os.path.split(f)[1]) # the processed foi file
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             out.wait()             
-            tmp_er = out.stderr.read()
-            if tmp_er != "":
-                logger.error(tmp_er)
-                raise Exception(tmp_er) 
             # remove the header from the files
             grsnp_util.remove_headers(out_f)
-            # Sort the FOI
+
+            # Check if items are rsIDs. Convert to bed coordinates if they are
+            if validate_rsids(f):
+                # check if a file exists in the database for rsID conversion and construct the path to it
+                rsid_path = os.path.join(os.path.split(gr_data_dir)[0],'custom_data','rsid_conversion',organism)
+                if not os.path.exists(rsid_path):
+                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                    return []
+                files = [f for f in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,f)) and f.endswith('.bed')]
+                # if conversion files found, perform conversion
+                if len(files) > 0:
+                    rsid_path = os.path.join(rsid_path,files[0])
+                    script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | awk '{{sub(/\ /,"\t")}};1' > {}.temp""".format(out_f,rsid_path,out_f)
+                    out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()             
+                    tmp_er = out.stderr.read()
+                    if tmp_er != "":
+                        logger.error(tmp_er)
+                        raise Exception(tmp_er)
+                    # we remove the original out_f FOI file and replace with the out_f.temp created with the join command above
+                    os.remove(out_f)
+                    out = subprocess.Popen(['cp {} {}'.format(out_f+'.temp',out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()  
+                    os.remove(out_f+'.temp')
+                else:
+                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                    return []
+
+            # sort the FOI
             script =  "sort -k1,1 -k2,2n " + '-o ' +out_f+' '+ out_f
-            out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+            out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             out.wait()
             tmp = out.stdout.read()
             tmp_er = out.stderr.read()
@@ -562,7 +608,7 @@ def preproces_fois(fois,output_dir):
             processed_fois.append(out_f)
 
     except Exception, e:
-        logger.error("Error while sorting the FOIs")
+        logger.error("Error while processing the FOIs")
         logger.error(traceback.format_exc())
         raise Exception(e)
     return processed_fois
@@ -580,7 +626,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     logger.setLevel(logging.INFO)
     output_dir = outdir
     curprog,progmax = 0,1
-    organism = ""
+    organism = "" # this is loaded from the settings file created by the server
 
     logger.info("P_value adjustment used: {}".format(padjust))
 
@@ -614,18 +660,19 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:
             logger.error("The following file(s) have invalid file names, cannot have space before/in file extension:\n" + "\n".join(invalid_names))
-            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run.")
+            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
             return         
         if bg_path.endswith(".tbi"):
             logger.error("Background has invalid extension (.tbi). Terminating run.")
-            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
+            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.")
             return
 
         # pre-process the FOIs
-        logger.info('Starting pre processing')
-        fois = preproces_fois(fois,output_dir)
-        logger.info('Finished pre processing')
-        logger.info(fois)
+        fois = preprocess_fois(fois,output_dir,gr_data_dir,organism)
+        if len(fois) == 0:
+            logger.error('No valid FOIs to supplied')
+            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
+            return
         # Validate FOIs against background. Also get the size of the background (n_bgs)
         foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
