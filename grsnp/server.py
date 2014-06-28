@@ -230,10 +230,13 @@ class WebUI(object):
 			if k.startswith("file:") and v=="on"]
 
 
-		# gather genomic features from autocomplete textbox
-		textbox_gfs = [v for k,v in kwargs.items() if k == 'gfs[]'] # find the 'gfs[]' item in kwargs (contains textbox gfs)
-		if len(textbox_gfs) >0:
-			gfeatures = gfeatures + [x[5:] for x in textbox_gfs[0]]
+		# gather genomic features from autocomplete textbox. A single item is passed a string, but multiple items are passed as a list		
+		if 'gfs[]' in kwargs.keys():
+			if isinstance(kwargs['gfs[]'],list):
+				gfeatures = gfeatures + [x[5:] for x in kwargs['gfs[]']]
+			else:
+				gfeatures = gfeatures + [kwargs['gfs[]'][5:]]
+
 		gfeatures = set(gfeatures) # remove GFs checked in checkbox tree and also added in textbox
 
 		with open(gfs,"a") as out_gfs:
