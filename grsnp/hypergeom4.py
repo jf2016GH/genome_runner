@@ -580,7 +580,7 @@ def preprocess_fois(fois,output_dir,gr_data_dir,organism):
                 # if conversion files found, perform conversion
                 if len(files) > 0:
                     rsid_path = os.path.join(rsid_path,files[0])
-                    script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | awk '{{sub(/\ /,"\t")}};1' > {}.temp""".format(out_f,rsid_path,out_f)
+                    script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(out_f,rsid_path,out_f)
                     out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                     out.wait()             
                     tmp_er = out.stderr.read()
