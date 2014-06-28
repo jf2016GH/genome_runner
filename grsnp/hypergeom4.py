@@ -570,13 +570,13 @@ def preprocess_fois(fois,output_dir,gr_data_dir,organism):
             grsnp_util.remove_headers(out_f)
 
             # Check if items are rsIDs. Convert to bed coordinates if they are
-            if validate_rsids(f):
+            if validate_rsids(out_f):
                 # check if a file exists in the database for rsID conversion and construct the path to it
                 rsid_path = os.path.join(os.path.split(gr_data_dir)[0],'custom_data','rsid_conversion',organism)
                 if not os.path.exists(rsid_path):
                     logger.error('rsID conversion not available for this organism. Analysis terminated.') 
                     return []
-                files = [f for f in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,f)) and f.endswith('.bed')]
+                files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
                 # if conversion files found, perform conversion
                 if len(files) > 0:
                     rsid_path = os.path.join(rsid_path,files[0])
