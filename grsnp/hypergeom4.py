@@ -745,6 +745,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         if zip_run_files:
             _write_progress("Preparing run files for download")
             _zip_run_files(fois,gfs,bg_path,outdir,job_name)
+        curprog,progmax = 1,1
         _write_progress("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
