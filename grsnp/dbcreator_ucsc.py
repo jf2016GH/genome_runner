@@ -342,6 +342,7 @@ preparebed = {"bed 6" : extract_bed6,
 numdownloaded = collections.defaultdict(int)
 
 def encodePath(line): # Generating paths for the ENCODE data tables using groups, tiers, and cell types
+#	ENCODE = re.compile('AffyRnaChipFiltTransfrags|AffyRnaChipTransfrags|AwgDnaseDuke|AwgDnaseUw|AwgSegmentationChromhmm|AwgTfbsBroad|AwgTfbsHaib|AwgTfbsSydh|AwgTfbsUchicago|AwgTfbsUta|AwgTfbsUw|BroadHistone|BroadHmm|CshlLongRnaSeq|CshlShortRnaSeq|GisChiaPet|GisRnaPet|HaibGenotype|HaibMethyl450|HaibMethylRrbs|HaibTfbs|LicrHistone|LicrTfbs|OpenChromSynth|OpenChromChip|PsuHistone|PsuTfbs|RikenCage|SydhHistone|SydhTfbs|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwAffyExonArray|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs')
 	ENCODE = re.compile('AffyRnaChipFiltTransfrags|BroadHistone|BroadHmm|GisChiaPet|GisRnaPet|HaibMethyl450|HaibGenotype|HaibMethylRrbs|HaibTfbs|OpenChromSynth|RikenCage|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwAffyExonArray|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs|CshlLongRnaSeq|CshlShortRnaSeq|LicrHistone|LicrTfbs|PsuHistone|PsuTfbs')
 	CELLS1 = re.compile('Gm12878|K562|H1hesc')
 	CELLS2 = re.compile('A549|Cd20ro01778|Cd20ro01794|Cd20|H1neurons|Helas3|Hepg2|Huvec|Imr90|Lhcnm2|Mcf7|Monocd14ro1746|Sknsh')
