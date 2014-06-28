@@ -735,7 +735,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
                     anot = get_annotation(f,gfs).split("\n")
                     anot[0] = anot[0].replace("Region\t\t","Region\t")
-                    wr.write("\t".join(base_name(x) for x in anot[0].split("\t")) + "\tTotal")
+                    wr.write("Region"+"\t"+"\t".join(base_name(x) for x in reversed(anot[0].split("\t")[1:])) + "\tTotal") # annotationAnalysis column order is reverse of input order
                     for ind, a in enumerate(anot[1:]):
                         if a.strip() != "":
                             cur_row = a.split("\t")

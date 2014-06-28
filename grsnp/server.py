@@ -103,7 +103,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
+				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=True, default_background = "",db_version=None,padjust = "None",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -225,7 +225,7 @@ class WebUI(object):
 		# have been checked.
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
-		organism,run,run_random,run_annotation = "",[],False,False
+		organism,run,run_random,run_annotation = "",[],False,True
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 
