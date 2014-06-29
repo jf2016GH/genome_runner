@@ -563,7 +563,7 @@ if __name__ == "__main__":
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created by type (i.e. bed4).",type=int)
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
-	parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
+	#parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
 
 
 

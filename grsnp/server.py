@@ -348,7 +348,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'])
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
@@ -645,8 +645,8 @@ if __name__ == "__main__":
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
-	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/grsnp_db/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
-	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grsnp_db/.", default="")
+	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/db_#.##_#.##.####/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
+	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
 	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
