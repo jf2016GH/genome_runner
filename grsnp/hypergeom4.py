@@ -560,7 +560,10 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
     try: 
         for f in fois:    
             # copy the FOI to the output_dir
-            out_f = os.path.join(output_dir,os.path.split(f)[1]) # the processed foi file
+            out_fname = os.path.split(f)[1]
+            if not out_fname.endswith('.bed'):
+                out_fname = base_name(out_fname)+".bed"
+            out_f = os.path.join(output_dir,out_fname) # the processed foi file
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
             out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
