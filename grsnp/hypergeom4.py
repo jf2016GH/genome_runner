@@ -575,7 +575,6 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
             if validate_rsids(out_f):
                 # check if a file exists in the database for rsID conversion and construct the path to it
                 rsid_path = os.path.join(os.path.split(gr_data_dir)[0],'custom_data','rsid_conversion',organism)
-                logger.info(rsid_path)
                 if not os.path.exists(rsid_path):
                     logger.error('rsID conversion not available for this organism. Analysis terminated.') 
                     return []
