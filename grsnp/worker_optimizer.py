@@ -29,15 +29,17 @@ def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None,**kwargs):
 	full_gf_path = os.path.join(data_dir,gf_path)
 	full_bkg_paths = [os.path.join(data_dir,x) for x in list_bkg_paths]
 	try:
-		missing_files = get_missing_files([full_gf_path] + list_bkg_paths)
+		missing_files = get_missing_files([full_gf_path] + full_bkg_paths)
 		if not missing_files:
-			gf_bgs_stats = hpgm.get_overlap_statistics(full_gf_path,list_bkg_paths)
+			gf_bgs_stats = hpgm.get_overlap_statistics(full_gf_path,full_bkg_paths)
 			return {full_gf_path: gf_bgs_stats}		
 		else:
 			raise Exception("gf/background data files not found: " + str(missing_files))
 	except Exception as exc:
+		print exc
 		return "ERROR: \"" + str(exc) + "\" while processing " + gf_path
-		
+
+
 
 # process command line arguments if they exist
 @signals.user_preload_options.connect
@@ -51,7 +53,7 @@ def cmd_options(options,**kwargs):
 def get_missing_files(paths):
 	'''Returns a list of any files that are missing. Returns false if all files are there.
 	'''
-	missing_files = False
+	missing_files = []
 	for f in paths:
 		if not os.path.exists(f):
 			missing_files.append(f)

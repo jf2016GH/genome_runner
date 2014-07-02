@@ -18,7 +18,7 @@ logger = logging.getLogger()
 
 
 
-def create_bkg_gf_overlap_db(gf_dir,background_dir):
+def create_bkg_gf_overlap_db(gf_dir,background_dir,data_dir):
 	""" Used to precalculate the overlapStatistics for the GFs against each of the
 	default backgrounds.
 	"""
@@ -26,39 +26,39 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	gf_bg_stats,list_completed_gfs = {},[]
 	all_gfs = []
 	backgrounds,gfs=[],[]
-	db_path = os.path.join(gf_dir,"bkg_overlaps.gr")
-
+	db_path = os.path.join(data_dir,gf_dir,"bkg_overlaps.gr")
+	full_gf_dir = os.path.join(data_dir,gf_dir)
+	full_background_dir = os.path.join(data_dir,background_dir)
 
 	# Read in all completed GF in the partially completed bkg_overlaps file
 	if os.path.exists(db_path):
 		list_completed_gfs = [x.split("\t")[0] for x in open(db_path).read().split("\n")] 
-
 	# gather all directories (groups) in the database
-	dirs = [name for name in os.listdir(gf_dir)
-		if os.path.isdir(os.path.join(gf_dir, name))]
+	dirs = [name for name in os.listdir(full_gf_dir)
+		if os.path.isdir(os.path.join(full_gf_dir, name))]
 
 	# Gather backgrounds paths
-	backgrounds = [os.path.join(background_dir, f) for f in os.listdir(background_dir) if f.endswith(('.gz', '.bb',".txt",".bed"))]
+	backgrounds = [os.path.join(background_dir, f) for f in os.listdir(full_background_dir) if f.endswith(('.gz', '.bb',".txt",".bed"))]
 
-	cur_prog,prog_max = 1,_count_gfs(gf_dir)
+	cur_prog,prog_max = 1,_count_gfs(full_gf_dir)
 	# Process each category of GFs
 	for d in dirs:
 		logger.info("Running overlapStatistics for all GFs in {}".format(gf_dir))
 		# Gather gfs paths
 		gfs = []
-		for base, d, files in os.walk(os.path.join(gf_dir,d)):
-				gfs += [os.path.join(base, f) for f 
-					in files if f.endswith(('.gz', '.bb'))]		
+		for base, d, files in os.walk(os.path.join(full_gf_dir,d)):
+				partial_base = base.replace(data_dir,"") # get the relative path of the database
+				gfs += [os.path.join(partial_base, f) for f 
+					in files if f.endswith(('.gz', '.bb'))]	
 		all_gfs += [x for x in gfs if x not in list_completed_gfs]
 		prog_gf  = 1
 	# Run overlap analysis using Celery
-	print "GFS to process: ", all_gfs
 	results = group(worker_opt.calculate_bkg_gf_overlap.s(gf_path=g,list_bkg_paths=backgrounds) for g in all_gfs)()
 	while not results.ready():
 		print "{} of {} completed".format(results.completed_count(),len(all_gfs))
 		sleep(5.0)
 
-	results = results.get()
+	results = results.join()
 	write_results(results,db_path)
 
 def write_results(results,outputpath):
@@ -136,20 +136,14 @@ if __name__ == "__main__":
 	grdb_dirs = [os.path.join(args["data_dir"],name) for name in os.listdir(args["data_dir"])
 			if os.path.isdir(os.path.join(args["data_dir"], name)) and "grsnp_db" in name]
 	for gr_dir in grdb_dirs:
-		# Ask if use wants to continue partially run optimization
-		path_tmp = os.path.join(gr_dir,"grsnp_db",args["organism"],"bkg_overlaps.gr") + ".tmp"
-		if os.path.exists(path_tmp):
-			in_var = raw_input("Temporary file exists at {}. Do you want to continue (yes) or start from scratch (no)?".format(path_tmp))
-			if in_var.lower() == "no": 
-				os.remove(path_tmp)
 
-		background_dir = os.path.join(args["data_dir"],"custom_data","backgrounds",args["organism"])
-		gfs_dir = os.path.join(gr_dir,args["organism"])
-		if not os.path.exists(gfs_dir):
+		background_dir = os.path.join("custom_data","backgrounds",args["organism"])
+		gfs_dir = os.path.join(os.path.split(gr_dir)[1],args["organism"])
+		if not os.path.exists(os.path.join(args['data_dir'], gfs_dir)):
 			print "ERROR: grsnp_db does not exist.  Use grsnp.dbcreator to create a database."
 			sys.exit()
-		if not os.path.exists(background_dir):
+		if not os.path.exists(os.path.join(args['data_dir'],background_dir)):
 			print "ERROR: No backgrounds found in default background directory {}.  Please add backgrounds.".format(background_dir)
 			sys.exit()
 		logger.info("Pre calculating statistics for GR database in")
-		create_bkg_gf_overlap_db(gf_dir=gfs_dir,background_dir=background_dir)
+		create_bkg_gf_overlap_db(gf_dir=gfs_dir,background_dir=background_dir,data_dir=args['data_dir'])
