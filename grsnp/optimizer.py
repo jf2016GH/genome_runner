@@ -57,10 +57,9 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	while not results.ready():
 		print "READY: ", results.ready()," waiting: ", results.waiting()," failed: ",results.failed()
 		print "{} of {} completed".format(results.completed_count(),len(all_gfs))
-		sleep(10.0)
+		sleep(5.0)
 
 	results = results.get()
-	print results
 	write_results(results,db_path)
 
 def write_results(results,outputpath):
@@ -76,6 +75,9 @@ def write_results(results,outputpath):
 
 	with open(outputpath+".tmp",'wb') as writer:
 		for res in results:
+			if "ERROR:" in res[5:]:
+				logger.error(res)
+				continue
 			gf = res.keys()[0]
 			stats = res[gf]
 			print "GF: ", gf
