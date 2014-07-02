@@ -10,6 +10,7 @@ import pdb
 from celery import group
 import celeryconfiguration_optimizer
 from time import sleep
+import atexit
 
 # connection information for the ucsc ftp server
 logger = logging.getLogger()
@@ -52,18 +53,24 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 		prog_gf  = 1
 	# Run overlap analysis using Celery
 	print "GFS to process: ", all_gfs
-	results = group(worker_opt.calculate_bkg_gf_overlap.s(g,backgrounds) for g in all_gfs)()
+	results = group(worker_opt.calculate_bkg_gf_overlap.s(gf_path=g,list_bkg_paths=backgrounds) for g in all_gfs)()
 	while not results.ready():
-		sleep(2.0)
+		print "{} of {} completed".format(results.completed_count(),len(all_gfs))
+		sleep(10.0)
 	results = results.join()
-	print "Results ", results
 	write_results(results,db_path)
-	logger.info("Completed.")
 
 def write_results(results,outputpath):
 	''' Results are written out to a temporary file which replaces the existing file if after successfully
 	being written.
+
+	NOTES:
+	Results data structure is as follows:
+		[{gf1_path: [{background1_overlapstatistics},{background2_overlapstatistics} ...]},
+		 {gf2_path: [{background1_overlapstatistics},{background2_overlapstatistics} ...]} ...
+		]
 	'''
+
 	with open(outputpath+".tmp",'wb') as writer:
 		for res in results:
 			gf = res.keys()[0]
@@ -76,7 +83,6 @@ def write_results(results,outputpath):
 	if os.path.exists(outputpath):
 		os.remove(outputpath)
 	os.rename(outputpath+".tmp",outputpath)
-	print results
 
 def _count_gfs(grsnp_db):
 	x = 0
@@ -85,6 +91,12 @@ def _count_gfs(grsnp_db):
 			if f.endswith(".bed.gz"):
 				x = x+1
 	return x
+
+def shutdown_workers():
+	# kill all existing optimizer workers
+	script = "ps auxww | grep  -E '*grsnp.worker_optimizer' | awk '{print $2}' | xargs kill -9"
+	out = subprocess.Popen(script,shell=True)
+	out.wait()
 
 
 if __name__ == "__main__":
@@ -104,18 +116,16 @@ if __name__ == "__main__":
 	logger.addHandler(hdlr_std)
 	logger.setLevel(logging.INFO)
 
+	atexit.register(shutdown_workers) # shutdown workers on termination
+
 	# start redis server
 	script = ["redis-server", "--port", str(celeryconfiguration_optimizer.redis_port)]
 	fh = open("redis.log","w")
 	out = subprocess.Popen(script,stdout=fh,stderr=fh)
-	# kill all existing optimizer workers
-	script = "ps auxww | grep  -E 'worker.*grsnp_optimizer' | awk '{print $2}' | xargs kill -9"
-	out = subprocess.Popen(script,shell=True)
-	out.wait()
 	for i in range(args["num_workers"]):
 		fh = open("worker{}.log".format(i),"w")
-		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
-		#out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp_optimizer{}.%h".format(i)]
+		out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	print "Redis backend URL: ", celeryconfiguration_optimizer.CELERY_RESULT_BACKEND
 
 	# find all the folders with GF data including those filtered by score
@@ -139,4 +149,3 @@ if __name__ == "__main__":
 			sys.exit()
 		logger.info("Pre calculating statistics for GR database in")
 		create_bkg_gf_overlap_db(gf_dir=gfs_dir,background_dir=background_dir)
-
