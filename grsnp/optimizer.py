@@ -24,6 +24,9 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	backgrounds,gfs=[],[]
 	db_path = os.path.join(gf_dir,"bkg_overlaps.gr")
 	db_path_tmp = db_path + ".tmp"
+	if os.path.exists(db_path):
+		logger.info(db_path + " already exists. Skipping.")
+		return
 
 
 	# Read in all completed GF in the partially completed bkg_overlaps file
