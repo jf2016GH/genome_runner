@@ -111,7 +111,7 @@ if __name__ == "__main__":
 	parser.add_argument("--num_workers", "-w", type=int, help="The number of local celery workers to start. Default: 1", default=1)	
 	args = vars(parser.parse_args())
 
-	hdlr = logging.FileHandler(os.path.join(args["data_dir"],'genomerunner_dbcreator.log'))
+	hdlr = logging.FileHandler(os.path.join(args["data_dir"],'genomerunner_optimizer.log'))
 	hdlr_std = StreamHandler()
 	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 	hdlr.setFormatter(formatter)
@@ -121,14 +121,14 @@ if __name__ == "__main__":
 	logger.setLevel(logging.INFO)
 
 	atexit.register(shutdown_workers) # shutdown workers on termination
-
+	logger.info('Running optimization')
 	# start redis server
 	script = ["redis-server", "--port", str(celeryconfiguration_optimizer.redis_port)]
 	fh = open("redis.log","w")
 	out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	for i in range(args["num_workers"]):
 		fh = open("worker{}.log".format(i),"w")
-		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp_optimizer{}.%h".format(i)]
+		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp_optimizer{}.%h".format(i),'--data_dir',args['data_dir']]
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	print "Redis backend URL: ", celeryconfiguration_optimizer.CELERY_RESULT_BACKEND
 
