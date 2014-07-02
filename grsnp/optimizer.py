@@ -75,7 +75,7 @@ def write_results(results,outputpath):
 
 	with open(outputpath+".tmp",'wb') as writer:
 		for res in results:
-			if "ERROR:" in res[5:]:
+			if isinstance(res,str):
 				logger.error(res)
 				continue
 			gf = res.keys()[0]
