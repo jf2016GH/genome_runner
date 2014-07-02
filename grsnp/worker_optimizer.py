@@ -2,7 +2,7 @@ from celery import Celery
 from celery import signals
 import grsnp.hypergeom4 as hpgm
 from celery.bin import Option
-from celery.exceptions import Reject
+from celery.exceptions import Reject, MaxRetriesExceededError
 import os
 
 
@@ -17,8 +17,8 @@ app.user_options['preload'].add(
 sett = {}
 
 # acks_late allows us to remove jobs for which we do not have the corresponding data
-@app.task(acks_late=True,ignore_result = False)
-def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None):
+@app.task(acks_late=True,ignore_result = False,max_retries =5)
+def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None,**kwargs):
 	"""Calculates the overlaps stats between the genomic feature and the backgrounds provided.
 
 	gf_path: The relative path to the genomic feature bed file. EX: 'grsnp_db_75_plus/hg19/genes/evofold.bed.gz'
@@ -36,13 +36,17 @@ def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None):
 		else:
 			raise Exception("gf/background data files not found: " + str(missing_files))
 	except Exception as exc:
-		raise Reject(ex)
+		calculate_bkg_gf_overlap.retry(exc=e, countdown=5)
+	except MaxRetriesExceededError as exc:
+		return "ERROR"
+		
 
 # process command line arguments if they exist
 @signals.user_preload_options.connect
 def cmd_options(options,**kwargs):
 	global sett
 	sett["data_dir"] = options['data_dir']
+
 
 
 
