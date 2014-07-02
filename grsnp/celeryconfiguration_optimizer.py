@@ -1,7 +1,6 @@
-BROKER_TRANSPORT = "redis"
-
 db_num = "0"         # Maps to database number.
-BROKER_URL = "redis://localhost:7775/" + db_num
+redis_port = 7775
+BROKER_URL = "redis://localhost:{}/".format(redis_port) + db_num
 
 # Workers should run as an unprivileged user.
 CELERYD_USER="ubuntu"

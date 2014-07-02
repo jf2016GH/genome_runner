@@ -1,5 +1,5 @@
 from celery import Celery
-import grsnp.optimizer
+import grsnp.hypergeom4 as hpgm
 from celery.bin import Option
 from celery.exceptions import Reject
 import os
@@ -8,7 +8,7 @@ import os
 # celery
 app = Celery('grsnp')
 app.config_from_object('grsnp.celeryconfiguration_optimizer')
-data_dir = " /home/lukas/Documents/db_1.00_05.12.2014"
+data_dir = "/home/lukas/Documents/db_1.00_05.12.2014"
 
 
 # acks_late allows us to remove jobs for which we do not have the corresponding data
@@ -21,13 +21,13 @@ def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None):
 	"""
 
 	# 
-	gf_path = os.path.join(data_dir,gf_path)
-	list_bkg_paths = [os.path.join(data_dir,x) for x in list_bkg_paths]
+	full_gf_path = os.path.join(data_dir,gf_path)
+	full_bkg_paths = [os.path.join(data_dir,x) for x in list_bkg_paths]
 	try:
-		missing_files = get_missing_files([gf_path] + list_bkg_paths)
+		missing_files = get_missing_files([full_gf_path] + list_bkg_paths)
 		if not missing_files:
-			gf_bgs_stats = hpgm.get_overlap_statistics(gf_path,list_bkg_paths)
-			return {gf_path: gf_bgs_stats}		
+			gf_bgs_stats = hpgm.get_overlap_statistics(full_gf_path,list_bkg_paths)
+			return {full_gf_path: gf_bgs_stats}		
 		else:
 			raise Exception("gf/background data files not found: " + str(missing_files))
 	except Exception as exc:

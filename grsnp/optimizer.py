@@ -5,8 +5,11 @@ import os
 import gzip
 import subprocess
 import argparse
-import hypergeom4 as hpgm
+from grsnp import worker_optimizer as worker_opt
 import pdb
+from celery import group
+import celeryconfiguration_optimizer
+from time import sleep
 
 # connection information for the ucsc ftp server
 logger = logging.getLogger()
@@ -23,12 +26,11 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	all_gfs = []
 	backgrounds,gfs=[],[]
 	db_path = os.path.join(gf_dir,"bkg_overlaps.gr")
-	db_path_tmp = db_path + ".tmp"
 
 
 	# Read in all completed GF in the partially completed bkg_overlaps file
-	if os.path.exists(db_path_tmp):
-		list_completed_gfs = [x.split("\t")[0] for x in open(db_path_tmp).read().split("\n")] 
+	if os.path.exists(db_path):
+		list_completed_gfs = [x.split("\t")[0] for x in open(db_path).read().split("\n")] 
 
 	# gather all directories (groups) in the database
 	dirs = [name for name in os.listdir(gf_dir)
@@ -45,30 +47,36 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 		gfs = []
 		for base, d, files in os.walk(os.path.join(gf_dir,d)):
 				gfs += [os.path.join(base, f) for f 
-					in files if f.endswith(('.gz', '.bb'))]
-		# create empty list entries for each gf
-		for g in gfs:
-			gf_bg_stats[g] = []
-		all_gfs += gfs
+					in files if f.endswith(('.gz', '.bb'))]		
+		all_gfs += [x for x in gfs if x not in list_completed_gfs]
 		prog_gf  = 1
-		# Run overlap analysis for each GF (g) and save to results in dictionary with key equal to 'g'
-		for g in gfs:
-			if g not in list_completed_gfs:	
-				_write(g+"\t",db_path_tmp)
-				for bg in backgrounds:
-					res = hpgm.get_overlap_statistics(g,[bg])
-					_write(os.path.join(background_dir,res[0]["queryfile"])+":"+str(res[0]["intersectregions"])+":"+str(res[0]["queryregions"])+",",db_path_tmp)  # write out bg_obs
-				logger.info("Processed {}".format(g))
-				print "Processed {} of {}.".format(cur_prog,prog_max)
-				_write("\n",db_path_tmp)
-			else:
-				logger.info("Stats already exist for {}, skipping.".format(g))
-			cur_prog += 1
-
-	if os.path.exists(db_path): os.remove(db_path) # remove old bgs_overlap
-	os.rename(db_path_tmp,db_path) # release new bgs_overlap to GRSNP
+	# Run overlap analysis using Celery
+	print "GFS to process: ", all_gfs
+	results = group(worker_opt.calculate_bkg_gf_overlap.s(g,backgrounds) for g in all_gfs)()
+	while not results.ready():
+		sleep(2.0)
+	results = results.join()
+	print "Results ", results
+	write_results(results,db_path)
 	logger.info("Completed.")
 
+def write_results(results,outputpath):
+	''' Results are written out to a temporary file which replaces the existing file if after successfully
+	being written.
+	'''
+	with open(outputpath+".tmp",'wb') as writer:
+		for res in results:
+			gf = res.keys()[0]
+			stats = res[gf]
+			print "GF: ", gf
+			stat_line = [x["queryfile"]+":"+str(x["intersectregions"])+":"+str(x["queryregions"]) for x in stats]
+			stat_line = ",".join(stat_line) + "\n"
+			writer.write(gf+"\t"+stat_line)
+
+	if os.path.exists(outputpath):
+		os.remove(outputpath)
+	os.rename(outputpath+".tmp",outputpath)
+	print results
 
 def _count_gfs(grsnp_db):
 	x = 0
@@ -78,17 +86,13 @@ def _count_gfs(grsnp_db):
 				x = x+1
 	return x
 
-def _write(line,path):
-	with open(path,"a") as wr:
-		wr.write(line)	
-
 
 if __name__ == "__main__":
 	global logger
 	parser = argparse.ArgumentParser(prog="python -m grsnp.optimizer", description="""Pre calculates the overlapStatistics for each of the backgrounds in <db_path>/custom_data/backgrounds/<organism> and genomic features in <db_path>/grsnp_db/<organism>. Example: python -m grsnp.optimizer -d /home/username/grs_db/ -g mm9""", epilog="""Creates a file  <db_path>/grsnp_db/<organism>/bkg_overlap.gr, automatically used by the server to speed up the analyses""")
 	parser.add_argument('--data_dir','-d', nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_2.00_6.26.2014/.", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", required=True, default="hg19")
-
+	parser.add_argument("--num_workers", "-w", type=int, help="The number of local celery workers to start. Default: 1", default=1)	
 	args = vars(parser.parse_args())
 
 	hdlr = logging.FileHandler(os.path.join(args["data_dir"],'genomerunner_dbcreator.log'))
@@ -99,6 +103,20 @@ if __name__ == "__main__":
 	logger.addHandler(hdlr)
 	logger.addHandler(hdlr_std)
 	logger.setLevel(logging.INFO)
+
+	# start redis server
+	script = ["redis-server", "--port", str(celeryconfiguration_optimizer.redis_port)]
+	fh = open("redis.log","w")
+	out = subprocess.Popen(script,stdout=fh,stderr=fh)
+	# kill all existing optimizer workers
+	script = "ps auxww | grep  -E 'worker.*grsnp_optimizer' | awk '{print $2}' | xargs kill -9"
+	out = subprocess.Popen(script,shell=True)
+	out.wait()
+	for i in range(args["num_workers"]):
+		fh = open("worker{}.log".format(i),"w")
+		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
+		#out = subprocess.Popen(script,stdout=fh,stderr=fh)
+	print "Redis backend URL: ", celeryconfiguration_optimizer.CELERY_RESULT_BACKEND
 
 	# find all the folders with GF data including those filtered by score
 	grdb_dirs = [os.path.join(args["data_dir"],name) for name in os.listdir(args["data_dir"])
