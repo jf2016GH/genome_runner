@@ -53,7 +53,7 @@ class WebUI(object):
 				custom_dir = os.path.join(os.path.split(db_dir)[0],"custom_data")
 				logger.info("Processing genomic features for {}".format(org))
 				if not os.path.exists(custom_dir): os.mkdir(custom_dir)
-				cust_sub_dir = ["backgrounds","gfs","fois"]
+				cust_sub_dir = ["backgrounds","gfs","fois","rsid_conversion"]
 				for c in cust_sub_dir:
 					tmp = os.path.join(custom_dir,c)
 					if not os.path.exists(tmp): os.mkdir(tmp)
@@ -120,7 +120,6 @@ class WebUI(object):
 		list_gfs = []
 
 		cherrypy.response.timeout = 3600
-
 		try:
 			jobname = kwargs["jobname"]
 		except Exception, e:
@@ -229,6 +228,17 @@ class WebUI(object):
 		organism,run,run_random,run_annotation = "",[],False,False
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
+
+
+		# gather genomic features from autocomplete textbox. A single item is passed a string, but multiple items are passed as a list		
+		if 'gfs[]' in kwargs.keys():
+			if isinstance(kwargs['gfs[]'],list):
+				gfeatures = gfeatures + [x[5:] for x in kwargs['gfs[]']]
+			else:
+				gfeatures = gfeatures + [kwargs['gfs[]'][5:]]
+
+		gfeatures = set(gfeatures) # remove GFs checked in checkbox tree and also added in textbox
+
 		with open(gfs,"a") as out_gfs:
 			for g in gfeatures:
 				if (base_name(g) not in list_gfs): 
@@ -338,7 +348,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'])
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
@@ -635,8 +645,8 @@ if __name__ == "__main__":
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
-	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/grsnp_db/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
-	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/grsnp_db/.", default="")
+	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/db_#.##_#.##.####/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
+	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
 	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", default="")
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 

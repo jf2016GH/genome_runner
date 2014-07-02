@@ -40,7 +40,7 @@ logger.propagate = 0
 matrix_outpath = None
 detailed_outpath = None
 progress_outpath = None
-output_dir = None
+run_files_dir = None
 console_output = False 
 print_progress = False
 logger_path = "gr_log.txt"
@@ -110,7 +110,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
 
 
     # write out to the enrichment result file
-    er_result_path = os.path.join(output_dir,"enrichment")
+    er_result_path = os.path.join(run_files_dir,"enrichment")
     if not os.path.exists(er_result_path): os.mkdir(er_result_path)
     er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
     # writes the first line as the header line
@@ -274,7 +274,7 @@ def cluster_matrix(input_path,output_path):
     saved_stdout, saved_stderr = sys.stdout, sys.stderr
     sys.stdout = sys.stderr = open(os.devnull, "w")
     r_script = """t5 = as.matrix(read.table("{}"))                     
-                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.0001) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
                         # Log transform matrix and keep correct sign
                         for (i in 1:nrow(t5)) {{
@@ -353,9 +353,26 @@ def get_annotation(foi,gfs):
     gfs: filepaths for GF
     """
     results = []
-    out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE) # TODO enable ["--print-region-name"]
-    out.wait()
-    return out.stdout.read()
+    out = ""
+    try:
+        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+        out.wait()
+        tmp = out.stdout.read()
+        tmp_er = out.stderr.read()
+        if tmp_er != "": logger.error(tmp_er)
+        if tmp[:6] == "ERROR:": 
+            logger.error(tmp[7:])
+            raise Exception(tmp)
+
+    except Exception, e:
+        logger.error(traceback.format_exc())
+        return tmp
+    return tmp
+
+
+
+
+
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
@@ -401,6 +418,8 @@ def check_background_foi_overlap(bg,fois):
     Removes FOIs that are poorly formed with the background.
     """
     good_fois = []
+    if len(fois) == 0:
+        return [[],[]]
     # Runs overlapStatistics on background and FOIs
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
@@ -449,7 +468,13 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
             z_ano.write(os.path.join(anno_dir,f),f)
         z_ano.close()
 
-        
+    # zip processed FOIs directory
+    proc_dir = os.path.join(outdir,'processed_fois')
+    if os.path.exists(proc_dir):
+        z_ano = zipfile.ZipFile(os.path.join(outdir,'processed_fois.zip'),'a')
+        for f in os.listdir(proc_dir):
+            z_ano.write(os.path.join(proc_dir,f),f)
+        z_ano.close()
 
     f = open(os.path.join(outdir,"gr_log.txt"))
     f_log = f.read()
@@ -504,30 +529,117 @@ def get_score_strand_settings(gf_path):
                 str_strand = "Strand: " + s
     return str_strand + "\t" + str_scorethresh
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score=""):
+def validate_rsids(foi_path):
+    ''' Checks if the first line is contains an rsIDs. If it does, the file is sorted
+    '''   
+    if foi_path.endswith('.gz'):
+        infile = gzip.open(foi_path)
+    else:
+        infile = open(foi_path)
+    line = infile.readline().rstrip('\n')
+    infile.close()
+    if line[:2] == 'rs':
+        # sort the rsIDs in place
+        script =  "sort -k1,1 " + '-o ' +foi_path+' '+ foi_path
+        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out.wait()
+        tmp = out.stdout.read()
+        tmp_er = out.stderr.read()
+        if tmp_er != "":
+            logger.error(tmp_er)
+            raise Exception(tmp_er) 
+        return True
+    else:
+        return False
+
+def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
+    processed_fois = []
+    output_dir = os.path.join(run_files_dir,'processed_fois')
+    # Sort the fois 
+    out = ""
+    try: 
+        for f in fois:    
+            # copy the FOI to the output_dir
+            out_fname = os.path.split(f)[1]
+            if not out_fname.endswith('.bed'):
+                out_fname = base_name(out_fname)+".bed"
+            out_f = os.path.join(output_dir,out_fname) # the processed foi file
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            out.wait()             
+            # remove the header from the files
+            grsnp_util.remove_headers(out_f)
+
+            # Check if items are rsIDs. Convert to bed coordinates if they are
+            if validate_rsids(out_f):
+                # check if a file exists in the database for rsID conversion and construct the path to it
+                rsid_path = os.path.join(os.path.split(gr_data_dir)[0],'custom_data','rsid_conversion',organism)
+                logger.info(rsid_path)
+                if not os.path.exists(rsid_path):
+                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                    return []
+                files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
+                # if conversion files found, perform conversion
+                if len(files) > 0:
+                    rsid_path = os.path.join(rsid_path,files[0])
+                    script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(out_f,rsid_path,out_f)
+                    out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()             
+                    tmp_er = out.stderr.read()
+                    if tmp_er != "":
+                        logger.error(tmp_er)
+                        raise Exception(tmp_er)
+                    # we remove the original out_f FOI file and replace with the out_f.temp created with the join command above
+                    os.remove(out_f)
+                    out = subprocess.Popen(['cp {} {}'.format(out_f+'.temp',out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()  
+                    os.remove(out_f+'.temp')
+                else:
+                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                    return []
+
+            # sort the FOI
+            script =  "sort -k1,1 -k2,2n " + '-o ' +out_f+' '+ out_f
+            out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            out.wait()
+            tmp = out.stdout.read()
+            tmp_er = out.stderr.read()
+            if tmp_er != "":
+                logger.error(tmp_er)
+                raise Exception(tmp_er) 
+            # check if processed FOI file is empty
+            if os.stat(out_f)[6]!=0:
+                processed_fois.append(out_f)
+
+    except Exception, e:
+        logger.error("Error while processing the FOIs")
+        logger.error(traceback.format_exc())
+        raise Exception(e)
+    return processed_fois
+
+
+
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism = ""):
     global formatter
-    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,output_dir
+    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,run_files_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
-    sett_path = os.path.join(outdir,".settings")
     fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
     fh.setFormatter(formatter)
     logger.addHandler(fh)
     logger.setLevel(logging.INFO)
-    output_dir = outdir
+    run_files_dir = outdir
     curprog,progmax = 0,1
-    organism = ""
 
+    logger.info("ORGANIS " + str(organism))
     logger.info("P_value adjustment used: {}".format(padjust))
 
     try:
-        trackdb = []
-        # loads the trackDb file data so that descriptions for the GF can be outputted
-        if os.path.exists(sett_path): 
-            with open(sett_path) as re:
-                organism = [x.split("\t")[1] for x in re.read().split("\n") if x.split("\t")[0] == "Organism:"][0]  # read in th organism data from .settings file generated by the server
-                trackdb_path = os.path.join(gr_data_dir,organism,"trackDb")
-                if os.path.exists(trackdb_path+".txt.gz") and os.path.exists(trackdb_path + ".sql"):
-                    trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
+        trackdb = []      
+
+        trackdb_path = os.path.join(gr_data_dir,organism,"trackDb")
+        if os.path.exists(trackdb_path+".txt.gz") and os.path.exists(trackdb_path + ".sql"):
+            trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
         # set output settings
         detailed_outpath =  os.path.join(outdir, "detailed.txt") 
         matrix_outpath = os.path.join(outdir,"matrix.txt")
@@ -549,19 +661,26 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:
             logger.error("The following file(s) have invalid file names, cannot have space before/in file extension:\n" + "\n".join(invalid_names))
-            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run.")
+            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
             return         
         if bg_path.endswith(".tbi"):
             logger.error("Background has invalid extension (.tbi). Terminating run.")
-            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run.")
+            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.")
             return
 
-        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   # Validate FOIs against background. Also get the size of the background (n_bgs)
+        # pre-process the FOIs
+        fois = preprocess_fois(fois,run_files_dir,gr_data_dir,organism)
+        if len(fois) == 0:
+            logger.error('No valid FOIs to supplied')
+            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
+            return
+        # Validate FOIs against background. Also get the size of the background (n_bgs)
+        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         # remove old detailed enrichment result files if they exit
-        enr_path =  os.path.join(output_dir,"enrichment")
+        enr_path =  os.path.join(run_files_dir,"enrichment")
         for f in good_fois:
             f_path = os.path.join(enr_path, base_name(f)+'.txt')
             if os.path.exists(f_path): os.remove(f_path)
@@ -607,7 +726,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         else:
             with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
                 wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
-        writer = open(os.path.join(outdir,"out.txt"),'wb')
+
         if run_annotation:
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
@@ -617,7 +736,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
                     anot = get_annotation(f,gfs).split("\n")
                     anot[0] = anot[0].replace("Region\t\t","Region\t")
-                    wr.write("\t".join(base_name(x) for x in anot[0].split("\t")) + "\tTotal")
+                    wr.write("Region"+"\t"+"\t".join(base_name(x) for x in reversed(anot[0].split("\t")[1:])) + "\tTotal") # annotationAnalysis column order is reverse of input order
                     for ind, a in enumerate(anot[1:]):
                         if a.strip() != "":
                             cur_row = a.split("\t")
@@ -627,6 +746,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         if zip_run_files:
             _write_progress("Preparing run files for download")
             _zip_run_files(fois,gfs,bg_path,outdir,job_name)
+        curprog,progmax = 1,1
         _write_progress("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
@@ -642,9 +762,12 @@ if __name__ == "__main__":
     parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
     parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
     parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
-    parser.add_argument("--output_dir","-d", help="Directory to output the result to. Example: test_results. Default: current directory", default="")
+    parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default="")
     parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
     parser.add_argument("--pv_adjust", "-v",type=str, help="Which p-value adjustment method to use. Default: 'fdr'. Available (case-sensitive): "+', '.join(valid_pv_adjust), default="fdr")
+    parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
+    parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
+
         
     args = vars(parser.parse_args())  
     if args['pv_adjust'] not in valid_pv_adjust:
@@ -654,12 +777,12 @@ if __name__ == "__main__":
     if args["pass_paths"]: 
         gf = args["gfs"][0].split(",")      
         foi = args["fois"][0].split(",")        
-        args["gfs"][0],args["fois"][0] = os.path.join(args["output_dir"],".gfs"),os.path.join(args["output_dir"],".fois")       
+        args["gfs"][0],args["fois"][0] = os.path.join(args["run_files_dir"],".gfs"),os.path.join(args["run_files_dir"],".fois")       
         with open(".gfs",'wb') as writer:       
             writer.write("\n".join(gf))     
         with open(".fois","wb") as writer:      
             writer.write("\n".join(foi))
-    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["output_dir"],"",False,"","",args["run_annotation"],run_randomization_test=False,padjust=args['pv_adjust'])
+    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,padjust=args['pv_adjust'],organism=args['organism'])
 
 class front_appender:
     '''

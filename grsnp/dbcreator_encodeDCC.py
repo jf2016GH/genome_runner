@@ -277,7 +277,7 @@ if __name__ == "__main__":
 	parser.add_argument('--featuregroups','-f', nargs="?", help='The names of the specific genomic feature groups to download.  List available for hg19 at ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/', default="")
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
-	parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
+	#parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int, default=None)
 
 

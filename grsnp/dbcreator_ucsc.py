@@ -342,7 +342,8 @@ preparebed = {"bed 6" : extract_bed6,
 numdownloaded = collections.defaultdict(int)
 
 def encodePath(line): # Generating paths for the ENCODE data tables using groups, tiers, and cell types
-	ENCODE = re.compile('AffyRnaChipFiltTransfrags|BroadHistone|BroadHmm|GisChiaPet|GisRnaPet|HaibMethyl450|HaibGenotype|HaibMethylRrbs|HaibTfbs|OpenChromSynth|RikenCage|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwAffyExonArray|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs|CshlLongRnaSeq|CshlShortRnaSeq|LicrHistone|LicrTfbs|PsuHistone|PsuTfbs')
+	ENCODE = re.compile('AffyRnaChipFiltTransfrags|AffyRnaChipTransfrags|AwgDnaseDuke|AwgDnaseUw|AwgSegmentationChromhmm|AwgTfbsBroad|AwgTfbsHaib|AwgTfbsSydh|AwgTfbsUchicago|AwgTfbsUta|AwgTfbsUw|BroadHistone|BroadHmm|CshlLongRnaSeq|CshlShortRnaSeq|GisChiaPet|GisRnaPet|HaibGenotype|HaibMethyl450|HaibMethylRrbs|HaibTfbs|LicrHistone|LicrTfbs|OpenChromSynth|OpenChromChip|PsuHistone|PsuTfbs|RikenCage|SydhHistone|SydhTfbs|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwAffyExonArray|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs')
+#	ENCODE = re.compile('AffyRnaChipFiltTransfrags|BroadHistone|BroadHmm|GisChiaPet|GisRnaPet|HaibMethyl450|HaibGenotype|HaibMethylRrbs|HaibTfbs|OpenChromSynth|RikenCage|SunyAlbanyGeneSt|SunyAlbanyTiling|SunyRipSeq|SunySwitchgear|UmassDekker5C|UwAffyExonArray|UwDgf|UwDnase|UwHistone|UwRepliSeq|UwTfbs|CshlLongRnaSeq|CshlShortRnaSeq|LicrHistone|LicrTfbs|PsuHistone|PsuTfbs')
 	CELLS1 = re.compile('Gm12878|K562|H1hesc')
 	CELLS2 = re.compile('A549|Cd20ro01778|Cd20ro01794|Cd20|H1neurons|Helas3|Hepg2|Huvec|Imr90|Lhcnm2|Mcf7|Monocd14ro1746|Sknsh')
 	CELLS3 = re.compile('Ag04449|Ag04450|Ag09309|Ag09319|Ag10803|Aoaf|Aosmc|Be2c|Bj|Caco2|Cmk|Dnd41|Ecc1|Gm06990|Gm12801|Gm12864|Gm12865|Gm12872|Gm12873|Gm12875|Gm12891|Gm12892|Gm19239|H7es|Hac|Hae|Hah|Hasp|Hbmec|Hcfaa|Hcf|Hcm|Hcpe|Hct116|Hee|Hek293|Hffmyc|Hff|Hgf|Hipe|Hl60|Hmec|Hmf|Hmvecdblad|Hnpce|Hpae|Hpaf|Hpdlf|Hpf|Hrce|Hre|Hrpe|Hsmmfshd|Hsmmtubefshd|Hsmmt|Hsmm|Htr8|Hvmf|Jurkat|Lncap|M059j|Mcf10aes|Nb4|Nha|Nhbe|Nhdfad|Nhdfneo|Nhek|Nhlf|Nt2d1|Osteobl|Osteo|Ovcar3|Panc1|Panislets|Pfsk1|Prec|Progfib|Rpmi7951|Rptec|Saec|Skmc|Sknmc|Sknshra|T47d|Th1|Th2|U87|Werirb1|Wi38')
@@ -562,7 +563,7 @@ if __name__ == "__main__":
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created by type (i.e. bed4).",type=int)
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
-	parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
+	#parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
 
 
 
@@ -589,26 +590,26 @@ if __name__ == "__main__":
 	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
-	# if filteronly is passed, then skip adding new GFs
-	if not args['filteronly']:
-		if args['galaxy']:
-			usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
-			if usrdir == '': 
-				usrdir = os.getcwd()
-			else:
-				usrdir = os.path.join(usrdir,"tool-data")
-				if not os.path.exists(usrdir):
-					logger.error("Galaxy tool-data does not exist")
-					sys.exist()
-			create_galaxy_xml_files(outputdir,usrdir)		
-			sys.exit()
-		if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
-			gfs = args["featurenames"].split(",")
-			trackdbpath = download_trackdb(args['organism'],outputdir)
-			create_feature_set(trackdbpath,args['organism'],args["max"],gfs)			
+	## if filteronly is passed, then skip adding new GFs
+	#if not args['filteronly']:
+	if args['galaxy']:
+		usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
+		if usrdir == '': 
+			usrdir = os.getcwd()
 		else:
-			print "ERROR: Requires UCSC organism code.  Use --help for more information"
-			sys.exit()
+			usrdir = os.path.join(usrdir,"tool-data")
+			if not os.path.exists(usrdir):
+				logger.error("Galaxy tool-data does not exist")
+				sys.exist()
+		create_galaxy_xml_files(outputdir,usrdir)		
+		sys.exit()
+	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
+		gfs = args["featurenames"].split(",")
+		trackdbpath = download_trackdb(args['organism'],outputdir)
+		create_feature_set(trackdbpath,args['organism'],args["max"],gfs)			
+	else:
+		print "ERROR: Requires UCSC organism code.  Use --help for more information"
+		sys.exit()
 
 	# load score from minmax.txt file created earlier
 	minmax = load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		
