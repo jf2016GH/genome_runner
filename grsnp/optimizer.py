@@ -55,7 +55,6 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir):
 	print "GFS to process: ", all_gfs
 	results = group(worker_opt.calculate_bkg_gf_overlap.s(gf_path=g,list_bkg_paths=backgrounds) for g in all_gfs)()
 	while not results.ready():
-		print "READY: ", results.ready()," waiting: ", results.waiting()," failed: ",results.failed()
 		print "{} of {} completed".format(results.completed_count(),len(all_gfs))
 		sleep(5.0)
 

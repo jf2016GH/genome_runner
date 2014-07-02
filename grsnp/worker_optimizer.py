@@ -31,8 +31,7 @@ def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None,**kwargs):
 	try:
 		missing_files = get_missing_files([full_gf_path] + list_bkg_paths)
 		if not missing_files:
-			raise Exception("gf/background data files not found: " + str(missing_files))
-			gf_bgs_statst = hpgm.get_overlap_statistics(full_gf_path,list_bkg_paths)
+			gf_bgs_stats = hpgm.get_overlap_statistics(full_gf_path,list_bkg_paths)
 			return {full_gf_path: gf_bgs_stats}		
 		else:
 			raise Exception("gf/background data files not found: " + str(missing_files))
