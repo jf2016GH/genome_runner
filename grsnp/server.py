@@ -735,12 +735,12 @@ if __name__ == "__main__":
 		#	else:
 		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
 		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		script = "ps auxww | grep  -E 'worker.*grsnp' | awk '{print $2}' | xargs kill -9"
+		script = "ps auxww | grep  -E 'worker.*grsnp_LOCAL' | awk '{print $2}' | xargs kill -9"
 		out = subprocess.Popen(script,shell=True)
 		out.wait()
 		for i in range(args["num_workers"]):
 			fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
-			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
+			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i)]
 			out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})
