@@ -77,21 +77,25 @@ def get_overlap_statistics(gf,fois):
     return results
 
 
-def get_bgobs(bg,gf,bkg_overlap_path): 
-    _write_progress("Getting overlap stats on background and {}".format(base_name(gf)))
-    logger.info("Getting overlap stats on background and {}".format(base_name(gf)))
-
+def get_bgobs(bg,gf,bkg_overlap_path,data_dir): 
+    ''' Check if pre-calculated GF and background overlap data exist.
+    If they do not, it manually calculates them.
+    '''
+    base_data_dir = os.path.split(data_dir)[0]
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
-        d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
+        d_gf = [x[1] for x in data if os.path.join(base_data_dir,x[0]) == gf and x[1]  != ""]
+
         if len(d_gf) != 0:
-            bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
+            bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == os.path.basename(bg)]
             if len(bg_obs) != 0:
                 logger.info("Pre-calculated values found for background and {} ".format(base_name(gf)))
                 return bg_obs[0]
     # manually get overlap values
+    logger.info("Caclulating overlap stats on background and {}".format(base_name(gf)))
+    _write_progress("Caclulating overlap stats on background and {}".format(base_name(gf)))
     result = get_overlap_statistics(gf,[bg])
     try:
         result = int(result[0]["intersectregions"])
@@ -632,7 +636,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
     logger.info("ORGANIS " + str(organism))
     logger.info("P_value adjustment used: {}".format(padjust))
-
     try:
         trackdb = []      
 
@@ -691,7 +694,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs
-            bg_obs = get_bgobs(bg_path,gf,bkg_overlaps_path)
+            bg_obs = get_bgobs(bg_path,gf,bkg_overlaps_path,gr_data_dir)
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue
