@@ -43,19 +43,20 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir,data_dir):
 	cur_prog,prog_max = 1,_count_gfs(full_gf_dir)
 	# Process each category of GFs
 	for d in dirs:
-		logger.info("Running overlapStatistics for all GFs in {}".format(gf_dir))
 		# Gather gfs paths
 		gfs = []
 		for base, d, files in os.walk(os.path.join(full_gf_dir,d)):
 				partial_base = base.replace(data_dir,"") # get the relative path of the database
 				gfs += [os.path.join(partial_base, f) for f 
 					in files if f.endswith(('.gz', '.bb'))]	
-		all_gfs += [x for x in gfs if x not in list_completed_gfs]
+		all_gfs += [x for x in gfs if os.path.join(data_dir,x) not in list_completed_gfs]
 		prog_gf  = 1
 	# Run overlap analysis using Celery
+	logger.info("Running overlapStatistics for all GFs in {}".format(gf_dir))
 	results = group(worker_opt.calculate_bkg_gf_overlap.s(gf_path=g,list_bkg_paths=backgrounds) for g in all_gfs)()
 	while not results.ready():
-		print "{} of {} completed".format(results.completed_count(),len(all_gfs))
+		sys.stdout.write("{} of {} completed...\r".format(results.completed_count(),len(all_gfs)))
+		sys.stdout.flush()
 		sleep(5.0)
 
 	results = results.join()
@@ -79,7 +80,6 @@ def write_results(results,outputpath):
 				continue
 			gf = res.keys()[0]
 			stats = res[gf]
-			print "GF: ", gf
 			stat_line = [x["queryfile"]+":"+str(x["intersectregions"])+":"+str(x["queryregions"]) for x in stats]
 			stat_line = ",".join(stat_line) + "\n"
 			writer.write(gf+"\t"+stat_line)
