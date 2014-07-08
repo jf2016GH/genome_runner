@@ -45,7 +45,12 @@ def calculate_bkg_gf_overlap(gf_path=None,list_bkg_paths=None,**kwargs):
 @signals.user_preload_options.connect
 def cmd_options(options,**kwargs):
 	global sett
+	if options['data_dir'] == '':
+		raise Exception('data_dir is a required argument')
+	if not os.path.exists(options['data_dir']):
+		raise Exception('{} does not exist'.format(options['data_dir']))
 	sett["data_dir"] = options['data_dir']
+
 
 
 

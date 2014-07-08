@@ -95,7 +95,7 @@ def _count_gfs(grsnp_db):
 def shutdown_workers():
 	# kill all existing optimizer workers
 	print "Stopping local workers..."
-	script = "ps auxww | grep  -E '*grsnp.grsnp_optimizerLOCAL' | awk '{print $2}' | xargs kill -9"
+	script = "ps auxww | grep  -E '*grsnp_optimizerLOCAL*' | awk '{print $2}' | xargs kill -9"
 	out = subprocess.Popen(script,shell=True)
 	out.wait()
 	print "Removing leftover optimizer jobs from Celery queue 'optimizer.group'..."
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 	out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	for i in range(args["num_workers"]):
 		fh = open("worker{}.log".format(i),"w")
-		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp_optimizerLOCAL{}.%h".format(i),'--data_dir',args['data_dir']]
+		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", '-Q','optimizer.group', "-n", "grsnp_optimizerLOCAL{}.%h".format(i),'--data_dir',args['data_dir']]
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	print "Redis backend URL: ", celeryconfiguration_optimizer.CELERY_RESULT_BACKEND
 
@@ -148,3 +148,4 @@ if __name__ == "__main__":
 			sys.exit()
 		logger.info("Pre calculating statistics for GR database in")
 		create_bkg_gf_overlap_db(gf_dir=gfs_dir,background_dir=background_dir,data_dir=args['data_dir'])
+	logger.info("Finished creating optimization files.")
