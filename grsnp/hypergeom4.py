@@ -636,6 +636,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
     logger.info("ORGANIS " + str(organism))
     logger.info("P_value adjustment used: {}".format(padjust))
+    print "gr_data_dir ",gr_data_dir
+    print "outdir ", outdir
     try:
         trackdb = []      
 

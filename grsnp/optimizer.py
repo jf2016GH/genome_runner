@@ -49,11 +49,11 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir,data_dir):
 				partial_base = base.replace(data_dir,"") # get the relative path of the database
 				gfs += [os.path.join(partial_base, f) for f 
 					in files if f.endswith(('.gz', '.bb'))]	
-		all_gfs += [x for x in gfs if os.path.join(data_dir,x) not in list_completed_gfs]
+		all_gfs += [x for x in gfs if x not in list_completed_gfs]
 		prog_gf  = 1
 	# Run overlap analysis using Celery
 	logger.info("Running overlapStatistics for all GFs in {}".format(gf_dir))
-	results = group(worker_opt.calculate_bkg_gf_overlap.s(gf_path=g,list_bkg_paths=backgrounds) for g in all_gfs)()
+	results = group(worker_opt.calculate_bkg_gf_overlap.s(gf_path=g,list_bkg_paths=backgrounds).set(queue='optimizer.group') for g in all_gfs)()
 	while not results.ready():
 		sys.stdout.write("{} of {} completed...\r".format(results.completed_count(),len(all_gfs)))
 		sys.stdout.flush()
@@ -73,7 +73,7 @@ def write_results(results,outputpath):
 		]
 	'''
 
-	with open(outputpath+".tmp",'wb') as writer:
+	with open(outputpath,'a') as writer:
 		for res in results:
 			if isinstance(res,str):
 				logger.error(res)
@@ -83,10 +83,6 @@ def write_results(results,outputpath):
 			stat_line = [x["queryfile"]+":"+str(x["intersectregions"])+":"+str(x["queryregions"]) for x in stats]
 			stat_line = ",".join(stat_line) + "\n"
 			writer.write(gf+"\t"+stat_line)
-
-	if os.path.exists(outputpath):
-		os.remove(outputpath)
-	os.rename(outputpath+".tmp",outputpath)
 
 def _count_gfs(grsnp_db):
 	x = 0
@@ -98,7 +94,12 @@ def _count_gfs(grsnp_db):
 
 def shutdown_workers():
 	# kill all existing optimizer workers
-	script = "ps auxww | grep  -E '*grsnp.worker_optimizer' | awk '{print $2}' | xargs kill -9"
+	print "Stopping local workers..."
+	script = "ps auxww | grep  -E '*grsnp.grsnp_optimizerLOCAL' | awk '{print $2}' | xargs kill -9"
+	out = subprocess.Popen(script,shell=True)
+	out.wait()
+	print "Removing leftover optimizer jobs from Celery queue 'optimizer.group'..."
+	script = "celery amqp queue.purge optimizer.group --broker " +  celeryconfiguration_optimizer.CELERY_RESULT_BACKEND
 	out = subprocess.Popen(script,shell=True)
 	out.wait()
 
@@ -128,7 +129,7 @@ if __name__ == "__main__":
 	out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	for i in range(args["num_workers"]):
 		fh = open("worker{}.log".format(i),"w")
-		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp_optimizer{}.%h".format(i),'--data_dir',args['data_dir']]
+		script = ["celery","worker", "--app", "grsnp.worker_optimizer","--loglevel", "INFO", "-n", "grsnp_optimizerLOCAL{}.%h".format(i),'--data_dir',args['data_dir']]
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
 	print "Redis backend URL: ", celeryconfiguration_optimizer.CELERY_RESULT_BACKEND
 
