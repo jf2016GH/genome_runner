@@ -278,7 +278,7 @@ def cluster_matrix(input_path,output_path):
     saved_stdout, saved_stderr = sys.stdout, sys.stderr
     sys.stdout = sys.stderr = open(os.devnull, "w")
     r_script = """t5 = as.matrix(read.table("{}"))                     
-                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), ]) # Remove rows with all values below cutoff 2 (p-value 0.01)
+                    t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), , drop=F]) # Remove rows with all values below cutoff 2 (p-value 0.01)
                     if (nrow(t5) > 0 && ncol(t5) > 0) {{
                         # Log transform matrix and keep correct sign
                         for (i in 1:nrow(t5)) {{
@@ -286,16 +286,19 @@ def cluster_matrix(input_path,output_path):
                             if (t5[i, j] < 0) {{ t5[i, j] <- log10(abs(t5[i, j]))}} else {{ t5[i,j] <- -log10(t5[i,j])}}
                           }}
                         }}
-                        if (dim(t5)[1] > 1 && dim(t5)[2] > 1) {{
+                        if (nrow(t5) >=1 && ncol(t5) >= 1) {{
                             library(gplots)
                             library(RColorBrewer)
                             color<-colorRampPalette(c("blue","yellow"))
                             pdf(file="{}")
-                            h = heatmap.2(t5, margins=c(20,20), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(t5)),cexCol=1/log10(nrow(t5)))
+                            if (nrow(t5) > 1 && ncol(t5) > 1) {{
+                                h = heatmap.2(t5, margins=c(20,20), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(t5)),cexCol=1/log10(nrow(t5)))
+                                write.table(t(h$carpet),"{}",sep="\t")
+                            }} else {{
+                                image(t(t5[order(t5[, 1], decreasing=T), , drop=F]), col=color(nrow(t5)))
+                                write.table(t5[order(t5[, 1], decreasing=T), , drop=F],"{}",sep="\t")
+                            }}
                             dev.off()
-                            write.table(t(h$carpet),"{}",sep="\t")
-                        }} else {{
-                            write.table(paste("ERROR: Cannot run clustering on",nrow(t5),"x",ncol(t5),"matrix. Should be at least 2 x 2. Analyze more sets of SNPs and select more genomic features"),"{}",sep="\t", row.names=F, col.names=F)
                         }}
                     }} else {{
                         write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
@@ -712,7 +715,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         for p in list_enr:
             adjust_detailed_pvalue(os.path.join(enr_path, p),padjust) 
 
-        if len(gfs) > 1 and len(good_fois) > 1:
+        if len(gfs) >= 1 and len(good_fois) >= 1:
             # Adjust the pvalues
             adjust_pvalue(matrix_outpath,padjust)
             # Cluster the matrix
