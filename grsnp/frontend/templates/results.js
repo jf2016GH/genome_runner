@@ -47,7 +47,9 @@ function update_progress(){
 			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>")
 		}
 		if(data['status'] == "Analysis Completed"  || data['status'] == "Run crashed. See end of log for details."){
-			update_progress()
+			$("#progressbar").progressbar({
+						value: 1,
+						max:  1});
 			clearInterval(refresh_progress);
 		}
 	});
