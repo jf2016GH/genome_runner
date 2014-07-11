@@ -30,6 +30,8 @@ import inspect
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
 import grsnp.dbcreator_util as grsnp_util
+import random
+import string
 
 # Logging configuration
 logger = logging.getLogger()
@@ -55,13 +57,22 @@ def get_overlap_statistics(gf,fois):
     """
     results = []
     out = ""
+    # use temporary files instead of piping out to console because large amounts of output to console can cause deadlock
+    # this creates unique random file names
+    tmp_path = get_tmp_file('grsnptmp')        
+    tmp_error_path = get_tmp_file('grsnperrortmp')
+    tmp_file = open(tmp_path,'wb')
+    tmp_error_file = open(tmp_error_path,'wb')
+
     try:
         # Runs overlapStatistics with preprocessed background stats if they exist
-        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=tmp_file,stderr=tmp_error_file)
         out.wait()
-        tmp = out.stdout.read()
-	tmp_er = out.stderr.read()
-	if tmp_er != "": logger.error(tmp_er)
+        tmp_file.close()
+        tmp_error_file.close()
+        tmp = open(tmp_path).read()
+        tmp_er = open(tmp_error_path).read()
+        if tmp_er != "": logger.error(tmp_er)
         if tmp[:6] == "ERROR:": 
             logger.error(tmp[7:])
             raise Exception(tmp)
@@ -71,11 +82,24 @@ def get_overlap_statistics(gf,fois):
                 tmp = x.split("\t")
                 foi_name,n,hit_count = os.path.split(tmp[0])[-1],tmp[2],tmp[3]
                 results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count),"indexregions": int(tmp[1])})
-    except Exception, e:        
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
+    except Exception, e:       
+        if not tmp_file.closed: tmp_file.close()
+        if not tmp_error_file.closed: tmp_error_file.close()
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
         logger.error(traceback.format_exc())
         return
     return results
 
+def get_tmp_file(prefix):
+    tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
+    while (os.path.exists(tmp_path)):
+        tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
+    return tmp_path
 
 def get_bgobs(bg,gf,bkg_overlap_path,data_dir): 
     ''' Check if pre-calculated GF and background overlap data exist.
@@ -361,17 +385,34 @@ def get_annotation(foi,gfs):
     """
     results = []
     out = ""
+    # use temporary files instead of piping out to console because large amounts of output to console can cause deadlock
+    # this creates unique random file names
+    tmp_path = get_tmp_file('grsnptmp')
+    tmp_error_path = get_tmp_file('grsnperrortmp')
+    
+    tmp_file = open(tmp_path,'wb')
+    tmp_error_file = open(tmp_error_path,'wb')
     try:
-        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=tmp_file,stderr=tmp_error_file) # TODO enable ["--print-region-name"]
         out.wait()
-        tmp = out.stdout.read()
-        tmp_er = out.stderr.read()
+        tmp_file.close()
+        tmp_error_file.close()
+        tmp = open(tmp_path).read()
+        tmp_er = open(tmp_error_path).read()
         if tmp_er != "": logger.error(tmp_er)
         if tmp[:6] == "ERROR:": 
             logger.error(tmp[7:])
             raise Exception(tmp)
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
 
     except Exception, e:
+        if not tmp_file.closed: tmp_file.close()
+        if not tmp_error_file.closed: tmp_error_file.close()
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
         logger.error(traceback.format_exc())
         return tmp
     return tmp
