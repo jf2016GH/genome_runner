@@ -144,7 +144,7 @@ class PathNode(defaultdict):
 		return html
 
 	def get_custom_gfs(self,organism,custom_dir):
-		demo_dir = os.path.join(custom_dir,"gfs",organism)
+		demo_dir = os.path.join(custom_dir,"gfs",organism)	
 		html = ""
 		if not os.path.exists(demo_dir):
 			return ""
@@ -152,8 +152,9 @@ class PathNode(defaultdict):
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f)) and not f.endswith(".tbi")]:
 				tooltip += "\t"+base_name(s) + "\n" 
+			rel_gfs_dir = os.path.join(demo_dir,os.path.split(gfs_dir)[1])
 			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" style="margin: 10px">{}</input>
-						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,base_name(gfs_dir),tooltip)
+						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(rel_gfs_dir,base_name(gfs_dir),tooltip)
 		return html
 
 	def get_scores(self,data_dir):

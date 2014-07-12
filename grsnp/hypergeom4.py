@@ -101,11 +101,13 @@ def get_tmp_file(prefix):
         tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
     return tmp_path
 
-def get_bgobs(bg,gf,bkg_overlap_path,data_dir): 
+def get_bgobs(bg,gf,data_dir,organism): 
     ''' Check if pre-calculated GF and background overlap data exist.
     If they do not, it manually calculates them.
     '''
     base_data_dir = os.path.split(data_dir)[0]
+    filt_grsnp_db = gf.replace(base_data_dir,"").lstrip("/").split("/")[0]
+    bkg_overlap_path = os.path.join(base_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
         data = open(bkg_overlap_path).read().split("\n")
@@ -615,7 +617,7 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
             out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            out.wait()             
+            out.wait()           
             # remove the header from the files
             grsnp_util.remove_headers(out_f)
 
@@ -721,7 +723,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
             return
         # Validate FOIs against background. Also get the size of the background (n_bgs)
-        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   
+        foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
@@ -738,7 +740,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs
-            bg_obs = get_bgobs(bg_path,gf,bkg_overlaps_path,gr_data_dir)
+            bg_obs = get_bgobs(bg_path,gf,gr_data_dir,organism)
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue
@@ -798,6 +800,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         logger.error( traceback.print_exc())
         write_output(traceback.format_exc(),logger_path)
         _write_progress("Run crashed. See end of log for details.")
+        raise Exception(e)
 
 if __name__ == "__main__":
     global print_progress

@@ -26,7 +26,7 @@
 	<div id="progressbar" ></div>
 	<div class="ui-widget" style="">
 		<div class="ui-state-highlight ui-corner-all">
-			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><label id="status">Starting Analysis</label></p>			
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><label id="status">Analysis job is in the queue.</label></p>			
 		</div>
 		<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>Please bookmark this page to return to your results. The results will be deleted after three days.</p>
 	</div>	

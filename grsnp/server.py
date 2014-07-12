@@ -27,6 +27,7 @@ import argparse
 import shutil
 import subprocess
 import celeryconfiguration
+from celery import Celery
 
 os.environ['GR_COMPATIBILITY_MODE'] = 'y'
 
@@ -103,7 +104,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
+				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=True, default_background = "",db_version=None,padjust = "None",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -118,7 +119,7 @@ class WebUI(object):
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
 		list_gfs = []
-
+		data_dir = os.path.split(sett["data_dir"][db_version])[0]
 		cherrypy.response.timeout = 3600
 		try:
 			jobname = kwargs["jobname"]
@@ -225,7 +226,7 @@ class WebUI(object):
 		# have been checked.
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
-		organism,run,run_random = "",[],False
+		organism,run,run_random,run_annotation = "",[],False,True
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 
@@ -308,12 +309,11 @@ class WebUI(object):
 
 		# make paths relative, needed for remote celery workers to function correctly
 		for f in [fois,gfs]:
-			list_foi = open(f).read().replace(uploads_dir,'uploads').replace(results_dir,'results')
+			list_foi = open(f).read().replace(uploads_dir,'/uploads').replace(results_dir,'/results').replace(data_dir,"")
 			with open(f,'wb') as writer:
 				writer.write(list_foi)
-		print "OLD BACKGROUND",b
-		b = b.replace(uploads_dir,'uploads')
-		print "BACKGROUND",b
+		
+		b = b.replace(data_dir,'')
 
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
@@ -357,7 +357,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism,id=id)
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
@@ -733,24 +733,24 @@ if __name__ == "__main__":
 		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
 		fh = open(os.path.join(sett["run_files_dir"],"redis.log"),"w")
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		# start the workers using queue system,
-		#for i in range(args["num_workers"]):
-		#	if i== 0  and args["num_workers"] <=1:
-		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
-		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		#	elif i == 0:
-		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","short_runs"]
-		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		#	else:
-		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
-		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		script = "ps auxww | grep  -E 'worker.*grsnp_LOCAL' | awk '{print $2}' | xargs kill -9"
-		out = subprocess.Popen(script,shell=True)
-		out.wait()
-		for i in range(args["num_workers"]):
-			fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
-			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i),'-r',sett['run_files_dir'],'-d',args["data_dir"].split(",")[0]]
-			out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		#script = "ps auxww | grep  -E 'worker.*grsnp_LOCAL' | awk '{print $2}' | xargs kill -9"
+		#out = subprocess.Popen(script,shell=True)
+		#out.wait()
+		app = Celery('grsnp')
+		app.config_from_object('grsnp.celeryconfiguration')
+		if app.control.inspect().ping() == None:
+			for i in range(args["num_workers"]):
+				print "Started celery worker[s]..."
+				fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
+				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i)]
+				out = subprocess.Popen(script,stdout=fh,stderr=fh)
+				workers = app.control.inspect().ping()
+				pids = [str(app.control.inspect().stats()[j]['pid']) for j in workers.keys()]
+				print "Celery workers  pids: " + ",".join(pids)
+		else:
+			workers = app.control.inspect().ping()
+			pids = [str(app.control.inspect().stats()[j]['pid']) for j in workers.keys()]
+			print "Celery workers already running. Pids: " + ",".join(pids)
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
