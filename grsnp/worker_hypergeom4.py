@@ -21,7 +21,7 @@ app.user_options['preload'].add(
 sett = {}
 
 @app.task(ignore_result=False)
-def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlaps_path="",run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism="",id=""):
+def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlaps_path="",run_annotation=False,run_randomization_test=False,padjust="None",pct_score="",organism="",id=""):
 	global sett
 	outdir=os.path.join(sett['run_files_dir'],'results',str(id))
 	# write out absolute gfs and fois file paths and pass these to the worker	
@@ -56,5 +56,4 @@ def cmd_options(options,**kwargs):
 		raise Exception('{} does not exist'.format(options['run_files_dir']))
 	sett["data_dir"] = options['data_dir'].rstrip("/")
 	sett["run_files_dir"] = options["run_files_dir"].rstrip("/")
-
 
