@@ -29,12 +29,7 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 		list_f = [x for x in open(f_path).read().split("\n") if x!= ""]
 		with open(f_path+'_full','wb') as writer:
 			for f in list_f:
-				# append the database directory or run files directory based on 
-				# the whether the path in the .fois or .gfs file starts with /scd_db
-				if f.startswith("/scd_db"):
-					writer.write(os.path.join(sett['data_dir'],f.lstrip('/'))+"\n")
-				else:
-					writer.write(os.path.join(sett['data_dir'],f.lstrip('/'))+"\n")
+				writer.write(os.path.join(sett['data_dir'],f.lstrip('/'))+"\n")
 	bg_path = os.path.join(sett['data_dir'],bg_path)
 	grsnp.hypergeom4.run_hypergeom(fois+"_full", gfs+"_full", bg_path,outdir,job_name,zip_run_files,bkg_overlaps_path,sett['data_dir'],run_annotation,run_randomization_test,padjust,pct_score,organism)
 
