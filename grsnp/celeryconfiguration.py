@@ -1,9 +1,7 @@
 BROKER_TRANSPORT = "redis"
-
-redis_port = 7775 # The port number that redis should use
-BROKER_HOST = "localhost"  # Maps to redis host.
-BROKER_PORT = redis_port         # Maps to redis port.
-BROKER_VHOST = "0"         # Maps to database number.
+db_num = "0"
+redis_port = 7775
+BROKER_URL = "redis://localhost:{}/".format(redis_port) + db_num
 
 # Workers should run as an unprivileged user.
 CELERYD_USER="ubuntu"
@@ -11,6 +9,11 @@ CELERYD_GROUP="ubuntu"
 CELERY_RESULT_BACKEND = 'redis://localhost:{}/0'.format(redis_port)
 
 CELERY_IMPORTS = ("grsnp")
+
+# info about the two settings bellow can be read at
+# http://docs.celeryproject.org/en/latest/userguide/optimizing.html#prefork-pool-prefetch-settings
+CELERYD_PREFETCH_MULTIPLIER = 1
+
 
 #CELERY_SEND_TASK_SENT_EVENT = True
 

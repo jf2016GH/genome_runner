@@ -306,6 +306,15 @@ class WebUI(object):
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
 
+		# make paths relative, needed for remote celery workers to function correctly
+		for f in [fois,gfs]:
+			list_foi = open(f).read().replace(uploads_dir,'uploads').replace(results_dir,'results')
+			with open(f,'wb') as writer:
+				writer.write(list_foi)
+		print "OLD BACKGROUND",b
+		b = b.replace(uploads_dir,'uploads')
+		print "BACKGROUND",b
+
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
 		set_info = {"Jobname:": str(id),
@@ -348,7 +357,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism)
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism,id=id)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
@@ -740,7 +749,7 @@ if __name__ == "__main__":
 		out.wait()
 		for i in range(args["num_workers"]):
 			fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
-			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i)]
+			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i),'-r',sett['run_files_dir'],'-d',args["data_dir"].split(",")[0]]
 			out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})

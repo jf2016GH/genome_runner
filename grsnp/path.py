@@ -29,7 +29,7 @@ class PathNode(defaultdict):
 		blacklist = []
 		blacklist_path = os.path.join(base,"blacklist.txt")
 		gfs_path = os.path.join(base,"gfs.php")
-
+		data_dir = os.path.split(os.path.split(base)[0])[0] # get the root data directory i.e. portion parent to '/grsnp_db/'
 		if os.path.exists(blacklist_path):
 			with open(blacklist_path) as f:
 				blacklist = [line.strip() for i,line in enumerate(f)]
@@ -47,7 +47,7 @@ class PathNode(defaultdict):
 					continue
 				node = node[p]
 				node.name = p
-			node.files = ["file:"+os.path.join(base, f) for f 
+			node.files = ["file:"+os.path.join(base, f).replace(data_dir,"") for f 
 				in files if f.endswith(('.gz', '.bb')) and base_name(f) not in blacklist]
 
 			# used for the auto-complete text box
@@ -121,7 +121,7 @@ class PathNode(defaultdict):
 		html = """<button type="button" id="demo_fois_none" onclick="enable_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary active" title="" >None</button>\n"""
 		if not os.path.exists(demo_dir):
 			return html
-		for snp_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
+		for snp_dir in [os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f)) and not f.endswith(".tbi")]:
 				tooltip += "\t"+base_name(s) + "\n" 
