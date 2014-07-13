@@ -467,6 +467,7 @@ def check_background_foi_overlap(bg,fois):
     """ Calculates the overlap of the FOIs with the background.
     Removes FOIs that are poorly formed with the background.
     """
+    _write_progress("Validating FOIs against background")
     good_fois = []
     if len(fois) == 0:
         return [[],[]]
@@ -607,6 +608,7 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
     output_dir = os.path.join(run_files_dir,'processed_fois')
     # Sort the fois 
     out = ""
+    print "DATADI",output_dir
     try: 
         for f in fois:    
             # copy the FOI to the output_dir
@@ -616,7 +618,7 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
             out_f = os.path.join(output_dir,out_fname) # the processed foi file
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
             out.wait()           
             # remove the header from the files
             grsnp_util.remove_headers(out_f)
@@ -680,8 +682,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     run_files_dir = outdir
     curprog,progmax = 0,1
 
-    logger.info("ORGANIS " + str(organism))
-    logger.info("P_value adjustment used: {}".format(padjust))
     try:
         trackdb = []      
 
@@ -692,6 +692,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         detailed_outpath =  os.path.join(outdir, "detailed.txt") 
         matrix_outpath = os.path.join(outdir,"matrix.txt")
         progress_outpath = os.path.join(outdir,".prog")
+        _write_progress("Starting analysis.")
         f = open(matrix_outpath,'wb') 
         f.close()
         f = open(detailed_outpath,'wb')

@@ -26,7 +26,7 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 	global sett
 	try:
 		if db_version not in sett['data_dir'].keys():
-			raise Exception("{} does not exist in the worker's database.".format(db_version))
+			raise Exception("{} does not exist in the worker's database. Databases available: {}".format(db_version,",".join(sett['data_dir'].keys())))
 		outdir=os.path.join(sett['run_files_dir'],'results',str(id))	
 		# write out absolute gfs and fois file paths and pass these to the worker	
 		for f_path in [fois, gfs]:
@@ -35,8 +35,6 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 				for f in list_f:
 					writer.write(os.path.join(sett['data_dir'][db_version],f.lstrip('/'))+"\n")
 		bg_path = os.path.join(sett['data_dir'][db_version],bg_path.lstrip("/"))
-		print bg_path.lstrip('/')
-		print sett['data_dir'][db_version]
 		grsnp.hypergeom4.run_hypergeom(fois+"_full", gfs+"_full", bg_path,outdir,job_name,zip_run_files,bkg_overlaps_path,sett['data_dir'][db_version],run_annotation,run_randomization_test,padjust,pct_score,organism)
 	except Exception, e:
 		print traceback.print_exc()
@@ -62,7 +60,7 @@ def cmd_options(options,**kwargs):
 
 	data_dir = {}
 	for db_dir in list_data_dir:
-		data_dir.update({os.path.split(db_dir[:-1])[1]:db_dir.strip().rstrip("/")})
+		data_dir.update({os.path.split(db_dir.rstrip("/").lstrip("/").strip())[1]:db_dir.strip().rstrip("/")})
 	#validate data directory
 	for k,v in data_dir.items():
 		if not os.path.exists(v):
@@ -70,15 +68,12 @@ def cmd_options(options,**kwargs):
 	# save to global settings
 	sett["run_files_dir"] = options["run_files_dir"].rstrip("/")
 	sett["data_dir"] = data_dir
-	print sett['data_dir']
-
 
 def _write_progress(line,id,curprog,progmax):
     """Saves the current progress to the progress file
     """
     global sett
     progress_outpath = os.path.join(sett['run_files_dir'],'results',id,".prog")
-    print progress_outpath
     if progress_outpath:
         progress = {"status": line, "curprog": curprog,"progmax": progmax}
         with open(progress_outpath,"wb") as progfile:

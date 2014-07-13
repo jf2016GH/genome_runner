@@ -740,17 +740,14 @@ if __name__ == "__main__":
 		app.config_from_object('grsnp.celeryconfiguration')
 		if app.control.inspect().ping() == None:
 			for i in range(args["num_workers"]):
-				print "Started celery worker[s]..."
-				fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
-				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i)]
+				print "Starting Celery worker[s]..."
+				fh = open("worker{}.log".format(i),"w")
+				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i),'-r',sett['run_files_dir'],'-d',args["data_dir"]]
 				out = subprocess.Popen(script,stdout=fh,stderr=fh)
-				workers = app.control.inspect().ping()
-				pids = [str(app.control.inspect().stats()[j]['pid']) for j in workers.keys()]
-				print "Celery workers  pids: " + ",".join(pids)
 		else:
 			workers = app.control.inspect().ping()
 			pids = [str(app.control.inspect().stats()[j]['pid']) for j in workers.keys()]
-			print "Celery workers already running. Pids: " + ",".join(pids)
+			print "Celery workers already running. Pids:" + ",".join(pids) 
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})
 		cherrypy.quickstart(WebUI(), "/gr", config=conf)
