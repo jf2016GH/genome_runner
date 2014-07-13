@@ -244,9 +244,10 @@ class WebUI(object):
 			for g in gfeatures:
 				if (base_name(g) not in list_gfs): 
 					# check if score and/or strand filtered GF data exists
-					g = verify_score_strand(g,kwargs['pct_score'],strand)
+					g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
 					out_gfs.write(g+"\n")
 				list_gfs.append(base_name(g))
+
 				
 		for k,v in kwargs.items():
 			# organism to use
@@ -312,8 +313,9 @@ class WebUI(object):
 			list_foi = open(f).read().replace(uploads_dir,'/uploads').replace(results_dir,'/results').replace(data_dir,"")
 			with open(f,'wb') as writer:
 				writer.write(list_foi)
-		
-		b = b.replace(data_dir,'')
+		print "absolute",b
+		b = b.replace(data_dir,'').replace(os.path.split(uploads_dir)[0],"").lstrip("/")
+		print "relative",b
 
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
@@ -633,10 +635,11 @@ class WebUI(object):
 def base_name(k):
     return os.path.basename(k).split(".")[0]
 
-def verify_score_strand(gf_path,pct_score,strand):
+def verify_score_strand(gf_path,pct_score,strand,data_dir):
     ''' Checks if a score and/or strand filtered version of gf_path exists in the database and
     returns the appropriate path if it does.
     '''
+    gf_path = os.path.join(data_dir,gf_path.lstrip("/"))
     gf_score_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}_{}/'.format(pct_score,strand))
     gf_score_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
     gf_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(strand))

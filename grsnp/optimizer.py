@@ -29,10 +29,12 @@ def create_bkg_gf_overlap_db(gf_dir,background_dir,data_dir):
 	db_path = os.path.join(data_dir,gf_dir,"bkg_overlaps.gr")
 	full_gf_dir = os.path.join(data_dir,gf_dir)
 	full_background_dir = os.path.join(data_dir,background_dir)
+	print db_path
 
 	# Read in all completed GF in the partially completed bkg_overlaps file
 	if os.path.exists(db_path):
-		list_completed_gfs = [x.split("\t")[0] for x in open(db_path).read().split("\n")] 
+		list_completed_gfs = [x.split("\t")[0] for x in open(db_path).read().split("\n")]
+		print [x for x in list_completed_gfs if "wgEncodeHaibTfbsEcc1Tcf12V0422111PkRep2" in x]
 	# gather all directories (groups) in the database
 	dirs = [name for name in os.listdir(full_gf_dir)
 		if os.path.isdir(os.path.join(full_gf_dir, name))]

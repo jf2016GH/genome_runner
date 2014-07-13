@@ -106,8 +106,12 @@ def get_bgobs(bg,gf,data_dir,organism):
     If they do not, it manually calculates them.
     '''
     base_data_dir = os.path.split(data_dir)[0]
-    filt_grsnp_db = gf.replace(base_data_dir,"").lstrip("/").split("/")[0]
+    # get the grsnp_db_[filt] folder
+    filt_grsnp_db = gf.replace(base_data_dir,"").lstrip("/").split("/")[1]
     bkg_overlap_path = os.path.join(base_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
+    logger.info("bkg_overlaps")
+    logger.info(bkg_overlap_path + " " + str(os.path.exists(bkg_overlap_path)))
+
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
         data = open(bkg_overlap_path).read().split("\n")
@@ -119,6 +123,8 @@ def get_bgobs(bg,gf,data_dir,organism):
             if len(bg_obs) != 0:
                 logger.info("Pre-calculated values found for background and {} ".format(base_name(gf)))
                 return bg_obs[0]
+    else:
+        logger.warning("Valid bkg_overlaps file not found")
     # manually get overlap values
     logger.info("Caclulating overlap stats on background and {}".format(base_name(gf)))
     _write_progress("Caclulating overlap stats on background and {}".format(base_name(gf)))
@@ -608,7 +614,6 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
     output_dir = os.path.join(run_files_dir,'processed_fois')
     # Sort the fois 
     out = ""
-    print "DATADI",output_dir
     try: 
         for f in fois:    
             # copy the FOI to the output_dir
@@ -735,7 +740,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             if os.path.exists(f_path): os.remove(f_path)
         _write_progress("Performing calculations on the background.")
         for gf in gfs: 
-            current_gf = base_name(gf)      
+            current_gf = base_name(gf)    
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
             write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,good_fois) 
