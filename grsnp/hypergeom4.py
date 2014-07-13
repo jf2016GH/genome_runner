@@ -475,7 +475,6 @@ def check_background_foi_overlap(bg,fois):
     if len(fois) == 0:
         return [[],[]]
     # Runs overlapStatistics on background and FOIs
-    pdb.set_trace()
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
@@ -612,7 +611,6 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
     output_dir = os.path.join(run_files_dir,'processed_fois')
     # Sort the fois 
     out = ""
-    print fois
     try: 
         for f in fois:    
             # copy the FOI to the output_dir
@@ -625,7 +623,6 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
             out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
             out.wait()
             # remove the header from the files
-            print "out_f",out_f
             grsnp_util.remove_headers(out_f)
 
             # Check if items are rsIDs. Convert to bed coordinates if they are
