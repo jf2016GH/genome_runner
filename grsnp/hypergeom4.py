@@ -92,7 +92,7 @@ def get_overlap_statistics(gf,fois):
         if os.path.exists(tmp_path): os.remove(tmp_path)
         if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
         logger.error(traceback.format_exc())
-        return
+        raise e
     return results
 
 def get_tmp_file(prefix):
@@ -101,14 +101,13 @@ def get_tmp_file(prefix):
         tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
     return tmp_path
 
-def get_bgobs(bg,gf,data_dir,organism): 
+def get_bgobs(bg,gf,root_data_dir,organism): 
     ''' Check if pre-calculated GF and background overlap data exist.
     If they do not, it manually calculates them.
     '''
-    base_data_dir = os.path.split(data_dir)[0]
     # get the grsnp_db_[filt] folder
-    filt_grsnp_db = gf.replace(base_data_dir,"").lstrip("/").split("/")[1]
-    bkg_overlap_path = os.path.join(base_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
+    filt_grsnp_db = gf.replace(root_data_dir,"").lstrip("/").split("/")[0]
+    bkg_overlap_path = os.path.join(root_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
     logger.info("bkg_overlaps")
     logger.info(bkg_overlap_path + " " + str(os.path.exists(bkg_overlap_path)))
 
@@ -116,15 +115,13 @@ def get_bgobs(bg,gf,data_dir,organism):
     if os.path.exists(bkg_overlap_path):       
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
-        d_gf = [x[1] for x in data if os.path.join(base_data_dir,x[0]) == gf and x[1]  != ""]
+        d_gf = [x[1] for x in data if os.path.join(root_data_dir,x[0]) == gf and x[1]  != ""]
 
         if len(d_gf) != 0:
             bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == os.path.basename(bg)]
             if len(bg_obs) != 0:
                 logger.info("Pre-calculated values found for background and {} ".format(base_name(gf)))
                 return bg_obs[0]
-    else:
-        logger.warning("Valid bkg_overlaps file not found")
     # manually get overlap values
     logger.info("Caclulating overlap stats on background and {}".format(base_name(gf)))
     _write_progress("Caclulating overlap stats on background and {}".format(base_name(gf)))
@@ -478,6 +475,7 @@ def check_background_foi_overlap(bg,fois):
     if len(fois) == 0:
         return [[],[]]
     # Runs overlapStatistics on background and FOIs
+    pdb.set_trace()
     foi_bg_stats =  get_overlap_statistics(bg,fois)
     for f in foi_bg_stats:
         isgood = True
@@ -609,11 +607,12 @@ def validate_rsids(foi_path):
     else:
         return False
 
-def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
+def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
     processed_fois = []
     output_dir = os.path.join(run_files_dir,'processed_fois')
     # Sort the fois 
     out = ""
+    print fois
     try: 
         for f in fois:    
             # copy the FOI to the output_dir
@@ -624,14 +623,15 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
             out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
-            out.wait()           
+            out.wait()
             # remove the header from the files
+            print "out_f",out_f
             grsnp_util.remove_headers(out_f)
 
             # Check if items are rsIDs. Convert to bed coordinates if they are
             if validate_rsids(out_f):
                 # check if a file exists in the database for rsID conversion and construct the path to it
-                rsid_path = os.path.join(os.path.split(gr_data_dir)[0],'custom_data','rsid_conversion',organism)
+                rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
                 if not os.path.exists(rsid_path):
                     logger.error('rsID conversion not available for this organism. Analysis terminated.') 
                     return []
@@ -676,7 +676,7 @@ def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
 
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism = ""):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism = ""):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,run_files_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -690,7 +690,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     try:
         trackdb = []      
 
-        trackdb_path = os.path.join(gr_data_dir,organism,"trackDb")
+        trackdb_path = os.path.join(root_data_dir,"grsnp_db",organism,"trackDb")
         if os.path.exists(trackdb_path+".txt.gz") and os.path.exists(trackdb_path + ".sql"):
             trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
         # set output settings
@@ -723,7 +723,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             return
 
         # pre-process the FOIs
-        fois = preprocess_fois(fois,run_files_dir,gr_data_dir,organism)
+        fois = preprocess_fois(fois,run_files_dir,root_data_dir,organism)
         if len(fois) == 0:
             logger.error('No valid FOIs to supplied')
             _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
@@ -746,7 +746,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs
-            bg_obs = get_bgobs(bg_path,gf,gr_data_dir,organism)
+            bg_obs = get_bgobs(bg_path,gf,root_data_dir,organism)
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue

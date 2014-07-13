@@ -25,8 +25,8 @@ sett = {}
 def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlaps_path="",run_annotation=False,run_randomization_test=False,padjust="None",pct_score="",organism="",id="",db_version=None):
 	global sett
 	try:
-		if db_version not in sett['data_dir'].keys():
-			raise Exception("{} does not exist in the worker's database. Databases available: {}".format(db_version,",".join(sett['data_dir'].keys())))
+		if db_version not in sett['root_data_dir'].keys():
+			raise Exception("{} does not exist in the worker's database. Databases available: {}".format(db_version,",".join(sett['root_data_dir'].keys())))
 		outdir=os.path.join(sett['run_files_dir'],'results',str(id))	
 		# write out absolute gfs and fois file paths and pass these to the worker	
 		for f_path in [fois, gfs]:
@@ -34,15 +34,15 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 			with open(f_path+'_full','wb') as writer:
 				for f in list_f:
 					if f.lstrip("/").startswith("grsnp_db") or f.lstrip("/").startswith("custom_data"):
-						writer.write(os.path.join(sett['data_dir'][db_version],f.lstrip('/'))+"\n")
+						writer.write(os.path.join(sett['root_data_dir'][db_version],f.lstrip('/'))+"\n")
 					else:
 						writer.write(os.path.join(sett['run_files_dir'],f.lstrip("/"))+"\n")
 		# make background path absolute
 		if bg_path.lstrip("/").startswith("custom_data"):
-			bg_path = os.path.join(sett['data_dir'][db_version],bg_path.lstrip("/"))
+			bg_path = os.path.join(sett['root_data_dir'][db_version],bg_path.lstrip("/"))
 		else:
 			bg_path = os.path.join(sett['run_files_dir'],bg_path.lstrip("/"))
-		grsnp.hypergeom4.run_hypergeom(fois+"_full", gfs+"_full", bg_path,outdir,job_name,zip_run_files,bkg_overlaps_path,sett['data_dir'][db_version],run_annotation,run_randomization_test,padjust,pct_score,organism)
+		grsnp.hypergeom4.run_hypergeom(fois+"_full", gfs+"_full", bg_path,outdir,job_name,zip_run_files,bkg_overlaps_path,sett['root_data_dir'][db_version],run_annotation,run_randomization_test,padjust,pct_score,organism)
 	except Exception, e:
 		print traceback.print_exc()
 		_write_progress("ERROR: Run crashed. Celery worker threw an error.",id,1,1)
@@ -65,16 +65,17 @@ def cmd_options(options,**kwargs):
 	if not os.path.exists(options['run_files_dir']):
 		raise Exception('{} does not exist'.format(options['run_files_dir']))
 
-	data_dir = {}
+	root_data_dir = {}
 	for db_dir in list_data_dir:
-		data_dir.update({os.path.split(db_dir.rstrip("/").lstrip("/").strip())[1]:db_dir.strip().rstrip("/")})
+		# Extract db_version and use as key. Value is directory to db.
+		root_data_dir.update({os.path.split(db_dir.rstrip("/").lstrip("/").strip())[1]:db_dir.strip().rstrip("/")})
 	#validate data directory
-	for k,v in data_dir.items():
+	for k,v in root_data_dir.items():
 		if not os.path.exists(v):
 			raise Exception("{} does not exist. Please run grsnp.dbcreator or use --data_dir.".format(v))
 	# save to global settings
 	sett["run_files_dir"] = options["run_files_dir"].rstrip("/")
-	sett["data_dir"] = data_dir
+	sett["root_data_dir"] = root_data_dir
 
 def _write_progress(line,id,curprog,progmax):
     """Saves the current progress to the progress file
