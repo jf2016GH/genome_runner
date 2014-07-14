@@ -45,7 +45,6 @@ progress_outpath = None
 run_files_dir = None
 console_output = False 
 print_progress = False
-logger_path = "gr_log.txt"
 
 
 
@@ -210,7 +209,7 @@ def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
 
     if bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(foi_name,gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
+        logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
     else: 
         if do_chi_square:        
             chi_result = scipy.stats.chi2_contingency(ctable)
@@ -343,7 +342,6 @@ def cluster_matrix(input_path,output_path):
     return output_path    
 
 def pearsons_cor_matrix(matrix_path,out_dir):
-    global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
     pval_output_path = os.path.join(os.path.split(output_path)[0], base_name(output_path)+"_pvalue.txt")
     pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
@@ -419,7 +417,7 @@ def get_annotation(foi,gfs):
         if os.path.exists(tmp_path): os.remove(tmp_path)
         if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
         logger.error(traceback.format_exc())
-        return tmp
+        raise e
     return tmp
 
 
@@ -481,15 +479,15 @@ def check_background_foi_overlap(bg,fois):
         foi_name,n_bgs,n_fois,foi_in = f["queryfile"],f["indexregions"],f["queryregions"],f["intersectregions"]
         if n_fois < 5:
             isgood = False
-            logger.error("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
+            logger.warning("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
         elif n_bgs < n_fois:
             isgood = False
-            logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
+            logger.warning("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
         if isgood:
             # ensure that overlapStatistics output filename with extension for queryFile field
             good_fois.append([x for x in fois if os.path.basename(x) == f["queryfile"]][0])
         if foi_in < n_fois:
-            logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
+            logger.warning("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
                                                                                                                        
 
@@ -630,8 +628,8 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
                 # check if a file exists in the database for rsID conversion and construct the path to it
                 rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
                 if not os.path.exists(rsid_path):
-                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
-                    return []
+                    logger.error('rsID conversion not available for this organism. Feature set {} removed'.format(f)) 
+                    continue
                 files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
                 # if conversion files found, perform conversion
                 if len(files) > 0:
@@ -683,9 +681,10 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     logger.setLevel(logging.INFO)
     run_files_dir = outdir
     curprog,progmax = 0,1
+    logger.propagate = False
 
     try:
-        trackdb = []      
+        trackdb = []
 
         trackdb_path = os.path.join(root_data_dir,"grsnp_db",organism,"trackDb")
         if os.path.exists(trackdb_path+".txt.gz") and os.path.exists(trackdb_path + ".sql"):
@@ -699,11 +698,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         f.close()
         f = open(detailed_outpath,'wb')
         f.close()
-        hdlr = logging.FileHandler(logger_path)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        hdlr.setFormatter(formatter)
-        logger.addHandler(hdlr)
-        logger.propagate = False
 
         # Read in the paths
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
@@ -784,6 +778,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             curprog,progmax = 0,len(fois)
             for f in fois:                
                 _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
+                logger.info("Running annotation analysis for {}".format(base_name(f)))
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
                     anot = get_annotation(f,gfs).split("\n")
                     anot[0] = anot[0].replace("Region\t\t","Region\t")
@@ -801,7 +796,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         _write_progress("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
-        write_output(traceback.format_exc(),logger_path)
         _write_progress("Run crashed. See end of log for details.")
         raise Exception(e)
 
