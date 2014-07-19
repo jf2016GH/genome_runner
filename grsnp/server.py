@@ -741,6 +741,7 @@ if __name__ == "__main__":
 		#out.wait()
 		app = Celery('grsnp')
 		app.config_from_object('grsnp.celeryconfiguration')
+		print "Checking for existing celery workers..."
 		if app.control.inspect().ping() == None:
 			for i in range(args["num_workers"]):
 				print "Starting Celery worker[s]..."
