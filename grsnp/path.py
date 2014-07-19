@@ -175,6 +175,7 @@ def get_database_versions_html(data_dir,db_version):
 		selected = ""
 		print v
 		if v == db_version: selected = " selected "
-		html += "<option value='"+v+"'" + selected +">" + v.split("_")[1] +" (" + v.split("_")[2].replace(".","-") + ")" +"</option>"
+		tmp = v.split("_")
+		html += "<option value='"+v+"'" + selected +">" + tmp[0] + " - " + tmp[1] +" (" + tmp[2].replace(".","-") + ")" +"</option>"
 	html += "</select>"
 	return [html,db_version]
