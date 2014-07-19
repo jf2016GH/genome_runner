@@ -143,6 +143,7 @@
 												<a class="btn" style="margin-top: 9px;" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
 												<a class="btn" style="margin-top: 9px;" onClick="treeviewCheckAll()">Select All</a>
 												<a class="btn" style="margin-top: 9px" onClick="treeviewUncheckAll()">Deselect all</a>
+												<a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a>
 											</div>
 											<div id="treeview-outer" style="padding-top:10px;">
 												<div id="treeview-inner" onClick="viewBoxClick()">

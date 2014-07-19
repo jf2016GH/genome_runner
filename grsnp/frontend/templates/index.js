@@ -31,6 +31,12 @@ function page_reload(){
 
 $(document).ready(function() {
 
+	$("#descriptions").click(function(){
+		var organism = $("#org").val().split(":")[1];
+		var db_version = $("#db_version").val();
+		window.open("./gf_descriptions?db_version="+db_version+"&organism="+organism)
+	});
+
 	$( "#db_version" ).change(function() {page_reload();});
 
 	$( "#frmQuery" ).submit(function( event ) {

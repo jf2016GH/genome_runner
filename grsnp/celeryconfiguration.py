@@ -1,6 +1,6 @@
 db_num = "0"
 redis_port = 7775
-BROKER_URL = "redis://10.84.146.27:{}/".format(redis_port) + db_num
+BROKER_URL = "redis://localhost:{}/".format(redis_port) + db_num
 
 # Workers should run as an unprivileged user.
 CELERYD_USER="ubuntu"

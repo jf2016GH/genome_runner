@@ -426,6 +426,15 @@ class WebUI(object):
 		return rend_template
 
 	@cherrypy.expose
+	def gf_descriptions(self,db_version,organism):
+		# Use mako to render index.html
+		tmpl = lookup.get_template("master.mako")
+		body = lookup.get_template("gf_descriptions.mako").render()
+		script = lookup.get_template("gf_descriptions.js").render(db_version=db_version,organism=organism)
+		return tmpl.render(body=body,script=script)
+
+
+	@cherrypy.expose
 	def get_heatmaps(self, run_id, organism):
 		"""	Returns clustered and PCC matrix if they exist.
 		'organism': is used to load detailed labels for the GFs.
@@ -500,7 +509,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
-		annotation_path = os.path.join(os.path.join(results_dir,run_id,"annotations",foi_name + ".txt"))
+		annotation_path = os.path.join(results_dir,run_id,"annotations",foi_name + ".txt")
 		results = []
 		if os.path.exists(annotation_path):
 			with open(annotation_path) as f:
@@ -517,7 +526,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_enrichment(self,run_id,foi_name):
-		enrichment_path = os.path.join(os.path.join(results_dir,run_id,"enrichment",foi_name + ".txt"))
+		enrichment_path = os.path.join(results_dir,run_id,"enrichment",foi_name + ".txt")
 		results = []
 		if os.path.exists(enrichment_path):
 			with open(enrichment_path) as f:
@@ -531,6 +540,24 @@ class WebUI(object):
 					if foi.strip() != "":
 						results.append(foi.rstrip().split("\t"))
 		return simplejson.dumps(results)
+
+	@cherrypy.expose
+	def get_gf_descriptions(self,db_version,organism):
+		descriptions_path = os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")		
+		results = []
+		if os.path.exists(descriptions_path):
+			with open(descriptions_path) as f:
+				# skip the comment lines
+				cols = f.readline().rstrip()
+				while cols[0] == "#":
+					cols = f.readline().rstrip()
+				cols = cols.split("\t")	
+				results.append(cols)			
+				for foi in f:
+					if foi.strip() != "":
+						results.append(foi.rstrip().split("\t"))
+		return simplejson.dumps(results)
+
 
 	@cherrypy.expose
 	def get_cluster(self,run_id):
@@ -591,6 +618,9 @@ class WebUI(object):
 				results["log"] = f.read()
 		return simplejson.dumps(results)
 
+	@cherrypy.expose
+	def get_gfdescriptions(self,organism,db_version):
+		return open(os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")).read()
 	@cherrypy.expose
 	def get_checkboxtree(self,organism,db_version):
 		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.html")).read()
