@@ -724,6 +724,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
+        # check if any good fois exist after background filtering
+        if len(good_fois) == 0:
+            logger.error('No valid FOIs to supplied')
+            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
+            return
         # remove old detailed enrichment result files if they exit
         enr_path =  os.path.join(run_files_dir,"enrichment")
         for f in good_fois:
