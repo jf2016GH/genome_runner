@@ -93,7 +93,15 @@ $(document).ready(function() {
 	    	alwaysVisible: true
 	});
 	
-
+	$("#disclaimer").click(function() {
+		// ensure that the user has agreed to the terms of use
+		if ($("#disclaimer").attr("checked") == "checked"){
+			 $("#btnSubmit").removeAttr("disabled");
+		}
+		else{		
+			 $("#btnSubmit").attr("disabled", "disabled");
+		}
+	});
 
 	$("#accfoi").bind('accordionchange',
 			function () {
