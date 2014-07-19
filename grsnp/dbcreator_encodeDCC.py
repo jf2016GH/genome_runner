@@ -301,24 +301,23 @@ if __name__ == "__main__":
 	args['score'] = set(args['score'].split(',')) # remove duplicate scores
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')
 
-	if not args['filteronly']:
-		if args['galaxy']:
-			usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
-			if usrdir == '': 
-				usrdir = os.getcwd()
-			else:
-				usrdir = os.path.join(usrdir,"tool-data")
-				if not os.path.exists(usrdir):
-					logger.error("Galaxy tool-data does not exist")
-					sys.exist()
-			create_galaxy_xml_files(outputdir,usrdir)		
-			sys.exit()
-		if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
-			gfs = args["featuregroups"].split(",")
-			create_feature_set(outputdir,args['organism'],gfs,pct_score=args['score'],max_install=args['max'])			
+	if args['galaxy']:
+		usrdir = raw_input("Enter directory of Galaxy containing the run.sh file. If left blank, grsnp_gfs.xml file will be outputted in the cwd: \n")
+		if usrdir == '': 
+			usrdir = os.getcwd()
 		else:
-			print "ERROR: Requires UCSC organism code.  Use --help for more information"
-			sys.exit()
+			usrdir = os.path.join(usrdir,"tool-data")
+			if not os.path.exists(usrdir):
+				logger.error("Galaxy tool-data does not exist")
+				sys.exist()
+		create_galaxy_xml_files(outputdir,usrdir)		
+		sys.exit()
+	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
+		gfs = args["featuregroups"].split(",")
+		create_feature_set(outputdir,args['organism'],gfs,pct_score=args['score'],max_install=args['max'])			
+	else:
+		print "ERROR: Requires UCSC organism code.  Use --help for more information"
+		sys.exit()
 
 	# load score from minmax.txt file created earlier
 	minmax = load_minmax(os.path.join(outputdir,args['organism'],"minmax.txt"))		

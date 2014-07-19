@@ -143,8 +143,7 @@ if __name__ == "__main__":
 		background_dir = os.path.join("custom_data","backgrounds",args["organism"])
 		gfs_dir = os.path.join(os.path.split(gr_dir)[1],args["organism"])
 		if not os.path.exists(os.path.join(args['data_dir'], gfs_dir)):
-			print "ERROR: grsnp_db does not exist.  Use grsnp.dbcreator to create a database."
-			sys.exit()
+			continue
 		if not os.path.exists(os.path.join(args['data_dir'],background_dir)):
 			print "ERROR: No backgrounds found in default background directory {}.  Please add backgrounds.".format(background_dir)
 			sys.exit()
