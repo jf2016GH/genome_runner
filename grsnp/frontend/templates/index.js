@@ -31,6 +31,12 @@ function page_reload(){
 
 $(document).ready(function() {
 
+	$("#descriptions").click(function(){
+		var organism = $("#org").val().split(":")[1];
+		var db_version = $("#db_version").val();
+		window.open("./gf_descriptions?db_version="+db_version+"&organism="+organism)
+	});
+
 	$( "#db_version" ).change(function() {page_reload();});
 
 	$( "#frmQuery" ).submit(function( event ) {
@@ -87,7 +93,15 @@ $(document).ready(function() {
 	    	alwaysVisible: true
 	});
 	
-
+	$("#disclaimer").click(function() {
+		// ensure that the user has agreed to the terms of use
+		if ($("#disclaimer").attr("checked") == "checked"){
+			 $("#btnSubmit").removeAttr("disabled");
+		}
+		else{		
+			 $("#btnSubmit").attr("disabled", "disabled");
+		}
+	});
 
 	$("#accfoi").bind('accordionchange',
 			function () {

@@ -143,6 +143,7 @@
 												<a class="btn" style="margin-top: 9px;" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
 												<a class="btn" style="margin-top: 9px;" onClick="treeviewCheckAll()">Select All</a>
 												<a class="btn" style="margin-top: 9px" onClick="treeviewUncheckAll()">Deselect all</a>
+												<a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a>
 											</div>
 											<div id="treeview-outer" style="padding-top:10px;">
 												<div id="treeview-inner" onClick="viewBoxClick()">
@@ -195,13 +196,14 @@
 							</tr>
 							<tr>
 
+								<td><input type="checkbox" id="disclaimer" checked="checked" >I certify that I understand that GRSNP is for research purposes only. I certify that I understand that GRSNP is for research purposes only.I certify that I understand that GRSNP is for research purposes only.</input></td>
 								<td id="td_submit" style="width:90px">
-									<button class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
+									<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
 									<img class="helptooltip" title="Submits the job for enrichment/epigenomic similarity analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								</td>
 								<td id="td_submit" style="width:170px">
 									<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
-								</td>
+								</td>	
 							</tr>
 						</table>
 						<br>
