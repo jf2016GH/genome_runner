@@ -1,9 +1,9 @@
 ## First question: How number of GFs affects run time
 all:	1_vs_xENCODE_precalc_noannot 1_vs_xENCODE_precalc_annot 1_vs_xENCODE_noprecalc_noannot 1_vs_xENCODE_noprecalc_annot
 ## Second question: How the number of SNP sets affects run time
-all:	x_vs_ENCODE_precalc_noannot x_vs_ENCODE_precalc_annot x_vs_ENCODE_noprecalc_noannot x_vs_ENCODE_noprecalc_annot
+#all:	x_vs_ENCODE_precalc_noannot x_vs_ENCODE_precalc_annot x_vs_ENCODE_noprecalc_noannot x_vs_ENCODE_noprecalc_annot
 ## Third question: How the size of SNP set affects run time
-all:	1x_vs_ENCODE_precalc_noannot 1x_vs_ENCODE_precalc_annot 1x_vs_ENCODE_noprecalc_noannot 1x_vs_ENCODE_noprecalc_annot
+#all:	1x_vs_ENCODE_precalc_noannot 1x_vs_ENCODE_precalc_annot 1x_vs_ENCODE_noprecalc_noannot 1x_vs_ENCODE_noprecalc_annot
 
 
 SHELL=/bin/bash
