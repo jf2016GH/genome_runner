@@ -492,10 +492,14 @@ def check_background_foi_overlap(bg,fois):
                                                                                                                        
 
 
-def get_description(gf,trackdb):
-    desc = [x["longLabel"] for x in trackdb if x["tableName"] == gf]
-    if len(desc) is not 0: return desc[0]
-    else: return "No Description"
+def get_description(gf,track_descriptions):
+    ''' Get the GF feature description
+    '''
+    desc = [x[1] for x in track_descriptions if x[0] == gf and len(x[0]) > 1]
+    if len(desc) is not 0: 
+        return desc[0]
+    else: 
+        return "No Description"
 
 
 
@@ -684,11 +688,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     logger.propagate = False
 
     try:
-        trackdb = []
+        track_descriptions = []
 
-        trackdb_path = os.path.join(root_data_dir,"grsnp_db",organism,"trackDb")
-        if os.path.exists(trackdb_path+".txt.gz") and os.path.exists(trackdb_path + ".sql"):
-            trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
+        decriptions_path = os.path.join(root_data_dir,"grsnp_db",organism,"gf_descriptions.txt")
+        if os.path.exists(decriptions_path):
+            track_descriptions = [x.split("\t") for x in open(decriptions_path).read().split("\n") if x != ""]
         # set output settings
         detailed_outpath =  os.path.join(outdir, "detailed.txt") 
         matrix_outpath = os.path.join(outdir,"matrix.txt")
@@ -738,7 +742,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         for gf in gfs: 
             current_gf = base_name(gf)    
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
-            write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
+            write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),track_descriptions)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs
