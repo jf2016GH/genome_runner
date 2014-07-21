@@ -689,7 +689,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
     try:
         track_descriptions = []
-
+        logger.info("Enrichment analysis started")
         decriptions_path = os.path.join(root_data_dir,"grsnp_db",organism,"gf_descriptions.txt")
         if os.path.exists(decriptions_path):
             track_descriptions = [x.split("\t") for x in open(decriptions_path).read().split("\n") if x != ""]
@@ -782,6 +782,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
 
         if run_annotation:
+            logger.info("Annotation started")
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
             curprog,progmax = 0,len(fois)
@@ -797,12 +798,13 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                             cur_row = a.split("\t")
                             wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))                            
                 curprog += 1
-
+            logger.info("Annotation finished")
         if zip_run_files:
             _write_progress("Preparing run files for download")
             _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         curprog,progmax = 1,1
-        _write_progress("Analysis Completed")       
+        _write_progress("Analysis Completed")
+        logger.info("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
         _write_progress("Run crashed. See end of log for details.")
