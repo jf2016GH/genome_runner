@@ -585,7 +585,6 @@ if __name__ == "__main__":
 		args['score'] = "25,50,75"
 	args['score'] = set(args['score'].split(',')) # remove duplicate scores
 		
-	global ftp, max_install_num
 	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
 	ftp.login(username,password)
 	outputdir=os.path.join(args["data_dir"],'grsnp_db')

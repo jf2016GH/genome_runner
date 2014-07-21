@@ -107,7 +107,6 @@ def shutdown_workers():
 
 
 if __name__ == "__main__":
-	global logger
 	parser = argparse.ArgumentParser(prog="python -m grsnp.optimizer", description="""Pre calculates the overlapStatistics for each of the backgrounds in <db_path>/custom_data/backgrounds/<organism> and genomic features in <db_path>/grsnp_db/<organism>. Example: python -m grsnp.optimizer -d /home/username/grs_db/ -g mm9""", epilog="""Creates a file  <db_path>/grsnp_db/<organism>/bkg_overlap.gr, automatically used by the server to speed up the analyses""")
 	parser.add_argument('--data_dir','-d', nargs="?", help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_2.00_6.26.2014/.", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", required=True, default="hg19")

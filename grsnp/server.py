@@ -683,7 +683,6 @@ def verify_score_strand(gf_path,pct_score,strand,data_dir):
     	return gf_path
 
 if __name__ == "__main__":
-	global static_dir,results_dir,media,root_dir,sett,uploads_dir
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
