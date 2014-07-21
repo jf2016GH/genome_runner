@@ -1,0 +1,272 @@
+## First question: How number of GFs affects run time
+all:	1_vs_xENCODE_precalc_noannot 1_vs_xENCODE_precalc_annot 1_vs_xENCODE_noprecalc_noannot 1_vs_xENCODE_noprecalc_annot
+## Second question: How the number of SNP sets affects run time
+#all:	x_vs_ENCODE_precalc_noannot x_vs_ENCODE_precalc_annot x_vs_ENCODE_noprecalc_noannot x_vs_ENCODE_noprecalc_annot
+## Third question: How the size of SNP set affects run time
+#all:	1x_vs_ENCODE_precalc_noannot 1x_vs_ENCODE_precalc_annot 1x_vs_ENCODE_noprecalc_noannot 1x_vs_ENCODE_noprecalc_annot
+
+
+SHELL=/bin/bash
+# Full path to the background file, which also serves as source of randomly selected SNPs
+SNP = /home/genomerunner/db_2.00_06.10.2014/custom_data/backgrounds/hg19/2snp138.bed.gz
+# Size of a SNP set
+SIZE =1000
+# Path to the ENCODE dataset
+GRSNP_DB = /home/genomerunner/db_2.00_06.10.2014/grsnp_db/hg19/ENCODE
+# Path to the full database
+DB = /home/genomerunner/db_2.00_06.10.2014/
+
+## First question: How number of GFs affects run time
+# 1 SNP set vs variable number of genomic features, precalculated, no annotation
+1_vs_xENCODE_precalc_noannot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find `pwd`/bed -type f -name rnd138_$(SIZE).bed > fois.txt; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..9}; do \
+		n=$$((100*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -d $(DB) -r "1_vs_"$$n"ENCODE_precalc_noannot"; \
+		n=$$((1000*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -d $(DB) -r "1_vs_"$$n"ENCODE_precalc_noannot"; \
+	done; \
+	cd ..
+
+# 1 SNP set vs variable number of genomic features, precalculated, annotation
+1_vs_xENCODE_precalc_annot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find `pwd`/bed -type f -name rnd138_$(SIZE).bed > fois.txt; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..9}; do \
+		n=$$((100*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -d $(DB) -r "1_vs_"$$n"ENCODE_precalc_annot" --run_annotation; \
+		n=$$((1000*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -d $(DB) -r "1_vs_"$$n"ENCODE_precalc_annot" --run_annotation; \
+	done; \
+	cd ..
+
+# 1 SNP set vs variable number of genomic features, not precalculated, no annotation
+1_vs_xENCODE_noprecalc_noannot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find `pwd`/bed -type f -name rnd138_$(SIZE).bed > fois.txt; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..9}; do \
+		n=$$((100*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -r "1_vs_"$$n"ENCODE_noprecalc_noannot"; \
+		n=$$((1000*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -r "1_vs_"$$n"ENCODE_noprecalc_noannot"; \
+	done; \
+	cd ..
+
+# 1 SNP set vs variable number of genomic features, not precalculated, annotation
+1_vs_xENCODE_noprecalc_annot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find `pwd`/bed -type f -name rnd138_$(SIZE).bed > fois.txt; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..9}; do \
+		n=$$((100*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -r "1_vs_"$$n"ENCODE_noprecalc_noannot" --run_annotation; \
+		n=$$((1000*i)); \
+		echo "Running 1 set of" $(SIZE) "SNPS vs." $$n "genome annotation features..."; \
+		cat gfs.hg19.ENCODE.txt | shuf | head -n $$n > gfs.hg19.ENCODE_$$n.txt; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE_$$n.txt $(SNP) -r "1_vs_"$$n"ENCODE_noprecalc_noannot" --run_annotation; \
+	done; \
+	cd ..
+
+## Second question: How the number of SNP sets affects run time
+# Multiple SNP sets vs all ENCODE data, precalculated, no annotation
+x_vs_ENCODE_precalc_noannot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((10*i)); \
+		echo "Running " $$n " sets of SNPS vs. all genome annotation features..."; \
+		for j in {1..$$n}; do \
+			awk -v n=$$n '{for(i=0;i<n;i++)print}' <(find `pwd`/bed -type f -name "*.bed") >> fois.txt; \
+		done; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -d $(DB) -r $$n"_vs_ENCODE_precalc_noannot"; \
+		rm fois.txt; \
+	done; \
+	cd ..
+
+# Multiple SNP sets vs all ENCODE data, precalculated, annotation
+x_vs_ENCODE_precalc_annot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((10*i)); \
+		echo "Running " $$n " sets of SNPS vs. all genome annotation features..."; \
+		for j in {1..$$n}; do \
+			awk -v n=$$n '{for(i=0;i<n;i++)print}' <(find `pwd`/bed -type f -name "*.bed") >> fois.txt; \
+		done; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -d $(DB) -r $$n"_vs_ENCODE_precalc_annot" --run_annotation; \
+		rm fois.txt; \
+	done; \
+	cd ..
+
+# Multiple SNP sets vs all ENCODE data, not precalculated, no annotation
+x_vs_ENCODE_noprecalc_noannot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((10*i)); \
+		echo "Running " $$n " sets of SNPS vs. all genome annotation features..."; \
+		for j in {1..$$n}; do \
+			awk -v n=$$n '{for(i=0;i<n;i++)print}' <(find `pwd`/bed -type f -name "*.bed") >> fois.txt; \
+		done; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -r $$n"_vs_ENCODE_noprecalc_noannot"; \
+		rm fois.txt; \
+	done; \
+	cd ..
+
+# Multiple SNP sets vs all ENCODE data, not precalculated, annotation
+x_vs_ENCODE_noprecalc_annot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	echo "Creating SNP set with" $(SIZE) "SNPs..."; \
+	zcat $(SNP) | shuf | head -n $(SIZE) >  bed/rnd138_$(SIZE).bed; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((10*i)); \
+		echo "Running " $$n " sets of SNPS vs. all genome annotation features..."; \
+		for j in {1..$$n}; do \
+			awk -v n=$$n '{for(i=0;i<n;i++)print}' <(find `pwd`/bed -type f -name "*.bed") >> fois.txt; \
+		done; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -r $$n"_vs_ENCODE_noprecalc_annot" --run_annotation; \
+		rm fois.txt; \
+	done; \
+	cd ..
+
+## Third question: How the size of SNP set affects run time
+# 1 SNP set of variable size vs all genomic features, precalculated, no annotation
+1x_vs_ENCODE_precalc_noannot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((1000*i)); \
+		echo "Creating SNP set with" $$n "SNPs..."; \
+		zcat $(SNP) | shuf | head -n $$n >  bed/rnd138_$$n.bed; \
+		find `pwd`/bed -type f -name "*.bed" > fois.txt; \
+		echo "Running 1 set of" $$n "SNPS vs.all genome annotation features..."; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -d $(DB) -r "1_"$$n"_vs_ENCODE_precalc_noannot"; \
+		rm bed/rnd138_$$n.bed; \
+	done; \
+	cd ..
+
+# 1 SNP set of variable size vs all genomic features, precalculated, annotation
+1x_vs_ENCODE_precalc_annot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((1000*i)); \
+		echo "Creating SNP set with" $$n "SNPs..."; \
+		zcat $(SNP) | shuf | head -n $$n >  bed/rnd138_$$n.bed; \
+		find `pwd`/bed -type f -name "*.bed" > fois.txt; \
+		echo "Running 1 set of" $$n "SNPS vs.all genome annotation features..."; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -d $(DB) -r "1_"$$n"_vs_ENCODE_precalc_annot" --run_annotation; \
+		rm bed/rnd138_$$n.bed; \
+	done; \
+	cd ..
+
+# 1 SNP set of variable size vs all genomic features, not precalculated, no annotation
+1x_vs_ENCODE_noprecalc_noannot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((1000*i)); \
+		echo "Creating SNP set with" $$n "SNPs..."; \
+		zcat $(SNP) | shuf | head -n $$n >  bed/rnd138_$$n.bed; \
+		find `pwd`/bed -type f -name "*.bed" > fois.txt; \
+		echo "Running 1 set of" $$n "SNPS vs.all genome annotation features..."; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -r "1_"$$n"_vs_ENCODE_noprecalc_noannot"; \
+		rm bed/rnd138_$$n.bed; \
+	done; \
+	cd ..
+
+# 1 SNP set of variable size vs all genomic features, not precalculated, annotation
+1x_vs_ENCODE_noprecalc_annot:
+	if [ ! -d $@ ]; then \
+		mkdir $@; \
+		mkdir $@/bed; \
+	fi; \
+	cd $@; \
+	find $(GRSNP_DB) -type f -name "*.bed.gz" > gfs.hg19.ENCODE.txt; \
+	for i in {1..10}; do \
+		n=$$((1000*i)); \
+		echo "Creating SNP set with" $$n "SNPs..."; \
+		zcat $(SNP) | shuf | head -n $$n >  bed/rnd138_$$n.bed; \
+		find `pwd`/bed -type f -name "*.bed" > fois.txt; \
+		echo "Running 1 set of" $$n "SNPS vs.all genome annotation features..."; \
+		python -m grsnp.hypergeom4 fois.txt gfs.hg19.ENCODE.txt $(SNP) -r "1_"$$n"_vs_ENCODE_noprecalc_annot" --run_annotation; \
+		rm bed/rnd138_$$n.bed; \
+	done; \
+	cd ..
