@@ -32,6 +32,6 @@ sudo python setup.py install
 cd ..
 # Finally, installing GenomeRunner itself. Keep uncommented only one type of installation
 # Developmental mode. Changes made in github-cloned folder are immediately active
-# sudo python setup.py install develop -d /usr/local/lib/python2.7/dist-packages/
+sudo python setup.py install develop -d /usr/local/lib/python2.7/dist-packages/
 # Standard mode, default. Changes made in github-cloned folder require reinstallation to be active
-sudo python setup.py install
+#sudo python setup.py install
