@@ -1,0 +1,114 @@
+Database version:	db_2.00_06.10.2014
+Background:	3gwasCatalog
+Time:	2014-08-08 01:25:45
+Jobname:	f4jse3t0o80z4ls3eauuhy47sguice4h
+Multiple test correction:	fdr
+Strand:	both
+% Score threshold:	%
+Organism:	hg19
+
+###LOG###
+2014-08-07 20:25:45,332 INFO Enrichment analysis started
+2014-08-07 20:25:48,534 INFO bkg_overlaps
+2014-08-07 20:25:48,536 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:48,536 INFO Caclulating overlap stats on background and H3K4me3_Colon_Smooth_Muscle
+2014-08-07 20:25:50,174 INFO bkg_overlaps
+2014-08-07 20:25:50,175 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:50,175 INFO Caclulating overlap stats on background and H3K4me3_CD3_Primary_Cells
+2014-08-07 20:25:51,847 INFO bkg_overlaps
+2014-08-07 20:25:51,848 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:51,849 INFO Caclulating overlap stats on background and H3K4me3_Brain_Mid_Frontal_Lobe
+2014-08-07 20:25:53,923 INFO bkg_overlaps
+2014-08-07 20:25:53,924 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:53,924 INFO Caclulating overlap stats on background and H3K4me3_Muscle_Satellite_Cultured_Cells
+2014-08-07 20:25:56,169 INFO bkg_overlaps
+2014-08-07 20:25:56,170 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:56,170 INFO Caclulating overlap stats on background and H3K4me3_Duodenum_Mucosa
+2014-08-07 20:25:57,816 INFO bkg_overlaps
+2014-08-07 20:25:57,817 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:57,818 INFO Caclulating overlap stats on background and H3K4me3_Stomach_Mucosa
+2014-08-07 20:25:59,690 INFO bkg_overlaps
+2014-08-07 20:25:59,692 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:25:59,692 INFO Caclulating overlap stats on background and H3K4me3_Colonic_Mucosa
+2014-08-07 20:26:01,818 INFO bkg_overlaps
+2014-08-07 20:26:01,820 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:01,820 INFO Caclulating overlap stats on background and H3K4me3_Brain_Inferior_Temporal_Lobe
+2014-08-07 20:26:04,006 INFO bkg_overlaps
+2014-08-07 20:26:04,007 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:04,008 INFO Caclulating overlap stats on background and H3K4me3_Stomach_Smooth_Muscle
+2014-08-07 20:26:06,531 INFO bkg_overlaps
+2014-08-07 20:26:06,532 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:06,533 INFO Caclulating overlap stats on background and H3K4me3_Duodenum_Smooth_Muscle
+2014-08-07 20:26:08,587 INFO bkg_overlaps
+2014-08-07 20:26:08,588 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:08,589 INFO Caclulating overlap stats on background and H3K4me3_Mobilized_CD34_Primary_Cells
+2014-08-07 20:26:10,469 INFO bkg_overlaps
+2014-08-07 20:26:10,470 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:10,471 INFO Caclulating overlap stats on background and H3K4me3_CD34_Cultured_Cells
+2014-08-07 20:26:13,035 INFO bkg_overlaps
+2014-08-07 20:26:13,037 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:13,037 INFO Caclulating overlap stats on background and H3K4me3_Bone_Marrow_Derived_Mesenchymal_Stem_Cell_Cultured_Cells
+2014-08-07 20:26:14,711 INFO bkg_overlaps
+2014-08-07 20:26:14,712 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:14,713 INFO Caclulating overlap stats on background and H3K4me3_CD4_Naive_Primary_Cells
+2014-08-07 20:26:16,518 INFO bkg_overlaps
+2014-08-07 20:26:16,519 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:16,519 INFO Caclulating overlap stats on background and H3K4me3_CD8_Memory_Primary_Cells
+2014-08-07 20:26:18,443 INFO bkg_overlaps
+2014-08-07 20:26:18,445 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:18,446 INFO Caclulating overlap stats on background and H3K4me3_Brain_Cingulate_Gyrus
+2014-08-07 20:26:20,267 INFO bkg_overlaps
+2014-08-07 20:26:20,268 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:20,269 INFO Caclulating overlap stats on background and H3K4me3_Brain_Substantia_Nigra
+2014-08-07 20:26:22,205 INFO bkg_overlaps
+2014-08-07 20:26:22,207 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:22,207 INFO Caclulating overlap stats on background and H3K4me3_Mesenchymal_Stem_Cell_Derived_Adipocyte_Cultured_Cells
+2014-08-07 20:26:23,868 INFO bkg_overlaps
+2014-08-07 20:26:23,872 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:23,872 INFO Caclulating overlap stats on background and H3K4me3_CD4_Memory_Primary_Cells
+2014-08-07 20:26:25,727 INFO bkg_overlaps
+2014-08-07 20:26:25,729 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:25,729 INFO Caclulating overlap stats on background and H3K4me3_Rectal_Smooth_Muscle
+2014-08-07 20:26:27,590 INFO bkg_overlaps
+2014-08-07 20:26:27,591 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:27,592 INFO Caclulating overlap stats on background and H3K4me3_Rectal_Mucosa
+2014-08-07 20:26:29,416 INFO bkg_overlaps
+2014-08-07 20:26:29,417 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:29,417 INFO Caclulating overlap stats on background and H3K4me3_Brain_Hippocampus_Middle
+2014-08-07 20:26:31,315 INFO bkg_overlaps
+2014-08-07 20:26:31,316 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:31,316 INFO Caclulating overlap stats on background and H3K4me3_Treg_Primary_Cells
+2014-08-07 20:26:33,047 INFO bkg_overlaps
+2014-08-07 20:26:33,048 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:33,049 INFO Caclulating overlap stats on background and H3K4me3_CD19_Primary_Cells
+2014-08-07 20:26:35,020 INFO bkg_overlaps
+2014-08-07 20:26:35,022 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:35,022 INFO Caclulating overlap stats on background and H3K4me3_Adipose_Nuclei
+2014-08-07 20:26:36,974 INFO bkg_overlaps
+2014-08-07 20:26:36,975 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:36,976 INFO Caclulating overlap stats on background and H3K4me3_Adult_Liver
+2014-08-07 20:26:38,867 INFO bkg_overlaps
+2014-08-07 20:26:38,869 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:38,869 INFO Caclulating overlap stats on background and H3K4me3_Chondrocytes_from_Bone_Marrow_Derived_Mesenchymal_Stem_Cell_Cultured_Cells
+2014-08-07 20:26:40,910 INFO bkg_overlaps
+2014-08-07 20:26:40,912 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:40,912 INFO Caclulating overlap stats on background and H3K4me3_Pancreatic_Islets
+2014-08-07 20:26:42,984 INFO bkg_overlaps
+2014-08-07 20:26:42,985 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:42,986 INFO Caclulating overlap stats on background and H3K4me3_Skeletal_Muscle
+2014-08-07 20:26:44,828 INFO bkg_overlaps
+2014-08-07 20:26:44,829 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:44,829 INFO Caclulating overlap stats on background and H3K4me3_CD8_Naive_Primary_Cells
+2014-08-07 20:26:46,920 INFO bkg_overlaps
+2014-08-07 20:26:46,921 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:46,922 INFO Caclulating overlap stats on background and H3K4me3_Adult_Kidney
+2014-08-07 20:26:49,795 INFO bkg_overlaps
+2014-08-07 20:26:49,797 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:49,798 INFO Caclulating overlap stats on background and H3K4me3_Brain_Anterior_Caudate
+2014-08-07 20:26:51,710 INFO bkg_overlaps
+2014-08-07 20:26:51,711 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:51,712 INFO Caclulating overlap stats on background and H3K4me3_CD34_Primary_Cells
+2014-08-07 20:26:54,141 INFO bkg_overlaps
+2014-08-07 20:26:54,142 INFO /home/genomerunner/db_2.00_06.10.2014/custom_data/hg19/bkg_overlaps.gr False
+2014-08-07 20:26:54,143 INFO Caclulating overlap stats on background and H3K4me3_Adipose_Derived_Mesenchymal_Stem_Cell_Cultured_Cells
+2014-08-07 20:26:54,930 INFO Analysis Completed
