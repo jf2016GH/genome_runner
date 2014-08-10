@@ -13,6 +13,7 @@ sudo pip install -U cython
 sudo apt-get -y install redis-server
 sudo pip install celery
 sudo pip install flower # Tool to monitor Celery jobs
+sudo pip install -U Celery # Helps to solve issue #12, 'module' object has no attribute 'celeryconfiguration'
 # Manual download and installation of required binaries
 mkdir downloads
 cd downloads
