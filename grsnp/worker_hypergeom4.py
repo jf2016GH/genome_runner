@@ -1,8 +1,8 @@
 from celery import Celery
 from celery import signals
 import grsnp.hypergeom4
-from celery.bin import Option
-from celery.exceptions import Reject, MaxRetriesExceededError
+from celery.bin.base import Option
+from celery.exceptions import MaxRetriesExceededError #,Reject
 import os
 import traceback
 import json
