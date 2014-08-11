@@ -19,7 +19,7 @@
 					<li><img width="30px" src="static/new-icon.jpg" alt="New: GenomeRunnerSNP Google Groups" /></li>
 				</div> -->
 			</ul>
-			<img height="40px" src="static/images/logo-reversed-small.jpg" align="right" />
+			<!-- <img height="40px" src="static/images/logo-reversed-small.jpg" align="right" /> -->
 		</div>
 	</div>
 </div>
@@ -30,12 +30,12 @@
 			${database_versions}		
 			<h3>GenomeRunner Web: Functional interpretation of SNPs within epigenomic context</h3>
 			<p>
-				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional interpretation of sets of SNPs&nbsp;</span></span><span style="font-family: arial, helvetica, sans-serif; font-size: 16px;">by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for SNPs in non-protein coding regions and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly associated with the disease&#39; SNPs.</span></p>
+				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional annotation andinterpretation of sets of SNPs by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly enriched with the disease-associated SNPs.</span></p>
 				<p>
 					<br />
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As <a href="result?id=example">output</a>, GenomeRunner Web calculates <a href="help#enrichment">enrichment p-values</a>&nbsp;by evaluating whether a&nbsp;set of SNPs co-localizes with regulatory elements more often that could happen by chance. For three or more sets of SNPs, GenomeRunner Web performs <a href="help#episimilarity">&#39;epigenomic similarity&#39; analysis</a>&nbsp;by correlating set-specific profiles of enrichment p-values. Downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
+					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As <a href="result?id=example">an example</a>, GenomeRunner Web calculates <a href="http://mdozmorov.github.io/grdocs/hypergeom4/enrichment.html">enrichment p-values</a> by evaluating whether a set of SNPs co-localizes with regulatory elements more often that could happen by chance. For the three or more sets of SNPs, GenomeRunner Web performs <a href="https://mdozmorov.github.io/grdocs/hypergeom4/episimilarity.html">epigenomic similarity analysis</a> by correlating set-specific profiles of enrichment p-values. The downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
 					<p>
-						&nbsp;</p>
+					</p>
 					</div>
 					<div class="well">
 						<div style="float:right;margin-top: 10px;">
@@ -43,10 +43,10 @@
 							${paths.org_as_html(id="org")} 
 							<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</div> 
-						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload .BED formatted files with genomic coordinates of SNPs of interest. Multiple file upload supported." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates of SNPs of interest. Multiple file upload supported." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
-							<h4 style="float:left;">Bed Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
+							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
 							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
 						</div>
 						<div id="div_demo_fois">
@@ -67,7 +67,7 @@
 										</td>
 										<td>
 											<label stlye="float:left">
-												Paste tab-separated genomic coordinates of SNPs of interest in .BED format. Pasting the data, or submitting one set of SNPs, restricts the analysis to the enrichment results only. To get the enrichment and epigenomic similarity heatmaps, upload multiple sets of SNPs as separate files using 'Choose Files' button.
+												Paste a list of rsIDs or tab-separated genomic coordinates of SNPs of interest in .BED format. Pasting the data, or submitting one set of SNPs, restricts the analysis to the enrichment results only. To get the enrichment and epigenomic similarity heatmaps, upload multiple sets of SNPs as separate files using 'Choose Files' button.
 											</label>
 											<p style="font-size: 120%">Use <a href="https://www.ncbi.nlm.nih.gov/projects/SNP/dbSNP.cgi?list=rslist">NCBI conversion tool</a> to convert rsIDs of SNPs into genomic coordinates.</p>
 										</td>
@@ -153,7 +153,7 @@
 										</div>
 										<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
 											<label style="width: 100%; margin: 5px;">Genome annotation data (aka functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
-											<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input>
+											<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set for the number of overlaps with the selected genome annotation features. Time consuming." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 										</div>
 
 									</div>
@@ -196,7 +196,7 @@
 							</tr>
 							<tr>
 
-								<td><input type="checkbox" id="disclaimer" checked="checked" >I certify that I understand that GRSNP is for research purposes only. I certify that I understand that GRSNP is for research purposes only.I certify that I understand that GRSNP is for research purposes only.</input></td>
+								<td><input type="checkbox" id="disclaimer" checked="checked" >I certify that I understand that GRSNP is for research purposes only.</input></td>
 								<td id="td_submit" style="width:90px">
 									<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
 									<img class="helptooltip" title="Submits the job for enrichment/epigenomic similarity analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
