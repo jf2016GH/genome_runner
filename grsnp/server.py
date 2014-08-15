@@ -783,7 +783,7 @@ if __name__ == "__main__":
 			print "Celery workers already running. Pids:" + ",".join(pids) 
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})
-		cherrypy.quickstart(WebUI(), "/gr", config=conf)
+		cherrypy.quickstart(WebUI(), "/", config=conf)
 
 	else:
 		print "WARNING: No port given. Server not started. Use --port flag to set port."

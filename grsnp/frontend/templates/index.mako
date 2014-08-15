@@ -13,7 +13,7 @@
 					<!-- <li><a href="./cite">How to Cite</a></li>
 					<li><a href="http://sourceforge.net/projects/genomerunner/">GenomeRunner on SourceForge</a></li>
 					<li><a href="./roadmap">Roadmap</a></li> -->
-					<li><a href="./help">Help</a></li>
+					<li><a href="https://mdozmorov.github.io/grdocs/" target="_blank">Help</a></li>
 <!-- <div>
 					<li><a href="./google">Google Group</a></li>
 					<li><img width="30px" src="static/new-icon.jpg" alt="New: GenomeRunnerSNP Google Groups" /></li>

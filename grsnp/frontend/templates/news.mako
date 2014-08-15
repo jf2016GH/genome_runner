@@ -1,6 +1,9 @@
         <h3>
             <span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
         <p> 
+            <span style="font-family:arial,helvetica,sans-serif;">08/14/2014: Full databases for hg18, hg38, mm9 and mm10 are online. Filtering by score and strand is available.</span></p>
+        <p>
+        <p> 
             <span style="font-family:arial,helvetica,sans-serif;">08/11/2014: New version of GenomeRunner is released as an open beta version. Full human hg19 database is available.</span></p>
         <p>
         <p> 
