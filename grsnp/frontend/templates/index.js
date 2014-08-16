@@ -144,7 +144,7 @@ $(document).ready(function() {
 	
 	function renderCheckBoxTree() { 		
 		$('#gfselheader').text('Choose genome annotation features (Loading ...)');
-		$.post('/gr/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text()+"&db_version="+$("#db_version").val(),function(data){
+		$.post('/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text()+"&db_version="+$("#db_version").val(),function(data){
 			$('#treeview-inner').html(data);
 			$('#ucsc').checkboxTree({
 				initializeChecked: 'collapsed',
