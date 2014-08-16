@@ -32,6 +32,7 @@ from rpy2.robjects.vectors import FloatVector
 import grsnp.dbcreator_util as grsnp_util
 import random
 import string
+import collections
 
 # Logging configuration
 logger = logging.getLogger()
@@ -567,7 +568,13 @@ def validate_filenames(file_paths):
         for t in os.path.basename(file).split("."):
             if len(t.strip()) != len(t):
                 # there are spaces before or after the '.'. Add the file to the list of invalids.
+                logger.error("Cannot have space before/in file extension: {}".format(file))
                 invalid.append(os.path.basename(file))
+    files_wo_ext = [base_name(x) for x in file_paths]
+    file_duplicates = [x for x, y in collections.Counter(files_wo_ext).items() if y > 1]
+    for f in file_duplicates:
+        logger.error("{} exists multiple times. (i.e. 'foi.txt.gz' has same basename as 'foi.txt')".format(f))
+        invalid.append(f)
     return invalid
 
 
@@ -613,65 +620,144 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
     output_dir = os.path.join(run_files_dir,'processed_fois')
     # Sort the fois 
     out = ""
+    data_dirs = [os.path.join(root_data_dir,'grsnp_db',organism),
+                os.path.join(root_data_dir,'custom_data')]
     try: 
-        for f in fois:    
-            # copy the FOI to the output_dir
-            out_fname = os.path.split(f)[1]
-            if not out_fname.endswith('.bed'):
-                out_fname = base_name(out_fname)+".bed"
-            out_f = os.path.join(output_dir,out_fname) # the processed foi file
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
-            out.wait()
-            # remove the header from the files
-            grsnp_util.remove_headers(out_f)
+        for f in fois:
+            if len([x for x in data_dirs if x in f]) == 0:
+                # extract file if it is gzipped.
+                unzipped_f = f
+                if f.endswith('.gz'):
+                    out = subprocess.Popen(["gunzip {}".format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()
+                    # filepath without the .gz extension
+                    unzipped_f = ".".join(unzipped_f.split(".")[:-1])
+                # copy the FOI to the output_dir
+                out_fname = os.path.split(unzipped_f)[1]
+                if not out_fname.endswith('.bed'):
+                    out_fname = base_name(out_fname)+".bed"
+                out_f = os.path.join(output_dir,out_fname) # the processed foi file
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                out = subprocess.Popen(['cp {} {}'.format(unzipped_f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
+                out.wait()
+                # remove the header from the files
+                grsnp_util.remove_headers(out_f)
 
-            # Check if items are rsIDs. Convert to bed coordinates if they are
-            if validate_rsids(out_f):
-                # check if a file exists in the database for rsID conversion and construct the path to it
-                rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
-                if not os.path.exists(rsid_path):
-                    logger.error('rsID conversion not available for this organism. Feature set {} removed'.format(f)) 
-                    continue
-                files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
-                # if conversion files found, perform conversion
-                if len(files) > 0:
-                    rsid_path = os.path.join(rsid_path,files[0])
-                    script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(out_f,rsid_path,out_f)
-                    out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                    out.wait()             
-                    tmp_er = out.stderr.read()
-                    if tmp_er != "":
-                        logger.error(tmp_er)
-                        raise Exception(tmp_er)
-                    # we remove the original out_f FOI file and replace with the out_f.temp created with the join command above
-                    os.remove(out_f)
-                    out = subprocess.Popen(['cp {} {}'.format(out_f+'.temp',out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                    out.wait()  
-                    os.remove(out_f+'.temp')
+                # Check if items are rsIDs. Convert to bed coordinates if they are
+                if validate_rsids(out_f):
+                    # check if a file exists in the database for rsID conversion and construct the path to it
+                    rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
+                    if not os.path.exists(rsid_path):
+                        logger.error('rsID conversion not available for this organism. Feature set {} removed'.format(f)) 
+                        continue
+                    files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
+                    # if conversion files found, perform conversion
+                    if len(files) > 0:
+                        rsid_path = os.path.join(rsid_path,files[0])
+                        script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(out_f,rsid_path,out_f)
+                        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()
+                        tmp_er = out.stderr.read()
+                        if tmp_er != "":
+                            logger.error(tmp_er)
+                            raise Exception(tmp_er)
+                        # we remove the original out_f FOI file and replace with the out_f.temp created with the join command above
+                        os.remove(out_f)
+                        out = subprocess.Popen(['cp {} {}'.format(out_f+'.temp',out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()  
+                        os.remove(out_f+'.temp')
+                    else:
+                        logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                        return [] 
+
+                # sort the FOI and bgzip
+                grsnp_util.sort_convert_to_bgzip(out_f,out_f+".gz")
+                # check if processed FOI file is empty
+                if os.stat(out_f+".gz")[6]!=0:                   
+                    processed_fois.append(out_f + ".gz")
                 else:
-                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
-                    return []
-
-            # sort the FOI
-            script =  "sort -k1,1 -k2,2n " + '-o ' +out_f+' '+ out_f
-            out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            out.wait()
-            tmp = out.stdout.read()
-            tmp_er = out.stderr.read()
-            if tmp_er != "":
-                logger.error(tmp_er)
-                raise Exception(tmp_er) 
-            # check if processed FOI file is empty
-            if os.stat(out_f)[6]!=0:
-                processed_fois.append(out_f)
-
+                    logger.error("{} is empty. Removing.")                    
+            else:
+                processed_fois.append(f)
+                print "{} is part of the database".format(f)
     except Exception, e:
         logger.error("Error while processing the FOIs")
         logger.error(traceback.format_exc())
         raise Exception(e)
     return processed_fois
+
+def preprocess_gf_files(file_paths,root_data_dir,organism):
+    ''' Used to preprocess the GF files and the background file.
+    Returns gzipped file paths
+    '''
+    processed_files = []
+    data_dirs = [os.path.join(root_data_dir,'grsnp_db',organism),
+                os.path.join(root_data_dir,'custom_data')]
+    try:
+        for out_f in file_paths:
+            # if the file is not uploaded by the user, do not preprocess
+            if len([x for x in data_dirs if x in out_f]) == 0:
+                # unzip the file
+                unzipped_f = out_f
+                if out_f.endswith('.gz'):
+                    out = subprocess.Popen(["gunzip {}".format(out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()
+                    # filepath without the .gz extension
+                    unzipped_f = ".".join(unzipped_f.split(".")[:-1])
+
+                out_fname = os.path.split(unzipped_f)[1]
+                if not out_fname.endswith('.bed'):
+                    out_fname = base_name(out_fname)+".bed"
+                # replace the ".txt" extension with ".bed"
+                output_dir = os.path.split(unzipped_f)[0]
+                out_bed_f = os.path.join(output_dir,out_fname) # the processed foi file
+
+                grsnp_util.remove_headers(unzipped_f)
+                # perform rsid conversion
+                if validate_rsids(unzipped_f):
+                    # check if a file exists in the database for rsID conversion and construct the path to it
+                    rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
+                    if not os.path.exists(rsid_path):
+                        logger.error('rsID conversion not available for this organism. Feature set {} removed'.format(unzipped_f)) 
+                        continue
+                    files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
+                    # if conversion files found, perform conversion
+                    if len(files) > 0:
+                        rsid_path = os.path.join(rsid_path,files[0])
+                        script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(unzipped_f,rsid_path,unzipped_f)
+                        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()             
+                        tmp_er = out.stderr.read()
+                        if tmp_er != "":
+                            logger.error(tmp_er)
+                            raise Exception(tmp_er)
+                        # we remove the original unzipped_f FOI file and replace with the unzipped_f.temp created with the join command above
+                        out = subprocess.Popen(['cp {} {}'.format(unzipped_f+'.temp',out_bed_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()  
+                        os.remove(unzipped_f+'.temp')
+                    else:
+                        logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                        return []
+
+                # sort the FOI
+                grsnp_util.sort_convert_to_bgzip(out_bed_f,out_bed_f+".gz")
+                # check if processed FOI file is empty
+                if os.stat(out_bed_f+".gz")[6]!=0:                   
+                    # add the processed file (the ".bed" file) to the list.
+                    processed_files.append(out_bed_f + ".gz")
+                else:
+                    logger.error("{} is empty. Removing.")
+                    
+            else:
+                processed_files.append(out_f)
+                print "{} is part of the database".format(out_f)
+    except Exception, e:
+       logger.error("Error while processing the GF/background files")
+       logger.error(traceback.format_exc())
+       raise Exception(e)
+    return processed_files
+
 
 
 
@@ -709,7 +795,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # check if there are spaces in invalid parts of the file name
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:
-            logger.error("The following file(s) have invalid file names, cannot have space before/in file extension:\n" + "\n".join(invalid_names))
+            logger.error("The following file(s) have invalid file names:\n" + "\n".join(invalid_names))
             _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
             return         
         if bg_path.endswith(".tbi"):
@@ -723,6 +809,10 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             logger.error('No valid FOIs to supplied')
             _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
             return
+        # pre-process the GFs and the background
+        bg_path = preprocess_gf_files([bg_path],root_data_dir,organism)[0]
+        gfs = preprocess_gf_files(gfs,root_data_dir,organism)
+
         # Validate FOIs against background. Also get the size of the background (n_bgs)
         foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)

@@ -212,7 +212,7 @@ class WebUI(object):
 										if not data:
 											break
 										out.write(data)	
-									if (base_name(f) not in list_gfs): out_gfs.write(f+"\n")
+									out_gfs.write(f+"\n")
 									list_gfs.append(base_name(f))		
 						else:
 							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
