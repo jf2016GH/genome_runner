@@ -1,5 +1,5 @@
 $(document).ready(function() {	
-	$.post("/gr/get_gf_descriptions?db_version=${db_version}&organism=${organism}", function(data){
+	$.post("/get_gf_descriptions?db_version=${db_version}&organism=${organism}", function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// insert blanks for GFs that do not have description
