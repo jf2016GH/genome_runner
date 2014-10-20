@@ -351,16 +351,20 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     sys.stdout = sys.stderr = open(os.devnull, "w")
     #pcc = open(output_path).read() 
     #if "PCC can't be performed" not in pcc:
-    r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\")) 
-        t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
+    r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\"))
+        cutoff <- -log10(0.1)
+        numofsig <- 1
+        t5<-as.matrix(t5[apply(t5, 1, function(x) sum(abs(x)>cutoff))>=numofsig, apply(t5, 2, function(x) sum(abs(x)>cutoff))>=numofsig])
             if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
             library(Hmisc)
             library(gplots)
             library(RColorBrewer)
             color<-colorRampPalette(c("blue","yellow"))
-            p5<-rcorr(t5)
+            p5<-rcorr(t5, type="spearman")
             pdf(file=\"""" + pdf_outpath +"""\")
-            h<-heatmap.2(as.matrix(p5[[1]]),margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
+            dist.method<-"euclidean"
+            hclust.method<-"ward"
+            h<-heatmap.2(as.matrix(p5[[1]]),distfun=function(x){dist(x, method=dist.method)}, hclustfun=function(x){hclust(x, method=hclust.method)},margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
             dev.off()
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+pval_output_path+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
