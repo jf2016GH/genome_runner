@@ -28,12 +28,12 @@
 		<div class="well" style="margin-top: -15px; padding: 0px">
 			<h3>Select Database Version:</h3>
 			${database_versions}		
-			<h3>GenomeRunner Web: Functional interpretation of SNPs within epigenomic context</h3>
+			<h3>GenomeRunner: Functional interpretation of SNPs within regulatory context</h3>
 			<p>
-				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner Web is a tool for functional annotation andinterpretation of sets of SNPs by considering their co-localization with functional/regulatory genome annotation data (epigenomic elements). It is particularly useful for SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly enriched with the disease-associated SNPs.</span></p>
+				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for annotation and enrichment analysis of sets of SNPs by considering their co-localization with functional/regulatory genome annotation data. GenomeRunner is particularly useful for interpretation of regulatory impact of SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly enriched with the disease-associated SNPs.</span></p>
 				<p>
 					<br />
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">As <a href="result?id=example">an example</a>, GenomeRunner Web calculates <a href="http://mdozmorov.github.io/grdocs/hypergeom4/enrichment.html">enrichment p-values</a> by evaluating whether a set of SNPs co-localizes with regulatory elements more often that could happen by chance. For the three or more sets of SNPs, GenomeRunner Web performs <a href="https://mdozmorov.github.io/grdocs/hypergeom4/episimilarity.html">epigenomic similarity analysis</a> by correlating set-specific profiles of enrichment p-values. The downloadable results are visualized as interactive heatmaps and tables.</span></span></p>
+					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner calculates <a href="http://mdozmorov.github.io/grdocs/hypergeom4/enrichment.html">enrichment p-values</a> by evaluating whether a set of SNPs co-localizes with regulatory datasets more often that could happen by chance. For the three or more sets of SNPs, GenomeRunner performs <a href="https://mdozmorov.github.io/grdocs/hypergeom4/episimilarity.html"> a regulatory similarity analysis</a> by correlating set-specific profiles of enrichment p-values. The downloadable results are visualized as interactive heatmaps and tables <a href="result?id=example">(Example)</a>.</span></span></p>
 					<p>
 					</p>
 					</div>
@@ -43,7 +43,7 @@
 							${paths.org_as_html(id="org")} 
 							<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</div> 
-						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates of SNPs of interest. Multiple file upload supported." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates (recommended) of SNPs of interest. Multiple file upload supported." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
@@ -67,9 +67,9 @@
 										</td>
 										<td>
 											<label stlye="float:left">
-												Paste a list of rsIDs or tab-separated genomic coordinates of SNPs of interest in .BED format. Pasting the data, or submitting one set of SNPs, restricts the analysis to the enrichment results only. To get the enrichment and epigenomic similarity heatmaps, upload multiple sets of SNPs as separate files using 'Choose Files' button.
+												Paste a list of rsIDs or tab-separated genomic coordinates (recommended) of SNPs of interest in .BED format (no headers). Pasting the data, or submitting one set of SNPs, restricts the analysis to the enrichment results only. To get the enrichment and epigenomic similarity heatmaps, upload multiple sets of SNPs as separate files using 'Choose Files' button.
 											</label>
-											<p style="font-size: 120%">Use <a href="https://www.ncbi.nlm.nih.gov/projects/SNP/dbSNP.cgi?list=rslist">NCBI conversion tool</a> to convert rsIDs of SNPs into genomic coordinates.</p>
+											<p style="font-size: 120%">Use <a href="https://www.ncbi.nlm.nih.gov/projects/SNP/dbSNP.cgi?list=rslist">the NCBI conversion tool</a> to convert rsIDs of SNPs into genomic coordinates.</p>
 										</td>
 									</tr>
 								</table>
@@ -77,7 +77,7 @@
 						</div>
 					</div>	
 					<div class="well">
-						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'population' to calculate the probability of SNPs in a set to be enriched with an epigenomic element" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'universe' to calculate the probability of SNPs in a set to be enriched with regulatory dataset" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input> -->
 						<b style=" font-size:120%; margin-left: 10px"></b>
@@ -96,7 +96,7 @@
 											</td>
 											<td>
 												<label stlye="float:left">
-													The background, or population selection is critical for the correct p-value calculation. The background represents all SNPs being evaluated in a user's study. A set of SNPs of interest should be a subset of the background. If that is not the case, a warning is generated.<br><br>
+													The 'background', or 'universe' of SNPs assessed in a study is critical for the correct p-value calculation. A set of SNPs of interest should be a subset of the background, else the p-values may be wrong.<br><br>
 													Default background selection &#40;all common SNPs from the latest organism-specific database&#41; is suitable when a genome-wide study was performed. When a microarray was used for SNPs profiling, it is advisable to use all SNPs on that array as a background.
 												</label>
 											</td>
@@ -107,12 +107,12 @@
 						</div>
 					</div>
 					<div class="well">
-						<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Select genome annotation features:</h3>
+						<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Select regulatory datasets:</h3>
 						${custom_gfs}
 						<br>
 
 						<div id="accordGFS" class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 3em;" onClick="renderCheckBoxTree()"> 
-							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose genome annotation features</a></h3>
+							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory datasets</a></h3>
 							<div >	
 								<ul>
 									<li id="list-bedbackground">					
@@ -122,14 +122,14 @@
 									</li>				
 								</ul>
 								<div id="grfdroplist" style="display: table;">	
-									<label>Enter genome annotation names:</label>
+									<label>Type in names of regulatory datasets:</label>
 									<img class="helptooltip" title="Fuzzy search, case insensitive" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="Fuzzy search"/>
 									<ol style="left: 9px;position: relative; padding-top:10px;padding-bottom:10px;">        
 										<li id="grf-list" class="input-text">
 											<input style="float: left;" type="text" value="" id="gfs" class"grf"/>
 										</li>
 										<div id="grfs-auto">
-											<div class="default">Type the names of the genome annotation features to run</div>
+											<div class="default">Type the names of the regulatory datasets to run</div>
 											<ul id="feed">
 											</ul>											
 										</div>										
@@ -137,7 +137,7 @@
 
 									<div style="display: table-row;">
 										<div id="divCheckBox" style="width: 70%; margin:10px; display: table-cell; verticle-align: top; visibility: hidden">
-											<label >Select genome annotation features: </label>
+											<label >Select (categories of) regulatory datasets: </label>
 											<div>
 												<a class="btn" style="margin-top: 9px;"onClick="changeCheckedStateTreeView(true)">Expand All</a>
 												<a class="btn" style="margin-top: 9px;" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
@@ -152,8 +152,8 @@
 											</div>
 										</div>
 										<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
-											<label style="width: 100%; margin: 5px;">Genome annotation data (aka functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select groups of epigenomic elements</label><br>
-											<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set for the number of overlaps with the selected genome annotation features. Time consuming." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+											<label style="width: 100%; margin: 5px;">Regulatory datasets (aka functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select categories of regulatory elements</label><br>
+											<input type="checkbox" style="font-size:120%;margin-top:1em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set for the number of overlaps with the selected regulatory elements." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 										</div>
 
 									</div>
@@ -178,11 +178,11 @@
 										<option value="BY">BY</option>
 										<option value="fdr" selected>fdr</option>
 									</select>
-									<img class="helptooltip" title="Sets multiple tests correction method when testing a set of SNPs against multiple genomic features" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<img class="helptooltip" title="Sets multiple tests correction method when testing a set of SNPs against multiple regulatory datasets" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								</th>
 								<th width="30%" style="vertical-align:bottom">
 									Percent score threshold: ${pct_scores}
-									<img class="helptooltip" title="Increasing this number filters out more genomic features detected at low level. If a genomic feature does not have a score, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a score, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								</th>
 								<th width="30%" style="vertical-align:bottom">
 									Strand selection: 
@@ -191,15 +191,15 @@
 										<option value="plus">Plus</option>
 										<option value="minus">Minus</option>
 									</select>
-									<img class="helptooltip" title="Sets whether or not to use strand-specific genomic annotations, if available. If a genomic feature does not have a strand, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<img class="helptooltip" title="Sets whether or not to use strand-specific regulatory datasets, if available. If a regulatory dataset does not have a strand, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								</th>
 							</tr>
 							<tr>
 
-								<td><input type="checkbox" id="disclaimer" checked="checked" >I certify that I understand that GRSNP is for research purposes only.</input></td>
+								<td><input type="checkbox" id="disclaimer" checked="checked" >I certify that I understand that GenomeRunner is for research purposes only.</input></td>
 								<td id="td_submit" style="width:90px">
 									<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" >Submit job</button>
-									<img class="helptooltip" title="Submits the job for enrichment/epigenomic similarity analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+									<img class="helptooltip" title="Submits the job for enrichment/regulatory similarity analyses" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								</td>
 								<td id="td_submit" style="width:170px">
 									<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
