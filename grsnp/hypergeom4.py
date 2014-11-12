@@ -108,8 +108,8 @@ def get_bgobs(bg,gf,root_data_dir,organism):
     # get the grsnp_db_[filt] folder
     filt_grsnp_db = gf.replace(root_data_dir,"").lstrip("/").split("/")[0]
     bkg_overlap_path = os.path.join(root_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
-    logger.info("bkg_overlaps")
-    logger.info(bkg_overlap_path + " " + str(os.path.exists(bkg_overlap_path)))
+    # logger.info("bkg_overlaps")
+    # logger.info(bkg_overlap_path + " " + str(os.path.exists(bkg_overlap_path)))
 
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
@@ -684,7 +684,7 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
                     logger.error("{} is empty. Removing.")                    
             else:
                 processed_fois.append(f)
-                print "{} is part of the database".format(f)
+                # print "{} is part of the database".format(f)
     except Exception, e:
         logger.error("Error while processing the FOIs")
         logger.error(traceback.format_exc())
