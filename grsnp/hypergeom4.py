@@ -253,9 +253,11 @@ def adjust_pvalue(input_path,method):
             t5 = as.matrix(read.table(\""""+input_path+"""\",sep="\t", header=T, row.names=1))
 
             rptemp <- t5
-
-            rp1 <- apply(abs(t5), 2, function(x) {p.adjust(x, \""""+method+"""\")})
-
+            if(nrow(t5) <=1){
+                rp1 <- abs(t5)
+            } else {
+                rp1 <- apply(abs(t5), 2, function(x) {p.adjust(x, \""""+method+"""\")})
+            }
             for (i in 1:nrow(t5)){
               for (j in (1:ncol(t5))) {
                 if (rptemp[i,j] < 0) { rp1[i,j] <- -1*rp1[i,j]}
@@ -278,8 +280,11 @@ def adjust_detailed_pvalue(input_path,method):
         sys.stdout = sys.stderr = open(os.devnull, "w")
         r_script = """
             t5 <- as.data.frame(read.table(\""""+input_path+"""\", sep="\t", header=TRUE))
-
-            rp1 <- p.adjust(abs(t5$P.value))
+            if(length(t5$P.value) <= 1) {
+                rp1 <- abs(t5$P.value)
+            } else {
+                rp1 <- p.adjust(abs(t5$P.value))
+            }
             for (i in 1:length(t5$P.value)) {
               if(t5$P.value[i] < 0) {
                 rp1[i] <- -1*rp1[i]
