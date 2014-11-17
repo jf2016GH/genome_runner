@@ -677,6 +677,9 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
 
                 # sort the FOI and bgzip
                 grsnp_util.sort_convert_to_bgzip(out_f,out_f+".gz")
+                script = "tabix -f " + out_f+".gz"
+                out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+                out.wait()
                 # check if processed FOI file is empty
                 if os.stat(out_f+".gz")[6]!=0:                   
                     processed_fois.append(out_f + ".gz")
@@ -755,7 +758,7 @@ def preprocess_gf_files(file_paths,root_data_dir,organism):
                     
             else:
                 processed_files.append(out_f)
-                print "{} is part of the database".format(out_f)
+                # print "{} is part of the database".format(out_f)
     except Exception, e:
        logger.error("Error while processing the GF/background files")
        logger.error(traceback.format_exc())
