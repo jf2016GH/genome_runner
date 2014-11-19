@@ -1,12 +1,12 @@
         <h3>
             <span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
-        <p> 
+        <p>
+            <span style="font-family:arial,helvetica,sans-serif;">11/19/2014: Bug fixes, interface updates.</span></p>
+        <p>
             <span style="font-family:arial,helvetica,sans-serif;">08/14/2014: Full databases for hg18, hg38, mm9 and mm10 are online. Filtering by score and strand is available.</span></p>
         <p>
-        <p> 
             <span style="font-family:arial,helvetica,sans-serif;">08/11/2014: New version of GenomeRunner is released as an open beta version. Full human hg19 database is available.</span></p>
         <p>
-        <p> 
             <span style="font-family:arial,helvetica,sans-serif;">02/21/2014: Database update and optimization from February 8, 2014. Adding mm10 genome annotations.</span></p>
         <p>
             <span style="font-family:arial,helvetica,sans-serif;">02/09/2014: Software demo presentation is available&nbsp;<a href="static/Dozmorov_GR_software_demo_2014.pdf">Dozmorov_GR_software_demo_2014.pdf</a>.</span></p>
@@ -21,7 +21,7 @@
         <p>
             <span style="font-family:arial,helvetica,sans-serif;">01/12/2014: Interface optimizations</span></p>
         <p>
-            <span style="font-family:arial,helvetica,sans-serif;">01/08/2014: Visualizing code updated, now using json objects. Statistical calculations made more robust against outliers.</span></p> 
+            <span style="font-family:arial,helvetica,sans-serif;">01/08/2014: Visualizing code updated, now using json objects. Statistical calculations made more robust against outliers.</span></p>
         <p>
             <span style="font-family:arial,helvetica,sans-serif;">12/10/2013: Interface makeover, database update</span></p>
         <p>
