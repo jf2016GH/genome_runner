@@ -1,4 +1,8 @@
-Jobname:	k1h5qwlr9pcirdgyn32v1j3rv5sc2ijw
-Background:	gwascatalog+
-Time:	2014-01-12 20:54:14
+Database version:	db_2.00_06.10.2014
+Background:	3gwasCatalog
+Time:	2014-11-25 22:12:52
+Jobname:	bmdipl2qsh1vhbigsyh5eqc6n7ks76m2
+Multiple test correction:	fdr
+Strand:	both
+% Score threshold:	%
 Organism:	hg19
