@@ -8,8 +8,8 @@
 ## validate, sort, bgzip and tabix the files.
 ##
 ## Note: To create gwasCatalog subgroups, use https://github.com/mdozmorov/gwas2bed
-
-all:	fois Cistrome.wget Epigenome.wget Motif.wget
+# all:	fois
+all:	Cistrome.wget Epigenome.wget Motif.wget
 
 fois:
 		python extract_UCSC.py wgEncodeBroadHmmGm12878HMM name histoneMarks && \
@@ -39,5 +39,5 @@ Epigenome.wget:	Epigenome.html
 	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
 
 Motif.wget:	Motif.html
-	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+	grep "bed\|zip" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
 
