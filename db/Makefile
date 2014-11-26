@@ -9,7 +9,7 @@
 ##
 ## Note: To create gwasCatalog subgroups, use https://github.com/mdozmorov/gwas2bed
 
-all:	fois
+all:	fois Cistrome.wget Epigenome.wget Motif.wget
 
 fois:
 		python extract_UCSC.py wgEncodeBroadHmmGm12878HMM name histoneMarks && \
@@ -30,3 +30,14 @@ fois:
 		else { print $$1, $$2, $$3, $$4, $$5, $$6 } }' | \
 		sort -k1,1 -k2,2n -k3,3n -u -o $$file && bgzip $$file && tabix $$file".gz"; \
 		done
+
+# Save sources of Cistrome web pages from http://cistrome.org/NR_Cistrome/ into corresponding HTML files
+Cistrome.wget:	Cistrome.html
+	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+
+Epigenome.wget:	Epigenome.html
+	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+
+Motif.wget:	Motif.html
+	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+
