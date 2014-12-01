@@ -18,12 +18,12 @@ function add_heatmaps(){
 
 	
 	$("#heatmap").heatmap({
-		ajaxuri: "/gr/get_cluster?run_id=${run_id}",
+		ajaxuri: "/get_cluster?run_id=${run_id}",
 		dwnl_link_id: "heatmap_download"		
 	});
 	
 	$("#heatmap_cor").heatmap({
-		ajaxuri: "/gr/get_pcc?run_id=${run_id}",
+		ajaxuri: "/get_pcc?run_id=${run_id}",
 		dwnl_link_id: "heatmap_cor_download"		
 	});
 
@@ -33,7 +33,7 @@ function add_heatmaps(){
 
 
 function update_progress(){
-	$.post('/gr/get_progress?run_id=${run_id}',function(data){
+	$.post('/get_progress?run_id=${run_id}',function(data){
 		data = jQuery.parseJSON( data );
 		// update progress bar
 		$("#progressbar").progressbar({
@@ -47,21 +47,23 @@ function update_progress(){
 			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>")
 		}
 		if(data['status'] == "Analysis Completed"  || data['status'] == "Run crashed. See end of log for details."){
-			update_progress()
+			$("#progressbar").progressbar({
+						value: 1,
+						max:  1});
 			clearInterval(refresh_progress);
 		}
 	});
 }
 
 function get_log(){
-	$.post('/gr/get_log?run_id=${run_id}',function(data){
+	$.post('/get_log?run_id=${run_id}',function(data){
 		data = jQuery.parseJSON( data );
 		$("#txtLog").html(data['log']);
 	});
 }
 
 function get_detailed(){
-	$.post('/gr/get_detailed?run_id=${run_id}',function(data){
+	$.post('/get_detailed?run_id=${run_id}',function(data){
 		data = jQuery.parseJSON( data );
 		$("#txtDetailed").html(data['detailed']);
 	});
@@ -98,7 +100,7 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 } );
 
 function get_annotation(foi_name){
-	$.post("/gr/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
+	$.post("/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// clear old data tables.
@@ -124,7 +126,6 @@ function get_annotation(foi_name){
 				}
 			}
 			// Create data table
-			debugger;
 			$('#dt_'+foi_name).dataTable({
 				"sDom": 'T<"clear">lfrtip',
 				"bProcessing": true,
@@ -151,7 +152,7 @@ function get_annotation(foi_name){
 }
 
 function get_enrichment(foi_name){
-	$.post("/gr/get_enrichment?run_id=${run_id}&foi_name="+foi_name, function(data){
+	$.post("/get_enrichment?run_id=${run_id}&foi_name="+foi_name, function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// clear old data tables.												

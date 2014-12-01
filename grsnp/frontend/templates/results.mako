@@ -12,7 +12,7 @@
 					<!-- <li><a href="./cite">How to Cite</a></li>
 					<li><a href="http://sourceforge.net/projects/genomerunner/">GenomeRunner on SourceForge</a></li>
 					<li><a href="./roadmap">Roadmap</a></li> -->
-					<li><a href="./help">Help</a></li>
+					<li><a href="https://mdozmorov.github.io/grdocs/">Help</a></li>
 <!-- <div>
 					<li><a href="./google">Google Group</a></li>
 					<li><img width="30px" src="static/new-icon.jpg" alt="New: GenomeRunnerSNP Google Groups" /></li>
@@ -26,7 +26,7 @@
 	<div id="progressbar" ></div>
 	<div class="ui-widget" style="">
 		<div class="ui-state-highlight ui-corner-all">
-			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><label id="status">Starting Analysis</label></p>			
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><label id="status">Analysis job is in the queue.</label></p>			
 		</div>
 		<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>Please bookmark this page to return to your results. The results will be deleted after three days.</p>
 	</div>	
@@ -37,7 +37,7 @@
 
 	<li ><a href="#enrichmentresults" data-toggle="tab">Enrichment Results<img class="helptooltip" title="Sortable tables of enrichment p-values" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
-	<li ><a href="#cormatrixresults" onclick="" data-toggle="tab">Epigenomic Similarity Heatmap<img class="helptooltip" title="Clustered heatmap of pairwise Pearson's correlation coefficients of enrichment profiles among sets of SNPs." style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
+	<li ><a href="#cormatrixresults" onclick="" data-toggle="tab">Regulatory Similarity Heatmap<img class="helptooltip" title="Clustered heatmap of pairwise Pearson's correlation coefficients of enrichment profiles among sets of SNPs." style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()" >Detailed Results<img class="helptooltip" title="P-value calculations" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 

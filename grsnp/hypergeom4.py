@@ -30,6 +30,9 @@ import inspect
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
 import grsnp.dbcreator_util as grsnp_util
+import random
+import string
+import collections
 
 # Logging configuration
 logger = logging.getLogger()
@@ -43,7 +46,6 @@ progress_outpath = None
 run_files_dir = None
 console_output = False 
 print_progress = False
-logger_path = "gr_log.txt"
 
 
 
@@ -55,13 +57,22 @@ def get_overlap_statistics(gf,fois):
     """
     results = []
     out = ""
+    # use temporary files instead of piping out to console because large amounts of output to console can cause deadlock
+    # this creates unique random file names
+    tmp_path = get_tmp_file('grsnptmp')        
+    tmp_error_path = get_tmp_file('grsnperrortmp')
+    tmp_file = open(tmp_path,'wb')
+    tmp_error_file = open(tmp_error_path,'wb')
+
     try:
         # Runs overlapStatistics with preprocessed background stats if they exist
-        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        out = subprocess.Popen(["overlapStatistics"] + [gf] + fois,stdout=tmp_file,stderr=tmp_error_file)
         out.wait()
-        tmp = out.stdout.read()
-	tmp_er = out.stderr.read()
-	if tmp_er != "": logger.error(tmp_er)
+        tmp_file.close()
+        tmp_error_file.close()
+        tmp = open(tmp_path).read()
+        tmp_er = open(tmp_error_path).read()
+        if tmp_er != "": logger.error(tmp_er)
         if tmp[:6] == "ERROR:": 
             logger.error(tmp[7:])
             raise Exception(tmp)
@@ -71,27 +82,49 @@ def get_overlap_statistics(gf,fois):
                 tmp = x.split("\t")
                 foi_name,n,hit_count = os.path.split(tmp[0])[-1],tmp[2],tmp[3]
                 results.append({"queryfile": foi_name,"queryregions": int(n),"intersectregions": int(hit_count),"indexregions": int(tmp[1])})
-    except Exception, e:        
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
+    except Exception, e:       
+        if not tmp_file.closed: tmp_file.close()
+        if not tmp_error_file.closed: tmp_error_file.close()
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
         logger.error(traceback.format_exc())
-        return
+        raise e
     return results
 
+def get_tmp_file(prefix):
+    tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
+    while (os.path.exists(tmp_path)):
+        tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
+    return tmp_path
 
-def get_bgobs(bg,gf,bkg_overlap_path): 
-    _write_progress("Getting overlap stats on background and {}".format(base_name(gf)))
-    logger.info("Getting overlap stats on background and {}".format(base_name(gf)))
+def get_bgobs(bg,gf,root_data_dir,organism): 
+    ''' Check if pre-calculated GF and background overlap data exist.
+    If they do not, it manually calculates them.
+    '''
+    # get the grsnp_db_[filt] folder
+    filt_grsnp_db = gf.replace(root_data_dir,"").lstrip("/").split("/")[0]
+    bkg_overlap_path = os.path.join(root_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
+    # logger.info("bkg_overlaps")
+    # logger.info(bkg_overlap_path + " " + str(os.path.exists(bkg_overlap_path)))
 
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
         data = open(bkg_overlap_path).read().split("\n")
         data = [x.split("\t") for x in data if x != ""]
-        d_gf = [x[1] for x in data if x[0] == gf and x[1]  != ""]
+        d_gf = [x[1] for x in data if os.path.join(root_data_dir,x[0]) == gf and x[1]  != ""]
+
         if len(d_gf) != 0:
-            bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == bg]
+            bg_obs = [x.split(":")[1] for x in d_gf[0].split(",") if x.split(":")[0] == os.path.basename(bg)]
             if len(bg_obs) != 0:
                 logger.info("Pre-calculated values found for background and {} ".format(base_name(gf)))
                 return bg_obs[0]
     # manually get overlap values
+    logger.info("Caclulating overlap stats on background and {}".format(base_name(gf)))
+    _write_progress("Caclulating overlap stats on background and {}".format(base_name(gf)))
     result = get_overlap_statistics(gf,[bg])
     try:
         result = int(result[0]["intersectregions"])
@@ -177,7 +210,7 @@ def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
 
     if bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
-        logger.error("P-value cannot be calculated (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(foi_name,gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
+        logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
     else: 
         if do_chi_square:        
             chi_result = scipy.stats.chi2_contingency(ctable)
@@ -220,9 +253,11 @@ def adjust_pvalue(input_path,method):
             t5 = as.matrix(read.table(\""""+input_path+"""\",sep="\t", header=T, row.names=1))
 
             rptemp <- t5
-
-            rp1 <- apply(abs(t5), 2, function(x) {p.adjust(x, \""""+method+"""\")})
-
+            if(nrow(t5) <=1){
+                rp1 <- abs(t5)
+            } else {
+                rp1 <- apply(abs(t5), 2, function(x) {p.adjust(x, \""""+method+"""\")})
+            }
             for (i in 1:nrow(t5)){
               for (j in (1:ncol(t5))) {
                 if (rptemp[i,j] < 0) { rp1[i,j] <- -1*rp1[i,j]}
@@ -245,8 +280,11 @@ def adjust_detailed_pvalue(input_path,method):
         sys.stdout = sys.stderr = open(os.devnull, "w")
         r_script = """
             t5 <- as.data.frame(read.table(\""""+input_path+"""\", sep="\t", header=TRUE))
-
-            rp1 <- p.adjust(abs(t5$P.value))
+            if(length(t5$P.value) <= 1) {
+                rp1 <- abs(t5$P.value)
+            } else {
+                rp1 <- p.adjust(abs(t5$P.value))
+            }
             for (i in 1:length(t5$P.value)) {
               if(t5$P.value[i] < 0) {
                 rp1[i] <- -1*rp1[i]
@@ -310,7 +348,6 @@ def cluster_matrix(input_path,output_path):
     return output_path    
 
 def pearsons_cor_matrix(matrix_path,out_dir):
-    global logger_path
     output_path = os.path.join(out_dir,"pcc_matrix.txt")
     pval_output_path = os.path.join(os.path.split(output_path)[0], base_name(output_path)+"_pvalue.txt")
     pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
@@ -319,16 +356,20 @@ def pearsons_cor_matrix(matrix_path,out_dir):
     sys.stdout = sys.stderr = open(os.devnull, "w")
     #pcc = open(output_path).read() 
     #if "PCC can't be performed" not in pcc:
-    r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\")) 
-        t5<-as.matrix(t5[,apply(t5,2,sd)!=0]) # Remove columns with SD = zeros
+    r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\"))
+        cutoff <- -log10(0.1)
+        numofsig <- 1
+        t5<-as.matrix(t5[apply(t5, 1, function(x) sum(abs(x)>cutoff))>=numofsig, apply(t5, 2, function(x) sum(abs(x)>cutoff))>=numofsig])
             if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
             library(Hmisc)
             library(gplots)
             library(RColorBrewer)
             color<-colorRampPalette(c("blue","yellow"))
-            p5<-rcorr(t5)
+            p5<-rcorr(t5, type="spearman")
             pdf(file=\"""" + pdf_outpath +"""\")
-            h<-heatmap.2(as.matrix(p5[[1]]),margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
+            dist.method<-"euclidean"
+            hclust.method<-"ward"
+            h<-heatmap.2(as.matrix(p5[[1]]),distfun=function(x){dist(x, method=dist.method)}, hclustfun=function(x){hclust(x, method=hclust.method)},margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
             dev.off()
             write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
             write.table(p5[[3]][h$rowInd, h$colInd],\""""+pval_output_path+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
@@ -357,19 +398,36 @@ def get_annotation(foi,gfs):
     """
     results = []
     out = ""
+    # use temporary files instead of piping out to console because large amounts of output to console can cause deadlock
+    # this creates unique random file names
+    tmp_path = get_tmp_file('grsnptmp')
+    tmp_error_path = get_tmp_file('grsnperrortmp')
+    
+    tmp_file = open(tmp_path,'wb')
+    tmp_error_file = open(tmp_error_path,'wb')
     try:
-        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=subprocess.PIPE,stderr=subprocess.PIPE) # TODO enable ["--print-region-name"]
+        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=tmp_file,stderr=tmp_error_file) # TODO enable ["--print-region-name"]
         out.wait()
-        tmp = out.stdout.read()
-        tmp_er = out.stderr.read()
+        tmp_file.close()
+        tmp_error_file.close()
+        tmp = open(tmp_path).read()
+        tmp_er = open(tmp_error_path).read()
         if tmp_er != "": logger.error(tmp_er)
         if tmp[:6] == "ERROR:": 
             logger.error(tmp[7:])
             raise Exception(tmp)
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
 
     except Exception, e:
+        if not tmp_file.closed: tmp_file.close()
+        if not tmp_error_file.closed: tmp_error_file.close()
+        # remove the temporary output files
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
         logger.error(traceback.format_exc())
-        return tmp
+        raise e
     return tmp
 
 
@@ -420,6 +478,7 @@ def check_background_foi_overlap(bg,fois):
     """ Calculates the overlap of the FOIs with the background.
     Removes FOIs that are poorly formed with the background.
     """
+    _write_progress("Validating FOIs against background")
     good_fois = []
     if len(fois) == 0:
         return [[],[]]
@@ -430,23 +489,27 @@ def check_background_foi_overlap(bg,fois):
         foi_name,n_bgs,n_fois,foi_in = f["queryfile"],f["indexregions"],f["queryregions"],f["intersectregions"]
         if n_fois < 5:
             isgood = False
-            logger.error("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
+            logger.warning("Number of SNPs in {} < 5. Removing it from analysis.".format(foi_name))
         elif n_bgs < n_fois:
             isgood = False
-            logger.error("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
+            logger.warning("Number of SNPs in {} > than in background. Removing it from analysis.".format(foi_name))
         if isgood:
             # ensure that overlapStatistics output filename with extension for queryFile field
             good_fois.append([x for x in fois if os.path.basename(x) == f["queryfile"]][0])
         if foi_in < n_fois:
-            logger.error("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
+            logger.warning("{} out of {} {} SNPs are not a part of the background. P-value are unreliable. Please, include all SNPs in the background and re-run analysis.".format(n_fois-foi_in,n_fois,foi_name))
     return [foi_bg_stats, good_fois]
                                                                                                                        
 
 
-def get_description(gf,trackdb):
-    desc = [x["longLabel"] for x in trackdb if x["tableName"] == gf]
-    if len(desc) is not 0: return desc[0]
-    else: return "No Description"
+def get_description(gf,track_descriptions):
+    ''' Get the GF feature description
+    '''
+    desc = [x[1] for x in track_descriptions if x[0] == gf and len(x[0]) > 1]
+    if len(desc) is not 0: 
+        return desc[0]
+    else: 
+        return "No Description"
 
 
 
@@ -514,7 +577,13 @@ def validate_filenames(file_paths):
         for t in os.path.basename(file).split("."):
             if len(t.strip()) != len(t):
                 # there are spaces before or after the '.'. Add the file to the list of invalids.
+                logger.error("Cannot have space before/in file extension: {}".format(file))
                 invalid.append(os.path.basename(file))
+    files_wo_ext = [base_name(x) for x in file_paths]
+    file_duplicates = [x for x, y in collections.Counter(files_wo_ext).items() if y > 1]
+    for f in file_duplicates:
+        logger.error("{} exists multiple times. (i.e. 'foi.txt.gz' has same basename as 'foi.txt')".format(f))
+        invalid.append(f)
     return invalid
 
 
@@ -555,75 +624,156 @@ def validate_rsids(foi_path):
     else:
         return False
 
-def preprocess_fois(fois,run_files_dir,gr_data_dir,organism):
+def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
     processed_fois = []
     output_dir = os.path.join(run_files_dir,'processed_fois')
     # Sort the fois 
     out = ""
+    data_dirs = [os.path.join(root_data_dir,'grsnp_db',organism),
+                os.path.join(root_data_dir,'custom_data')]
     try: 
-        for f in fois:    
-            # copy the FOI to the output_dir
-            out_fname = os.path.split(f)[1]
-            if not out_fname.endswith('.bed'):
-                out_fname = base_name(out_fname)+".bed"
-            out_f = os.path.join(output_dir,out_fname) # the processed foi file
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            out = subprocess.Popen(['cp {} {}'.format(f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            out.wait()             
-            # remove the header from the files
-            grsnp_util.remove_headers(out_f)
+        for f in fois:
+            if len([x for x in data_dirs if x in f]) == 0:
+                # extract file if it is gzipped.
+                unzipped_f = f
+                if f.endswith('.gz'):
+                    out = subprocess.Popen(["gunzip {}".format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()
+                    # filepath without the .gz extension
+                    unzipped_f = ".".join(unzipped_f.split(".")[:-1])
+                # copy the FOI to the output_dir
+                out_fname = os.path.split(unzipped_f)[1]
+                if not out_fname.endswith('.bed'):
+                    out_fname = base_name(out_fname)+".bed"
+                out_f = os.path.join(output_dir,out_fname) # the processed foi file
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                out = subprocess.Popen(['cp {} {}'.format(unzipped_f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
+                out.wait()
+                # remove the header from the files
+                grsnp_util.remove_headers(out_f)
 
-            # Check if items are rsIDs. Convert to bed coordinates if they are
-            if validate_rsids(out_f):
-                # check if a file exists in the database for rsID conversion and construct the path to it
-                rsid_path = os.path.join(os.path.split(gr_data_dir)[0],'custom_data','rsid_conversion',organism)
-                logger.info(rsid_path)
-                if not os.path.exists(rsid_path):
-                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
-                    return []
-                files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
-                # if conversion files found, perform conversion
-                if len(files) > 0:
-                    rsid_path = os.path.join(rsid_path,files[0])
-                    script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(out_f,rsid_path,out_f)
-                    out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                    out.wait()             
-                    tmp_er = out.stderr.read()
-                    if tmp_er != "":
-                        logger.error(tmp_er)
-                        raise Exception(tmp_er)
-                    # we remove the original out_f FOI file and replace with the out_f.temp created with the join command above
-                    os.remove(out_f)
-                    out = subprocess.Popen(['cp {} {}'.format(out_f+'.temp',out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                    out.wait()  
-                    os.remove(out_f+'.temp')
+                # Check if items are rsIDs. Convert to bed coordinates if they are
+                if validate_rsids(out_f):
+                    # check if a file exists in the database for rsID conversion and construct the path to it
+                    rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
+                    if not os.path.exists(rsid_path):
+                        logger.error('rsID conversion not available for this organism. Feature set {} removed'.format(f)) 
+                        continue
+                    files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
+                    # if conversion files found, perform conversion
+                    if len(files) > 0:
+                        rsid_path = os.path.join(rsid_path,files[0])
+                        script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(out_f,rsid_path,out_f)
+                        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()
+                        tmp_er = out.stderr.read()
+                        if tmp_er != "":
+                            logger.error(tmp_er)
+                            raise Exception(tmp_er)
+                        # we remove the original out_f FOI file and replace with the out_f.temp created with the join command above
+                        os.remove(out_f)
+                        out = subprocess.Popen(['cp {} {}'.format(out_f+'.temp',out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()  
+                        os.remove(out_f+'.temp')
+                    else:
+                        logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                        return [] 
+
+                # sort the FOI and bgzip
+                grsnp_util.sort_convert_to_bgzip(out_f,out_f+".gz")
+                script = "tabix -f " + out_f+".gz"
+                out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+                out.wait()
+                # check if processed FOI file is empty
+                if os.stat(out_f+".gz")[6]!=0:                   
+                    processed_fois.append(out_f + ".gz")
                 else:
-                    logger.error('rsID conversion not available for this organism. Analysis terminated.') 
-                    return []
-
-            # sort the FOI
-            script =  "sort -k1,1 -k2,2n " + '-o ' +out_f+' '+ out_f
-            out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            out.wait()
-            tmp = out.stdout.read()
-            tmp_er = out.stderr.read()
-            if tmp_er != "":
-                logger.error(tmp_er)
-                raise Exception(tmp_er) 
-            # check if processed FOI file is empty
-            if os.stat(out_f)[6]!=0:
-                processed_fois.append(out_f)
-
+                    logger.error("{} is empty. Removing.")                    
+            else:
+                processed_fois.append(f)
+                # print "{} is part of the database".format(f)
     except Exception, e:
         logger.error("Error while processing the FOIs")
         logger.error(traceback.format_exc())
         raise Exception(e)
     return processed_fois
 
+def preprocess_gf_files(file_paths,root_data_dir,organism):
+    ''' Used to preprocess the GF files and the background file.
+    Returns gzipped file paths
+    '''
+    processed_files = []
+    data_dirs = [os.path.join(root_data_dir,'grsnp_db',organism),
+                os.path.join(root_data_dir,'custom_data')]
+    try:
+        for out_f in file_paths:
+            # if the file is not uploaded by the user, do not preprocess
+            if len([x for x in data_dirs if x in out_f]) == 0:
+                # unzip the file
+                unzipped_f = out_f
+                if out_f.endswith('.gz'):
+                    out = subprocess.Popen(["gunzip {}".format(out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    out.wait()
+                    # filepath without the .gz extension
+                    unzipped_f = ".".join(unzipped_f.split(".")[:-1])
+
+                out_fname = os.path.split(unzipped_f)[1]
+                if not out_fname.endswith('.bed'):
+                    out_fname = base_name(out_fname)+".bed"
+                # replace the ".txt" extension with ".bed"
+                output_dir = os.path.split(unzipped_f)[0]
+                out_bed_f = os.path.join(output_dir,out_fname) # the processed foi file
+
+                grsnp_util.remove_headers(unzipped_f)
+                # perform rsid conversion
+                if validate_rsids(unzipped_f):
+                    # check if a file exists in the database for rsID conversion and construct the path to it
+                    rsid_path = os.path.join(root_data_dir,'custom_data','rsid_conversion',organism)
+                    if not os.path.exists(rsid_path):
+                        logger.error('rsID conversion not available for this organism. Feature set {} removed'.format(unzipped_f)) 
+                        continue
+                    files = [x for x in os.listdir(rsid_path) if os.path.isfile(os.path.join(rsid_path,x)) and x.endswith('.bed')]
+                    # if conversion files found, perform conversion
+                    if len(files) > 0:
+                        rsid_path = os.path.join(rsid_path,files[0])
+                        script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(unzipped_f,rsid_path,unzipped_f)
+                        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()             
+                        tmp_er = out.stderr.read()
+                        if tmp_er != "":
+                            logger.error(tmp_er)
+                            raise Exception(tmp_er)
+                        # we remove the original unzipped_f FOI file and replace with the unzipped_f.temp created with the join command above
+                        out = subprocess.Popen(['cp {} {}'.format(unzipped_f+'.temp',out_bed_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()  
+                        os.remove(unzipped_f+'.temp')
+                    else:
+                        logger.error('rsID conversion not available for this organism. Analysis terminated.') 
+                        return []
+
+                # sort the FOI
+                grsnp_util.sort_convert_to_bgzip(out_bed_f,out_bed_f+".gz")
+                # check if processed FOI file is empty
+                if os.stat(out_bed_f+".gz")[6]!=0:                   
+                    # add the processed file (the ".bed" file) to the list.
+                    processed_files.append(out_bed_f + ".gz")
+                else:
+                    logger.error("{} is empty. Removing.")
+                    
+            else:
+                processed_files.append(out_f)
+                # print "{} is part of the database".format(out_f)
+    except Exception, e:
+       logger.error("Error while processing the GF/background files")
+       logger.error(traceback.format_exc())
+       raise Exception(e)
+    return processed_files
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",gr_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism = ""):
+
+
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism = ""):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,run_files_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -633,29 +783,23 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     logger.setLevel(logging.INFO)
     run_files_dir = outdir
     curprog,progmax = 0,1
-
-    logger.info("ORGANIS " + str(organism))
-    logger.info("P_value adjustment used: {}".format(padjust))
+    logger.propagate = False
 
     try:
-        trackdb = []      
-
-        trackdb_path = os.path.join(gr_data_dir,organism,"trackDb")
-        if os.path.exists(trackdb_path+".txt.gz") and os.path.exists(trackdb_path + ".sql"):
-            trackdb = bedfilecreator.load_tabledata_dumpfiles(trackdb_path)
+        track_descriptions = []
+        logger.info("Enrichment analysis started")
+        decriptions_path = os.path.join(root_data_dir,"grsnp_db",organism,"gf_descriptions.txt")
+        if os.path.exists(decriptions_path):
+            track_descriptions = [x.split("\t") for x in open(decriptions_path).read().split("\n") if x != ""]
         # set output settings
         detailed_outpath =  os.path.join(outdir, "detailed.txt") 
         matrix_outpath = os.path.join(outdir,"matrix.txt")
         progress_outpath = os.path.join(outdir,".prog")
+        _write_progress("Starting analysis.")
         f = open(matrix_outpath,'wb') 
         f.close()
         f = open(detailed_outpath,'wb')
         f.close()
-        hdlr = logging.FileHandler(logger_path)
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        hdlr.setFormatter(formatter)
-        logger.addHandler(hdlr)
-        logger.propagate = False
 
         # Read in the paths
         fois = [line for line in read_lines(fois) if not line.endswith(".tbi")]
@@ -663,7 +807,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # check if there are spaces in invalid parts of the file name
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:
-            logger.error("The following file(s) have invalid file names, cannot have space before/in file extension:\n" + "\n".join(invalid_names))
+            logger.error("The following file(s) have invalid file names:\n" + "\n".join(invalid_names))
             _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
             return         
         if bg_path.endswith(".tbi"):
@@ -672,16 +816,25 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             return
 
         # pre-process the FOIs
-        fois = preprocess_fois(fois,run_files_dir,gr_data_dir,organism)
+        fois = preprocess_fois(fois,run_files_dir,root_data_dir,organism)
         if len(fois) == 0:
             logger.error('No valid FOIs to supplied')
             _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
             return
+        # pre-process the GFs and the background
+        bg_path = preprocess_gf_files([bg_path],root_data_dir,organism)[0]
+        gfs = preprocess_gf_files(gfs,root_data_dir,organism)
+
         # Validate FOIs against background. Also get the size of the background (n_bgs)
-        foi_bg,good_fois = check_background_foi_overlap(bg_path,fois)   
+        foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
+        # check if any good fois exist after background filtering
+        if len(good_fois) == 0:
+            logger.error('No valid FOIs to supplied')
+            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
+            return
         # remove old detailed enrichment result files if they exit
         enr_path =  os.path.join(run_files_dir,"enrichment")
         for f in good_fois:
@@ -689,13 +842,13 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             if os.path.exists(f_path): os.remove(f_path)
         _write_progress("Performing calculations on the background.")
         for gf in gfs: 
-            current_gf = base_name(gf)      
+            current_gf = base_name(gf)    
             _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
-            write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),trackdb)+"###"+"\n",detailed_outpath)
+            write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),track_descriptions)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs
-            bg_obs = get_bgobs(bg_path,gf,bkg_overlaps_path)
+            bg_obs = get_bgobs(bg_path,gf,root_data_dir,organism)
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue
@@ -731,11 +884,13 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
 
         if run_annotation:
+            logger.info("Annotation started")
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
             curprog,progmax = 0,len(fois)
             for f in fois:                
                 _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
+                logger.info("Running annotation analysis for {}".format(base_name(f)))
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
                     anot = get_annotation(f,gfs).split("\n")
                     anot[0] = anot[0].replace("Region\t\t","Region\t")
@@ -745,19 +900,19 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                             cur_row = a.split("\t")
                             wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))                            
                 curprog += 1
-
+            logger.info("Annotation finished")
         if zip_run_files:
             _write_progress("Preparing run files for download")
             _zip_run_files(fois,gfs,bg_path,outdir,job_name)
         curprog,progmax = 1,1
-        _write_progress("Analysis Completed")       
+        _write_progress("Analysis Completed")
+        logger.info("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
-        write_output(traceback.format_exc(),logger_path)
         _write_progress("Run crashed. See end of log for details.")
+        raise Exception(e)
 
 if __name__ == "__main__":
-    global print_progress
     print_progress = True
     valid_pv_adjust = ['bonferroni', 'holm', 'hochberg', 'hommel', 'BH', 'BY', 'fdr','None']
     parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")

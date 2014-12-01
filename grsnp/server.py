@@ -27,6 +27,7 @@ import argparse
 import shutil
 import subprocess
 import celeryconfiguration
+from celery import Celery
 
 os.environ['GR_COMPATIBILITY_MODE'] = 'y'
 
@@ -118,7 +119,7 @@ class WebUI(object):
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
 		list_gfs = []
-
+		data_dir = os.path.split(sett["data_dir"][db_version])[0]
 		cherrypy.response.timeout = 3600
 		try:
 			jobname = kwargs["jobname"]
@@ -211,7 +212,7 @@ class WebUI(object):
 										if not data:
 											break
 										out.write(data)	
-									if (base_name(f) not in list_gfs): out_gfs.write(f+"\n")
+									out_gfs.write(f+"\n")
 									list_gfs.append(base_name(f))		
 						else:
 							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
@@ -225,7 +226,7 @@ class WebUI(object):
 		# have been checked.
 		# Thus with this way of doing things, it is not possible to have a genomicfeature
 		# with one of these reserved names. 
-		organism,run,run_random,run_annotation = "",[],False,False
+		organism,run,run_random = "",[],False
 		gfeatures = [k[5:] for k,v in kwargs.items()
 			if k.startswith("file:") and v=="on"]
 
@@ -243,9 +244,10 @@ class WebUI(object):
 			for g in gfeatures:
 				if (base_name(g) not in list_gfs): 
 					# check if score and/or strand filtered GF data exists
-					g = verify_score_strand(g,kwargs['pct_score'],strand)
+					g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
 					out_gfs.write(g+"\n")
 				list_gfs.append(base_name(g))
+
 				
 		for k,v in kwargs.items():
 			# organism to use
@@ -306,6 +308,15 @@ class WebUI(object):
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: unable to upload background"
 
+		# make paths relative, needed for remote celery workers to function correctly
+		for f in [fois,gfs]:
+			list_foi = open(f).read().replace(uploads_dir,'/uploads').replace(results_dir,'/results').replace(data_dir,"")
+			with open(f,'wb') as writer:
+				writer.write(list_foi)
+		print "absolute",b
+		b = b.replace(data_dir,'').replace(os.path.split(uploads_dir)[0],"").lstrip("/")
+		print "relative",b
+
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
 		set_info = {"Jobname:": str(id),
@@ -348,7 +359,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),sett["data_dir"][db_version],run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism)
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
@@ -413,6 +424,15 @@ class WebUI(object):
 			print str_error
 			rend_template = str_error
 		return rend_template
+
+	@cherrypy.expose
+	def gf_descriptions(self,db_version,organism):
+		# Use mako to render index.html
+		tmpl = lookup.get_template("master.mako")
+		body = lookup.get_template("gf_descriptions.mako").render()
+		script = lookup.get_template("gf_descriptions.js").render(db_version=db_version,organism=organism)
+		return tmpl.render(body=body,script=script)
+
 
 	@cherrypy.expose
 	def get_heatmaps(self, run_id, organism):
@@ -489,7 +509,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_annotation(self,run_id,foi_name):
-		annotation_path = os.path.join(os.path.join(results_dir,run_id,"annotations",foi_name + ".txt"))
+		annotation_path = os.path.join(results_dir,run_id,"annotations",foi_name + ".txt")
 		results = []
 		if os.path.exists(annotation_path):
 			with open(annotation_path) as f:
@@ -506,7 +526,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_enrichment(self,run_id,foi_name):
-		enrichment_path = os.path.join(os.path.join(results_dir,run_id,"enrichment",foi_name + ".txt"))
+		enrichment_path = os.path.join(results_dir,run_id,"enrichment",foi_name + ".txt")
 		results = []
 		if os.path.exists(enrichment_path):
 			with open(enrichment_path) as f:
@@ -520,6 +540,24 @@ class WebUI(object):
 					if foi.strip() != "":
 						results.append(foi.rstrip().split("\t"))
 		return simplejson.dumps(results)
+
+	@cherrypy.expose
+	def get_gf_descriptions(self,db_version,organism):
+		descriptions_path = os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")		
+		results = []
+		if os.path.exists(descriptions_path):
+			with open(descriptions_path) as f:
+				# skip the comment lines
+				cols = f.readline().rstrip()
+				while cols[0] == "#":
+					cols = f.readline().rstrip()
+				cols = cols.split("\t")	
+				results.append(cols)			
+				for foi in f:
+					if foi.strip() != "":
+						results.append(foi.rstrip().split("\t"))
+		return simplejson.dumps(results)
+
 
 	@cherrypy.expose
 	def get_cluster(self,run_id):
@@ -581,6 +619,9 @@ class WebUI(object):
 		return simplejson.dumps(results)
 
 	@cherrypy.expose
+	def get_gfdescriptions(self,organism,db_version):
+		return open(os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")).read()
+	@cherrypy.expose
 	def get_checkboxtree(self,organism,db_version):
 		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.html")).read()
 
@@ -624,10 +665,11 @@ class WebUI(object):
 def base_name(k):
     return os.path.basename(k).split(".")[0]
 
-def verify_score_strand(gf_path,pct_score,strand):
+def verify_score_strand(gf_path,pct_score,strand,data_dir):
     ''' Checks if a score and/or strand filtered version of gf_path exists in the database and
     returns the appropriate path if it does.
     '''
+    gf_path = os.path.join(data_dir,gf_path.lstrip("/"))
     gf_score_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}_{}/'.format(pct_score,strand))
     gf_score_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
     gf_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(strand))
@@ -641,13 +683,12 @@ def verify_score_strand(gf_path,pct_score,strand):
     	return gf_path
 
 if __name__ == "__main__":
-	global static_dir,results_dir,media,root_dir,sett,uploads_dir
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
 	parser = argparse.ArgumentParser(prog="python -m grsnp.server", description="Starts the GenomeRunner SNP server. Example: python -m grsnp.server -d /home/username/db_#.##_#.##.####/ -g hg19 -p 8000", epilog="Use GenomeRunner SNP: http://localhost:8000/gr")
-	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
-	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", default="")
+	parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", required=True)
+	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", required=True)
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
 	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)	
@@ -724,27 +765,25 @@ if __name__ == "__main__":
 		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
 		fh = open(os.path.join(sett["run_files_dir"],"redis.log"),"w")
 		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		# start the workers using queue system,
-		#for i in range(args["num_workers"]):
-		#	if i== 0  and args["num_workers"] <=1:
-		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
-		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		#	elif i == 0:
-		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","short_runs"]
-		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		#	else:
-		#		script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i),"-Q","long_runs,short_runs"]
-		#		out = subprocess.Popen(script,stdout=fh,stderr=fh)
-		script = "ps auxww | grep  -E 'worker.*grsnp' | awk '{print $2}' | xargs kill -9"
-		out = subprocess.Popen(script,shell=True)
-		out.wait()
-		for i in range(args["num_workers"]):
-			fh = open(os.path.join(sett["run_files_dir"],"worker{}.log".format(i)),"w")
-			script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp{}.%h".format(i)]
-			out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		#script = "ps auxww | grep  -E 'worker.*grsnp_LOCAL' | awk '{print $2}' | xargs kill -9"
+		#out = subprocess.Popen(script,shell=True)
+		#out.wait()
+		app = Celery('grsnp')
+		app.config_from_object('grsnp.celeryconfiguration')
+		print "Checking for existing celery workers..."
+		if app.control.inspect().ping() == None:
+			for i in range(args["num_workers"]):
+				print "Starting Celery worker[s]..."
+				fh = open("worker{}.log".format(i),"w")
+				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i),'-r',sett['run_files_dir'],'-d',args["data_dir"]]
+				out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		else:
+			workers = app.control.inspect().ping()
+			pids = [str(app.control.inspect().stats()[j]['pid']) for j in workers.keys()]
+			print "Celery workers already running. Pids:" + ",".join(pids) 
 		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})
-		cherrypy.quickstart(WebUI(), "/gr", config=conf)
+		cherrypy.quickstart(WebUI(), "/", config=conf)
 
 	else:
 		print "WARNING: No port given. Server not started. Use --port flag to set port."

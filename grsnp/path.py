@@ -29,7 +29,7 @@ class PathNode(defaultdict):
 		blacklist = []
 		blacklist_path = os.path.join(base,"blacklist.txt")
 		gfs_path = os.path.join(base,"gfs.php")
-
+		data_dir = os.path.split(os.path.split(base)[0])[0] # get the root data directory i.e. portion parent to '/grsnp_db/'
 		if os.path.exists(blacklist_path):
 			with open(blacklist_path) as f:
 				blacklist = [line.strip() for i,line in enumerate(f)]
@@ -47,7 +47,7 @@ class PathNode(defaultdict):
 					continue
 				node = node[p]
 				node.name = p
-			node.files = ["file:"+os.path.join(base, f) for f 
+			node.files = ["file:"+os.path.join(base, f).replace(data_dir,"") for f 
 				in files if f.endswith(('.gz', '.bb')) and base_name(f) not in blacklist]
 
 			# used for the auto-complete text box
@@ -66,18 +66,8 @@ class PathNode(defaultdict):
 		else:
 			label = name = k
 		s = """\t<li><input name="%s" type="checkbox">
-			<label>%s</label>\n""" % (name,label)
-		if k.startswith("file:"):
-			org= k.split(os.sep)[k.split(os.sep).index("grsnp_db")+1]
-			s = """<a target="_blank" href="meta?tbl=%s&organism=%s">%s</a>""" % \
-				(label,org, s)
-
-		s = """\t<li><input name="%s" type="checkbox">
-			<label>%s</label>\n""" % (name,label)
-		if k.startswith("file:"):
-			org= k.split(os.sep)[k.split(os.sep).index("grsnp_db")+1]
-			s = """<a target="_blank" href="meta?tbl=%s&organism=%s">%s</a>""" % \
-				(label,org, s)
+			<label>%s</label>\n""" % (name,label)		
+		
 		return s
 
 	def _treeview_html(self, id=None,):
@@ -121,7 +111,7 @@ class PathNode(defaultdict):
 		html = """<button type="button" id="demo_fois_none" onclick="enable_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary active" title="" >None</button>\n"""
 		if not os.path.exists(demo_dir):
 			return html
-		for snp_dir in [ os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
+		for snp_dir in [os.path.join(demo_dir,f) for f in os.listdir(demo_dir) if os.path.isdir(os.path.join(demo_dir,f))]:
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f)) and not f.endswith(".tbi")]:
 				tooltip += "\t"+base_name(s) + "\n" 
@@ -144,7 +134,7 @@ class PathNode(defaultdict):
 		return html
 
 	def get_custom_gfs(self,organism,custom_dir):
-		demo_dir = os.path.join(custom_dir,"gfs",organism)
+		demo_dir = os.path.join(custom_dir,"gfs",organism)	
 		html = ""
 		if not os.path.exists(demo_dir):
 			return ""
@@ -152,8 +142,9 @@ class PathNode(defaultdict):
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f)) and not f.endswith(".tbi")]:
 				tooltip += "\t"+base_name(s) + "\n" 
+			rel_gfs_dir = os.path.join(demo_dir,os.path.split(gfs_dir)[1])
 			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" style="margin: 10px">{}</input>
-						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(gfs_dir,base_name(gfs_dir),tooltip)
+						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(rel_gfs_dir,base_name(gfs_dir),tooltip)
 		return html
 
 	def get_scores(self,data_dir):
@@ -175,14 +166,16 @@ def base_name(k):
 def get_database_versions_html(data_dir,db_version):
 	html = "<select id='db_version' name='db_version'>"
 	list_dir = data_dir.keys()
+	print "LST DIR:",list_dir
 	# sort so that the latest database is first
 	list_dir.sort()
 	list_dir.reverse()
 	if db_version == None: db_version = list_dir[0]
 	for v in list_dir:
 		selected = ""
+		print v
 		if v == db_version: selected = " selected "
-		html += "<option value='"+v+"'" + selected +">" + v.split("_")[1] +" (" + v.split("_")[2].replace(".","-") + ")" +"</option>"
+		tmp = v.split("_")
+		html += "<option value='"+v+"'" + selected +">" + tmp[0] + " - " + tmp[1] +" (" + tmp[2].replace(".","-") + ")" +"</option>"
 	html += "</select>"
 	return [html,db_version]
-
