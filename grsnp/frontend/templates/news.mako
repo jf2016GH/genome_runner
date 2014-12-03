@@ -1,6 +1,9 @@
         <h3>
             <span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
         <p>
+            <span style="font-family:arial,helvetica,sans-serif;">12/01/2014: Database update for hg19 and mm9. Note that snp141 database is now used as a background.</span></p>
+        <p>
+        <p>
             <span style="font-family:arial,helvetica,sans-serif;">11/19/2014: Bug fixes, interface updates.</span></p>
         <p>
             <span style="font-family:arial,helvetica,sans-serif;">08/14/2014: Full databases for hg18, hg38, mm9 and mm10 are online. Filtering by score and strand is available.</span></p>
