@@ -23,7 +23,7 @@
 		<img src="static/images/coming_soon.png" /></p>
 
 		--></p>
-		<h3>
+		<!--<h3>
 			<span style="font-family:arial,helvetica,sans-serif;">An overview of GenomeRunner&#39;s idea, October 2011</span></h3>
 		<p>
-			<span style="font-family:arial,helvetica,sans-serif;"><iframe allowfullscreen="" frameborder="0" height="315" src="//www.youtube.com/embed/v9p9FClrqXU" width="560"></iframe></span></p>
+			<span style="font-family:arial,helvetica,sans-serif;"><iframe allowfullscreen="" frameborder="0" height="315" src="//www.youtube.com/embed/v9p9FClrqXU" width="560"></iframe></span></p>-->
