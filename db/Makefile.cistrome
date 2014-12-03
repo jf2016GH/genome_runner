@@ -1,0 +1,50 @@
+## Downloads and sorts Nuclear Receptor Cistrome DB data
+##
+## Prerequisites:
+##     Save sources of Cistrome web pages from http://cistrome.org/NR_Cistrome/ into corresponding HTML files
+##     Create 'Cistrome' folder, 'hg19' and 'mm9' subfolders, and 'Cistrome', 'Epigenome' and 'Motif' subsubfolders
+##
+## Note: Scripts are still not automatic, due to non-standard .zip files
+
+all:	CistromeNR
+
+Cistrome.wget:	Cistrome.html
+	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+
+Epigenome.wget:	Epigenome.html
+	grep ".bed" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+
+Motif.wget:	Motif.html
+	grep "bed\|zip" $< | tr '\"' '\t' | cut -f4 | sed 's/\.\///' | awk '{print "http://cistrome.org/NR_Cistrome/"$$0}' > $@ 
+
+CistromeNR:	Cistrome.wget Epigenome.wget Motif.wget
+	DIR="Cistrome" ; \
+	for file in $^; do \
+		for file2 in `cat $$file`; do \
+			wget $$file2 && \
+			f2name=`basename $$file2` ; \
+			f2ext="$${f2name##*.}" && \
+			if [ $$f2ext = "zip" ] ; then \
+				unzip $$f2name && \
+				rm $$f2name ; \
+				for file3 in $${f2name%.zip}/* ; do \
+					if [ `ls $$file3 | grep -i "human"` ] ; then \
+						mv $$file3 $$DIR/hg19/$${file%.wget}/ ; \
+					else \
+						mv $$file3 $$DIR/mm9/$${file%.wget}/ ; \
+					fi ; \
+				done ; \
+				rm -r $${f2name%.zip} ; \
+			else \
+				if [ `ls $$f2name | grep -i "human"` ] ; then \
+					mv $$f2name $$DIR/hg19/$${file%.wget}/ ; \
+				else \
+					mv $$f2name $$DIR/mm9/$${file%.wget}/ ; \
+				fi ; \
+			fi ; \
+		done ; \
+	done ; \
+	for file in `find $$DIR/ -type f -name "*.bed"`; do \
+		sed '1d' $$file > $${file%.bed}".f.bed" && \
+		rm $$file ; \
+	done

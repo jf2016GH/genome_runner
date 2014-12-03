@@ -8,20 +8,20 @@
 ## validate, sort, bgzip and tabix the files.
 ##
 ## Note: To create gwasCatalog subgroups, use https://github.com/mdozmorov/gwas2bed
-
+## Uncomment to run
 all:	fois
 
 fois:
-		python extract_UCSC.py wgEncodeBroadHmmGm12878HMM name histoneMarks && \
+		python extract_UCSC.py wgEncodeBroadHmmGm12878HMM name chromStates && \
 		python extract_UCSC.py wgEncodeRegTfbsClusteredV3 name tfbsEncode && \
 		python extract_UCSC.py gap type gapLocations && \
-		python extract_UCSC.py coriellDelDup cellType coriellCNVs && \
+		python extract_UCSC.py coriellDelDup cellType coriellDelDup && \
 		python extract_UCSC.py knownAlt name altSplicing && \
 		python extract_UCSC.py wgRna type ncRnas && \
 		python extract_UCSC.py tfbsConsSites name tfbsConserved && \
-		python extract_UCSC.py dgvMerged varType genomicVariants && \
-		python extract_UCSC.py nestedRepeats repClass repeats && \
-		python extract_UCSC.py snp138Flagged func snpClinical && \
+		python extract_UCSC.py dgvMerged varType DGV && \
+		python extract_UCSC.py nestedRepeats repClass nestedRepeats && \
+		python extract_UCSC.py snp141Flagged func snp141Flagged && \
 		echo "Data extraction complete"; \
 		for file in `find . -type f -name "*.bed"`; do \
 		f=`basename $$file`; d=`dirname $$file`; echo "Processing:" $$file; \
