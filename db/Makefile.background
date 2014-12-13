@@ -1,0 +1,33 @@
+## Creates a merged background file from the 'ENCODE' and 'genes' annotations
+##
+## Prerequisites:
+##     The GenomeRunner database should be created
+##     Create 'Cistrome' folder, 'hg19' and 'mm9' subfolders, and 'Cistrome', 'Epigenome' and 'Motif' subsubfolders
+##
+## Note: Scripts are still not automatic, due to non-standard .zip files
+
+DB = /home/genomerunner/db_3.00_12-01-2014
+ORG = hg19
+
+all:	$(ORG)_background.bed
+
+$(ORG)_background.bed:
+	echo "Processing genes" ; \
+	for file in `find $(DB)/grsnp_db/$(ORG)/genes/ -type f -name "*.bed.gz"`; do \
+		zcat $$file | grep "\bchr[0-9XYM][^_]\b" >> genes.bed; \
+	done; \
+	echo "Sorting and merging genes"; \
+	cut -f1-3 genes.bed | sort -k1,1 -k2,2n > genes_sorted.bed && \
+	mergeBed -i genes_sorted.bed > genes.bed && \
+	rm genes_sorted.bed; \
+	echo "Processing ENCODE"; \
+	for file in `find $(DB)/grsnp_db/$(ORG)/ENCODE/ -type f -name "*.bed.gz"`; do \
+		zcat $$file | grep "\bchr[0-9XYM][^_]\b" >> encode.bed; \
+	done; \
+	echo "Sorting and merging ENCODE"; \
+	cut -f1-3 encode.bed | sort -k1,1 -k2,2n > encode_sorted.bed && \
+	mergeBed -i encode_sorted.bed > encode.bed && \
+	rm encode_sorted.bed; \
+	cat genes.bed encode.bed | sort -k1,1 -k2,2n | uniq > genes_encode.bed && \
+	mergeBed -i genes_encode.bed > $@; \
+	rm genes_encode.bed
