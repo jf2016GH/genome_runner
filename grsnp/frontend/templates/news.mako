@@ -1,6 +1,9 @@
         <h3>
             <span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
         <p>
+            <span style="font-family:arial,helvetica,sans-serif;">12/15/2014: Design updates</span></p>
+        <p>
+        <p>
             <span style="font-family:arial,helvetica,sans-serif;">12/01/2014: Database update for hg19 and mm9. Note that snp141 database is now used as a background.</span></p>
         <p>
         <p>
