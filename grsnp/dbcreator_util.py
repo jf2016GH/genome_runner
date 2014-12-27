@@ -54,6 +54,9 @@ def sort_convert_to_bgzip(path,outpath):
 	out.wait()
 	os.remove(path)# remove the .temp file extension to activate the GF		
 	os.rename(outpath+".gz.temp",outpath)
+	script = "tabix -f " + outpath
+	out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
+	out.wait()
 
 
 
