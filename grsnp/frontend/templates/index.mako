@@ -43,7 +43,7 @@
 							${paths.org_as_html(id="org")} 
 							<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</div> 
-						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates in BED format of SNPs of interest. Multiple file upload supported. Note: Avoid special characters and extra dots in file names!" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates in BED format of SNPs of interest. Multiple file upload supported. Note: Avoid special characters and extra dots in file names. Do not use SNP IDs other than rsIDs." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
