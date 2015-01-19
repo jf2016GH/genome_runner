@@ -30,10 +30,10 @@
 			${database_versions}		
 			<h3>GenomeRunner: Functional interpretation of SNPs within regulatory context</h3>
 			<p>
-				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for annotation and enrichment analysis of sets of SNPs by considering their co-localization with functional/regulatory genome annotation data. GenomeRunner is particularly useful for interpretation of regulatory impact of SNPs in non-protein coding regions, and rare variants. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly enriched with the disease-associated SNPs.</span></p>
+				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for annotation and enrichment analysis of the SNP sets by considering SNPs co-localization with functional/regulatory genome annotation data. GenomeRunner is particularly useful for interpretation of the collective regulatory impact of SNPs in non-protein coding regions. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly enriched with the disease-associated SNPs.</span></p>
 				<p>
 					<br />
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner calculates <a href="http://mdozmorov.github.io/grdocs/hypergeom4/enrichment.html">enrichment p-values</a> by evaluating whether a set of SNPs co-localizes with regulatory datasets more often that could happen by chance. For the three or more sets of SNPs, GenomeRunner performs <a href="https://mdozmorov.github.io/grdocs/hypergeom4/episimilarity.html"> a regulatory similarity analysis</a> by correlating set-specific profiles of enrichment p-values. The downloadable results are visualized as interactive heatmaps and tables <a href="result?id=example">(Example)</a>.</span></span></p>
+					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner calculates <a href="http://mdozmorov.github.io/grdocs/hypergeom4/enrichment.html">the enrichment p-values</a> by evaluating whether a SNP set co-localizes with regulatory datasets more often that could happen by chance. For three or more SNP sets, GenomeRunner performs <a href="https://mdozmorov.github.io/grdocs/hypergeom4/episimilarity.html"> a regulatory similarity analysis</a> by correlating SNP set-specific regulatory enrichment profiles. The downloadable results are visualized as interactive heatmaps and tables <a href="result?id=example">(Example)</a>.</span></span></p>
 					<p>
 					</p>
 					</div>
@@ -43,7 +43,7 @@
 							${paths.org_as_html(id="org")} 
 							<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</div> 
-						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates in BED format of SNPs of interest. Multiple file upload supported. Note: Avoid special characters and extra dots in file names. Do not use SNP IDs other than rsIDs." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates in BED format of SNPs of interest. At least 5 SNPs per set are required. Multiple file upload supported. Note: Avoid special characters and extra dots in file names. Do not use SNP IDs other than rsIDs." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
