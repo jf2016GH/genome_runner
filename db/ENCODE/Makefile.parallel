@@ -1,0 +1,33 @@
+# http://quinlanlab.org/tutorials/cshl2014/bedtools.html
+# curl -O http://quinlanlab.cs.virginia.edu/cshl2013/make-matrix.py
+# ln -s ../bed/*.bed .
+
+#all:	make-matrix
+#all:	join-matrix-long
+all:	join-matrix-wide
+
+SHELL=/bin/bash
+
+make-matrix:
+	parallel "bedtools jaccard -a {1} -b {2} \
+	         | awk 'NR>1' \
+	         | cut -f 3 \
+	         > {1}.{2}.jaccard" \
+	         ::: *.bed.gz ::: *.bed.gz
+
+join-matrix-long:
+	find . -type f -name "*.bed.gz.jaccard" \
+    | grep jaccard \
+    | xargs grep "" \
+    | sed -e s"/\.\///" \
+    | perl -pi -e "s/.bed.gz./.bed\t/" \
+    | perl -pi -e "s/.gz.jaccard:/\t/" \
+    > jaccard.tfbsEncode.long.txt
+
+join-matrix-wide:
+	awk 'NF==3' jaccard.tfbsEncode.long.txt \
+	| python make-matrix.py > jaccard.tfbsEncode.wide.txt
+
+clean:
+	rm *.bed.gz.jaccard
+
