@@ -30,3 +30,5 @@ This analysis tests whether a set of SNPs from a region is enriched in the genom
 	for file in `find /home/mikhail/test_db/grsnp_db/hg19/ENCODE/ -maxdepth 1 ! -path /home/mikhail/test_db/grsnp_db/hg19/ENCODE/ -type d`; do GR=`basename $file`; find $file -type f -name '*.bed.gz' > enc.hg19.$GR.txt; done
 
 ``Analysis.Rmd`` - R code for the interpretation of the results. Click ``Analysis.md`` to see an example of the output.
+
+``Makefile.OR`` - converts detailed.txt file into a matrix of odds ratios.

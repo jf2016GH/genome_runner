@@ -1,0 +1,20 @@
+all:	split
+
+SHELL=/bin/bash
+
+SIZE=93
+
+split:	detailed.txt
+	mkdir tmp; \
+	sed '1d' $< | split -p "###" - tmp/detailed && \
+	for file in tmp/*; do \
+		head -n1 $$file | cut -f1 | sed 's/###//g' | tr "\n" "\t"  >> header.txt; \
+	done; echo >> header.txt && \
+	sed '1d' tmp/detailedaa | cut -f1 | cut -c 1-15 > rownames.txt; \
+	for file in tmp/*; do\
+		cut -f6 $$file | sed '1d' > $$file"_cut.txt" && \
+		rm $$file ; \
+	done && \
+	paste rownames.txt tmp/* > detailed_pasted.txt && \
+	cat header.txt > matrix_OR.txt; cat detailed_pasted.txt >> matrix_OR.txt && \
+	rm -r rownames.txt header.txt detailed_pasted.txt tmp/
