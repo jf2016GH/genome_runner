@@ -2,8 +2,10 @@ all:	split
 
 SHELL=/bin/bash
 
+# Adjust size
 SIZE=93
 
+# After splitting, need to manually add TAB to the beginning of the header, and remove TAB at the end
 split:	detailed.txt
 	mkdir tmp; \
 	sed '1d' $< | split -p "###" - tmp/detailed && \
