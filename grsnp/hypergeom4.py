@@ -215,9 +215,15 @@ def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         if do_chi_square:        
             chi_result = scipy.stats.chi2_contingency(ctable)
             odds_ratio = (ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
+            # from http://www.medcalc.org/calc/odds_ratio.php
+            # Where zeros cause problems with computation of the odds ratio or its standard error, 0.5 is added to all cells (a, b, c, d) (Pagano & Gauvreau, 2000; Deeks & Higgins, 2010).
+            if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
+                odds_ratio = ((ctable[0][0]+0.5)*(ctable[1][1]+0.5))/((ctable[0][1]+0.5)*(ctable[1][0]+0.5))
             pval = chi_result[1]
         else:    
             odds_ratio, pval = scipy.stats.fisher_exact(ctable)
+            if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
+                odds_ratio = ((ctable[0][0]+0.5)*(ctable[1][1]+0.5))/((ctable[0][1]+0.5)*(ctable[1][0]+0.5))
     sign = -1 if (odds_ratio < 1) else 1
     return [sign,pval,odds_ratio,do_chi_square]
 
