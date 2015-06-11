@@ -133,8 +133,9 @@ def get_bgobs(bg,gf,root_data_dir,organism):
         logger.error(traceback.format_exc())
     return result
 
-def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randomization_test=False):    
-    """Return the signed p-value of all FOIs against the GF.
+def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randomization_test=False):    
+    """Return the shrunken odds-ratio and signed p-value of all FOIs against the GF so they can be written to
+    matrix files. Outputs stats to the detailed results file.
     """
     global logger_path
     foi_name = base_name(foi_path)
@@ -168,8 +169,15 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     if run_randomization_test:
         strpval = "%.2e" % pval if type(pval) != type("") else pval 
         strprnd = "%.2e" % prnd if type(prnd) != type("") else prnd 
+
+    # calculate the shrunken odds ratio and confidence intervals
+    [shrunken_or,ci_lower,ci_upper] = calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio)
+
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
+                "%.2f" % ci_lower if type(ci_lower) != type("") else ci_lower, 
+                "%.2f" % ci_upper if type(ci_upper) != type("") else ci_upper, 
+                "%.2f" % shrunken_or if type(shrunken_or) != type("") else shrunken_or,                 
                 "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
                 "Chi-squared" if did_chi_square else "Fisher-Exact",
                 strprnd,strpval])) + "\n",detailed_outpath)
@@ -178,7 +186,7 @@ def p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_ran
     if pval < 1E-307:
         # set to value obtained from sys.float_info.min_10_exp
         pval = 1E-306   
-    return sign * pval
+    return [sign * pval,shrunken_or]
 
 def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     ''' Calculated by generating 'num' random feature files and running them against gf_path.
@@ -194,6 +202,7 @@ def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     return np.min(p_rand)
 
 def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
+    "Returns [sign,pval,odds_ratio,do_chi_square]"
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
@@ -227,10 +236,35 @@ def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     sign = -1 if (odds_ratio < 1) else 1
     return [sign,pval,odds_ratio,do_chi_square]
 
+def calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio):
+    ''' Calculates the confidence intervals and the shrunken odds ratio.
+        Returns [shrunken_or,ci_lower,ci_upper]
+    '''
+    ctable = [[foi_obs, n_fois-foi_obs],
+          [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
+    # check for zeros and add 0.5 if one of the cells is 0
+    if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
+        ctable[0][0] += 0.5
+        ctable[0][1] += 0.5
+        ctable[1][0] += 0.5
+        ctable[1][1] += 0.5
 
+    log_or = scipy.log(odds_ratio)
+    conf_coe = 1.96 # the confidence coefficent of a standard norm dist
+    # calculate the standard error
+    se = math.sqrt(1/ctable[0][0] + 1/ctable[1][0] + 1/ctable[0][1] + 1/ctable[1][1])
+    # calculate the upper and lower confidence interval
+    ci_upper = scipy.exp(log_or + conf_coe * se)
+    ci_lower = scipy.exp(log_or - conf_coe * se)
+    # shrunken_or is the ci (either upper or lower) that is closest to 1
+    if ci_lower<1 and ci_upper>1:
+        shrunken_or = 1
+    else:
+        ci_index = scipy.array([[abs(ci_lower-1),abs(ci_upper-1)]]).argmin()
+        shrunken_or = [ci_lower,ci_upper][ci_index]
 
-
+    return [shrunken_or,ci_lower,ci_upper]
 
 def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
     paths = []
@@ -358,6 +392,49 @@ def cluster_matrix(input_path,output_path):
         logger.error(str(e))
     return output_path    
 
+def cluster_sor_matrix(input_path,output_path):
+    '''
+    Takes the matrix file outputted by genomerunner and clusters it in R
+    '''  
+    try:      
+        pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
+        saved_stdout, saved_stderr = sys.stdout, sys.stderr
+        sys.stdout = sys.stderr = open(os.devnull, "w")
+        r_script = """t5 = as.matrix(read.table("{}"))                     
+                        t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), , drop=F]) # Remove rows with all values below cutoff 2 (p-value 0.01)
+                        if (nrow(t5) > 0 && ncol(t5) > 0) {{
+                            if (nrow(t5) >=1 && ncol(t5) >= 1) {{
+                                library(gplots)
+                                library(RColorBrewer)
+                                color<-colorRampPalette(c("blue","yellow"))
+                                pdf(file="{}")
+                                if (nrow(t5) > 1 && ncol(t5) > 1) {{
+                                    h = heatmap.2(t5, margins=c(20,20), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(t5)),cexCol=1/log10(nrow(t5)))
+                                    write.table(t(h$carpet),"{}",sep="\t")
+                                }} else {{
+                                    image(t(t5[order(t5[, 1], decreasing=T), , drop=F]), col=color(nrow(t5)))
+                                    write.table(t5[order(t5[, 1], decreasing=T), , drop=F],"{}",sep="\t")
+                                }}
+                                dev.off()
+                            }}
+                        }} else {{
+                            write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
+                        }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
+        robjects.r(r_script)
+        sys.stdout, sys.stderr = saved_stdout, saved_stderr
+        # write matrices in json format     
+        json_mat = []       
+        mat = open(output_path).read()      
+        json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha": 0.05,"matrix": mat})        
+        with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:       
+            simplejson.dump(json_mat,f)
+    except Exception, e:
+        logger.error("R CRASHED: cluster_matrix")
+        logger.error(traceback.print_exc())        
+        logger.error(str(e))
+    return output_path  
+
+
 def pearsons_cor_matrix(matrix_path,out_dir):
     try:
         output_path = os.path.join(out_dir,"pcc_matrix.txt")
@@ -452,11 +529,6 @@ def get_annotation(foi,gfs):
         logger.error(traceback.format_exc())
         raise e
     return tmp
-
-
-
-
-
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
 def write_output(content,outpath=None):
@@ -817,9 +889,12 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # set output settings
         detailed_outpath =  os.path.join(outdir, "detailed.txt") 
         matrix_outpath = os.path.join(outdir,"matrix.txt")
+        matrix_sor_outpath = os.path.join(outdir,"matrix_shrunk_or.txt")
         progress_outpath = os.path.join(outdir,".prog")
         _write_progress("Starting analysis.")
         f = open(matrix_outpath,'wb') 
+        f.close()
+        f = open(matrix_sor_outpath,'wb')
         f.close()
         f = open(detailed_outpath,'wb')
         f.close()
@@ -851,7 +926,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # Validate FOIs against background. Also get the size of the background (n_bgs)
         foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
+        write_output("\t".join(map(base_name,good_fois))+"\n", matrix_sor_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio',"ci_lower","ci_upper", 'shrunken_odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         # check if any good fois exist after background filtering
         if len(good_fois) == 0:
@@ -878,8 +954,17 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
 
             n_bgs = foi_bg[0]["indexregions"]  
 
-            # run the enrichment analysis and output the matrix line for the current gf
-            write_output("\t".join([base_name(gf)] + [str(p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)) for i in range(len(good_fois))])+"\n",matrix_outpath)
+            # calculate the pvalues and output the matrix line for the current gf
+            pvals,sors = [],[] # sors = shrunken odds-ratios
+            for i in range(len(good_fois)):
+                [pvalue,shrunken_or] = output_p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)
+                pvals.append(str(pvalue))
+                sors.append(str(shrunken_or))
+
+            # output the matrices file lines
+            write_output("\t".join([base_name(gf)] + pvals)+"\n",matrix_outpath)
+            write_output("\t".join([base_name(gf)] + sors)+"\n",matrix_sor_outpath)
+
             curprog += 1
         # Adjust p values for the enrichment files
         list_enr =  [x  for x in os.listdir(enr_path)]
@@ -890,9 +975,11 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             # Adjust the pvalues
             adjust_pvalue(matrix_outpath,padjust)
             # Cluster the matrix
-            clust_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered.txt"))
+            clust_pval_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered_pval.txt"))
+            clust_sor_path = cluster_matrix(matrix_sor_outpath,os.path.join(outdir,"clustered_sor.txt"))
             if len(gfs) > 4:               
-                pearsons_cor_matrix(clust_path,outdir)
+                pearsons_cor_matrix(clust_pval_path,outdir)
+                pearsons_cor_matrix(clust_sor_path,outdir)
             else:
                 json_mat = []
                 json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": "ERROR:PCC matrix requires at least a 5 X 2 matrix."})      
