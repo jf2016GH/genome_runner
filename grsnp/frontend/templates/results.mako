@@ -29,16 +29,11 @@
 			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span><label id="status">Analysis job is in the queue.</label></p>			
 		</div>
 		<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>Please bookmark this page to return to your results. The results will be deleted after three days.</p>
-	</div>	
+	</div>
+	<a href="./results_shiny/?id=${run_id}" class="btn btn-info" role="button">Shiny Analysis</a>
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
-	<li class="active" ><a href="#matrixresults" onclick="" data-toggle="tab">Enrichment Heatmap<img class="helptooltip" title="Clustered heatmap of epigenomic elements significantly associated with sets of SNPs" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
-
-	<li ><a href="#enrichmentresults" data-toggle="tab">Enrichment Results<img class="helptooltip" title="Sortable tables of enrichment p-values" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
-
-	<li ><a href="#cormatrixresults" onclick="" data-toggle="tab">Regulatory Similarity Heatmap<img class="helptooltip" title="Clustered heatmap of pairwise Pearson's correlation coefficients of enrichment profiles among sets of SNPs." style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
-
 	<li ><a href="#detailedresults" data-toggle="tab" onclick="get_detailed()" >Detailed Results<img class="helptooltip" title="P-value calculations" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
 
 	<li ><a href="#debugresults" data-toggle="tab" onclick="get_log()">Analysis Log<img class="helptooltip" title="Log, warning, and error messages" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help"></a></li>
@@ -51,38 +46,7 @@
 
 </ul>
 
-<div class="tab-content">
-	<div class="tab-pane active" id="matrixresults">
-		<div class="well">
-				<h4 class="lblMat" style="margin: 202px;">Heatmap will be loaded after analysis completion.</h4>
-				<div  id='heatmap' >
-	      		</div>
-		</div>
-
-	</div>
-	<div class="tab-pane" id="enrichmentresults">
-			<ul class="tabs" id="enrichmentab" data-tabs="tabs">
-				% for i,item in enumerate(fois):
-				  <li><a href="#enri_tab_${item}" data-toggle="tab" onclick="get_enrichment('${item}')">${item}</a></li>
-				% endfor
-			</ul>
-			<div class="tab-content">
-				% for i,item in enumerate(fois):
-				<div class="dt_enrichments" ${"class='tab-pane active'" if i==0 else "class='tab-pane'"} id="enri_tab_${item}">
-					<div class="well">
-						<table id="dter_${item}"></table>
-					</div>
-				</div>
-				% endfor
-			</div>	
-	</div>
-	<div class="tab-pane" id="cormatrixresults">
-		<div class="well">
-			<h4 class="lblMat" style="margin: 202px;">Heatmap will be loaded after analysis completion.</h4>	
-			<div  id='heatmap_cor' >
-      		</div>
-		</div>
-	</div>
+<div class="tab-content">	
 	<div class="tab-pane" id="detailedresults">
 		<div class="well">
 			<h3>Detailed Results</h3>
@@ -117,9 +81,9 @@
 		<div id="wellDownloads" class="well">
 			<div id="divDownload" style="margin: 20px">
 				<a class="btn btn-primary disabled" style="margin-left: 230px;" type="button">Run files not ready for download</a>
-			</div>			
+			</div>						
 		</div>
-	</div>
+	</div>	
 </div>
 
 </body>

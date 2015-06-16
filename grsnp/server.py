@@ -426,6 +426,25 @@ class WebUI(object):
 		return rend_template
 
 	@cherrypy.expose
+	def results_shiny(self, id):
+		path = os.path.join(results_dir, id)	
+		params = {}	
+		params['run_id'] = id
+		try:
+			rend_template = lookup.get_template("results_shiny.mako").render(script= lookup.get_template("results_shiny.js").render(**params),**params)
+		except Exception, e:
+			traceback = MakoTraceback()
+			str_error = ""
+			for (filename, lineno, function, line) in traceback.traceback:
+				str_error +=  "File %s, line %s, in %s" % (os.path.split(filename)[-1], lineno, function)
+				str_error += "\n"
+				str_error += line + "\n"
+				str_error += "%s: %s" % (str(traceback.error.__class__.__name__), traceback.error)
+			print str_error
+			rend_template = str_error
+		return rend_template
+
+	@cherrypy.expose
 	def gf_descriptions(self,db_version,organism):
 		# Use mako to render index.html
 		tmpl = lookup.get_template("master.mako")

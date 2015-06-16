@@ -1,0 +1,1 @@
+<iframe id="example1" style="border: none; width: 100%; height: 100%;" src="http://10.0.2.15:8080?id=${run_id}" width="300" height="150" frameborder="0"></iframe> 

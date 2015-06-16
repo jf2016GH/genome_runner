@@ -1,15 +1,6 @@
 var refresh_progress = ""
 $(document).ready(function() {	
-	$("#progressbar").progressbar({
-						value: ${curprog},
-						max:  ${progmax}
-					});
-	$("#btnheatmaps1").click(function(){
-		add_heatmaps();
-	});
-	update_progress();
-	refresh_progress = setInterval(update_progress, 10000);	
-	$(".helptooltip").tooltip();	
+	var run_id = ${run_id};
 });
 
 	// generates both of the heatmap graphs
@@ -29,45 +20,6 @@ function add_heatmaps(){
 
 	return false;
 	*/	
-}
-
-
-
-function update_progress(){
-	$.post('/get_progress?run_id=${run_id}',function(data){
-		data = jQuery.parseJSON( data );
-		// update progress bar
-		$("#progressbar").progressbar({
-						value: data['curprog'],
-						max:  data['progmax']});
-		if (data['status'] != "") $("#status").html(data['status']);
-		if (data['status'] == "Analysis Completed" || data['status'].substring(0,18) == "Running Annotation"){ 
-			// draw the heatmaps		
-			$(".lblMat").remove()
-			add_heatmaps();			
-			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>")
-		}
-		if(data['status'] == "Analysis Completed"  || data['status'] == "Run crashed. See end of log for details."){
-			$("#progressbar").progressbar({
-						value: 1,
-						max:  1});
-			clearInterval(refresh_progress);
-		}
-	});
-}
-
-function get_log(){
-	$.post('/get_log?run_id=${run_id}',function(data){
-		data = jQuery.parseJSON( data );
-		$("#txtLog").html(data['log']);
-	});
-}
-
-function get_detailed(){
-	$.post('/get_detailed?run_id=${run_id}',function(data){
-		data = jQuery.parseJSON( data );
-		$("#txtDetailed").html(data['detailed']);
-	});
 }
 
 // Sorting functions for the P-values
