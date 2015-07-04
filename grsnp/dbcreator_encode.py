@@ -208,7 +208,6 @@ def preparebed_splitby(gf_outputdir,organism,group_name, gf_file):
 	'''
 	# TODO handle the case of partially finished database
 	added_features = [] 
-	if not os.path.exists(gf_outputdir): os.makedirs(gf_outputdir)
 	# download the GF file	
 	dwnl_file = download_file(organism,	group_name,	gf_file)
 	full_gf_paths = []
@@ -216,7 +215,6 @@ def preparebed_splitby(gf_outputdir,organism,group_name, gf_file):
 	with gzip.open(dwnl_file) as infile:
 		min_max = MinMax() # keep track of the min and max score			
 		file_writers = {} # {'cur_split_value': file_writer_object} A writer is created for each name field
-		gf_outputdir = os.path.join(gf_outputdir,base_name(gf_file))
 		if not os.path.exists(gf_outputdir):
 			os.makedirs(gf_outputdir)
 		while True:
@@ -241,22 +239,24 @@ def preparebed_splitby(gf_outputdir,organism,group_name, gf_file):
 		# convert all created files into gzip
 		converted_paths = []
 		for f_path in full_gf_paths:
+			o_dir = os.path.dirname(f_path)
+			new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
 			sort_convert_to_bgzip(f_path,new_path)
 			converted_paths.append(new_path)
 		return [min_max.str_minmax(),converted_paths]
 
 def preparebed(gf_outputdir, organism, group_name, gf_file):
 	''' Converts the file to the correct bed format, sorts it, and gzips it. Returns the min_max stats, 
-	outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
+	gf_outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
 	EX: /[root]/grsnp_db/[organism]/[tier]/[source]/[celltype]/
 
 	gf_file: file name with extension i.e gfname.bed.gz
 	'''
 	added_features = [] 
-	if not os.path.exists(outputdir): os.makedirs(outputdir)
+	if not os.path.exists(gf_outputdir): os.makedirs(gf_outputdir)
 	# download the GF file	
 	dwnl_file = download_file(organism,	group_name,	gf_file)
-	f_path = os.path.join(outputdir,base_name(gf_file)+".bed.temp")
+	f_path = os.path.join(gf_outputdir,base_name(gf_file)+".bed.temp")
 	o_dir = os.path.dirname(f_path)
 	new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
 	if os.path.exists(new_path) == True:
@@ -282,8 +282,8 @@ def preparebed(gf_outputdir, organism, group_name, gf_file):
 def _get_celltype_source(f_name, padding):
 	''' Extracts the source and cell type from the genomic feature file name
 	'''
-	f_name.lstrip(padding)
-	categories = re.findall('[A-Z][^A-Z]*', f_name)
+	f_name = f_name.lstrip(padding)
+	categories = re.findall('[A-Z][^A-Z]*', f_name)	
 	return {"source": categories[0], "cell": categories[1]}
 
 def _get_gf_directory(outputdir,gf_group,gf_name):
@@ -294,32 +294,31 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "wgEncodeAwgTfbsUniform": "wgEncodeAwgTfbs",
 	 "wgEncodeBroadHmm": "wgEncodeBroad",
 	 "wgEncodeBroadHistone": "wgEncodeBroadHistone",
-	 "wgEncodeUwHistone": "wgEncodeUwHistone",
-	 "wgEncodeSydhHistone": "wgEncodeSydhHistone",
+	 "wgEncodeUwHistone": "wgEncodeUw",
+	 "wgEncodeSydhHistone": "wgEncodeSydh",
 	 "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnaseUniform"
 	}
 
 	# Dictates the structure of the directory
 	dirstruture = {
-	 "wgEncodeAwgTfbsUniform": ['tier','cell','source'],
+	 "wgEncodeAwgTfbsUniform": ['tier','cell'],
 	 'wgEncodeBroadHmm': ['tier','cell'],
 	 "wgEncodeRegTfbsClustered": [],
-	 "wgEncodeBroadHistone": ['tier','cell','source'],
-	 "wgEncodeUwHistone": ['tier','cell','source'],
-	 "wgEncodeSydhHistone": ['tier','cell','source'],
-	 "wgEncodeAwgDnaseUniform": ['tier','cell','source']
+	 "wgEncodeBroadHistone": ['tier','cell'],
+	 "wgEncodeUwHistone": ['tier','cell'],
+	 "wgEncodeSydhHistone": ['tier','cell'],
+	 "wgEncodeAwgDnaseUniform": ['tier','cell']
 	}
 
 	root_folder = {
-	"wgEncodeAwgTfbsUniform": "ENCODE",
-	 "wgEncodeRegTfbsClustered": "ENCODE",
-	 "wgEncodeBroadHmm": "ENCODE",
-	 "wgEncodeBroadHistone": "ENCODE",
-	 "wgEncodeUwHistone": "ENCODE",
-	 "wgEncodeSydhHistone": "ENCODE",
-	 "wgEncodeAwgDnaseUniform": "ENCODE"
+	"wgEncodeAwgTfbsUniform": "ENCODE/TFBS_cellspecific",
+	 "wgEncodeRegTfbsClustered": "ENCODE/TFBS_conserved",
+	 "wgEncodeBroadHmm": "ENCODE/ChromStates",
+	 "wgEncodeBroadHistone": "ENCODE/Histone",
+	 "wgEncodeUwHistone": "ENCODE/wgEncdoeUwHistone",
+	 "wgEncodeSydhHistone": "ENCODE/wgEncodeSydhHistone",
+	 "wgEncodeAwgDnaseUniform": "ENCODE/wgEncodeAwgDnaseUniform"
 	}
-
 	dir_structure = dirstruture[gf_group]
 	gf_directory = [root_folder[gf_group]]
 	for folder in dirstruture[gf_group]:
@@ -328,7 +327,10 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 		elif folder == 'cell':
 			gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['cell'])
 		elif folder == 'source':
-			gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['source'])
+			if ":" in folder:
+				gf_directory.append(folder.split(":")[1])
+			else:
+				gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['source'])
 	gf_directory = "/".join(gf_directory)
 	return os.path.join(outputdir,gf_directory)
 
@@ -369,7 +371,7 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			try:
 				[minmax_score, gf_paths] = prepare_type[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
 			except GF_ALREADY_EXISTS:
-				logger.info( "{} already exists as or .gz, skipping extraction".format(outpath.replace(".gz","")))
+				logger.info( "{} already exists, skipping extraction".format(outpath.replace(".gz","")))
 				continue
 			# output minmax stats
 			for f in gf_paths:
@@ -466,7 +468,7 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		for grp in prepare_type.keys():
-			create_feature_set(data_dir,args['organism'],grp,None,5)
+			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
