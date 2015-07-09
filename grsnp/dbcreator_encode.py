@@ -153,7 +153,7 @@ def get_road_gf_filepaths(gf_group):
 	links = soup.body.find_all('a', href=True)
 	# exclude header line links (they lack a '.')
 	file_names = [x['href'] for x in links if '.' in x.contents[0]]
-	if gf_group == "chromStates_15_states":
+	if gf_group in ["chromStates_15_states","chromStates_18_states", "chromStates_25_states"]:
 		file_names = [x for x in file_names if x.endswith('_dense.bed.gz')]
 	if gf_group.startswith('Histone_'):
 		# filter out the DNase files as these will be processes separately
@@ -282,6 +282,8 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		if line == "":
 			break
 		cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
+		if gf_file == "E003_18_core_K27ac_expanded.bed.gz":
+			pdb.set_trace()
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
 		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")
