@@ -255,7 +255,7 @@ def _get_tier(line,outputdir): # Generating paths for the ENCODE data tables usi
 def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	''' A function that creates separate bed files for each value in field with index 'splitby'
 	gf_outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
-	EX: /[root]/grsnp_db/[organism]/[tier]/[source]/[celltype]/
+	EX: /[root]/grsnp_db/[organism]/[tier]/[celltype]/
 
 	gf_file: file name with extension i.e gfname.bed.gz
 	'''
@@ -282,8 +282,6 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		if line == "":
 			break
 		cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
-		if gf_file == "E003_18_core_K27ac_expanded.bed.gz":
-			pdb.set_trace()
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
 		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")
@@ -311,7 +309,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	''' Converts the file to the correct bed format, sorts it, and gzips it. Returns the min_max stats, 
 	gf_outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
-	EX: /[root]/grsnp_db/[organism]/[tier]/[source]/[celltype]/
+	EX: /[root]/grsnp_db/[organism]/[tier]/[celltype]/
 
 	gf_file: file name with extension i.e gfname.bed.gz
 	'''
@@ -347,12 +345,15 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	infile.close()
 	return [min_max.str_minmax(),[new_path]]
 
-def _get_celltype_source(f_name, padding):
-	''' Extracts the source and cell type from the genomic feature file name
+def _get_celltype(f_name, padding):
+	''' Extracts the cell type from the genomic feature file name
 	'''
-	f_name = f_name.lstrip(padding)
-	categories = re.findall('[A-Z][^A-Z]*', f_name)	
-	return {"source": categories[0], "cell": categories[1]}
+	if f_name == "wgEncodeAwgDnaseDuke8988tUniPk":
+		return "8988t" # special case since cell name starts with a number
+	if f_name.startswith(padding):
+		f_name = f_name[len(padding):]
+	categories = re.findall('[A-Z][^A-Z]*', f_name)
+	return categories[1]
 
 def _get_road_tissuegrp(f_name):
 	'''Looks up tissue group using the E*** roadmap cell name'''
@@ -372,14 +373,14 @@ def _get_EID(f_name):
 def _get_gf_directory(outputdir,gf_group,gf_name):
 	''' Returns the output_dir of the gf.
 	'''
-	# Dictates how much of the filename to strip off before searching for cell type/source etc.
+	# Dictates how much of the filename to strip off before searching for cell type etc.
 	padding = {
 	 "wgEncodeAwgTfbsUniform": "wgEncodeAwgTfbs",
 	 "wgEncodeBroadHmm": "wgEncodeBroad",
-	 "wgEncodeBroadHistone": "wgEncodeBroadHistone",
+	 "wgEncodeBroadHistone": "wgEncodeBroad",
 	 "wgEncodeUwHistone": "wgEncodeUw",
 	 "wgEncodeSydhHistone": "wgEncodeSydh",
-	 "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnaseUniform"
+	 "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase"
 	}
 
 	# Dictates the structure of the directory
@@ -412,9 +413,9 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "wgEncodeRegTfbsClustered": "ENCODE/TFBS_conserved",
 	 "wgEncodeBroadHmm": "ENCODE/ChromStates",
 	 "wgEncodeBroadHistone": "ENCODE/Histone",
-	 "wgEncodeUwHistone": "ENCODE/wgEncdoeUwHistone",
-	 "wgEncodeSydhHistone": "ENCODE/wgEncodeSydhHistone",
-	 "wgEncodeAwgDnaseUniform": "ENCODE/wgEncodeAwgDnaseUniform",
+	 "wgEncodeUwHistone": "ENCODE/Histone",
+	 "wgEncodeSydhHistone": "ENCODE/Histone",
+	 "wgEncodeAwgDnaseUniform": "ENCODE/DNase",
 	 "chromStates_15_states": "ROADMAP/chromStates_15_states",
 	 'chromStates_18_states':"ROADMAP/chromStates_18_states",
 	 "chromStates_25_states": "ROADMAP/chromStates_25_states",
@@ -435,12 +436,7 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 		if folder == 'tier':
 			gf_directory.append(_get_tier(gf_name,outputdir))
 		elif folder == 'cell':
-			gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['cell'])
-		elif folder == 'source':
-			if ":" in folder:
-				gf_directory.append(folder.split(":")[1])
-			else:
-				gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['source'])
+			gf_directory.append(_get_celltype(gf_name,padding[gf_group]))		
 		elif folder == 'roadmap_tissue':
 			gf_directory.append(_get_road_tissuegrp(gf_name))
 		elif folder == 'EID':
