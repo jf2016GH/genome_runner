@@ -626,11 +626,11 @@ if __name__ == "__main__":
 	# load score from minmax.txt file created earlier
 	minmax = load_minmax(os.path.join(data_dir,args['organism'],"minmax.txt"))		
 
+	sys.exit
 
 	### Second Step: Create subdirectories for score and filter data by score percentile
 	# create sub directories for score percentiles and populate with score-filtered GF data
 	# gather all directories (groups) in the database
-#	sys.exit(0)
 #	print "Filtering GFs by strand and score..."
 #	orgdir = os.path.join(data_dir,args['organism'])
 #	dirs = [name for name in os.listdir(orgdir)
