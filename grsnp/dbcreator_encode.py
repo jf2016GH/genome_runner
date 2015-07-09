@@ -53,16 +53,17 @@ def download_encode_file(organism,gf_group,gf_file):
 	
 	try:
 		outputpath = os.path.join(download_dir,gf_file)
+		outputpath = outputpath.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 		if not os.path.exists(outputpath):
 			ftp = ftplib.FTP(gf_grp_sett[gf_group]['ftp_server'], timeout=1800) # Connection timeout 0.5h
 			ftp.login(username,password)
+			logger.info( 'Downloading {} from UCSC'.format(gf_file))
 			with open(outputpath + ".temp",'wb') as fhandle:  
 				global ftp
 				logger.info( 'Downloading {} from UCSC'.format(gf_file))				
 				ftp.cwd(gf_grp_sett[gf_group]['directory'].format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(gf_file),fhandle.write)
 				os.rename(outputpath+".temp",outputpath)
-				logger.info( 'Finished downloading {} from UCSC'.format(gf_file))
 			ftp.quit()
 			# remove header lines
 			remove_headers(outputpath)
@@ -95,17 +96,18 @@ def download_roadmap_file(gf_group,gf_file):
 		return ''	
 	try:
 		outputpath = os.path.join(download_dir,gf_file)
+		outputpath = outputpath.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 		if not os.path.exists(outputpath):
 			url = "".join([gf_grp_sett[gf_group]['html_server'],gf_grp_sett[gf_group]['directory'],"/",gf_file])
 			req = urllib2.urlopen(url)
 			CHUNK = 16 * 1024
+			logger.info( 'Downloading {}'.format(gf_file))
 			with open(outputpath + ".temp",'wb') as fp:
 				while True:
 					chunk = req.read(CHUNK)
 					if not chunk: break
 					fp.write(chunk)
 			os.rename(outputpath+".temp",outputpath)
-			logger.info( 'Finished downloading {}'.format(gf_file))
 			# remove header lines
 			remove_headers(outputpath)
 		else:
@@ -156,25 +158,13 @@ def get_road_gf_filepaths(gf_group):
 	if gf_group.startswith('Histone_'):
 		# filter out the DNase files as these will be processes separately
 		file_names = [x for x in file_names if '-DNase' not in x]
+		# filter out all non compressed .bed file names
+		file_names = [x for x in file_names if not x.endswith('.bed')]
 	if gf_group.startswith('DNase_'):
 		file_names = [x for x in file_names if '-DNase' in x]
 	return file_names
 
 
-def extract_bed(organism,gf_group,gf_file,outputpath):
-	gf_file = download_encode_file(organism,gf_group,gf_file)
-	min_max = MinMax() # keep track of the min and max score
-	if gf_file.endswith('.gz'):
-		infile,outfile = gzip.open(gf_file),open(outputpath,'wb')
-	else:
-		infile,outfile = open(gf_file),open(outputpath,'wb')
-	while True:
-		line = infile.readline().rstrip('\n')
-		if line == "":
-			break
-		line = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)+"\n"
-		outfile.write(line)
-	return [min_max.str_minmax(),'bed']
 
 def _format_bed(line,min_max):
 	line = line.split("\t")
@@ -294,7 +284,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
-		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")			
+		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")
 		if cur_split_value not in file_writers:
 			o_dir = os.path.dirname(outputpath)
 			new_path = os.path.join(o_dir,''.join(e for e in base_name(outputpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
@@ -311,7 +301,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	converted_paths = []
 	for f_path in full_gf_paths:
 		o_dir = os.path.dirname(f_path)
-		new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+		new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
 		sort_convert_to_bgzip(f_path,new_path)
 		converted_paths.append(new_path)
 	return [min_max.str_minmax(),converted_paths]
@@ -330,9 +320,10 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 		dwnl_file = download_encode_file(organism, gf_group, gf_file)
 	elif "html_server" in gf_grp_sett[gf_group].keys():
 		dwnl_file = download_roadmap_file(gf_group,	gf_file)
+	gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 	f_path = os.path.join(gf_outputdir,base_name(gf_file)+".bed.temp")
 	o_dir = os.path.dirname(f_path)
-	new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+	new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
 	if os.path.exists(new_path) == True:
 		raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(new_path))
 	logger.info( "Converting into proper bed format: {}".format(gf_file))
@@ -348,9 +339,9 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 			if line == "":
 				break
 			cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
-			writer.write("\t".join(cur_gf)+"\n")			
-		# convert all created files into gzip
-		sort_convert_to_bgzip(f_path,new_path)
+			writer.write("\t".join(cur_gf)+"\n")
+	# convert all created files into gzip
+	sort_convert_to_bgzip(f_path,new_path)
 	infile.close()
 	return [min_max.str_minmax(),[new_path]]
 
@@ -577,6 +568,7 @@ gf_grp_sett = {
 }
 
 
+# Dictionary of supported file type mapped to function used to convert to proper bed format
 preparebed = {
 	"bed":_format_bed,
 	"bed9":_format_bed,
@@ -585,8 +577,9 @@ preparebed = {
 	"broadPeak":_format_peak,
 	"narrowPeak":_format_peak,
 	"gappedPeak": _format_gapped_peak,
-	"bedRnaElements":_format_bed
-
+	"bedRnaElements":_format_bed,
+	"nPk": _format_bed,
+	"gPk": _format_bed
 }
 
 if __name__ == "__main__":
@@ -625,8 +618,9 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
+#		for grp in ["Histone_imputed_narrowPeak"]:
 		for grp in gf_grp_sett.keys():		
-			create_feature_set(data_dir,args['organism'],grp,None,1)
+			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
@@ -638,46 +632,46 @@ if __name__ == "__main__":
 	### Second Step: Create subdirectories for score and filter data by score percentile
 	# create sub directories for score percentiles and populate with score-filtered GF data
 	# gather all directories (groups) in the database
-	sys.exit(0)
-	print "Filtering GFs by strand and score..."
-	orgdir = os.path.join(data_dir,args['organism'])
-	dirs = [name for name in os.listdir(orgdir)
-		if os.path.isdir(os.path.join(orgdir, name))]
-	for d in dirs:
-		# gather all paths
-		gfs = []
-		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
-				gfs += [os.path.join(base,f) for f 	 
-					in files if f.endswith(('.gz'))]
-		for gf_path in gfs: 
-			print "Filtering {} ...".format(gf_path)
-			# filter the original GF by strand
-			filter_by_strand(data_dir,gf_path)
-			for pct_score in args['score']:		
-				[score_min,score_max] = minmax[base_name(gf_path)].split(",")
-				# calculate threshold score
-				if score_min == 'NA':
-					continue
-				score_min,score_max = float(score_min),float(score_max) 
-				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
-				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
-				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
-				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
-					os.makedirs(os.path.split(gf_scorepath_out)[0])
-				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
-				# filter by score
-				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
-				# filter the score filtered GF by strand				
-				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
-
-
-	root_dir = os.path.dirname(os.path.realpath(__file__))
-	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
-	with open("grsnp_db_readme.txt","wb") as writer:
-		writer.write(readme)
-	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
-
-
-
-
+#	sys.exit(0)
+#	print "Filtering GFs by strand and score..."
+#	orgdir = os.path.join(data_dir,args['organism'])
+#	dirs = [name for name in os.listdir(orgdir)
+#		if os.path.isdir(os.path.join(orgdir, name))]
+#	for d in dirs:
+#		# gather all paths
+#		gfs = []
+#		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
+#				gfs += [os.path.join(base,f) for f 	 
+#					in files if f.endswith(('.gz'))]
+#		for gf_path in gfs: 
+#			print "Filtering {} ...".format(gf_path)
+#			# filter the original GF by strand
+#			filter_by_strand(data_dir,gf_path)
+#			for pct_score in args['score']:		
+#				[score_min,score_max] = minmax[base_name(gf_path)].split(",")
+#				# calculate threshold score
+#				if score_min == 'NA':
+#					continue
+#				score_min,score_max = float(score_min),float(score_max) 
+#				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
+#				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
+#				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
+#				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+#				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
+#					os.makedirs(os.path.split(gf_scorepath_out)[0])
+#				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
+#				# filter by score
+#				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
+#				# filter the score filtered GF by strand				
+#				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
+#
+#
+#	root_dir = os.path.dirname(os.path.realpath(__file__))
+#	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
+#	with open("grsnp_db_readme.txt","wb") as writer:
+#		writer.write(readme)
+#	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
+#
+#
+#
+#
