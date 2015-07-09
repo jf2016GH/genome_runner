@@ -17,7 +17,7 @@ import copy
 import traceback  as trace
 import pdb
 from xml.sax.saxutils import quoteattr as xml_quoteattr
-import BeautifulSoup
+from bs4 import BeautifulSoup
 import urllib2
 from grsnp.dbcreator_util import *
 from time import sleep
@@ -25,18 +25,18 @@ from time import sleep
 logger = logging.getLogger('genomerunner.dbcreator')
 
 # connection information for the ucsc ftp server
-ftp_server = 'hgdownload.cse.ucsc.edu'
-directory = '/goldenPath/{}/encodeDCC'
+
 username = 'anonymous'
 password = ''
 
 download_dir = ""
+DEBUG = True
 
 class GF_ALREADY_EXISTS(Exception):
     pass
 
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
-def download_file(organism,gf_grp,gf_file):
+def download_encode_file(organism,gf_group,gf_file):
 	''' Downloads the gf_file from the UCSC ftp server and saves it
 	in a folder with the same name as the organism.
 	'''
@@ -54,12 +54,12 @@ def download_file(organism,gf_grp,gf_file):
 	try:
 		outputpath = os.path.join(download_dir,gf_file)
 		if not os.path.exists(outputpath):
-			ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
+			ftp = ftplib.FTP(gf_grp_sett[gf_group]['ftp_server'], timeout=1800) # Connection timeout 0.5h
 			ftp.login(username,password)
 			with open(outputpath + ".temp",'wb') as fhandle:  
 				global ftp
 				logger.info( 'Downloading {} from UCSC'.format(gf_file))				
-				ftp.cwd(os.path.join(directory.format(organism),gf_grp))
+				ftp.cwd(gf_grp_sett[gf_group]['directory'].format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(gf_file),fhandle.write)
 				os.rename(outputpath+".temp",outputpath)
 				logger.info( 'Finished downloading {} from UCSC'.format(gf_file))
@@ -77,28 +77,92 @@ def download_file(organism,gf_grp,gf_file):
 		logger.warning(e)
 		logger.warning("Could not download the {} file. Names ARE case sensitive.".format(gf_file))
 		return '' 
-	return outputpath 
+	return outputpath
 
-
-def get_gf_filepaths(organism,gf_grp):
-	''' Returns the list of file in the gf_grp folder on the ucsc server.
+def download_roadmap_file(gf_group,gf_file):
+	''' Downloads the gf_file from the http server and saves it
+	in a folder with the same name as the organism.
 	'''
-	ftp = ftplib.FTP(ftp_server, timeout=1800) # Connection timeout 0.5h
+	global download_dir
+	outputpath = ''
+	try:
+		if os.path.exists(download_dir) == False and download_dir != '':
+			logger.info( "creating directory {}".format(download_dir))
+			os.makedirs(download_dir)
+	except Exception, e:
+		logger.warning( e)
+		logger.warning("Could not create folder at {} for {}".format(download_dir,gf_file))
+		return ''	
+	try:
+		outputpath = os.path.join(download_dir,gf_file)
+		if not os.path.exists(outputpath):
+			url = "".join([gf_grp_sett[gf_group]['html_server'],gf_grp_sett[gf_group]['directory'],"/",gf_file])
+			req = urllib2.urlopen(url)
+			CHUNK = 16 * 1024
+			with open(outputpath + ".temp",'wb') as fp:
+				while True:
+					chunk = req.read(CHUNK)
+					if not chunk: break
+					fp.write(chunk)
+			os.rename(outputpath+".temp",outputpath)
+			logger.info( 'Finished downloading {}'.format(gf_file))
+			# remove header lines
+			remove_headers(outputpath)
+		else:
+			logger.info('{} already exists, skipping download'.format(outputpath))	
+	except Exception, e:
+		logger.warning(e)
+		logger.warning("Could not download the {} file. Names ARE case sensitive.".format(gf_file))
+		return '' 
+	return outputpath
+
+
+def get_gf_filepaths(organism,gf_group):
+	'''Returns the list of file in the gf_group folder on the ucsc server.
+	'''
+	ftp = ftplib.FTP(gf_grp_sett[gf_group]['ftp_server'], timeout=1800) # Connection timeout 0.5h
 	ftp.login(username,password)
 
-	root_dir = os.path.join(directory.format(organism),gf_grp)
+	root_dir = gf_grp_sett[gf_group]['directory'].format(organism)
 	ftp.cwd(root_dir)
 	gf_paths = []
 	# get all folders in the root directory
 	ftp.dir(gf_paths.append)
 	gf_paths = [x.split()[-1] for x in gf_paths if x[0] == '-']
 	ftp.quit()
+	# for chromstats in Roadmap we only want certain files
+	if gf_group.startswith('chromStates_'):
+		gf_paths = [x for x in gf_paths if x.endswith("_dense.bed.gz")]
 	return gf_paths
 
+def get_road_gf_filepaths(gf_group):
+	'''Returns the list of the files on the roadmap server for the 'gf_group'.
+	Does this by parsing the returned html file for hrefs'''
+	url = "".join([gf_grp_sett[gf_group]['html_server'],gf_grp_sett[gf_group]['directory']])
+	url_file = gf_group +'.html'
+	if os.path.exists(url_file) and DEBUG:
+		remotefile = open(url_file).read()
+	else:
+		remotefile = urllib2.urlopen(url).read().decode('utf-8')
+		if DEBUG:
+			with open(url_file,'wb') as writer:
+				writer.write(remotefile)
+	soup = BeautifulSoup(remotefile)
+	links = soup.body.find_all('a', href=True)
+	# exclude header line links (they lack a '.')
+	file_names = [x['href'] for x in links if '.' in x.contents[0]]
+	if gf_group == "chromStates_15_states":
+		file_names = [x for x in file_names if x.endswith('_dense.bed.gz')]
+	if gf_group.startswith('Histone_'):
+		# filter out the DNase files as these will be processes separately
+		file_names = [x for x in file_names if '-DNase' not in x]
+	if gf_group.startswith('DNase_'):
+		file_names = [x for x in file_names if '-DNase' in x]
+	return file_names
 
 
-def extract_bed(organism,gf_grp,gf_file,outputpath):	
-	gf_file = download_file(organism,gf_grp,gf_file)
+def extract_bed(organism,gf_group,gf_file,outputpath):
+	gf_file = download_encode_file(organism,gf_group,gf_file)
 	min_max = MinMax() # keep track of the min and max score
 	if gf_file.endswith('.gz'):
 		infile,outfile = gzip.open(gf_file),open(outputpath,'wb')
@@ -178,7 +242,7 @@ def _format_bedRNA(line,min_max):
 
 
 
-def get_tier(line,outputdir): # Generating paths for the ENCODE data tables using tiers, and cell types
+def _get_tier(line,outputdir): # Generating paths for the ENCODE data tables using tiers, and cell types
 	CELLS1 = re.compile('Gm12878|K562|H1hesc')
 	CELLS2 = re.compile('A549|Cd20ro01778|Cd20ro01794|Cd20|H1neurons|Helas3|Hepg2|Huvec|Imr90|Lhcnm2|Mcf7|Monocd14ro1746|Sknsh')
 	CELLS3 = re.compile('Ag04449|Ag04450|Ag09309|Ag09319|Ag10803|Aoaf|Aosmc|Be2c|Bj|Caco2|Cmk|Dnd41|Ecc1|Gm06990|Gm12801|Gm12864|Gm12865|Gm12872|Gm12873|Gm12875|Gm12891|Gm12892|Gm19239|H7es|Hac|Hae|Hah|Hasp|Hbmec|Hcfaa|Hcf|Hcm|Hcpe|Hct116|Hee|Hek293|Hffmyc|Hff|Hgf|Hipe|Hl60|Hmec|Hmf|Hmvecdblad|Hnpce|Hpae|Hpaf|Hpdlf|Hpf|Hrce|Hre|Hrpe|Hsmmfshd|Hsmmtubefshd|Hsmmt|Hsmm|Htr8|Hvmf|Jurkat|Lncap|M059j|Mcf10aes|Nb4|Nha|Nhbe|Nhdfad|Nhdfneo|Nhek|Nhlf|Nt2d1|Osteobl|Osteo|Ovcar3|Panc1|Panislets|Pfsk1|Prec|Progfib|Rpmi7951|Rptec|Saec|Skmc|Sknmc|Sknshra|T47d|Th1|Th2|U87|Werirb1|Wi38')
@@ -198,8 +262,7 @@ def get_tier(line,outputdir): # Generating paths for the ENCODE data tables usin
 
 	return Tier
 
-
-def preparebed_splitby(gf_outputdir,organism,group_name, gf_file):
+def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	''' A function that creates separate bed files for each value in field with index 'splitby'
 	gf_outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
 	EX: /[root]/grsnp_db/[organism]/[tier]/[source]/[celltype]/
@@ -209,75 +272,87 @@ def preparebed_splitby(gf_outputdir,organism,group_name, gf_file):
 	# TODO handle the case of partially finished database
 	added_features = [] 
 	# download the GF file	
-	dwnl_file = download_file(organism,	group_name,	gf_file)
+	if "ftp_server" in gf_grp_sett[gf_group].keys():
+		dwnl_file = download_encode_file(organism, gf_group, gf_file)
+	elif "html_server" in gf_grp_sett[gf_group].keys():
+		dwnl_file = download_roadmap_file(gf_group, gf_file)
 	full_gf_paths = []
 	# convert it to bed format
-	with gzip.open(dwnl_file) as infile:
-		min_max = MinMax() # keep track of the min and max score			
-		file_writers = {} # {'cur_split_value': file_writer_object} A writer is created for each name field
-		if not os.path.exists(gf_outputdir):
-			os.makedirs(gf_outputdir)
-		while True:
-			line = infile.readline().rstrip('\n')
-			if line == "":
-				break
-			cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
-			cur_split_value = cur_gf[3]
-			# check if current TFBS already has a file writer
-			outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")			
-			if cur_split_value not in file_writers:
-				o_dir = os.path.dirname(outputpath)
-				new_path = os.path.join(o_dir,''.join(e for e in base_name(outputpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-				if os.path.exists(new_path):
-					raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(new_path))
-				file_writers[cur_split_value] = open(outputpath,'wb')
-				full_gf_paths.append(outputpath)
-			file_writers[cur_split_value].write("\t".join(cur_gf)+"\n")
-		#close all open files
-		for k in file_writers.keys():
-			file_writers[k].close()
-		# convert all created files into gzip
-		converted_paths = []
-		for f_path in full_gf_paths:
-			o_dir = os.path.dirname(f_path)
-			new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-			sort_convert_to_bgzip(f_path,new_path)
-			converted_paths.append(new_path)
-		return [min_max.str_minmax(),converted_paths]
+	logger.info( "Converting into proper bed format: {}".format(gf_file))
+	if gf_file.endswith('.gz'):
+		infile = gzip.open(dwnl_file)
+	else:
+		infile = open(dwnl_file)
+	min_max = MinMax() # keep track of the min and max score			
+	file_writers = {} # {'cur_split_value': file_writer_object} A writer is created for each name field
+	if not os.path.exists(gf_outputdir):
+		os.makedirs(gf_outputdir)
+	while True:
+		line = infile.readline().rstrip('\n')
+		if line == "":
+			break
+		cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
+		cur_split_value = cur_gf[3]
+		# check if current TFBS already has a file writer
+		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")			
+		if cur_split_value not in file_writers:
+			o_dir = os.path.dirname(outputpath)
+			new_path = os.path.join(o_dir,''.join(e for e in base_name(outputpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+			if os.path.exists(new_path):
+				raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(new_path))
+			file_writers[cur_split_value] = open(outputpath,'wb')
+			full_gf_paths.append(outputpath)
+		file_writers[cur_split_value].write("\t".join(cur_gf)+"\n")
+	#close all open files
+	for k in file_writers.keys():
+		file_writers[k].close()
+	infile.close()
+	# convert all created files into gzip
+	converted_paths = []
+	for f_path in full_gf_paths:
+		o_dir = os.path.dirname(f_path)
+		new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
+		sort_convert_to_bgzip(f_path,new_path)
+		converted_paths.append(new_path)
+	return [min_max.str_minmax(),converted_paths]
 
-def preparebed(gf_outputdir, organism, group_name, gf_file):
+def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	''' Converts the file to the correct bed format, sorts it, and gzips it. Returns the min_max stats, 
 	gf_outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
 	EX: /[root]/grsnp_db/[organism]/[tier]/[source]/[celltype]/
 
 	gf_file: file name with extension i.e gfname.bed.gz
 	'''
-	added_features = [] 
+	added_features = []
 	if not os.path.exists(gf_outputdir): os.makedirs(gf_outputdir)
-	# download the GF file	
-	dwnl_file = download_file(organism,	group_name,	gf_file)
+	# download the GF file
+	if "ftp_server" in gf_grp_sett[gf_group].keys():
+		dwnl_file = download_encode_file(organism, gf_group, gf_file)
+	elif "html_server" in gf_grp_sett[gf_group].keys():
+		dwnl_file = download_roadmap_file(gf_group,	gf_file)
 	f_path = os.path.join(gf_outputdir,base_name(gf_file)+".bed.temp")
 	o_dir = os.path.dirname(f_path)
 	new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
 	if os.path.exists(new_path) == True:
 		raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(new_path))
-	# convert it to bed format
-	with gzip.open(dwnl_file) as infile:
-		min_max = MinMax() # keep track of the min and max score
-		with open(f_path,'wb') as writer:
-			while True:
-				line = infile.readline().rstrip('\n')
-				if line == "":
-					break
-				cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
-				writer.write("\t".join(cur_gf)+"\n")			
-			# convert all created files into gzip
-			sort_convert_to_bgzip(f_path,new_path)
+	logger.info( "Converting into proper bed format: {}".format(gf_file))
+	if gf_file.endswith('.gz'):
+		infile = gzip.open(dwnl_file)
+	else:
+		infile = open(dwnl_file)
+	# convert it to bed format	
+	min_max = MinMax() # keep track of the min and max score
+	with open(f_path,'wb') as writer:
+		while True:
+			line = infile.readline().rstrip('\n')
+			if line == "":
+				break
+			cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
+			writer.write("\t".join(cur_gf)+"\n")			
+		# convert all created files into gzip
+		sort_convert_to_bgzip(f_path,new_path)
+	infile.close()
 	return [min_max.str_minmax(),[new_path]]
-
-
-
-
 
 def _get_celltype_source(f_name, padding):
 	''' Extracts the source and cell type from the genomic feature file name
@@ -285,6 +360,21 @@ def _get_celltype_source(f_name, padding):
 	f_name = f_name.lstrip(padding)
 	categories = re.findall('[A-Z][^A-Z]*', f_name)	
 	return {"source": categories[0], "cell": categories[1]}
+
+def _get_road_tissuegrp(f_name):
+	'''Looks up tissue group using the E*** roadmap cell name'''
+	# roadmapCellData is located in dbcreator_util.py
+	road_conversion = [x.split("\t") for x in roadmapCellData.split("\n")[1:]]
+	f_name_eid =  f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
+	# [3] is the GR column in roadmapCellData
+	tissue_group = [x for x in road_conversion if x[0] == f_name_eid][0][3]
+	return tissue_group
+
+def _get_EID(f_name):
+	'''Returns the roadmap EID of the current file'''
+	eid = f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
+	return eid
+
 
 def _get_gf_directory(outputdir,gf_group,gf_name):
 	''' Returns the output_dir of the gf.
@@ -307,7 +397,21 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "wgEncodeBroadHistone": ['tier','cell'],
 	 "wgEncodeUwHistone": ['tier','cell'],
 	 "wgEncodeSydhHistone": ['tier','cell'],
-	 "wgEncodeAwgDnaseUniform": ['tier','cell']
+	 "wgEncodeAwgDnaseUniform": ['tier','cell'],
+	 "chromStates_15_states": ['roadmap_tissue','EID'],
+	 "chromStates_18_states": ['roadmap_tissue','EID'],
+	 "chromStates_25_states": ['roadmap_tissue','EID'],
+	 "Histone_processed_broadPeak": ['roadmap_tissue','EID'],
+	 "Histone_processed_narrowPeak": ['roadmap_tissue','EID'],
+	 "Histone_processed_gappedPeak": ['roadmap_tissue','EID'],
+	 "Histone_imputed_narrowPeak": ['roadmap_tissue','EID'],
+	 "Histone_imputed_gappedPeak": ['roadmap_tissue','EID'],
+	 "DNase_processed_broadPeak": ['roadmap_tissue','EID'],
+	 "DNase_processed_narrowPeak": ['roadmap_tissue','EID'],
+	 "DNase_processed_gappedPeak": ['roadmap_tissue','EID'],
+	 "DNase_imputed_narrowPeak": ['roadmap_tissue','EID'],
+	 "DNase_imputed_gappedPeak": ['roadmap_tissue','EID']
+
 	}
 
 	root_folder = {
@@ -317,13 +421,26 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "wgEncodeBroadHistone": "ENCODE/Histone",
 	 "wgEncodeUwHistone": "ENCODE/wgEncdoeUwHistone",
 	 "wgEncodeSydhHistone": "ENCODE/wgEncodeSydhHistone",
-	 "wgEncodeAwgDnaseUniform": "ENCODE/wgEncodeAwgDnaseUniform"
+	 "wgEncodeAwgDnaseUniform": "ENCODE/wgEncodeAwgDnaseUniform",
+	 "chromStates_15_states": "ROADMAP/chromStates_15_states",
+	 'chromStates_18_states':"ROADMAP/chromStates_18_states",
+	 "chromStates_25_states": "ROADMAP/chromStates_25_states",
+	 "Histone_processed_broadPeak": "ROADMAP/Histone_processed_broadPeak",
+	 "Histone_processed_narrowPeak": "ROADMAP/Histone_processed_narrowPeak",
+	 "Histone_processed_gappedPeak": "ROADMAP/Histone_processed_gappedPeak",
+	 "Histone_imputed_narrowPeak": "ROADMAP/Histone_imputed_narrowPeak",
+	 "Histone_imputed_gappedPeak": "ROADMAP/Histone_imputed_gappedPeak",
+	 "DNase_processed_broadPeak": "ROADMAP/DNase_processed_broadPeak",
+	 "DNase_processed_narrowPeak": "ROADMAP/DNase_processed_narrowPeak",
+	 "DNase_processed_gappedPeak": "ROADMAP/DNase_processed_gappedPeak",
+	 "DNase_imputed_narrowPeak": "ROADMAP/DNase_imputed_narrowPeak",
+	 "DNase_imputed_gappedPeak": "ROADMAP/DNase_imputed_gappedPeak"
 	}
 	dir_structure = dirstruture[gf_group]
 	gf_directory = [root_folder[gf_group]]
 	for folder in dirstruture[gf_group]:
 		if folder == 'tier':
-			gf_directory.append(get_tier(gf_name,outputdir))
+			gf_directory.append(_get_tier(gf_name,outputdir))
 		elif folder == 'cell':
 			gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['cell'])
 		elif folder == 'source':
@@ -331,6 +448,11 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 				gf_directory.append(folder.split(":")[1])
 			else:
 				gf_directory.append(_get_celltype_source(gf_name,padding[gf_group])['source'])
+		elif folder == 'roadmap_tissue':
+			gf_directory.append(_get_road_tissuegrp(gf_name))
+		elif folder == 'EID':
+			gf_directory.append(_get_EID(gf_name))
+
 	gf_directory = "/".join(gf_directory)
 	return os.path.join(outputdir,gf_directory)
 
@@ -347,10 +469,13 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 
 	min_max_scores = load_minmax(min_max_path)
 	grp_count,gf_file_paths = 0,[]
-	if "gf_files" in prepare_type[gf_group].keys():
-		gf_file_paths = prepare_type[gf_group]["gf_files"]
+	if "gf_files" in gf_grp_sett[gf_group].keys():
+		gf_file_paths = gf_grp_sett[gf_group]["gf_files"] 
 	else:
-		gf_file_paths = get_gf_filepaths(organism,gf_group)
+		if "ftp_server" in gf_grp_sett[gf_group].keys():
+			gf_file_paths = get_gf_filepaths(organism,gf_group)
+		elif "html_server" in gf_grp_sett[gf_group].keys():
+			gf_file_paths = get_road_gf_filepaths(gf_group)
 	for gf_file in gf_file_paths:
 		# check if gf_type is supported
 		if gf_file.replace(".gz",'').split(".")[-1] not in preparebed.keys():
@@ -359,6 +484,7 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 		if max_install != None and grp_count >= max_install:
 			break
 		try:
+			grp_count += 1			
 			gf_type = ""
 			gf_outputdir = _get_gf_directory(outputdir,gf_group,base_name(gf_file))
 			if not os.path.exists(gf_outputdir):
@@ -366,12 +492,11 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			# removes the .temp file, to prevent duplicate data from being written
 			if os.path.exists(outpath+".temp"):
 				os.remove(outpath+".temp")
-			# converts the ucsc data into proper bed format
-			logger.info( "Converting into proper bed format: {}".format(gf_file))
+			# converts the ucsc data into proper bed format			
 			try:
-				[minmax_score, gf_paths] = prepare_type[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
+				[minmax_score, gf_paths] = gf_grp_sett[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
 			except GF_ALREADY_EXISTS:
-				logger.info( "{} already exists, skipping extraction".format(outpath.replace(".gz","")))
+				logger.info("{} already exists, skipping extraction".format(outpath.replace(".gz","")))
 				continue
 			# output minmax stats
 			for f in gf_paths:
@@ -384,7 +509,6 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 				logger.warning( "Unable to convert {} into bed".format(gf_file))
 				continue
 			added_features.append(outpath)
-			grp_count += 1			
 			write_line("\t".join([gf_file,gf_type,"None"]),summary_path)
 
 		except Exception, e:
@@ -409,13 +533,47 @@ def update_progress(progress):
 
 # each genomic feature group must have an entry in this dictionary
 # f_names is optional and can be left out.  It limits the download of the gf group to only the files listed
-prepare_type = {
-	"wgEncodeRegTfbsClustered": {"prep_method":  preparebed_splitby, "gf_files": ["wgEncodeRegTfbsClusteredV3.bed.gz"]},
-	"wgEncodeBroadHmm": {"prep_method":  preparebed_splitby},
-	"wgEncodeBroadHistone": {"prep_method":  preparebed},
-	"wgEncodeUwHistone": {"prep_method":  preparebed},
-	"wgEncodeSydhHistone": {"prep_method":  preparebed},
-	"wgEncodeAwgDnaseUniform": {"prep_method":  preparebed}
+# 'ftp_server' and 'directory' are used to download files from the database. 
+# '{}' in 'directory' is filled in with the organism name when present
+gf_grp_sett = {
+	"wgEncodeRegTfbsClustered": {"prep_method":  preparebed_splitby, "gf_files": ["wgEncodeRegTfbsClusteredV3.bed.gz"],
+				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeRegTfbsClustered'},
+	"wgEncodeBroadHmm": {"prep_method":  preparebed_splitby,
+				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeBroadHmm'},
+	"wgEncodeBroadHistone": {"prep_method":  preparebed,
+				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeBroadHistone'},
+	"wgEncodeUwHistone": {"prep_method":  preparebed,
+				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeUwHistone'},
+	"wgEncodeSydhHistone": {"prep_method":  preparebed,
+				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeSydhHistone'},
+	"wgEncodeAwgDnaseUniform": {"prep_method":  preparebed,
+				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeAwgDnaseUniform'},
+	"chromStates_15_states": {'prep_method': preparebed_splitby,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final"},
+	"chromStates_18_states": {'prep_method': preparebed_splitby,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/core_K27ac/jointModel/final"},
+	"chromStates_25_states": {'prep_method': preparebed_splitby,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/imputed12marks/jointModel/final"},
+	"Histone_processed_broadPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/broadPeak"},
+	"Histone_processed_narrowPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/narrowPeak"},
+	"Histone_processed_gappedPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/gappedPeak"},
+	"Histone_imputed_narrowPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/narrowPeak"},
+	"Histone_imputed_gappedPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak/"},
+	"DNase_processed_broadPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/broadPeak"},
+	"DNase_processed_narrowPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/narrowPeak"},
+	"DNase_processed_gappedPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/gappedPeak"},
+	"DNase_imputed_narrowPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/narrowPeak"},
+	"DNase_imputed_gappedPeak": {'prep_method': preparebed,
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak/"} 			
 }
 
 
@@ -464,11 +622,11 @@ if __name__ == "__main__":
 
 
 	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
-		global download_dir, prepare_type
+		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-		for grp in prepare_type.keys():
-			create_feature_set(data_dir,args['organism'],grp,None,2)
+		for grp in gf_grp_sett.keys():		
+			create_feature_set(data_dir,args['organism'],grp,None,1)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
