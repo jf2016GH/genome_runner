@@ -46,7 +46,7 @@ def download_encode_file(organism,gf_group,gf_file):
 	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
 	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
-	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
+	out_gf_file = '.'.join([output_gf_file,gf_file_ext]).replace("_bed.nPk",".nPk").replace("_bed.gPk",".gPk")
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
@@ -94,7 +94,7 @@ def download_roadmap_file(gf_group,gf_file):
 	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
 	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
-	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
+	out_gf_file = '.'.join([output_gf_file,gf_file_ext]).replace("_bed.nPk",".nPk").replace("_bed.gPk",".gPk")
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
@@ -625,8 +625,8 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-#		for grp in ["Histone_imputed_narrowPeak"]:
-		for grp in gf_grp_sett.keys():		
+		for grp in ["Histone_imputed_narrowPeak"]:
+#		for grp in gf_grp_sett.keys():		
 			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
