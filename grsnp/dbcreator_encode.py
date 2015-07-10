@@ -42,18 +42,22 @@ def download_encode_file(organism,gf_group,gf_file):
 	'''
 	global download_dir
 	outputpath = ''
+	# replace all '.' with '_' except for the file extension portion
+	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
+	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
+	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
+	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
 			os.makedirs(download_dir)
 	except Exception, e:
 		logger.warning( e)
-		logger.warning("Could not create folder at {} for {}".format(download_dir,gf_file))
+		logger.warning("Could not create folder at {} for {}".format(download_dir,out_gf_file))
 		return '' 
 	
 	try:
-		outputpath = os.path.join(download_dir,gf_file)
-		outputpath = outputpath.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
+		outputpath = os.path.join(download_dir,out_gf_file)
 		if not os.path.exists(outputpath):
 			ftp = ftplib.FTP(gf_grp_sett[gf_group]['ftp_server'], timeout=1800) # Connection timeout 0.5h
 			ftp.login(username,password)
@@ -86,16 +90,21 @@ def download_roadmap_file(gf_group,gf_file):
 	'''
 	global download_dir
 	outputpath = ''
+	# replace all '.' with '_' except for the file extension portion
+	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
+	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
+	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
+	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
 			os.makedirs(download_dir)
 	except Exception, e:
 		logger.warning( e)
-		logger.warning("Could not create folder at {} for {}".format(download_dir,gf_file))
+		logger.warning("Could not create folder at {} for {}".format(download_dir,out_gf_file))
 		return ''	
 	try:
-		outputpath = os.path.join(download_dir,gf_file)
+		outputpath = os.path.join(download_dir,out_gf_file)
 		outputpath = outputpath.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 		if not os.path.exists(outputpath):
 			url = "".join([gf_grp_sett[gf_group]['html_server'],gf_grp_sett[gf_group]['directory'],"/",gf_file])
