@@ -278,7 +278,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	full_gf_paths = []
 	# convert it to bed format
 	logger.info( "Converting into proper bed format: {}".format(gf_file))
-	if gf_file.endswith('.gz'):
+	if dwnl_file.endswith('.gz'):
 		infile = gzip.open(dwnl_file)
 	else:
 		infile = open(dwnl_file)
@@ -290,7 +290,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		line = infile.readline().rstrip('\n')
 		if line == "":
 			break
-		cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
+		cur_gf = preparebed[dwnl_file.replace(".gz",'').split(".")[-1]](line,min_max)
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
 		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")
@@ -329,8 +329,8 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 		dwnl_file = download_encode_file(organism, gf_group, gf_file)
 	elif "html_server" in gf_grp_sett[gf_group].keys():
 		dwnl_file = download_roadmap_file(gf_group,	gf_file)
-	gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
-	f_path = os.path.join(gf_outputdir,base_name(gf_file)+".bed.temp")
+
+	f_path = os.path.join(gf_outputdir,base_name(dwnl_file)+".bed.temp")
 	o_dir = os.path.dirname(f_path)
 	new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
 	if os.path.exists(new_path) == True:
@@ -625,8 +625,8 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-		for grp in ["Histone_imputed_narrowPeak"]:
-#		for grp in gf_grp_sett.keys():		
+#		for grp in ["DNase_processed_narrowPeak"]:
+		for grp in gf_grp_sett.keys():		
 			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
