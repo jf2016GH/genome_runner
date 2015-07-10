@@ -626,8 +626,8 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 #		for grp in ["DNase_processed_narrowPeak"]:
-		for grp in gf_grp_sett.keys():		
-			create_feature_set(data_dir,args['organism'],grp,None,2)
+	#	for grp in gf_grp_sett.keys():		
+	#		create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
@@ -640,45 +640,45 @@ if __name__ == "__main__":
 	### Second Step: Create subdirectories for score and filter data by score percentile
 	# create sub directories for score percentiles and populate with score-filtered GF data
 	# gather all directories (groups) in the database
-#	print "Filtering GFs by strand and score..."
-#	orgdir = os.path.join(data_dir,args['organism'])
-#	dirs = [name for name in os.listdir(orgdir)
-#		if os.path.isdir(os.path.join(orgdir, name))]
-#	for d in dirs:
-#		# gather all paths
-#		gfs = []
-#		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
-#				gfs += [os.path.join(base,f) for f 	 
-#					in files if f.endswith(('.gz'))]
-#		for gf_path in gfs: 
-#			print "Filtering {} ...".format(gf_path)
-#			# filter the original GF by strand
-#			filter_by_strand(data_dir,gf_path)
-#			for pct_score in args['score']:		
-#				[score_min,score_max] = minmax[base_name(gf_path)].split(",")
-#				# calculate threshold score
-#				if score_min == 'NA':
-#					continue
-#				score_min,score_max = float(score_min),float(score_max) 
-#				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
-#				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
-#				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
-#				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-#				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
-#					os.makedirs(os.path.split(gf_scorepath_out)[0])
-#				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
-#				# filter by score
-#				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
-#				# filter the score filtered GF by strand				
-#				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
-#
-#
-#	root_dir = os.path.dirname(os.path.realpath(__file__))
-#	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
-#	with open("grsnp_db_readme.txt","wb") as writer:
-#		writer.write(readme)
-#	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
-#
-#
-#
-#
+	print "Filtering GFs by strand and score..."
+	orgdir = os.path.join(data_dir,args['organism'])
+	dirs = [name for name in os.listdir(orgdir)
+		if os.path.isdir(os.path.join(orgdir, name))]
+	for d in dirs:
+		# gather all paths
+		gfs = []
+		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
+				gfs += [os.path.join(base,f) for f 	 
+					in files if f.endswith(('.gz'))]
+		for gf_path in gfs: 
+			print "Filtering {} ...".format(gf_path)
+			# filter the original GF by strand
+			filter_by_strand(data_dir,gf_path)
+			for pct_score in args['score']:		
+				[score_min,score_max] = minmax[gf_path].split(",")
+				# calculate threshold score
+				if score_min == 'NA':
+					continue
+				score_min,score_max = float(score_min),float(score_max) 
+				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
+				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
+				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
+				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
+					os.makedirs(os.path.split(gf_scorepath_out)[0])
+				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
+				# filter by score
+				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
+				# filter the score filtered GF by strand				
+				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
+
+
+	root_dir = os.path.dirname(os.path.realpath(__file__))
+	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
+	with open("grsnp_db_readme.txt","wb") as writer:
+		writer.write(readme)
+	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
+
+
+
+
