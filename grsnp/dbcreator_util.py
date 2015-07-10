@@ -71,9 +71,10 @@ def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 		with gzip.open(gf_path_input) as dr:
 			while True:
 				line = dr.readline().rstrip('\n')
-				if line == "":
+				cur_gf = line.split('\t')
+				if line == "" or len(cur_gf) < 5:
 					break
-				score  = line.split('\t')[4]
+				score  = cur_gf[4]
 				# if the score is >= to the threshold, output that GF
 				if float(score) >= float(thresh_score):
 					bed.write(line+"\n")
@@ -93,9 +94,10 @@ def filter_by_strand(data_dir,gf_path):
 	with gzip.open(gf_path) as dr:		
 		while True:
 			line = dr.readline().rstrip('\n')
-			if line == "":
+			cur_gf =  line.split('\t')
+			if line == "" or len(cur_gf) < 6:
 				break
-			strand  = line.split('\t')[5]
+			strand  = cur_gf[5]
 			# check if a valid strand exists and output to the appropriate file.
 			if strand in strand_file:
 				strand_file[strand].write(line+"\n")
