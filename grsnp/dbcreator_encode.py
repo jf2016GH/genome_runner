@@ -256,8 +256,8 @@ def _get_tier(line,outputdir): # Generating paths for the ENCODE data tables usi
 		Tier = 'Tier3'
 	else:
 		Tier = 'Tier3'
-		with open(os.path.join(outputdir,"missing_tier.log"),'wb') as writer:
-			writer.write(line)		
+		with open(os.path.join(outputdir,"missing_tier.log"),'a') as writer:
+			writer.write(line)
 
 	return Tier
 
