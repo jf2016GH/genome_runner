@@ -42,22 +42,18 @@ def download_encode_file(organism,gf_group,gf_file):
 	'''
 	global download_dir
 	outputpath = ''
-	# replace all '.' with '_' except for the file extension portion
-	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
-	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
-	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
-	out_gf_file = '.'.join([output_gf_file,gf_file_ext]).replace("_bed.nPk",".nPk").replace("_bed.gPk",".gPk")
+	
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
 			os.makedirs(download_dir)
 	except Exception, e:
 		logger.warning( e)
-		logger.warning("Could not create folder at {} for {}".format(download_dir,out_gf_file))
+		logger.warning("Could not create folder at {} for {}".format(download_dir,gf_file))
 		return '' 
 	
 	try:
-		outputpath = os.path.join(download_dir,out_gf_file)
+		outputpath = os.path.join(download_dir,gf_file)
 		if not os.path.exists(outputpath):
 			ftp = ftplib.FTP(gf_grp_sett[gf_group]['ftp_server'], timeout=1800) # Connection timeout 0.5h
 			ftp.login(username,password)
@@ -90,21 +86,17 @@ def download_roadmap_file(gf_group,gf_file):
 	'''
 	global download_dir
 	outputpath = ''
-	# replace all '.' with '_' except for the file extension portion
-	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
-	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
-	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
-	out_gf_file = '.'.join([output_gf_file,gf_file_ext]).replace("_bed.nPk",".nPk").replace("_bed.gPk",".gPk")
+	
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
 			os.makedirs(download_dir)
 	except Exception, e:
 		logger.warning( e)
-		logger.warning("Could not create folder at {} for {}".format(download_dir,out_gf_file))
+		logger.warning("Could not create folder at {} for {}".format(download_dir,gf_file))
 		return ''	
 	try:
-		outputpath = os.path.join(download_dir,out_gf_file)
+		outputpath = os.path.join(download_dir,gf_file)
 		outputpath = outputpath.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
 		if not os.path.exists(outputpath):
 			url = "".join([gf_grp_sett[gf_group]['html_server'],gf_grp_sett[gf_group]['directory'],"/",gf_file])
@@ -162,7 +154,7 @@ def get_road_gf_filepaths(gf_group):
 	links = soup.body.find_all('a', href=True)
 	# exclude header line links (they lack a '.')
 	file_names = [x['href'] for x in links if '.' in x.contents[0]]
-	if gf_group in ["chromStates_15_states","chromStates_18_states", "chromStates_25_states"]:
+	if gf_group in ["chromStates15","chromStates18", "chromStates25"]:
 		file_names = [x for x in file_names if x.endswith('_dense.bed.gz')]
 	if gf_group.startswith('Histone_'):
 		# filter out the DNase files as these will be processes separately
@@ -170,7 +162,7 @@ def get_road_gf_filepaths(gf_group):
 		# filter out all non compressed .bed file names
 		file_names = [x for x in file_names if not x.endswith('.bed')]
 	if gf_group.startswith('DNase_'):
-		file_names = [x for x in file_names if '-DNase' in x]
+		file_names = [x for x in file_names if '-DNase' in x and "DNase.imputed.narrowPeak.bed.gz" not in x]
 	return file_names
 
 
@@ -269,7 +261,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	gf_file: file name with extension i.e gfname.bed.gz
 	'''
 	# TODO handle the case of partially finished database
-	added_features = [] 
+	added_features = []
 	# download the GF file	
 	if "ftp_server" in gf_grp_sett[gf_group].keys():
 		dwnl_file = download_encode_file(organism, gf_group, gf_file)
@@ -282,6 +274,13 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		infile = gzip.open(dwnl_file)
 	else:
 		infile = open(dwnl_file)
+
+	gf_file_ext = '.'.join(gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
+	z_gf_file = gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
+	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
+	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
+
+
 	min_max = MinMax() # keep track of the min and max score			
 	file_writers = {} # {'cur_split_value': file_writer_object} A writer is created for each name field
 	if not os.path.exists(gf_outputdir):
@@ -290,17 +289,24 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		line = infile.readline().rstrip('\n')
 		if line == "":
 			break
-		cur_gf = preparebed[dwnl_file.replace(".gz",'').split(".")[-1]](line,min_max)
+		cur_gf = preparebed[out_gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
-		outputpath = os.path.join(gf_outputdir,cur_split_value+".bed.temp")
 		if cur_split_value not in file_writers:
-			o_dir = os.path.dirname(outputpath)
-			new_path = os.path.join(o_dir,''.join(e for e in base_name(outputpath) if e.isalnum() or e=='.' or e=='_')) + ".bed.gz"
-			if os.path.exists(new_path):
-				raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(new_path))
-			file_writers[cur_split_value] = open(outputpath,'wb')
-			full_gf_paths.append(outputpath)
+			o_dir = gf_outputdir
+			# get formated file name [cell]-[factor]-[source]
+			eid =  _get_EID(gf_file,gf_group)
+			tmp_name = cur_split_value
+
+			if eid != "": # will be '' if working with ENCODE data
+				tmp_name = eid + "-" + cur_split_value
+			form_dwnl_file = _get_formated_file_name(gf_group,tmp_name)
+
+			out_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz.temp"
+			if os.path.exists(out_path):
+				raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(out_path))
+			file_writers[cur_split_value] = open(out_path,'wb')
+			full_gf_paths.append(out_path)
 		file_writers[cur_split_value].write("\t".join(cur_gf)+"\n")
 	#close all open files
 	for k in file_writers.keys():
@@ -329,10 +335,20 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 		dwnl_file = download_encode_file(organism, gf_group, gf_file)
 	elif "html_server" in gf_grp_sett[gf_group].keys():
 		dwnl_file = download_roadmap_file(gf_group,	gf_file)
-
 	f_path = os.path.join(gf_outputdir,base_name(dwnl_file)+".bed.temp")
 	o_dir = os.path.dirname(f_path)
-	new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
+
+	tmp_gf_file = dwnl_file.replace(".imputed.gappedPeak.bed.gPk.gz",".gPk.gz").replace(".imputed.narrowPeak.bed.nPk.gz",".nPk.gz")
+	# replace all '.' with '_' except for the file extension portion
+	gf_file_ext = '.'.join(tmp_gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
+	z_gf_file = tmp_gf_file.replace(".Z.","Z.") # special case: H2A.Z needs to be H2AZ
+	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
+	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
+	# get formated file name [cell]-[factor]-[source]
+	form_dwnl_file = _get_formated_file_name(gf_group,os.path.split(dwnl_file)[1])
+
+
+	new_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
 	if os.path.exists(new_path) == True:
 		raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(new_path))
 	logger.info( "Converting into proper bed format: {}".format(gf_file))
@@ -354,11 +370,13 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	infile.close()
 	return [min_max.str_minmax(),[new_path]]
 
-def _get_celltype(f_name, padding):
+def _get_celltype(f_name, padding,gf_group):
 	''' Extracts the cell type from the genomic feature file name
 	'''
 	if f_name == "wgEncodeAwgDnaseDuke8988tUniPk":
 		return "8988t" # special case since cell name starts with a number
+	if gf_group == "wgEncodeRegTfbsClustered":
+		return "TFBS"
 	if f_name.startswith(padding):
 		f_name = f_name[len(padding):]
 	categories = re.findall('[A-Z][^A-Z]*', f_name)
@@ -373,24 +391,97 @@ def _get_road_tissuegrp(f_name):
 	tissue_group = [x for x in road_conversion if x[0] == f_name_eid][0][3]
 	return tissue_group
 
-def _get_EID(f_name):
+def _get_EID(f_name, gf_group):
 	'''Returns the roadmap EID of the current file'''
+	if root_folder[gf_group].split('/')[0] == 'ENCODE':
+		return ''
 	eid = f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
 	return eid
+
+
+# Dictates how much of the filename to strip off before searching for cell type etc.
+padding = {
+ "wgEncodeAwgTfbsUniform": "wgEncodeAwgTfbs",
+ "wgEncodeRegTfbsClustered": "wgEncode",
+ "wgEncodeBroadHmm": "wgEncodeBroad",
+ "wgEncodeBroadHistone": "wgEncodeBroad",
+ "wgEncodeUwHistone": "wgEncodeUw",
+ "wgEncodeSydhHistone": "wgEncodeSydh",
+ "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase"
+}
+
+source = {
+ "wgEncodeAwgTfbsUniform": "AwgTfbsUniform",
+ 'wgEncodeBroadHmm': "ChromStates",
+ "wgEncodeRegTfbsClustered": "RegTfbsClustered",
+ "wgEncodeBroadHistone": "BroadHistone",
+ "wgEncodeUwHistone": "UwHistone",
+ "wgEncodeSydhHistone": "SydhHistone",
+ "wgEncodeAwgDnaseUniform": "AwgDnaseUniform",
+ "chromStates15": "chromStates15",
+ "chromStates18": "chromStates18",
+ "chromStates25": "chromStates25",
+ "Histone_processed_broadPeak": "processed",
+ "Histone_processed_narrowPeak": "processed",
+ "Histone_processed_gappedPeak": "processed",
+ "Histone_imputed_narrowPeak": "imputed",
+ "Histone_imputed_gappedPeak": "imputed",
+ "DNase_processed_broadPeak": "processed",
+ "DNase_processed_narrowPeak": "processed",
+ "DNase_processed_gappedPeak": "processed",
+ "DNase_imputed_narrowPeak": "imputed",
+ "DNase_imputed_gappedPeak": "imputed"
+}
+
+
+root_folder = {
+"wgEncodeAwgTfbsUniform": "ENCODE/AwgTfbsUniform",
+ "wgEncodeRegTfbsClustered": "ENCODE/TfbsClustered",
+ "wgEncodeBroadHmm": "ENCODE/ChromStates",
+ "wgEncodeBroadHistone": "ENCODE/Histone",
+ "wgEncodeUwHistone": "ENCODE/Histone",
+ "wgEncodeSydhHistone": "ENCODE/Histone",
+ "wgEncodeAwgDnaseUniform": "ENCODE/DNase",
+ "chromStates15": "ROADMAP/chromStates15",
+ 'chromStates18':"ROADMAP/chromStates18",
+ "chromStates25": "ROADMAP/chromStates25",
+ "Histone_processed_broadPeak": "ROADMAP/Histone_bPk-processed",
+ "Histone_processed_narrowPeak": "ROADMAP/Histone_nPk-processed",
+ "Histone_processed_gappedPeak": "ROADMAP/Histone_gPk-processed",
+ "Histone_imputed_narrowPeak": "ROADMAP/Histone_nPk-imputed",
+ "Histone_imputed_gappedPeak": "ROADMAP/Histone_gPk-imputed",
+ "DNase_processed_broadPeak": "ROADMAP/DNase_bPk-processed",
+ "DNase_processed_narrowPeak": "ROADMAP/DNase_nPk-processed",
+ "DNase_processed_gappedPeak": "ROADMAP/DNase_gPk-processed",
+ "DNase_imputed_narrowPeak": "ROADMAP/DNase_nPk-imputed",
+ "DNase_imputed_gappedPeak": "ROADMAP/DNase_gPk-imputed"
+}
+
+
+def _get_formated_file_name(gf_group,gf_name):
+	rfold = root_folder[gf_group].split("/")[0] # 'ENCODE' or 'ROADMAP'
+	peak_to_p = {'broadPeak': 'bPk', 'narrowPeak': 'nPk', 'gappedPeak': 'gPk'}
+	if rfold == "ROADMAP":
+			
+		eid = _get_EID(gf_name,gf_group)
+		factor = gf_name.replace(eid,'')[1:].split('.')[0]
+#		if gf_group in ["chromStates15","chromStates18","chromStates25"]:
+#			factor = gfname.split('.')[0]
+
+		# append abbreviated peak to factor if it exists. i.e. 'narrowPeak' is 'nPk'
+		peak = gf_group.split("_")[-1]
+		if peak in peak_to_p.keys():
+			factor = factor + "_" + peak_to_p[peak]
+		return "-".join([eid, factor, source[gf_group]])
+	elif rfold == "ENCODE":
+		cell_type = _get_celltype(gf_name,padding[gf_group],gf_group)
+		factor = gf_name.split(".")[0]
+		return "-".join([cell_type, factor, source[gf_group]])
 
 
 def _get_gf_directory(outputdir,gf_group,gf_name):
 	''' Returns the output_dir of the gf.
 	'''
-	# Dictates how much of the filename to strip off before searching for cell type etc.
-	padding = {
-	 "wgEncodeAwgTfbsUniform": "wgEncodeAwgTfbs",
-	 "wgEncodeBroadHmm": "wgEncodeBroad",
-	 "wgEncodeBroadHistone": "wgEncodeBroad",
-	 "wgEncodeUwHistone": "wgEncodeUw",
-	 "wgEncodeSydhHistone": "wgEncodeSydh",
-	 "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase"
-	}
 
 	# Dictates the structure of the directory
 	dirstruture = {
@@ -401,9 +492,9 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "wgEncodeUwHistone": ['tier','cell'],
 	 "wgEncodeSydhHistone": ['tier','cell'],
 	 "wgEncodeAwgDnaseUniform": ['tier','cell'],
-	 "chromStates_15_states": ['roadmap_tissue','EID'],
-	 "chromStates_18_states": ['roadmap_tissue','EID'],
-	 "chromStates_25_states": ['roadmap_tissue','EID'],
+	 "chromStates15": ['roadmap_tissue','EID'],
+	 "chromStates18": ['roadmap_tissue','EID'],
+	 "chromStates25": ['roadmap_tissue','EID'],
 	 "Histone_processed_broadPeak": ['roadmap_tissue','EID'],
 	 "Histone_processed_narrowPeak": ['roadmap_tissue','EID'],
 	 "Histone_processed_gappedPeak": ['roadmap_tissue','EID'],
@@ -414,42 +505,19 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "DNase_processed_gappedPeak": ['roadmap_tissue','EID'],
 	 "DNase_imputed_narrowPeak": ['roadmap_tissue','EID'],
 	 "DNase_imputed_gappedPeak": ['roadmap_tissue','EID']
-
 	}
 
-	root_folder = {
-	"wgEncodeAwgTfbsUniform": "ENCODE/TFBS_cellspecific",
-	 "wgEncodeRegTfbsClustered": "ENCODE/TFBS_conserved",
-	 "wgEncodeBroadHmm": "ENCODE/ChromStates",
-	 "wgEncodeBroadHistone": "ENCODE/Histone",
-	 "wgEncodeUwHistone": "ENCODE/Histone",
-	 "wgEncodeSydhHistone": "ENCODE/Histone",
-	 "wgEncodeAwgDnaseUniform": "ENCODE/DNase",
-	 "chromStates_15_states": "ROADMAP/chromStates_15_states",
-	 'chromStates_18_states':"ROADMAP/chromStates_18_states",
-	 "chromStates_25_states": "ROADMAP/chromStates_25_states",
-	 "Histone_processed_broadPeak": "ROADMAP/Histone_processed_broadPeak",
-	 "Histone_processed_narrowPeak": "ROADMAP/Histone_processed_narrowPeak",
-	 "Histone_processed_gappedPeak": "ROADMAP/Histone_processed_gappedPeak",
-	 "Histone_imputed_narrowPeak": "ROADMAP/Histone_imputed_narrowPeak",
-	 "Histone_imputed_gappedPeak": "ROADMAP/Histone_imputed_gappedPeak",
-	 "DNase_processed_broadPeak": "ROADMAP/DNase_processed_broadPeak",
-	 "DNase_processed_narrowPeak": "ROADMAP/DNase_processed_narrowPeak",
-	 "DNase_processed_gappedPeak": "ROADMAP/DNase_processed_gappedPeak",
-	 "DNase_imputed_narrowPeak": "ROADMAP/DNase_imputed_narrowPeak",
-	 "DNase_imputed_gappedPeak": "ROADMAP/DNase_imputed_gappedPeak"
-	}
 	dir_structure = dirstruture[gf_group]
 	gf_directory = [root_folder[gf_group]]
 	for folder in dirstruture[gf_group]:
 		if folder == 'tier':
 			gf_directory.append(_get_tier(gf_name,outputdir))
 		elif folder == 'cell':
-			gf_directory.append(_get_celltype(gf_name,padding[gf_group]))		
+			gf_directory.append(_get_celltype(gf_name,padding[gf_group],gf_group))		
 		elif folder == 'roadmap_tissue':
 			gf_directory.append(_get_road_tissuegrp(gf_name))
 		elif folder == 'EID':
-			gf_directory.append(_get_EID(gf_name))
+			gf_directory.append(_get_EID(gf_name,gf_group))
 
 	gf_directory = "/".join(gf_directory)
 	return os.path.join(outputdir,gf_directory)
@@ -546,11 +614,11 @@ gf_grp_sett = {
 				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeSydhHistone'},
 	"wgEncodeAwgDnaseUniform": {"prep_method":  preparebed,
 				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeAwgDnaseUniform'},
-	"chromStates_15_states": {'prep_method': preparebed_splitby,
+	"chromStates15": {'prep_method': preparebed_splitby,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/coreMarks/jointModel/final"},
-	"chromStates_18_states": {'prep_method': preparebed_splitby,
+	"chromStates18": {'prep_method': preparebed_splitby,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/core_K27ac/jointModel/final"},
-	"chromStates_25_states": {'prep_method': preparebed_splitby,
+	"chromStates25": {'prep_method': preparebed_splitby,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/chromhmmSegmentations/ChmmModels/imputed12marks/jointModel/final"},
 	"Histone_processed_broadPeak": {'prep_method': preparebed,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidated/broadPeak"},
@@ -625,9 +693,9 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-#		for grp in ["DNase_processed_narrowPeak"]:
-	#	for grp in gf_grp_sett.keys():		
-	#		create_feature_set(data_dir,args['organism'],grp,None,2)
+		for grp in ["chromStates15"]:
+#		for grp in gf_grp_sett.keys():		
+			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
@@ -637,48 +705,48 @@ if __name__ == "__main__":
 
 	sys.exit
 
-	### Second Step: Create subdirectories for score and filter data by score percentile
-	# create sub directories for score percentiles and populate with score-filtered GF data
-	# gather all directories (groups) in the database
-	print "Filtering GFs by strand and score..."
-	orgdir = os.path.join(data_dir,args['organism'])
-	dirs = [name for name in os.listdir(orgdir)
-		if os.path.isdir(os.path.join(orgdir, name))]
-	for d in dirs:
-		# gather all paths
-		gfs = []
-		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
-				gfs += [os.path.join(base,f) for f 	 
-					in files if f.endswith(('.gz'))]
-		for gf_path in gfs: 
-			print "Filtering {} ...".format(gf_path)
-			# filter the original GF by strand
-			filter_by_strand(data_dir,gf_path)
-			for pct_score in args['score']:		
-				[score_min,score_max] = minmax[gf_path].split(",")
-				# calculate threshold score
-				if score_min == 'NA':
-					continue
-				score_min,score_max = float(score_min),float(score_max) 
-				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
-				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
-				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
-				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
-					os.makedirs(os.path.split(gf_scorepath_out)[0])
-				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
-				# filter by score
-				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
-				# filter the score filtered GF by strand				
-				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
-
-
-	root_dir = os.path.dirname(os.path.realpath(__file__))
-	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
-	with open("grsnp_db_readme.txt","wb") as writer:
-		writer.write(readme)
-	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
-
+#	### Second Step: Create subdirectories for score and filter data by score percentile
+#	# create sub directories for score percentiles and populate with score-filtered GF data
+#	# gather all directories (groups) in the database
+#	print "Filtering GFs by strand and score..."
+#	orgdir = os.path.join(data_dir,args['organism'])
+#	dirs = [name for name in os.listdir(orgdir)
+#		if os.path.isdir(os.path.join(orgdir, name))]
+#	for d in dirs:
+#		# gather all paths
+#		gfs = []
+#		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
+#				gfs += [os.path.join(base,f) for f 	 
+#					in files if f.endswith(('.gz'))]
+#		for gf_path in gfs: 
+#			print "Filtering {} ...".format(gf_path)
+#			# filter the original GF by strand
+#			filter_by_strand(data_dir,gf_path)
+#			for pct_score in args['score']:		
+#				[score_min,score_max] = minmax[gf_path].split(",")
+#				# calculate threshold score
+#				if score_min == 'NA':
+#					continue
+#				score_min,score_max = float(score_min),float(score_max) 
+#				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
+#				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
+#				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
+#				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
+#				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
+#					os.makedirs(os.path.split(gf_scorepath_out)[0])
+#				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
+#				# filter by score
+#				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
+#				# filter the score filtered GF by strand				
+#				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
+#
+#
+#	root_dir = os.path.dirname(os.path.realpath(__file__))
+#	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
+#	with open("grsnp_db_readme.txt","wb") as writer:
+#		writer.write(readme)
+#	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
+#
 
 
 
