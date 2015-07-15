@@ -298,9 +298,10 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 			tmp_name = cur_split_value
 			if eid != "": # will be '' if working with ENCODE data
 				tmp_name = eid + "-" + cur_split_value
-			elif gf_group != "wgEncodeRegTfbsClustered": # wgEncodeRegTfbsClustered doesn't have cell type
-				tmp_name = gf_file[len(padding[gf_group]):].split(".")[0]+"-"+cur_split_value #add cell type to front
-			form_dwnl_file = _get_formated_file_name(gf_group,tmp_name)
+			else:
+				tmp_name = _get_celltype(gf_file,gf_group)+"-"+cur_split_value #add cell type to front
+			# create formated file name
+			form_dwnl_file = tmp_name + '-' + _get_source(gf_file, gf_group)
 
 			out_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz.temp"
 			if os.path.exists(out_path):
@@ -370,33 +371,6 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	infile.close()
 	return [min_max.str_minmax(),[new_path]]
 
-def _get_celltype(f_name, padding,gf_group):
-	''' Extracts the cell type from the genomic feature file name
-	'''
-	if f_name == "wgEncodeAwgDnaseDuke8988tUniPk":
-		return "8988t" # special case since cell name starts with a number
-	if gf_group == "wgEncodeRegTfbsClustered":
-		return "TFBS"
-	if f_name.startswith(padding):
-		f_name = f_name[len(padding):]
-	categories = re.findall('[A-Z][^A-Z]*', f_name)
-	return categories[1]
-
-def _get_road_tissuegrp(f_name):
-	'''Looks up tissue group using the E*** roadmap cell name'''
-	# roadmapCellData is located in dbcreator_util.py
-	road_conversion = [x.split("\t") for x in roadmapCellData.split("\n")[1:]]
-	f_name_eid =  f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
-	# [3] is the GR column in roadmapCellData
-	tissue_group = [x for x in road_conversion if x[0] == f_name_eid][0][3]
-	return tissue_group
-
-def _get_EID(f_name, gf_group):
-	'''Returns the roadmap EID of the current file'''
-	if root_folder[gf_group].split('/')[0] == 'ENCODE':
-		return ''
-	eid = f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
-	return eid
 
 	
 
@@ -405,9 +379,9 @@ padding = {
  "wgEncodeAwgTfbsUniform": "wgEncodeAwgTfbs",
  "wgEncodeRegTfbsClustered": "wgEncode",
  "wgEncodeBroadHmm": "wgEncodeBroad",
- "wgEncodeBroadHistone": "wgEncodeBroad",
- "wgEncodeUwHistone": "wgEncodeUw",
- "wgEncodeSydhHistone": "wgEncodeSydh",
+ "wgEncodeBroadHistone": "wgEncode",
+ "wgEncodeUwHistone": "wgEncode",
+ "wgEncodeSydhHistone": "wgEncode",
  "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase",
  "Encode_chromeStates": "wgEncodeAwgSegmentation"
 }
@@ -415,7 +389,7 @@ padding = {
 source = {
  "wgEncodeAwgTfbsUniform": "AwgTfbsUniform",
  'wgEncodeBroadHmm': "BroadHmm",
- "wgEncodeRegTfbsClustered": "RegTfbsClustered",
+ "wgEncodeRegTfbsClustered": "TfbsV3",
  "wgEncodeBroadHistone": "BroadHistone",
  "wgEncodeUwHistone": "UwHistone",
  "wgEncodeSydhHistone": "SydhHistone",
@@ -437,8 +411,8 @@ source = {
 
 
 root_folder = {
-"wgEncodeAwgTfbsUniform": "ENCODE/AwgTfbsUniform",
- "wgEncodeRegTfbsClustered": "ENCODE/TfbsClustered",
+"wgEncodeAwgTfbsUniform": "ENCODE/TFBS_cellspecific",
+ "wgEncodeRegTfbsClustered": "ENCODE/TFBS_clustered",
  "wgEncodeBroadHmm": "ENCODE/chromStates/BroadHmm",
  "wgEncodeBroadHistone": "ENCODE/Histone",
  "wgEncodeUwHistone": "ENCODE/Histone",
@@ -460,6 +434,34 @@ root_folder = {
  "Encode_chromeStates": "ENCODE/chromStates"
 }
 
+def _get_celltype(f_name, gf_group):
+	''' Extracts the cell type from the ENCODE genomic feature file name
+	'''
+	if f_name == "wgEncodeAwgDnaseDuke8988tUniPk":
+		return "8988t" # special case since cell name starts with a number
+	if gf_group == "wgEncodeRegTfbsClustered":
+		return "Clustered"
+	if f_name.startswith(padding[gf_group]):
+		f_name = f_name[len(padding[gf_group]):]
+	categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
+	return categories[1]
+
+def _get_road_tissuegrp(f_name):
+	'''Looks up tissue group using the E*** roadmap cell name'''
+	# roadmapCellData is located in dbcreator_util.py
+	road_conversion = [x.split("\t") for x in roadmapCellData.split("\n")[1:]]
+	f_name_eid =  f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
+	# [3] is the GR column in roadmapCellData
+	tissue_group = [x for x in road_conversion if x[0] == f_name_eid][0][3]
+	return tissue_group
+
+def _get_EID(f_name, gf_group):
+	'''Returns the roadmap EID of the current file'''
+	if root_folder[gf_group].split('/')[0] == 'ENCODE':
+		return ''
+	eid = f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
+	return eid
+
 def _get_source(gf_name,gf_group):
 	if gf_group == 'Encode_chromeStates':
 		if gf_name.startswith(padding[gf_group]):
@@ -476,18 +478,31 @@ def _get_formated_file_name(gf_group,gf_name):
 			
 		eid = _get_EID(gf_name,gf_group)
 		factor = gf_name.replace(eid,'')[1:].split('.')[0]
-#		if gf_group in ["chromStates15","chromStates18","chromStates25"]:
-#			factor = gfname.split('.')[0]
 
 		# append abbreviated peak to factor if it exists. i.e. 'narrowPeak' is 'nPk'
 		peak = gf_group.split("_")[-1]
 		if peak in peak_to_p.keys():
 			factor = factor + "_" + peak_to_p[peak]
 		return "-".join([eid, factor, _get_source(gf_name,gf_group)])
-	elif rfold == "ENCODE":
-		cell_type = _get_celltype(gf_name,padding[gf_group],gf_group)
-		factor = gf_name.split("-")[-1].split('.')[0]
-		return "-".join([cell_type, factor, _get_source(gf_name,gf_group)])
+	elif rfold == "ENCODE":	
+		if gf_name.startswith(padding[gf_group]):
+			gf_name = gf_name[len(padding[gf_group]):]
+		gf_name = gf_name.replace("Histone","")
+		categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
+		# get the cell type
+		cell_type = categories[1]
+		if "8988t" in gf_name: # cell name that doesn't start with capital letter
+			cell_type = "8988t"
+			gf_name = gf_name.replace("8988t","Abc") # replace with dummy cell_type so splitting by letters works
+			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
+		# get source
+		source = categories[0]
+		# get factor
+		if gf_group == "wgEncodeAwgDnaseUniform":
+			factor = 'DNase'
+		else:
+			factor = categories[2]
+		return "-".join([cell_type, factor, source])
 
 
 def _get_gf_directory(outputdir,gf_group,gf_name):
@@ -518,14 +533,14 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "DNase_imputed_gappedPeak": ['roadmap_tissue','EID'],
 	 "Encode_chromeStates": ['source','cell']
 	}
-
+	gf_name = gf_name.replace("Histone","")
 	dir_structure = dirstruture[gf_group]
 	gf_directory = [root_folder[gf_group]]
 	for folder in dirstruture[gf_group]:
 		if folder == 'tier':
 			gf_directory.append(_get_tier(gf_name,outputdir))
 		elif folder == 'cell':
-			gf_directory.append(_get_celltype(gf_name,padding[gf_group],gf_group))		
+			gf_directory.append(_get_celltype(gf_name,gf_group))		
 		elif folder == 'roadmap_tissue':
 			gf_directory.append(_get_road_tissuegrp(gf_name))
 		elif folder == 'EID':
@@ -616,6 +631,8 @@ def update_progress(progress):
 # 'ftp_server' and 'directory' are used to download files from the database. 
 # '{}' in 'directory' is filled in with the organism name when present
 gf_grp_sett = {
+	"wgEncodeAwgTfbsUniform": {'prep_method': preparebed,
+				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': '/goldenPath/{}/encodeDCC/wgEncodeAwgTfbsUniform'},
 	"wgEncodeRegTfbsClustered": {"prep_method":  preparebed_splitby, "gf_files": ["wgEncodeRegTfbsClusteredV3.bed.gz"],
 				"ftp_server": 'hgdownload.cse.ucsc.edu', "directory": '/goldenPath/{}/encodeDCC/wgEncodeRegTfbsClustered'},
 	"wgEncodeBroadHmm": {"prep_method":  preparebed_splitby,
@@ -709,9 +726,9 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-		for grp in ["Encode_chromeStates"]:
-#		for grp in gf_grp_sett.keys():		
-			create_feature_set(data_dir,args['organism'],grp,None,10)
+		for grp in ["wgEncodeRegTfbsClustered"]:
+#		for grp in gf_grp_sett.keys():
+			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
