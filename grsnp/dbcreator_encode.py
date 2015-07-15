@@ -297,9 +297,10 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 			# get formated file name [cell]-[factor]-[source]
 			eid =  _get_EID(gf_file,gf_group)
 			tmp_name = cur_split_value
-
 			if eid != "": # will be '' if working with ENCODE data
 				tmp_name = eid + "-" + cur_split_value
+			elif gf_group != "wgEncodeRegTfbsClustered": # wgEncodeRegTfbsClustered doesn't have cell type
+				tmp_name = gf_file[len(padding[gf_group]):].split(".")[0]+"-"+cur_split_value #add cell type to front
 			form_dwnl_file = _get_formated_file_name(gf_group,tmp_name)
 
 			out_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz.temp"
@@ -398,6 +399,7 @@ def _get_EID(f_name, gf_group):
 	eid = f_name.split("_")[0].split('-')[0] # need to split by both '_' and '-' since DNase uses '-' to separate the EID
 	return eid
 
+	
 
 # Dictates how much of the filename to strip off before searching for cell type etc.
 padding = {
@@ -407,12 +409,13 @@ padding = {
  "wgEncodeBroadHistone": "wgEncodeBroad",
  "wgEncodeUwHistone": "wgEncodeUw",
  "wgEncodeSydhHistone": "wgEncodeSydh",
- "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase"
+ "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase",
+ "Encode_chromeStates": "wgEncodeAwgSegmentation"
 }
 
 source = {
  "wgEncodeAwgTfbsUniform": "AwgTfbsUniform",
- 'wgEncodeBroadHmm': "ChromStates",
+ 'wgEncodeBroadHmm': "BroadHmm",
  "wgEncodeRegTfbsClustered": "RegTfbsClustered",
  "wgEncodeBroadHistone": "BroadHistone",
  "wgEncodeUwHistone": "UwHistone",
@@ -437,7 +440,7 @@ source = {
 root_folder = {
 "wgEncodeAwgTfbsUniform": "ENCODE/AwgTfbsUniform",
  "wgEncodeRegTfbsClustered": "ENCODE/TfbsClustered",
- "wgEncodeBroadHmm": "ENCODE/ChromStates",
+ "wgEncodeBroadHmm": "ENCODE/chromStates/BroadHmm",
  "wgEncodeBroadHistone": "ENCODE/Histone",
  "wgEncodeUwHistone": "ENCODE/Histone",
  "wgEncodeSydhHistone": "ENCODE/Histone",
@@ -454,9 +457,18 @@ root_folder = {
  "DNase_processed_narrowPeak": "ROADMAP/DNase_nPk-processed",
  "DNase_processed_gappedPeak": "ROADMAP/DNase_gPk-processed",
  "DNase_imputed_narrowPeak": "ROADMAP/DNase_nPk-imputed",
- "DNase_imputed_gappedPeak": "ROADMAP/DNase_gPk-imputed"
+ "DNase_imputed_gappedPeak": "ROADMAP/DNase_gPk-imputed",
+ "Encode_chromeStates": "ENCODE/chromStates"
 }
 
+def _get_source(gf_name,gf_group):
+	if gf_group == 'Encode_chromeStates':
+		if f_name.startswith(padding[gf_group]):
+			f_name = f_name[len(padding[gf_group]):]
+		categories = re.findall('[A-Z][^A-Z]*', f_name)
+		return categories[0]
+	else:
+		return source[gf_group]
 
 def _get_formated_file_name(gf_group,gf_name):
 	rfold = root_folder[gf_group].split("/")[0] # 'ENCODE' or 'ROADMAP'
@@ -472,11 +484,11 @@ def _get_formated_file_name(gf_group,gf_name):
 		peak = gf_group.split("_")[-1]
 		if peak in peak_to_p.keys():
 			factor = factor + "_" + peak_to_p[peak]
-		return "-".join([eid, factor, source[gf_group]])
+		return "-".join([eid, factor, _get_source(gf_name,gf_group)])
 	elif rfold == "ENCODE":
 		cell_type = _get_celltype(gf_name,padding[gf_group],gf_group)
-		factor = gf_name.split(".")[0]
-		return "-".join([cell_type, factor, source[gf_group]])
+		factor = gf_name.split("-")[-1].split('.')[0]
+		return "-".join([cell_type, factor, _get_source(gf_name,gf_group)])
 
 
 def _get_gf_directory(outputdir,gf_group,gf_name):
@@ -486,7 +498,7 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	# Dictates the structure of the directory
 	dirstruture = {
 	 "wgEncodeAwgTfbsUniform": ['tier','cell'],
-	 'wgEncodeBroadHmm': ['tier','cell'],
+	 'wgEncodeBroadHmm': ['cell'],
 	 "wgEncodeRegTfbsClustered": [],
 	 "wgEncodeBroadHistone": ['tier','cell'],
 	 "wgEncodeUwHistone": ['tier','cell'],
@@ -504,7 +516,8 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "DNase_processed_narrowPeak": ['roadmap_tissue','EID'],
 	 "DNase_processed_gappedPeak": ['roadmap_tissue','EID'],
 	 "DNase_imputed_narrowPeak": ['roadmap_tissue','EID'],
-	 "DNase_imputed_gappedPeak": ['roadmap_tissue','EID']
+	 "DNase_imputed_gappedPeak": ['roadmap_tissue','EID'],
+	 "Encode_chromeStates": ['source','cell']
 	}
 
 	dir_structure = dirstruture[gf_group]
@@ -639,7 +652,10 @@ gf_grp_sett = {
 	"DNase_imputed_narrowPeak": {'prep_method': preparebed,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/narrowPeak"},
 	"DNase_imputed_gappedPeak": {'prep_method': preparebed,
-	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak/"} 			
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak",
+	"Encode_chromeStates": {'prep_method': preparebed_splitby,
+				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': "/goldenPath/{}/encodeDCC/wgEncodeAwgSegmentation"}}
+
 }
 
 
@@ -693,8 +709,8 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-		for grp in ["chromStates15"]:
-#		for grp in gf_grp_sett.keys():		
+#		for grp in ["wgEncodeBroadHmm"]:
+		for grp in gf_grp_sett.keys():		
 			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
