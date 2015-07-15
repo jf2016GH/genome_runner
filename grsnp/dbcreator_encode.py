@@ -280,7 +280,6 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
 	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
 
-
 	min_max = MinMax() # keep track of the min and max score			
 	file_writers = {} # {'cur_split_value': file_writer_object} A writer is created for each name field
 	if not os.path.exists(gf_outputdir):
@@ -463,9 +462,9 @@ root_folder = {
 
 def _get_source(gf_name,gf_group):
 	if gf_group == 'Encode_chromeStates':
-		if f_name.startswith(padding[gf_group]):
-			f_name = f_name[len(padding[gf_group]):]
-		categories = re.findall('[A-Z][^A-Z]*', f_name)
+		if gf_name.startswith(padding[gf_group]):
+			gf_name = gf_name[len(padding[gf_group]):]
+		categories = re.findall('[A-Z][^A-Z]*', gf_name)
 		return categories[0]
 	else:
 		return source[gf_group]
@@ -531,6 +530,8 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 			gf_directory.append(_get_road_tissuegrp(gf_name))
 		elif folder == 'EID':
 			gf_directory.append(_get_EID(gf_name,gf_group))
+		elif folder == 'source':
+			gf_directory.append(_get_source(gf_name,gf_group))
 
 	gf_directory = "/".join(gf_directory)
 	return os.path.join(outputdir,gf_directory)
@@ -652,10 +653,9 @@ gf_grp_sett = {
 	"DNase_imputed_narrowPeak": {'prep_method': preparebed,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/narrowPeak"},
 	"DNase_imputed_gappedPeak": {'prep_method': preparebed,
-	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak",
+	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak"},
 	"Encode_chromeStates": {'prep_method': preparebed_splitby,
-				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': "/goldenPath/{}/encodeDCC/wgEncodeAwgSegmentation"}}
-
+				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': "/goldenPath/{}/encodeDCC/wgEncodeAwgSegmentation"}
 }
 
 
@@ -709,9 +709,9 @@ if __name__ == "__main__":
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-#		for grp in ["wgEncodeBroadHmm"]:
-		for grp in gf_grp_sett.keys():		
-			create_feature_set(data_dir,args['organism'],grp,None,2)
+		for grp in ["Encode_chromeStates"]:
+#		for grp in gf_grp_sett.keys():		
+			create_feature_set(data_dir,args['organism'],grp,None,10)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
