@@ -5,6 +5,7 @@ import subprocess
 import pdb
 import gzip
 
+
 def remove_headers(datapath):
 	''' Removes all lines that start with special characters, such as header lines.
 	Replaces the datapath file with a file that does not contain header lines.
@@ -151,6 +152,8 @@ class MinMax:
 def write_line(line,path):
 	with open(path, 'a') as writer:
 		writer.write(line+"\n")
+
+
 
 
 

@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 import urllib2
 from grsnp.dbcreator_util import *
 from time import sleep
+from collections import namedtuple
 
 logger = logging.getLogger('genomerunner.dbcreator')
 
@@ -34,6 +35,13 @@ DEBUG = True
 
 class GF_ALREADY_EXISTS(Exception):
     pass
+
+gf_description_colnames = ["file_name","full_path", "URL", "full_description", "category", "category_desc", "cell", "cell_desc",
+	"factor", "factor_desc", "source", "source_desc"]
+GF_description = namedtuple("gf_description",gf_description_colnames)
+
+gf_descriptions = {}
+
 
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
 def download_encode_file(organism,gf_group,gf_file):
@@ -552,7 +560,7 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	return os.path.join(outputdir,gf_directory)
 
 def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = None):
-	outputdir = os.path.join(data_dir,organism)
+	outputdir = os.path.join(data_dir,organism)	
 	min_max_path = os.path.join(outputdir,'minmax.txt')
 	added_features = [] 
 	outpath = ""
@@ -565,12 +573,16 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 	min_max_scores = load_minmax(min_max_path)
 	grp_count,gf_file_paths = 0,[]
 	if "gf_files" in gf_grp_sett[gf_group].keys():
-		gf_file_paths = gf_grp_sett[gf_group]["gf_files"] 
+		gf_file_paths = gf_grp_sett[gf_group]["gf_files"]
+		url = gf_grp_sett[gf_group]['ftp_server'] +  gf_grp_sett[gf_group]['directory'].format(organism)
 	else:
+		url = ""
 		if "ftp_server" in gf_grp_sett[gf_group].keys():
 			gf_file_paths = get_gf_filepaths(organism,gf_group)
+			url = gf_grp_sett[gf_group]['ftp_server'] +  gf_grp_sett[gf_group]['directory'].format(organism)
 		elif "html_server" in gf_grp_sett[gf_group].keys():
 			gf_file_paths = get_road_gf_filepaths(gf_group)
+			url = gf_grp_sett[gf_group]['html_server'] +  gf_grp_sett[gf_group]['directory'].format(organism)
 	for gf_file in gf_file_paths:
 		# check if gf_type is supported
 		if gf_file.replace(".gz",'').split(".")[-1] not in preparebed.keys():
@@ -590,6 +602,16 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			# converts the ucsc data into proper bed format			
 			try:
 				[minmax_score, gf_paths] = gf_grp_sett[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
+				for f in gf_paths:
+					# get the relative full path i.e. grsnp/ENCODE/....
+					relative_outputdir = "/grsnp_db/" + os.path.split(f)[0].split("/grsnp_db")[-1]
+					rel_f = os.path.join(relative_outputdir, os.path.split(f)[-1]) 
+					if not rel_f in gf_descriptions.keys():
+						f_parts = base_name(f).split("-")
+						gf_descriptions[rel_f] = GF_description(**{"file_name": base_name(f), "full_path": rel_f, "URL": url+"/" + gf_file,
+							"full_description": "", "category": gf_group, "category_desc": "", "cell": f_parts[0], "cell_desc": "",	
+							"factor": f_parts[1], "factor_desc": "", "source": f_parts[2], "source_desc": ""})
+				_write_description_file(data_dir,organism)
 			except GF_ALREADY_EXISTS:
 				logger.info("{} already exists, skipping extraction".format(outpath.replace(".gz","")))
 				continue
@@ -621,6 +643,31 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 	# logger.info( "The following types are not supported (includes all 'big' file types):\n " + str(notsuptypes))
 	# logger.info("The following features were added to the database: \n{}".format(added_features))
 	return "Created UCSC database"
+
+def _write_description_file(data_dir,organism):
+	# write gf_description to temp file which is renamed after writing is complete
+	outpath = os.path.join(data_dir,organism,"gf_descriptions.txt")
+	with open(outpath + ".tmp",'wb') as writer:
+		writer.write("\t".join(gf_description_colnames)+"\n")
+		for full_path,gf_desc in gf_descriptions.iteritems():
+			writer.write("\t".join([str(i) for i in gf_desc])+"\n")
+	if os.path.exists(outpath):
+		os.remove(outpath)
+	os.rename(outpath+".tmp",outpath)
+
+def _read_description_file(data_dir,organism):
+	descriptions = {}
+	outpath = os.path.join(data_dir,organism,"gf_descriptions.txt")
+	if not os.path.exists(outpath):
+		return descriptions
+	with open(outpath) as reader:
+		while True:			
+			line = reader.readline().rstrip('\n')
+			if line == "":
+				break
+			row = GF_description(**dict(zip(gf_description_colnames, line.split("\t"))))
+			descriptions[row.full_path] = row
+	return descriptions
 
 def update_progress(progress):
     print '\r[{0}] {1}%'.format('#'*(progress/10), progress),
@@ -721,13 +768,13 @@ if __name__ == "__main__":
 	args['score'] = set(args['score'].split(',')) # remove duplicate scores
 	data_dir=os.path.join(args["data_dir"],'grsnp_db')
 
-
 	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
 		global download_dir, gf_grp_sett
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
-		for grp in ["wgEncodeRegTfbsClustered"]:
-#		for grp in gf_grp_sett.keys():
+		gf_descriptions = _read_description_file(data_dir,args["organism"])
+#		for grp in ["wgEncodeBroadHistone"]:
+		for grp in gf_grp_sett.keys():
 			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
