@@ -67,19 +67,26 @@ def filter_by_score(gf_path_input,gf_path_output,thresh_score):
 	have a score greater than the thresh_score threshold.
 	gf_path_output should be WITHOUT file extension
 	'''
+
 	tmp_path = gf_path_output+'.temp'
+	# check if score column exists
+	with gzip.open(gf_path_input) as dr:
+		line = dr.readline()
+		if len(line.split("\t")) < 5:
+			return []
 	with open(tmp_path,"wb") as bed:
 		with gzip.open(gf_path_input) as dr:
 			while True:
 				line = dr.readline().rstrip('\n')
 				cur_gf = line.split('\t')
-				if line == "" or len(cur_gf) < 5:
+				if line == "":
 					break
 				score  = cur_gf[4]
 				# if the score is >= to the threshold, output that GF
 				if float(score) >= float(thresh_score):
 					bed.write(line+"\n")
 	sort_convert_to_bgzip(tmp_path,gf_path_output+'.bed.gz')
+	return gf_path_output + '.bed.gz'
 
 def filter_by_strand(data_dir,gf_path):
 	''' Read in the gf data from gf_path and create new GFs for each strand.
@@ -90,13 +97,23 @@ def filter_by_strand(data_dir,gf_path):
 	plus_path, minus_path = os.path.join(data_dir+"_plus/",sub_data_path+'.temp'),os.path.join(data_dir+"_minus/",sub_data_path+'.temp')
 	if not os.path.exists(os.path.split(plus_path)[0]): os.makedirs(os.path.split(plus_path)[0])
 	if not os.path.exists(os.path.split(minus_path)[0]): os.makedirs(os.path.split(minus_path)[0])
+	final_plus_path = os.path.join(os.path.split(plus_path)[0],base_name(plus_path)+'.bed.gz')
+	final_minus_path = os.path.join(os.path.split(minus_path)[0],base_name(minus_path)+'.bed.gz')
+	if os.path.exists(final_plus_path) and os.path.exists(final_minus_path):
+		pdb.set_trace()
+		return [final_plus_path,final_minus_path]
 	plus_file,minus_file = open(plus_path,'wb'),open(minus_path,'wb')
 	strand_file = {"+":plus_file,'-':minus_file}
+	# check if strand column exists
+	with gzip.open(gf_path) as dr:
+		line = dr.readline()
+		if len(line.split("\t")) < 6:
+			return []
 	with gzip.open(gf_path) as dr:		
 		while True:
 			line = dr.readline().rstrip('\n')
-			cur_gf =  line.split('\t')
-			if line == "" or len(cur_gf) < 6:
+			cur_gf =  line.split('\t')			
+			if line == "":
 				break
 			strand  = cur_gf[5]
 			# check if a valid strand exists and output to the appropriate file.
@@ -104,15 +121,19 @@ def filter_by_strand(data_dir,gf_path):
 				strand_file[strand].write(line+"\n")
 	plus_file.close()
 	minus_file.close()
-	# remove the  strand filtered gf file if empty 
+	# remove the  strand filtered gf file if empty
+	strand_paths = []
 	if os.stat(plus_path).st_size==0:
 		os.remove(plus_path)
 	else:
-		sort_convert_to_bgzip(plus_path,os.path.join(os.path.split(plus_path)[0],base_name(plus_path)+'.bed.gz'))
+		sort_convert_to_bgzip(plus_path,final_plus_path)
+		strand_paths.append(final_plus_path)
 	if os.stat(minus_path).st_size==0:
 		os.remove(minus_path)
 	else:
-		sort_convert_to_bgzip(minus_path,os.path.join(os.path.split(minus_path)[0],base_name(minus_path)+'.bed.gz'))
+		sort_convert_to_bgzip(minus_path,final_minus_path)
+		strand_paths.append(final_minus_path)
+	return strand_paths
 
 
 class MinMax:

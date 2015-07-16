@@ -22,6 +22,7 @@ import urllib2
 from grsnp.dbcreator_util import *
 from time import sleep
 from collections import namedtuple
+import numpy as np
 
 logger = logging.getLogger('genomerunner.dbcreator')
 
@@ -175,7 +176,7 @@ def get_road_gf_filepaths(gf_group):
 
 
 
-def _format_bed(line,min_max):
+def _format_bed(line):
 	line = line.split("\t")
 	# removes special characters and the '.' used when a field is blank
 	if len(line) >= 6:
@@ -183,18 +184,16 @@ def _format_bed(line,min_max):
 		line[4] = line[4] if line[4] != "." else "0"
 		line[5] = line[5] if line[5] in ["+","-"] else ""
 		line = line[0:6]
-		min_max.update_minmax(line[4])
 	elif len(line) == 5:
 		line[3] = ''.join(e for e in line[3] if e.isalnum())
 		line[4] = line[4] if line[4] != "." else "0"
 		line = line[0:5]
-		min_max.update_minmax(line[4])
 	elif len(line) == 4:
 		line[3] = ''.join(e for e in line[3] if e.isalnum())
 		line = line[0:4]
 	return line
 
-def _format_peak(line,min_max):
+def _format_peak(line):
 	'''Handles broadPeak and narrowPeak. Returns line of formated bed as a list of fields
 	'''
 	line = line.split("\t")
@@ -203,10 +202,9 @@ def _format_peak(line,min_max):
 	line[4] = line[6] if line[6] != "." else "0" # for peak data we use the SignalValue column
 	line[5] = line[5] if line[5] in ["+","-"] else ""
 	line = line[0:6]
-	min_max.update_minmax(line[4])
 	return line
 
-def _format_gapped_peak(line,min_max):
+def _format_gapped_peak(line):
 	'''Handles gappedPeak. Returns line of formated bed as a list of fields
 	'''
 	line = line.split("\t")
@@ -215,10 +213,9 @@ def _format_gapped_peak(line,min_max):
 	line[4] = line[12] if line[12] != "." else "0" # for peak data we use the SignalValue column
 	line[5] = line[5] if line[5] in ["+","-"] else ""
 	line = line[0:6]
-	min_max.update_minmax(line[4])
 	return line
 
-def _format_bedRNA(line,min_max):
+def _format_bedRNA(line):
 	offset = 1
 	line = line.split("\t")
 	# removes special characters and the '.' used when a field is blank
@@ -227,12 +224,10 @@ def _format_bedRNA(line,min_max):
 		line[5] = line[5] if line[5] != "." else "0"
 		line[6] = line[6] if line[6] in ["+","-"] else ""
 		line = line[1:7]
-		min_max.update_minmax(line[5])
 	elif len(line) == 6:
 		line[4] = ''.join(e for e in line[4] if e.isalnum())
 		line[5] = line[5] if line[5] != "." else "0"
 		line = line[1:6]
-		min_max.update_minmax(line[5])
 	elif len(line) == 5:
 		line[4] = ''.join(e for e in line[4] if e.isalnum())
 		line = line[1:5]
@@ -288,7 +283,6 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 	output_gf_file = '_'.join(z_gf_file.split('.')[:-2]) # replace all other '.' with '_' for rest of filename
 	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
 
-	min_max = MinMax() # keep track of the min and max score			
 	file_writers = {} # {'cur_split_value': file_writer_object} A writer is created for each name field
 	if not os.path.exists(gf_outputdir):
 		os.makedirs(gf_outputdir)
@@ -296,7 +290,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		line = infile.readline().rstrip('\n')
 		if line == "":
 			break
-		cur_gf = preparebed[out_gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
+		cur_gf = preparebed[out_gf_file.replace(".gz",'').split(".")[-1]](line)
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
 		if cur_split_value not in file_writers:
@@ -328,10 +322,10 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		new_path = os.path.join(o_dir,''.join(e for e in base_name(f_path) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
 		sort_convert_to_bgzip(f_path,new_path)
 		converted_paths.append(new_path)
-	return [min_max.str_minmax(),converted_paths]
+	return converted_paths
 
 def preparebed(gf_outputdir, organism, gf_group, gf_file):
-	''' Converts the file to the correct bed format, sorts it, and gzips it. Returns the min_max stats, 
+	''' Converts the file to the correct bed format, sorts it, and gzips it.
 	gf_outputdir: the directory in which the gf_folder should be created in which the split GFs should be outputted to
 	EX: /[root]/grsnp_db/[organism]/[tier]/[celltype]/
 
@@ -366,18 +360,17 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	else:
 		infile = open(dwnl_file)
 	# convert it to bed format	
-	min_max = MinMax() # keep track of the min and max score
 	with open(f_path,'wb') as writer:
 		while True:
 			line = infile.readline().rstrip('\n')
 			if line == "":
 				break
-			cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line,min_max)
+			cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line)
 			writer.write("\t".join(cur_gf)+"\n")
 	# convert all created files into gzip
 	sort_convert_to_bgzip(f_path,new_path)
 	infile.close()
-	return [min_max.str_minmax(),[new_path]]
+	return [new_path]
 
 
 	
@@ -561,7 +554,6 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 
 def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = None):
 	outputdir = os.path.join(data_dir,organism)	
-	min_max_path = os.path.join(outputdir,'minmax.txt')
 	added_features = [] 
 	outpath = ""
 	prog, num = 0,len(gfs)
@@ -570,7 +562,6 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 	open(summary_path,'wb')
 
 
-	min_max_scores = load_minmax(min_max_path)
 	grp_count,gf_file_paths = 0,[]
 	if "gf_files" in gf_grp_sett[gf_group].keys():
 		gf_file_paths = gf_grp_sett[gf_group]["gf_files"]
@@ -599,9 +590,10 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			# removes the .temp file, to prevent duplicate data from being written
 			if os.path.exists(outpath+".temp"):
 				os.remove(outpath+".temp")
-			# converts the ucsc data into proper bed format			
 			try:
-				[minmax_score, gf_paths] = gf_grp_sett[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
+				# converts the ucsc data into proper bed format			
+				gf_paths = gf_grp_sett[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
+				# output description
 				for f in gf_paths:
 					# get the relative full path i.e. grsnp/ENCODE/....
 					relative_outputdir = "/grsnp_db/" + os.path.split(f)[0].split("/grsnp_db")[-1]
@@ -615,11 +607,7 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			except GF_ALREADY_EXISTS:
 				logger.info("{} already exists, skipping extraction".format(outpath.replace(".gz","")))
 				continue
-			# output minmax stats
-			for f in gf_paths:
-				min_max_scores[f] = minmax_score
-			save_minmax(min_max_scores,min_max_path)
-
+			
 			# cannot detect type, skip
 			if gf_type == "failed":
 				write_line("\t".join([gf_file,"Not supported","None"]),summary_path)
@@ -743,7 +731,7 @@ if __name__ == "__main__":
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
 	parser.add_argument('--featuregroups','-f', nargs="?", help='The names of the specific genomic feature groups to download.  List available for hg19 at ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/', default="")
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
-	parser.add_argument('--score', '-s', help="Commas separated list of score percentiles.", nargs='?',default="")
+	parser.add_argument('--quantiles', '-s', help="Commas separated list of score quantiles.", nargs='?',default="")
 	#parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
 	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int, default=None)
 
@@ -762,10 +750,11 @@ if __name__ == "__main__":
 	if not args["data_dir"]:
 		print "ERROR: --data_dir is required"
 		sys.exit()
-
-	if args['score'] == "":
-		args['score'] = "25,50,75"
-	args['score'] = set(args['score'].split(',')) # remove duplicate scores
+	if args['quantiles'] == "":
+		quantiles = [25,50,75]
+	else:
+		quantiles = set(map(int,args['quantiles'].split(','))) # remove duplicate scores
+		quantiles = sorted(list(quantiles))
 	data_dir=os.path.join(args["data_dir"],'grsnp_db')
 
 	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
@@ -773,60 +762,72 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
-#		for grp in ["wgEncodeBroadHistone"]:
+#		for grp in ["DNase_processed_broadPeak"]:
 		for grp in gf_grp_sett.keys():
 			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
 
-	# load score from minmax.txt file created earlier
-	minmax = load_minmax(os.path.join(data_dir,args['organism'],"minmax.txt"))		
+	### Second Step: Create subdirectories for score and filter data by score quantiles
+	# create sub directories for score percentiles and populate with score-filtered GF data
+	# gather all directories (groups) in the database
+	print "Filtering GFs by strand and score..."
+	orgdir = os.path.join(data_dir,args['organism'])
+	dirs = [name for name in os.listdir(orgdir)
+		if os.path.isdir(os.path.join(orgdir, name))]
+	for d in dirs:
+		# gather all paths
+		gfs = []
+		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
+				gfs += [os.path.join(base,f) for f 	 
+					in files if f.endswith(('.gz'))]
+		for gf_path in gfs:			
+			print "Filtering {} ...".format(gf_path)
+			# filter the original GF by strand. filter_by_strand checks if this step has been done
+			strand_paths = filter_by_strand(data_dir,gf_path)
+			# filter original and strand filtered files by score
+			for p in [gf_path] + strand_paths:
+				# check if score column exists
+				with gzip.open(p) as dr:
+					line = dr.readline().rstrip('\n')
+					if len(line.split('\t')) < 5:
+						print "{} lacks score column..."
+						continue
+				# check if the file has already been processed.
+				# Done before loading into numpy array since that takes time
+				scores_processed = True
+				for i in range(len(quantiles)):
+					gf_scorepath_out = p.replace('/grsnp_db','/grsnp_db_{}'.format(quantiles[i]))
+					if os.path.exists(gf_scorepath_out):
+						scores_processed = False
+				if not scores_processed:
+					continue
+				# read in score column into numpy array
+				dt = np.loadtxt(p, usecols=(4,), delimiter  = '\t') 
+				score_min,score_max = np.min(dt),np.max(dt)
+				if score_max == score_min:
+					print "Min_score == Max_score == {} ...skipping".format(np.round(score_min,2))
+					continue
+				# calculate the quantiles using numpy
+				quantile_thresh = np.percentile(dt,quantiles)
+				# filter by the quantile thresholds
+				for i in range(len(quantile_thresh)):
+					gf_scorepath_out = p.replace('/grsnp_db','/grsnp_db_{}'.format(quantiles[i]))					
+					if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
+						os.makedirs(os.path.split(gf_scorepath_out)[0])
+					# filepath without extension is needed by the filter function
+					gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
+					# filter by score
+					filter_by_score(p, gf_path_out_woext,quantile_thresh[i])
+				logger.info("MinMax stats for {}: Min={}, Max={}, quantile values={}".format(base_name(p), score_min,score_max,np.round(quantile_thresh,2)))
 
-	sys.exit
+	root_dir = os.path.dirname(os.path.realpath(__file__))
+	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
+	with open("grsnp_db_readme.txt","wb") as writer:
+		writer.write(readme)
+	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
 
-#	### Second Step: Create subdirectories for score and filter data by score percentile
-#	# create sub directories for score percentiles and populate with score-filtered GF data
-#	# gather all directories (groups) in the database
-#	print "Filtering GFs by strand and score..."
-#	orgdir = os.path.join(data_dir,args['organism'])
-#	dirs = [name for name in os.listdir(orgdir)
-#		if os.path.isdir(os.path.join(orgdir, name))]
-#	for d in dirs:
-#		# gather all paths
-#		gfs = []
-#		for base, tmp, files in os.walk(os.path.join(orgdir,d)):
-#				gfs += [os.path.join(base,f) for f 	 
-#					in files if f.endswith(('.gz'))]
-#		for gf_path in gfs: 
-#			print "Filtering {} ...".format(gf_path)
-#			# filter the original GF by strand
-#			filter_by_strand(data_dir,gf_path)
-#			for pct_score in args['score']:		
-#				[score_min,score_max] = minmax[gf_path].split(",")
-#				# calculate threshold score
-#				if score_min == 'NA':
-#					continue
-#				score_min,score_max = float(score_min),float(score_max) 
-#				thresh_score = score_min + (score_max-score_min)*float(pct_score)/100
-#				logger.info("MinMax stats for {}: Min={}, Max={}, {} pct_thresh={}".format(base_name(gf_path), score_min,score_max,pct_score,thresh_score))
-#				# is this safe? It searches /dirpath/grsnp_db/subdirs/gf.txt and replaces /grsnp_db/ with /grsnp_db_[score]/
-#				gf_scorepath_out =gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
-#				if not os.path.exists(os.path.split(gf_scorepath_out)[0]):
-#					os.makedirs(os.path.split(gf_scorepath_out)[0])
-#				gf_path_out_woext = os.path.join(os.path.split(gf_scorepath_out)[0],base_name(gf_scorepath_out))
-#				# filter by score
-#				filter_by_score(gf_path, gf_path_out_woext,thresh_score)
-#				# filter the score filtered GF by strand				
-#				filter_by_strand(data_dir+"_{}".format(pct_score),gf_scorepath_out)
-#
-#
-#	root_dir = os.path.dirname(os.path.realpath(__file__))
-#	readme = open(os.path.join(root_dir,"grsnp_db_readme.txt")).read()
-#	with open("grsnp_db_readme.txt","wb") as writer:
-#		writer.write(readme)
-#	print "FINISHED: Downloaded files from UCSC are placed in {}.  Database created in {}".format(os.path.join(args["data_dir"],"downloads"),os.path.join(args["data_dir"],"grsnp_db`"))
-#
 
 
 
