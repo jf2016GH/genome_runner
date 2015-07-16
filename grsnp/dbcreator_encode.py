@@ -306,7 +306,8 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 			form_dwnl_file = tmp_name + '-' + _get_source(gf_file, gf_group)
 
 			out_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz.temp"
-			if os.path.exists(out_path):
+			new_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
+			if os.path.exists(new_path):
 				raise GF_ALREADY_EXISTS("{} already exists. Not going to overwrite it.".format(out_path))
 			file_writers[cur_split_value] = open(out_path,'wb')
 			full_gf_paths.append(out_path)
@@ -762,7 +763,7 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
-#		for grp in ["DNase_processed_broadPeak"]:
+#		for grp in ["Encode_chromeStates"]:
 		for grp in gf_grp_sett.keys():
 			create_feature_set(data_dir,args['organism'],grp,None,2)
 	else:
