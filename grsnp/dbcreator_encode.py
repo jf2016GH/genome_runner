@@ -252,7 +252,7 @@ def _get_tier(line,outputdir): # Generating paths for the ENCODE data tables usi
 	else:
 		Tier = 'Tier3'
 		with open(os.path.join(outputdir,"missing_tier.log"),'a') as writer:
-			writer.write(line)
+			writer.write(line+"\n")
 
 	return Tier
 
@@ -489,7 +489,12 @@ def _get_formated_file_name(gf_group,gf_name):
 	elif rfold == "ENCODE":	
 		if gf_name.startswith(padding[gf_group]):
 			gf_name = gf_name[len(padding[gf_group]):]
-		gf_name = gf_name.replace("Histone","")
+		# Histone is special case, we append this to the source later
+		if "Histone" in gf_name:
+			gf_name = gf_name.replace("Histone","")
+			source = "Histone"
+		else: source = ""
+		# split filename by capital letters
 		categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
 		# get the cell type
 		cell_type = categories[1]
@@ -498,7 +503,7 @@ def _get_formated_file_name(gf_group,gf_name):
 			gf_name = gf_name.replace("8988t","Abc") # replace with dummy cell_type so splitting by letters works
 			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
 		# get source
-		source = categories[0]
+		source = categories[0] + source
 		# get factor
 		if gf_group == "wgEncodeAwgDnaseUniform":
 			factor = 'DNase'
@@ -765,7 +770,7 @@ if __name__ == "__main__":
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
 #		for grp in ["Encode_chromeStates"]:
 		for grp in gf_grp_sett.keys():
-			create_feature_set(data_dir,args['organism'],grp,None,2)
+			create_feature_set(data_dir,args['organism'],grp,None,5)
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()

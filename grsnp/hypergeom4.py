@@ -142,13 +142,6 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     gf_name = base_name(gf_path)
     sign,pval,odds_ratio,did_chi_square = calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path)
 
-
-    # write out to the enrichment result file
-    er_result_path = os.path.join(run_files_dir,"enrichment")
-    if not os.path.exists(er_result_path): os.mkdir(er_result_path)
-    er_result_path = os.path.join(er_result_path,base_name(foi_name)+".txt")
-    # writes the first line as the header line
-    if not os.path.exists(er_result_path): write_output("GF Name\tP-value\tDirection\n",er_result_path)
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
     else: direction =  "underrepresented"
@@ -182,7 +175,6 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
                 "Chi-squared" if did_chi_square else "Fisher-Exact",
                 strprnd,strpval])) + "\n",detailed_outpath)
 
-    write_output("\t".join([gf_name,"%.2e" % pval if type(pval) != type("") else pval,direction])+"\n",er_result_path) 
     if pval < 1E-307:
         # set to value obtained from sys.float_info.min_10_exp
         pval = 1E-306   
@@ -281,214 +273,6 @@ def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
             out = commands.getstatusoutput(command)
         paths.append(rnd_snp_path)
     return paths
-
-def adjust_pvalue(input_path,method):
-    ''' Uses R to adjust the pvalues
-    '''
-    try:
-        if method == "None": return
-        saved_stdout, saved_stderr = sys.stdout, sys.stderr
-        sys.stdout = sys.stderr = open(os.devnull, "w")
-        r_script = """
-            t5 = as.matrix(read.table(\""""+input_path+"""\",sep="\t", header=T, row.names=1))
-
-            rptemp <- t5
-            if(nrow(t5) <=1){
-                rp1 <- abs(t5)
-            } else {
-                rp1 <- apply(abs(t5), 2, function(x) {p.adjust(x, \""""+method+"""\")})
-            }
-            for (i in 1:nrow(t5)){
-              for (j in (1:ncol(t5))) {
-                if (rptemp[i,j] < 0) { rp1[i,j] <- -1*rp1[i,j]}
-              }
-            }
-            write.table(rp1,\""""+input_path+"""\",sep="\t")
-        """
-        robjects.r(r_script)
-        sys.stdout, sys.stderr = saved_stdout, saved_stderr
-        
-    except Exception, e:
-        logger.error("R CRASHED")
-        logger.error(traceback.print_exc())
-        logger.error(str(e))
-
-def adjust_detailed_pvalue(input_path,method):   
-    try:
-        if method == "None": return
-        saved_stdout, saved_stderr = sys.stdout, sys.stderr
-        sys.stdout = sys.stderr = open(os.devnull, "w")
-        r_script = """
-            t5 <- as.data.frame(read.table(\""""+input_path+"""\", sep="\t", header=TRUE))
-            if(length(t5$P.value) <= 1) {
-                rp1 <- abs(t5$P.value)
-            } else {
-                rp1 <- p.adjust(abs(t5$P.value))
-            }
-            for (i in 1:length(t5$P.value)) {
-              if(t5$P.value[i] < 0) {
-                rp1[i] <- -1*rp1[i]
-              } 
-            }
-
-            t5 <- cbind(t5, P.adj=rp1)
-
-            write.table(t5, \""""+input_path+"""\", sep="\t", row.names=F,quote=F)
-
-        """
-        robjects.r(r_script)
-        sys.stdout, sys.stderr = saved_stdout, saved_stderr
-        
-    except Exception, e:
-        logger.error("R CRASHED")
-        logger.error(traceback.print_exc())        
-        logger.error(str(e))
-
-def cluster_matrix(input_path,output_path):
-    '''
-    Takes the matrix file outputted by genomerunner and clusters it in R
-    '''  
-    try:      
-        pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
-        saved_stdout, saved_stderr = sys.stdout, sys.stderr
-        sys.stdout = sys.stderr = open(os.devnull, "w")
-        r_script = """t5 = as.matrix(read.table("{}"))                     
-                        t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), , drop=F]) # Remove rows with all values below cutoff 2 (p-value 0.01)
-                        if (nrow(t5) > 0 && ncol(t5) > 0) {{
-                            # Log transform matrix and keep correct sign
-                            for (i in 1:nrow(t5)) {{
-                              for (j in 1:ncol(t5)) {{
-                                if (t5[i, j] < 0) {{ t5[i, j] <- log10(abs(t5[i, j]))}} else {{ t5[i,j] <- -log10(t5[i,j])}}
-                              }}
-                            }}
-                            if (nrow(t5) >=1 && ncol(t5) >= 1) {{
-                                library(gplots)
-                                library(RColorBrewer)
-                                color<-colorRampPalette(c("blue","yellow"))
-                                pdf(file="{}")
-                                if (nrow(t5) > 1 && ncol(t5) > 1) {{
-                                    h = heatmap.2(t5, margins=c(20,20), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(t5)),cexCol=1/log10(nrow(t5)))
-                                    write.table(t(h$carpet),"{}",sep="\t")
-                                }} else {{
-                                    image(t(t5[order(t5[, 1], decreasing=T), , drop=F]), col=color(nrow(t5)))
-                                    write.table(t5[order(t5[, 1], decreasing=T), , drop=F],"{}",sep="\t")
-                                }}
-                                dev.off()
-                            }}
-                        }} else {{
-                            write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
-                        }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
-        robjects.r(r_script)
-        sys.stdout, sys.stderr = saved_stdout, saved_stderr
-        # write matrices in json format     
-        json_mat = []       
-        mat = open(output_path).read()      
-        json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha": 0.05,"matrix": mat})        
-        with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:       
-            simplejson.dump(json_mat,f)
-    except Exception, e:
-        logger.error("R CRASHED: cluster_matrix")
-        logger.error(traceback.print_exc())        
-        logger.error(str(e))
-    return output_path    
-
-def cluster_sor_matrix(input_path,output_path):
-    '''
-    Takes the matrix file outputted by genomerunner and clusters it in R
-    '''  
-    try:      
-        pdf_outpath = ".".join(output_path.split(".")[:-1] + ["pdf"])
-        saved_stdout, saved_stderr = sys.stdout, sys.stderr
-        sys.stdout = sys.stderr = open(os.devnull, "w")
-        r_script = """t5 = as.matrix(read.table("{}"))                     
-                        t5<-as.matrix(t5[apply(t5, 1, function(row) {{sum(abs(row) < 0.01) >= 1}}), , drop=F]) # Remove rows with all values below cutoff 2 (p-value 0.01)
-                        if (nrow(t5) > 0 && ncol(t5) > 0) {{
-                            if (nrow(t5) >=1 && ncol(t5) >= 1) {{
-                                library(gplots)
-                                library(RColorBrewer)
-                                color<-colorRampPalette(c("blue","yellow"))
-                                pdf(file="{}")
-                                if (nrow(t5) > 1 && ncol(t5) > 1) {{
-                                    h = heatmap.2(t5, margins=c(20,20), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(t5)),cexCol=1/log10(nrow(t5)))
-                                    write.table(t(h$carpet),"{}",sep="\t")
-                                }} else {{
-                                    image(t(t5[order(t5[, 1], decreasing=T), , drop=F]), col=color(nrow(t5)))
-                                    write.table(t5[order(t5[, 1], decreasing=T), , drop=F],"{}",sep="\t")
-                                }}
-                                dev.off()
-                            }}
-                        }} else {{
-                            write.table("ERROR: Nothing significant","{}",sep="\t",row.names=F,col.names=F)
-                        }}""".format(input_path,pdf_outpath,output_path,output_path,output_path)
-        robjects.r(r_script)
-        sys.stdout, sys.stderr = saved_stdout, saved_stderr
-        # write matrices in json format     
-        json_mat = []       
-        mat = open(output_path).read()      
-        json_mat.append({"log": True,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha": 0.05,"matrix": mat})        
-        with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:       
-            simplejson.dump(json_mat,f)
-    except Exception, e:
-        logger.error("R CRASHED: cluster_matrix")
-        logger.error(traceback.print_exc())        
-        logger.error(str(e))
-    return output_path  
-
-
-def pearsons_cor_matrix(matrix_path,out_dir):
-    try:
-        output_path = os.path.join(out_dir,"pcc_matrix.txt")
-        pval_output_path = os.path.join(os.path.split(output_path)[0], base_name(output_path)+"_pvalue.txt")
-        pdf_outpath = ".".join(output_path.split(".")[:-1] + [".pdf"])
-        # check if anything significant is in the clustered matrix
-        with open(matrix_path) as f:
-            tmp = f.read()
-            if tmp.startswith("\"ERROR: Nothing significant\""):
-                # in case of nothing significant, skip pearsons
-                with open(output_path, 'wb') as writer:
-                    writer.write("\"ERROR: Nothing significant\"")
-                return output_path
-        saved_stdout, saved_stderr = sys.stdout, sys.stderr
-        sys.stdout = sys.stderr = open(os.devnull, "w")
-        r_script = """t5 = as.matrix(read.table(\""""+matrix_path+"""\"))
-            cutoff <- -log10(0.1)
-            numofsig <- 1
-            t5<-as.matrix(t5[apply(t5, 1, function(x) sum(abs(x)>cutoff))>=numofsig, apply(t5, 2, function(x) sum(abs(x)>cutoff))>=numofsig])
-                if (dim(t5)[1] > 4 && dim(t5)[2] > 1) {
-                library(Hmisc)
-                library(gplots)
-                library(RColorBrewer)
-                color<-colorRampPalette(c("blue","yellow"))
-                p5<-rcorr(t5, type="spearman")
-                pdf(file=\"""" + pdf_outpath +"""\")
-                dist.method<-"euclidean"
-                hclust.method<-"ward"
-                h<-heatmap.2(as.matrix(p5[[1]]),distfun=function(x){dist(x, method=dist.method)}, hclustfun=function(x){hclust(x, method=hclust.method)},margins=c(25,25), col=color, trace="none", density.info="none", cexRow=1/log10(nrow(p5[[1]])),cexCol=1/log10(nrow(p5[[1]]))) # [[1]] element contains actual PCCs, we cluster them
-                dev.off()
-                write.table(h$carpet,\"""" + output_path + """\",sep="\t") # Write clustering results
-                write.table(p5[[3]][h$rowInd, h$colInd],\""""+pval_output_path+ """\",sep="\t") # [[3]] element contains p-values. We write them using clustering order
-            } else {
-                write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
-                write.table(paste("ERROR: Cannot run correlation analysis on", dim(t5)[1], "x", dim(t5)[2], "matrix. Should be at least 5 x 2. Analyze more sets of SNPs and select more genomic features"),\"""" + pval_output_path + """\",sep="\t", row.names=F, col.names=F) # Write clustering results            
-
-            }"""
-        #pcc = open(output_path).read() 
-        #if "PCC can't be performed" not in pcc:
-        robjects.r(r_script)
-        sys.stdout, sys.stderr = saved_stdout, saved_stderr
-        # write matrices in json format     
-        mat = open(output_path).read()      
-        mat_pval = open(pval_output_path).read()        
-        json_mat = []       
-        json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": mat})      
-        json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": mat_pval})      
-        with open(".".join(output_path.split(".")[:-1]+ ["json"]),'wb') as f:       
-            simplejson.dump(json_mat,f)
-    except Exception, e:
-        logger.error("R CRASHED: pearsons_cor_matrix")
-        logger.error(traceback.print_exc())        
-        logger.error(str(e))
-    return output_path
 
 
 def get_annotation(foi,gfs):
@@ -613,13 +397,6 @@ def _zip_run_files(fois,gfs,bg_path,outdir,id=""):
     '''
     File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
     '''    
-
-    # zip enrichment folder
-    en_dir = os.path.join(outdir,'enrichment')
-    z_en = zipfile.ZipFile(os.path.join(outdir,'enrichment.zip'),'a')
-    for f in os.listdir(en_dir):
-        z_en.write(os.path.join(en_dir,f),f)
-    z_en.close()
 
     # zip annotation result folder if it exists
     anno_dir = os.path.join(outdir,'annotations')
@@ -888,8 +665,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             track_descriptions = [x.split("\t") for x in open(decriptions_path).read().split("\n") if x != ""]
         # set output settings
         detailed_outpath =  os.path.join(outdir, "detailed.txt") 
-        matrix_outpath = os.path.join(outdir,"matrix.txt")
-        matrix_sor_outpath = os.path.join(outdir,"matrix_shrunk_or.txt")
+        matrix_outpath = os.path.join(outdir,"matrix_PVAL.txt")
+        matrix_sor_outpath = os.path.join(outdir,"matrix_OR.txt")
         progress_outpath = os.path.join(outdir,".prog")
         _write_progress("Starting analysis.")
         f = open(matrix_outpath,'wb') 
@@ -966,31 +743,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             write_output("\t".join([base_name(gf)] + sors)+"\n",matrix_sor_outpath)
 
             curprog += 1
-        # Adjust p values for the enrichment files
-        list_enr =  [x  for x in os.listdir(enr_path)]
-        for p in list_enr:
-            adjust_detailed_pvalue(os.path.join(enr_path, p),padjust) 
-        
-        if len(gfs) >= 1 and len(good_fois) >= 1:
-            # Adjust the pvalues
-            adjust_pvalue(matrix_outpath,padjust)
-            # Cluster the matrix
-            clust_pval_path =  cluster_matrix(matrix_outpath,os.path.join(outdir,"clustered_pval.txt"))
-            clust_sor_path = cluster_matrix(matrix_sor_outpath,os.path.join(outdir,"clustered_sor.txt"))
-            if len(gfs) > 4:               
-                pearsons_cor_matrix(clust_pval_path,outdir)
-                pearsons_cor_matrix(clust_sor_path,outdir)
-            else:
-                json_mat = []
-                json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "Pearsons","alpha":"","matrix": "ERROR:PCC matrix requires at least a 5 X 2 matrix."})      
-                json_mat.append({"log": False,"neg": "Underrepresented", "pos": "Overrepresented","name": "P-value","alpha":"","matrix": "ERROR:PCC matrix requires at least a 5 X 2 matrix."})      
-                with open(os.path.join(outdir,"pcc_matrix.json"),'wb') as f:   
-                    simplejson.dump(json_mat,f)
-                with open(os.path.join(os.path.join(outdir,"pcc_matrix.txt")),"wb") as wb:
-                    wb.write("ERROR:PCC matrix requires at least a 5 X 2 matrix.")
-        else:
-            with open(os.path.join(outdir,"clustered.txt"),"wb") as wb:
-                wb.write("ERROR:Clustered matrix requires at least a 2 X 2 matrix.")
         if run_annotation:
             logger.info("Annotation started")
             annot_outdir = os.path.join(outdir,"annotations")
