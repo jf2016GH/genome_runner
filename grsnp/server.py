@@ -641,7 +641,7 @@ class WebUI(object):
 		return open(os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")).read()
 	@cherrypy.expose
 	def get_checkboxtree(self,organism,db_version):
-		return open(os.path.join(sett["data_dir"][db_version],organism,"tree.json")).read()
+		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.json")).read()
 
 
 	@cherrypy.expose
