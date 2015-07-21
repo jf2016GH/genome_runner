@@ -85,7 +85,6 @@ class PathNode(defaultdict):
 			s += child._treeview_html()		
 		return s + "</ul>"
 
-
 	def write_treeview_html(self,base,organism):
 		html_path = os.path.join(base,organism,"treeview.html")
 		html = self._treeview_html(id="ucsc") # generate the treeview html code
@@ -160,6 +159,20 @@ class PathNode(defaultdict):
 		html = html + "</select>"
 		return html
 
+	def get_treeview_json(dirname, path=os.path.pathsep):
+		data = []
+		for name in [x for x in os.listdir(dirname) if not x.endswith('.tbi') and not x.endswith('.html') and not x.endswith('.log') and not  x.endswith('.gr') and not x.endswith('.txt') and not x.endswith('.xlsx') and not x.ednswith('.pathsep')]:
+			dct = {}
+			full_path = os.path.join(dirname, name)
+			if os.path.isfile(full_path):
+				dct['text'] = base_name(full_path)
+				dct['data'] = full_path
+			elif os.path.isdir(full_path):
+				dct['text'] = name
+				dct['children'] = dir_to_list(full_path, path=path + name + os.path.pathsep)
+			data.append(dct)
+		return data
+
 def base_name(k):
     return os.path.basename(k).split(".")[0]
 
@@ -179,3 +192,25 @@ def get_database_versions_html(data_dir,db_version):
 		html += "<option value='"+v+"'" + selected +">" + tmp[0] + " - " + tmp[1] +" (" + tmp[2].replace(".","-") + ")" +"</option>"
 	html += "</select>"
 	return [html,db_version]
+
+def write_treeview_json(base):
+	''' Traverses the base directory and creates a json file for the jstree containing the directory structure.
+	base: the data_dir with organism name i.e /home/db_1.---/grsnp_db/hg19
+	'''
+	json_data = _get_treeview_json(base)
+	with open(os.path.join(base,'treeview.json'),'wb') as writer:
+		writer.write(json.dumps(json_data))
+
+def _get_treeview_json(base, path=os.path.pathsep):
+	data = []
+	for name in [x for x in os.listdir(base) if not x.endswith(('.tbi', '.html' ,'.log', '.gr', '.txt', '.xlsx', '.php'))]:
+		dct = {}
+		full_path = os.path.join(base, name)
+		if os.path.isfile(full_path):
+			dct['text'] = base_name(full_path)
+			dct['data'] = full_path
+		elif os.path.isdir(full_path):
+			dct['text'] = name
+			dct['children'] = _get_treeview_json(full_path, path=path + name + os.path.pathsep)
+		data.append(dct)
+	return data

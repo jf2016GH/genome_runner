@@ -44,7 +44,6 @@ logger = logging.getLogger('genomerunner.server')
 
 
 # Each function in this class is a web page 
-# TODO: Fix custom gfs directories.
 class WebUI(object):
 	def __init__(self):		
 		# go through each database directory and create custom_data if it does not exist.
@@ -65,7 +64,7 @@ class WebUI(object):
 				paths.name = "Root"
 				paths.organisms = self.get_org(db_ver) 
 				paths.traverse(os.path.join(db_dir,org))
-				paths.write_treeview_html(db_dir,org)
+				grsnp_path.write_treeview_json(os.path.join(db_dir,org))
 		self._index_html = {}
 
 	@cherrypy.expose
@@ -642,7 +641,7 @@ class WebUI(object):
 		return open(os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")).read()
 	@cherrypy.expose
 	def get_checkboxtree(self,organism,db_version):
-		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.html")).read()
+		return open(os.path.join(sett["data_dir"][db_version],organism,"tree.json")).read()
 
 
 	@cherrypy.expose

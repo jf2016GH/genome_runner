@@ -25,7 +25,7 @@
 </div>
 <form name="frmQuery" action="query" method="post" enctype="multipart/form-data">
 	<div id="content">
-		<div class="well" style="margin-top: -15px; padding: 0px">
+		<div class="well" style="margin-top: -15px; padding: 0px">			
 			<h3>Select Database Version:</h3>
 			${database_versions}		
 			<h3>GenomeRunner: Functional interpretation of SNPs within regulatory context</h3>
@@ -139,17 +139,17 @@
 										<div id="divCheckBox" style="width: 70%; margin:10px; display: table-cell; verticle-align: top; visibility: hidden">
 											<label >Select (categories of) regulatory datasets: </label>
 											<div>
-												<a class="btn" style="margin-top: 9px;"onClick="changeCheckedStateTreeView(true)">Expand All</a>
-												<a class="btn" style="margin-top: 9px;" onClick="changeCheckedStateTreeView(false)">Collapse All</a>
-												<a class="btn" style="margin-top: 9px;" onClick="treeviewCheckAll()">Select All</a>
-												<a class="btn" style="margin-top: 9px" onClick="treeviewUncheckAll()">Deselect all</a>
+												<a class="btn" style="margin-top: 9px;"onClick="$('#jstree_gfs').jstree('open_all');">Expand All</a>
+												<a class="btn" style="margin-top: 9px;" onClick="$('#jstree_gfs').jstree('close_all');">Collapse All</a>
+												<a class="btn" style="margin-top: 9px;" onClick="$('#jstree_gfs').jstree('check_all');">Select All</a>
+												<a class="btn" style="margin-top: 9px" onClick="$('#jstree_gfs').jstree('uncheck_all');">Deselect all</a>
 												<a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a>
 											</div>
-											<div id="treeview-outer" style="padding-top:10px;">
-												<div id="treeview-inner" onClick="viewBoxClick()">
+											<label >Search genomic features</label>
+											<input id="txt_gfs_search" class='input' type="text"></input>
+											<a class="btn" style="margin-top: 9px;" id="treeSelect" onClick="treeviewSelectSearchedClick()">Select</a>
 
-												</div>
-											</div>
+											<div id="jstree_gfs"></div>
 										</div>
 										<div style="margin:10px; display: table-cell;  verticle-align: top; padding-left:10px">
 											<label style="width: 100%; margin: 5px;">Regulatory datasets (aka functional/regulatory/epigenomic data) are mirrored from and organized according to the UCSC genome database scheme. If you know names of the tracks you want to run enrichment analyses with, start typing their names in the search box. Or simply search for keywords, like 'H3K4me1', to see which tracks are available. Use checkboxes in the collapsible TreeView to select categories of regulatory elements</label><br>
