@@ -232,6 +232,7 @@ def calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio):
     ''' Calculates the confidence intervals and the shrunken odds ratio.
         Returns [shrunken_or,ci_lower,ci_upper]
     '''
+    bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
           [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
 
