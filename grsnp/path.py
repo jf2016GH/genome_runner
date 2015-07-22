@@ -197,20 +197,21 @@ def write_treeview_json(base):
 	''' Traverses the base directory and creates a json file for the jstree containing the directory structure.
 	base: the data_dir with organism name i.e /home/db_1.---/grsnp_db/hg19
 	'''
-	json_data = _get_treeview_json(base)
+	base_rel = os.path.split(os.path.split(base)[0])[0]
+	json_data = _get_treeview_json(base,base_rel)
 	with open(os.path.join(base,'treeview.json'),'wb') as writer:
 		writer.write(json.dumps(json_data))
 
-def _get_treeview_json(base, path=os.path.pathsep):
+def _get_treeview_json(base,base_rel, path=os.path.pathsep):
 	data = []
-	for name in [x for x in os.listdir(base) if not x.endswith(('.tbi', '.html' ,'.log', '.gr', '.txt', '.xlsx', '.php'))]:
+	for name in [x for x in os.listdir(base) if not x.endswith(('.tbi', '.html' ,'.log', '.gr', '.txt', '.xlsx', '.php','.json'))]:
 		dct = {}
 		full_path = os.path.join(base, name)
 		if os.path.isfile(full_path):
 			dct['text'] = base_name(full_path)
-			dct['data'] = full_path
+			dct['id'] = "file:"+os.path.relpath(full_path,base_rel)
 		elif os.path.isdir(full_path):
 			dct['text'] = name
-			dct['children'] = _get_treeview_json(full_path, path=path + name + os.path.pathsep)
+			dct['children'] = _get_treeview_json(full_path, base_rel,path=path + name + os.path.pathsep)
 		data.append(dct)
 	return data

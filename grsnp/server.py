@@ -103,7 +103,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
+				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",jstree_gfs="",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -219,35 +219,20 @@ class WebUI(object):
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: Unable to process custom Genome annotation feature"
 
-		# "kwargs" (Keyword Arguments) stands for all the other
-		# fields from the HTML form besides bed_file, niter, name, score, and strand
-		# These other fields are all the tables whose boxes might
-		# have been checked.
-		# Thus with this way of doing things, it is not possible to have a genomicfeature
-		# with one of these reserved names. 
+		
 		organism,run,run_random = "",[],False
-		gfeatures = [k[5:] for k,v in kwargs.items()
-			if k.startswith("file:") and v=="on"]
 
-
-		# gather genomic features from autocomplete textbox. A single item is passed a string, but multiple items are passed as a list		
-		if 'gfs[]' in kwargs.keys():
-			if isinstance(kwargs['gfs[]'],list):
-				gfeatures = gfeatures + [x[5:] for x in kwargs['gfs[]']]
-			else:
-				gfeatures = gfeatures + [kwargs['gfs[]'][5:]]
-
-		gfeatures = set(gfeatures) # remove GFs checked in checkbox tree and also added in textbox
-
+		# add genomic feature tracks loaded via the JStree control
 		with open(gfs,"a") as out_gfs:
-			for g in gfeatures:
-				if (base_name(g) not in list_gfs): 
-					# check if score and/or strand filtered GF data exists
-					g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
-					out_gfs.write(g+"\n")
-				list_gfs.append(base_name(g))
-
-				
+			for k in jstree_gfs.split(','):
+				if k.startswith('file:'):
+					g = k.split(":")[-1]
+					if (base_name(g) not in list_gfs): 
+						# check if score and/or strand filtered GF data exists
+						g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
+						out_gfs.write(g+"\n")
+					print "GFS ",gfs, k
+					list_gfs.append(base_name(g))
 		for k,v in kwargs.items():
 			# organism to use
 			if "organism:" in v:
@@ -312,9 +297,7 @@ class WebUI(object):
 			list_foi = open(f).read().replace(uploads_dir,'/uploads').replace(results_dir,'/results').replace(data_dir,"")
 			with open(f,'wb') as writer:
 				writer.write(list_foi)
-		print "absolute",b
 		b = b.replace(data_dir,'').replace(os.path.split(uploads_dir)[0],"").lstrip("/")
-		print "relative",b
 
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")

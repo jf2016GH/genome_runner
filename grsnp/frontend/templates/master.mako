@@ -68,7 +68,6 @@
       	<script type="text/javascript" src="static/js/backbone.js"></script>
       	<script src="static/js/d3.js" charset="utf-8"></script>
       	<script src='static/js/d3.json_heatmap.js' type="text/javascript"></script>
-      	<script src="static/js/fcbkcomplete.js" type="text/javascript" charset="utf-8"></script>
 		<script type="text/javascript">${script}</script>
 </head>
 <body bgcolor="#A8D5FF">
