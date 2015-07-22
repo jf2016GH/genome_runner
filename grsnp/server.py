@@ -279,7 +279,7 @@ class WebUI(object):
 							break
 						out.write(data)			
 			elif background_data != None and background_data != "":
-				b = os.path.join(upload_dir,"custom.background.bed")
+				b = os.path.join(upload_dir,"custom_background.bed")
 				background_name = "custom.bed"
 				with open(b, "wb") as out:
 					logger.info('Received raw text background data (id={})'.format(id))
