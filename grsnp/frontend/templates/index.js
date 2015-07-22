@@ -135,7 +135,7 @@ $(document).ready(function() {
 			"checkbox" : {
 			     "keep_selected_style" : false
 			   },
-			 "plugins" : [ "checkbox",'search', 'json_data', 'json','core' ]
+			 "plugins" : [ "checkbox",'search', 'sort' ]
 			});
 
 			 var to = false;
