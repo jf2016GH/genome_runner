@@ -71,7 +71,8 @@ $(document).ready(function() {
 		$(".accordion").accordion({
 			collapsible: true,
 			active: false,
-			autoHeight: false
+			autoHeight: false,
+			heightStyle: "content" 
 		});
 	});
 
@@ -86,7 +87,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$("#accfoi").bind('accordionchange',
+	$("#accfoi").bind('accordionactivate',
 			function () {
 				if ($(this).find('.ui-state-active').length == 0){
 					enable_foi_uploads();
@@ -107,7 +108,7 @@ $(document).ready(function() {
 				}
 			});
 
-	$("#accback").bind('accordionchange',
+	$("#accback").bind('accordionactivate',
 			function () {
 				if ($(this).find('.ui-state-active').length == 0){
 					document.getElementById("inputbackgroundfile").disabled=false;
@@ -163,24 +164,7 @@ $(document).ready(function() {
 		$.each($('.jstree-search'), function(i,val){ $('#jstree_gfs').jstree('deselect_node','#'+val.id) })		
 	}
 
-	function viewBoxClick(){
-		var minHeight = 300;
-		var maxHeight = 500;			
-		// resize to the expanded treeview as long as it is less than 500			
-		if ($("#ucsc").height() <= maxHeight) {
-			var oldHeight = $(".slimScrollDiv").height();
-			//$(".slimScrollDiv").css("height", $('#ucsc').height()+'px');
-			$(".slimScrollDiv").height($('#ucsc').height());
-			$("#treeview-inner").height($("#treeview-inner").height() + $(".slimScrollDiv").height() - oldHeight);
 
-		}
-		else if ($("#ucsc").height() > maxHeight){
-			//$(".slimScrollDiv").css("height",maxHeight + 'px');
-			$(".slimScrollDiv").height(maxHeight);
-			$("#treeview-inner").height(maxHeight);
-		}
-
-	}
 
 	function submit_job(){
 		var input = $("<input>")
