@@ -129,12 +129,10 @@ $(document).ready(function() {
 		$('#gfselheader').text('Choose genome annotation features (Loading ...)');
 		$.post('/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text()+"&db_version="+$("#db_version").val(),function(data){
 			// Render the checkboxtree
-			$('#jstree_gfs').jstree({ 'core' : {
-			    'data' : JSON.parse(data)
-			}, 
-			"checkbox" : {
-			     "keep_selected_style" : false
-			   },
+			$('#jstree_gfs').jstree({ 
+				'core' : { 'data' : JSON.parse(data) }, 
+			"checkbox" : { "keep_selected_style": false, },
+			 "search": { "close_opened_onclear": true },
 			 "plugins" : [ "checkbox",'search', 'sort' ]
 			});
 
@@ -143,8 +141,8 @@ $(document).ready(function() {
 			   if(to) { clearTimeout(to); }
 			   to = setTimeout(function () {
 			     var v = $('#txt_gfs_search').val();
-			     if (v.length < 2){ return }; // limit to at least two character in order to select
-			     $('#jstree_gfs').jstree(true).search(v);
+			     if (v.length < 2){ $('#jstree_gfs').jstree(true).clear_search();} // limit to at least two character in order to select
+			     else { $('#jstree_gfs').jstree(true).search(v); }
 			   }, 500);
 			 });
 
@@ -157,8 +155,12 @@ $(document).ready(function() {
 	}
 
 	function treeviewSelectSearchedClick(){
-		$("#jstree_search").jstree("select_node",".stree-search");
+		$.each($('.jstree-search'), function(i,val){ $('#jstree_gfs').jstree('select_node','#'+val.id) })
 
+	}
+
+	function treeviewDeselectSearchedClick(){
+		$.each($('.jstree-search'), function(i,val){ $('#jstree_gfs').jstree('deselect_node','#'+val.id) })		
 	}
 
 	function viewBoxClick(){

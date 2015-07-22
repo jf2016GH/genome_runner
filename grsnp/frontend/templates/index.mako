@@ -135,6 +135,7 @@
 											<label >Search genomic features</label>
 											<input id="txt_gfs_search" class='input' type="text"></input>
 											<a class="btn" style="margin-top: 9px;" id="treeSelect" onClick="treeviewSelectSearchedClick()">Select</a>
+											<a class="btn" style="margin-top: 9px;" id="treeSelect" onClick="treeviewDeselectSearchedClick()">Unselect</a>
 
 											<div id="jstree_gfs"></div>
 										</div>
