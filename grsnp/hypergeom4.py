@@ -196,7 +196,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-              
+    #pdb.set_trace()         
     # Ensure there are no negative values in the ctable
     for i in ctable:
         for k in i:
@@ -209,10 +209,12 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
     else:    
         odds_ratio, pval = scipy.stats.fisher_exact(ctable)
+    if pval == 1.0:
+        odds_ratio = 1
     if odds_ratio == 0.0:
-        odds_ratio = 1e-300
+        odds_ratio = sys.float_info.min
     if np.isinf(odds_ratio):
-        odds_ratio = 1e300
+        odds_ratio = sys.float_info.max
 
     # check for zeros and add 0.5 if one of the cells is 0
     if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
