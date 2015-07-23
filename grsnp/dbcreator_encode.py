@@ -65,11 +65,11 @@ def download_encode_file(organism,gf_group,gf_file):
 		outputpath = os.path.join(download_dir,gf_file)
 		if not os.path.exists(outputpath):
 			ftp = ftplib.FTP(gf_grp_sett[gf_group]['ftp_server'], timeout=1800) # Connection timeout 0.5h
-			ftp.login(username,password)
-			logger.info( 'Downloading {} from UCSC'.format(gf_file))
+			ftp.login(username,password)			
 			with open(outputpath + ".temp",'wb') as fhandle:  
 				global ftp
-				logger.info( 'Downloading {} from UCSC'.format(gf_file))				
+				logger.info( 'Downloading {} from {}'.format(gf_file,
+				gf_grp_sett[gf_group]['ftp_server']+gf_grp_sett[gf_group]['directory'].format(organism)))			
 				ftp.cwd(gf_grp_sett[gf_group]['directory'].format(organism))
 				ftp.retrbinary('RETR ' + "{}".format(gf_file),fhandle.write)
 				os.rename(outputpath+".temp",outputpath)
@@ -111,7 +111,7 @@ def download_roadmap_file(gf_group,gf_file):
 			url = "".join([gf_grp_sett[gf_group]['html_server'],gf_grp_sett[gf_group]['directory'],"/",gf_file])
 			req = urllib2.urlopen(url)
 			CHUNK = 16 * 1024
-			logger.info( 'Downloading {}'.format(gf_file))
+			logger.info( 'Downloading {} from {}'.format(gf_file,url))
 			with open(outputpath + ".temp",'wb') as fp:
 				while True:
 					chunk = req.read(CHUNK)
@@ -768,9 +768,9 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
-#		for grp in ["Encode_chromeStates"]:
-		for grp in gf_grp_sett.keys():
-			create_feature_set(data_dir,args['organism'],grp,None,2) # Remove ',2' limit to create full database
+		for grp in ["chromStates15"]:
+#		for grp in gf_grp_sett.keys():
+			create_feature_set(data_dir,args['organism'],grp,None,6) # Remove ',2' limit to create full database
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
