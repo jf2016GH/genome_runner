@@ -57,7 +57,7 @@
 							</div>
 						</div>
 						<div id="accfoi" class="accordion" style="padding-bottom: 0em;list-style:none;margin-top: 20px">       
-							<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>
+							<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a><img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 							<div>          
 								<table>
 									<tr>
@@ -84,7 +84,7 @@
 								Bed File:
 								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />		
 								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
-									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a></h3>							        
+									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a><img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>							        
 									<table style="margin-bottom:0px; padding-bottom:0px">
 										<tr>
 											<td>
@@ -98,10 +98,10 @@
 						</div>
 					</div>
 					<div class="well" style="padding-bottom:0em">
-						<h3 style="float: left;margin-right: 10px;margin-top: 1px;">3. Select regulatory datasets:</h3>
+						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory datasets<img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 						${custom_gfs}
 						<br>
-						<div id="accordGFSfile" class="accordion" style="padding-bottom: 0.5em;list-style:none; margin-top: 1em;" ><h3  id="accordionheader"><a id='gffileheader' href="#" style="font-size:120%; height: 100%">Upload regulatory bed files</a></h3>
+						<div id="accordGFSfile" class="accordion" style="padding-bottom: 0.5em;list-style:none; margin-top: 1em;" ><h3  id="accordionheader"><a id='gffileheader' href="#" style="font-size:120%; height: 100%">Upload regulatory bed files:<img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></a></h3>
 							<ul>
 								<li id="list-bedbackground">					
 									Bed Files (.bed or .gz):
@@ -111,7 +111,7 @@
 							</ul>
 						</div>
 						<div id="accordGFS" class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 0.5em;" onClick="renderCheckBoxTree()"> 
-							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory datasets</a></h3>
+							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory datasets</a><img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 							<div >								
 								<div id="grfdroplist" style="display: table;">	
 									<div id="divCheckBox" style="width: 70%; margin:15px; display: table-cell; verticle-align: top; visibility: hidden">
@@ -124,13 +124,13 @@
 												<a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a>
 											</div>
 										</div>												
-											<label>Search genomic features</label>
+											<label>Search genomic features<img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
 											<input style="margin-top:1.5em" id="txt_gfs_search" class='input' type="text"></input>
 											<a class="btn" id="treeSelect" onClick="treeviewSelectSearchedClick()">Select</a>
 											<a class="btn" id="treeSelect" onClick="treeviewDeselectSearchedClick()">Unselect</a>
 
 									
-											<div id="jstree_gfs" style="height:300px;overflow:auto"></div>
+											<div id="jstree_gfs" style="height:200px;overflow:auto"></div>
 									</div>
 									
 								</div>			 
