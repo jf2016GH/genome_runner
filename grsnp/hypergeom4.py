@@ -140,7 +140,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     global logger_path
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
-    sign,pval,odds_ratio,did_chi_square = calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path)
+    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path)
 
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
@@ -163,16 +163,12 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
         strpval = "%.2e" % pval if type(pval) != type("") else pval 
         strprnd = "%.2e" % prnd if type(prnd) != type("") else prnd 
 
-    # calculate the shrunken odds ratio and confidence intervals
-    [shrunken_or,ci_lower,ci_upper] = calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio)
-
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
                 "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
                 "%.2f" % ci_lower if type(ci_lower) != type("") else ci_lower, 
                 "%.2f" % ci_upper if type(ci_upper) != type("") else ci_upper, 
                 "%.2f" % shrunken_or if type(shrunken_or) != type("") else shrunken_or,                 
                 "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
-                "Chi-squared" if did_chi_square else "Fisher-Exact",
                 strprnd,strpval])) + "\n",detailed_outpath)
 
     if pval < 1E-307:
@@ -189,51 +185,36 @@ def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     rnd_stats = get_overlap_statistics(gf_path,rnds_paths)
     p_rand = [1]
     for r in rnd_stats:
-        sign,pval,odds_ratio,chi = calculate_p_value(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path)
+        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path)
         p_rand.append(pval)
     return np.min(p_rand)
 
-def calculate_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
-    "Returns [sign,pval,odds_ratio,do_chi_square]"
+def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
+    """Calculates the p-value,confidence intervals and the shrunken odds ratio.
+    Returns [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
+    """
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-              
+    #pdb.set_trace()         
     # Ensure there are no negative values in the ctable
-    do_chi_square = True
     for i in ctable:
         for k in i:
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
                 return [1,1,1,False]
-            if k < 11:
-                do_chi_square = False
 
     if bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
         logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
-    else: 
-        if do_chi_square:        
-            chi_result = scipy.stats.chi2_contingency(ctable)
-            odds_ratio = (ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
-            # from http://www.medcalc.org/calc/odds_ratio.php
-            # Where zeros cause problems with computation of the odds ratio or its standard error, 0.5 is added to all cells (a, b, c, d) (Pagano & Gauvreau, 2000; Deeks & Higgins, 2010).
-            if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
-                odds_ratio = ((ctable[0][0]+0.5)*(ctable[1][1]+0.5))/((ctable[0][1]+0.5)*(ctable[1][0]+0.5))
-            pval = chi_result[1]
-        else:    
-            odds_ratio, pval = scipy.stats.fisher_exact(ctable)
-            if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
-                odds_ratio = ((ctable[0][0]+0.5)*(ctable[1][1]+0.5))/((ctable[0][1]+0.5)*(ctable[1][0]+0.5))
-    sign = -1 if (odds_ratio < 1) else 1
-    return [sign,pval,odds_ratio,do_chi_square]
-
-def calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio):
-    ''' Calculates the confidence intervals and the shrunken odds ratio.
-        Returns [shrunken_or,ci_lower,ci_upper]
-    '''
-    ctable = [[foi_obs, n_fois-foi_obs],
-          [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
+    else:    
+        odds_ratio, pval = scipy.stats.fisher_exact(ctable)
+    if pval == 1.0:
+        odds_ratio = 1
+    if odds_ratio == 0.0:
+        odds_ratio = sys.float_info.min
+    if np.isinf(odds_ratio):
+        odds_ratio = sys.float_info.max
 
     # check for zeros and add 0.5 if one of the cells is 0
     if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
@@ -242,8 +223,9 @@ def calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio):
         ctable[1][0] += 0.5
         ctable[1][1] += 0.5
 
+    # calculate the shrunken odds ratio
     log_or = scipy.log(odds_ratio)
-    conf_coe = 1.96 # the confidence coefficent of a standard norm dist
+    conf_coe = 1.96 # the confidence coefficient of a standard norm dist
     # calculate the standard error
     se = math.sqrt(1/ctable[0][0] + 1/ctable[1][0] + 1/ctable[0][1] + 1/ctable[1][1])
     # calculate the upper and lower confidence interval
@@ -251,12 +233,16 @@ def calculate_shrunken_or(foi_obs,n_fois,bg_obs,n_bgs, odds_ratio):
     ci_lower = scipy.exp(log_or - conf_coe * se)
     # shrunken_or is the ci (either upper or lower) that is closest to 1
     if ci_lower<1 and ci_upper>1:
-        shrunken_or = 1
+        shrunken_or,odds_ratio = 1,1
     else:
+        # find which value is closer to 1
         ci_index = scipy.array([[abs(ci_lower-1),abs(ci_upper-1)]]).argmin()
         shrunken_or = [ci_lower,ci_upper][ci_index]
 
-    return [shrunken_or,ci_lower,ci_upper]
+    sign = -1 if (odds_ratio < 1) else 1
+    return [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
+
+
 
 def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
     paths = []
@@ -704,7 +690,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_sor_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio',"ci_lower","ci_upper", 'shrunken_odds_ratio', 'p_val','test_type','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio',"ci_lower","ci_upper", 'shrunken_odds_ratio', 'p_val','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         # check if any good fois exist after background filtering
         if len(good_fois) == 0:

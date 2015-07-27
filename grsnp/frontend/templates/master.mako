@@ -48,15 +48,17 @@
 		<![endif]-->
 		<link type="text/css" href="static/css/demo_table.css" rel="stylesheet" />
 
-		<link type="text/css" href="static/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />
+		<link type="text/css" href="static/jui/jquery-ui-1.11.4.custom/jquery-ui.custom.min.css" rel="stylesheet" />
 		<link type="text/css" href="static/css/main.css"/>
 		<link rel="stylesheet" href="static/css/combobox.css" type="text/css" media="screen" title="Test Stylesheet" charset="utf-8" />
 		<link type="text/css" href="static/css/TableTools_JUI.css" rel="stylesheet" />
+		<link type="text/css" href="static/themes/default/style.min.css" rel="stylesheet" />
 
 		<script type="text/javascript" src="static/js/jquery.js"></script>
-		<script type="text/javascript" src="static/jui/jquery-ui-1.8.12.custom/js/jquery-ui-1.8.12.custom.min.js"></script>
+		<script type="text/javascript" src="static/jui/jquery-ui-1.11.4.custom/jquery-ui.custom.min.js"></script>
 		<script type="text/javascript" src="static/js/jquery.dataTables.min.js"></script>
 		<script type="text/javascript" src="static/js/ZeroClipboard.js"></script>
+		<script type="text/javascript" src="static/js/jstree.js"></script>
 
 		<script type="text/javascript" src="static/js/TableTools.js"></script>
 		<script src="static/js/bootstrap.min.js"></script>
@@ -66,9 +68,6 @@
       	<script type="text/javascript" src="static/js/backbone.js"></script>
       	<script src="static/js/d3.js" charset="utf-8"></script>
       	<script src='static/js/d3.json_heatmap.js' type="text/javascript"></script>
-      	<script type="text/javascript" src="static/js/jquery.checkboxtree.js"></script>
-      	<script src="static/js/fcbkcomplete.js" type="text/javascript" charset="utf-8"></script>
-		<script src="static/js/jquery.slimScroll.js" type="text/javascript" charset="utf-8"></script>
 		<script type="text/javascript">${script}</script>
 </head>
 <body bgcolor="#A8D5FF">

@@ -12,25 +12,6 @@ $(document).ready(function() {
 	$(".helptooltip").tooltip();	
 });
 
-	// generates both of the heatmap graphs
-function add_heatmaps(){
-
-
-	/*
-	$("#heatmap").heatmap({
-		ajaxuri: "/get_cluster?run_id=${run_id}",
-		dwnl_link_id: "heatmap_download"		
-	});
-	
-	$("#heatmap_cor").heatmap({
-		ajaxuri: "/get_pcc?run_id=${run_id}",
-		dwnl_link_id: "heatmap_cor_download"		
-	});
-
-	return false;
-	*/	
-}
-
 
 
 function update_progress(){
@@ -54,6 +35,8 @@ function update_progress(){
 			clearInterval(refresh_progress);
 		}
 	});
+	get_log();
+	get_detailed();
 }
 
 function get_log(){

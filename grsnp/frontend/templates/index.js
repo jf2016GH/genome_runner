@@ -29,7 +29,8 @@ function page_reload(){
 	window.location = $url;
 }
 
-$(document).ready(function() {
+$(document).ready(function() {	
+
 
 	$("#descriptions").click(function(){
 		var organism = $("#org").val().split(":")[1];
@@ -66,32 +67,15 @@ $(document).ready(function() {
 		$('#org').val("organism:" + getQueryVariable('organism'));}
 	else{$('#org').val("organism:${default_organism}");}
 
-	// Crete autocomplete text box 
-	$.facebooklist('#gfs', '#preadded', '#grfs-auto',{url:$("#db_version").val()+"/"+$('#org').val().split(":")[1]+"/gfs.php",cache:1}, 10, {userfilter:1,casesensetive:0});
-
 	$(function() {
 		$(".accordion").accordion({
 			collapsible: true,
 			active: false,
-			autoHeight: false
+			autoHeight: false,
+			heightStyle: "content" 
 		});
 	});
 
-	// The tooltips
-	/*$('.helptooltip').tipsy({
-		gravity: 'e',html: true,
-		title: function(){
-			var d = $(this).attr("title");
-			return '<p>'+d+'</p>';
-		}				
-	})*/
-
-	// the viewport for the treeview
-	$("#treeview-inner").slimScroll({
-	    	height: $("#ucsc").height(),
-	    	width: '100%',
-	    	alwaysVisible: true
-	});
 	
 	$("#disclaimer").click(function() {
 		// ensure that the user has agreed to the terms of use
@@ -103,7 +87,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$("#accfoi").bind('accordionchange',
+	$("#accfoi").bind('accordionactivate',
 			function () {
 				if ($(this).find('.ui-state-active').length == 0){
 					enable_foi_uploads();
@@ -124,7 +108,7 @@ $(document).ready(function() {
 				}
 			});
 
-	$("#accback").bind('accordionchange',
+	$("#accback").bind('accordionactivate',
 			function () {
 				if ($(this).find('.ui-state-active').length == 0){
 					document.getElementById("inputbackgroundfile").disabled=false;
@@ -145,13 +129,24 @@ $(document).ready(function() {
 	function renderCheckBoxTree() { 		
 		$('#gfselheader').text('Choose genome annotation features (Loading ...)');
 		$.post('/get_checkboxtree?organism='+$("select[name='organism'] option:selected").text()+"&db_version="+$("#db_version").val(),function(data){
-			$('#treeview-inner').html(data);
-			$('#ucsc').checkboxTree({
-				initializeChecked: 'collapsed',
-				initializeUnchecked: 'collapsed',
-				collapseEffect: '',
-				expandEffect: ''
+			// Render the checkboxtree
+			$('#jstree_gfs').jstree({ 
+				'core' : { 'data' : JSON.parse(data) }, 
+			"checkbox" : { "keep_selected_style": false, },
+			 "search": { "close_opened_onclear": true },
+			 "plugins" : [ "checkbox",'search', 'sort' ]
 			});
+
+			 var to = false;
+			 $('#txt_gfs_search').keyup(function () {
+			   if(to) { clearTimeout(to); }
+			   to = setTimeout(function () {
+			     var v = $('#txt_gfs_search').val();
+			     if (v.length < 2){ $('#jstree_gfs').jstree(true).clear_search();} // limit to at least two character in order to select
+			     else { $('#jstree_gfs').jstree(true).search(v); }
+			   }, 500);
+			 });
+
 			// Make the checkbox tree visible
 			$('#divCheckBox').css('visibility','visible');
 			$('#gfselheader').text('Choose genome annotation features');
@@ -159,26 +154,23 @@ $(document).ready(function() {
 		});
 
 	}
-	function viewBoxClick(){
-		var minHeight = 300;
-		var maxHeight = 500;			
-		// resize to the expanded treeview as long as it is less than 500			
-		if ($("#ucsc").height() <= maxHeight) {
-			var oldHeight = $(".slimScrollDiv").height();
-			//$(".slimScrollDiv").css("height", $('#ucsc').height()+'px');
-			$(".slimScrollDiv").height($('#ucsc').height());
-			$("#treeview-inner").height($("#treeview-inner").height() + $(".slimScrollDiv").height() - oldHeight);
 
-		}
-		else if ($("#ucsc").height() > maxHeight){
-			//$(".slimScrollDiv").css("height",maxHeight + 'px');
-			$(".slimScrollDiv").height(maxHeight);
-			$("#treeview-inner").height(maxHeight);
-		}
+	function treeviewSelectSearchedClick(){
+		$.each($('.jstree-search'), function(i,val){ $('#jstree_gfs').jstree('select_node','#'+val.id) })
 
 	}
 
+	function treeviewDeselectSearchedClick(){
+		$.each($('.jstree-search'), function(i,val){ $('#jstree_gfs').jstree('deselect_node','#'+val.id) })		
+	}
+
+
+
 	function submit_job(){
+		var input = $("<input>")
+	               .attr("type", "hidden")
+	               .attr("name", "jstree_gfs").val($('#jstree_gfs').jstree('get_selected'));
+		$('#frmQuery').append($(input));
 		$("#upmessage").css("visibility","visible");
 	}
 	
@@ -188,17 +180,6 @@ $(document).ready(function() {
 		var node = (evt.target) ? evt.target : ((evt.srcElement) ? evt.srcElement : null); 
 		if ((evt.keyCode == 13) && (node.type=="text"))  {return false;} 
 	} 
-
-	function changeCheckedStateTreeView(checkAll){
-		if (checkAll == true){
-			$('#ucsc').checkboxTree('expandAll');
-			viewBoxClick();
-		}
-		else {
-			$('#ucsc').checkboxTree('collapseAll');
-			viewBoxClick();
-		}
-	}
 
 	function treeviewCheckAll(){
 		$("#ucsc").children().find(':checkbox').prop("checked", true);

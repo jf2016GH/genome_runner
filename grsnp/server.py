@@ -44,7 +44,6 @@ logger = logging.getLogger('genomerunner.server')
 
 
 # Each function in this class is a web page 
-# TODO: Fix custom gfs directories.
 class WebUI(object):
 	def __init__(self):		
 		# go through each database directory and create custom_data if it does not exist.
@@ -65,7 +64,7 @@ class WebUI(object):
 				paths.name = "Root"
 				paths.organisms = self.get_org(db_ver) 
 				paths.traverse(os.path.join(db_dir,org))
-				paths.write_treeview_html(db_dir,org)
+				grsnp_path.write_treeview_json(os.path.join(db_dir,org))
 		self._index_html = {}
 
 	@cherrypy.expose
@@ -104,7 +103,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",**kwargs):
+				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",jstree_gfs="",**kwargs):
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -220,35 +219,20 @@ class WebUI(object):
 			logger.error("id={}".format(id) + str(e))
 			return "ERROR: Unable to process custom Genome annotation feature"
 
-		# "kwargs" (Keyword Arguments) stands for all the other
-		# fields from the HTML form besides bed_file, niter, name, score, and strand
-		# These other fields are all the tables whose boxes might
-		# have been checked.
-		# Thus with this way of doing things, it is not possible to have a genomicfeature
-		# with one of these reserved names. 
+		
 		organism,run,run_random = "",[],False
-		gfeatures = [k[5:] for k,v in kwargs.items()
-			if k.startswith("file:") and v=="on"]
 
-
-		# gather genomic features from autocomplete textbox. A single item is passed a string, but multiple items are passed as a list		
-		if 'gfs[]' in kwargs.keys():
-			if isinstance(kwargs['gfs[]'],list):
-				gfeatures = gfeatures + [x[5:] for x in kwargs['gfs[]']]
-			else:
-				gfeatures = gfeatures + [kwargs['gfs[]'][5:]]
-
-		gfeatures = set(gfeatures) # remove GFs checked in checkbox tree and also added in textbox
-
+		# add genomic feature tracks loaded via the JStree control
 		with open(gfs,"a") as out_gfs:
-			for g in gfeatures:
-				if (base_name(g) not in list_gfs): 
-					# check if score and/or strand filtered GF data exists
-					g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
-					out_gfs.write(g+"\n")
-				list_gfs.append(base_name(g))
-
-				
+			for k in jstree_gfs.split(','):
+				if k.startswith('file:'):
+					g = k.split(":")[-1]
+					if (base_name(g) not in list_gfs): 
+						# check if score and/or strand filtered GF data exists
+						g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
+						out_gfs.write(g+"\n")
+					print "GFS ",gfs, k
+					list_gfs.append(base_name(g))
 		for k,v in kwargs.items():
 			# organism to use
 			if "organism:" in v:
@@ -295,7 +279,7 @@ class WebUI(object):
 							break
 						out.write(data)			
 			elif background_data != None and background_data != "":
-				b = os.path.join(upload_dir,"custom.background.bed")
+				b = os.path.join(upload_dir,"custom_background.bed")
 				background_name = "custom.bed"
 				with open(b, "wb") as out:
 					logger.info('Received raw text background data (id={})'.format(id))
@@ -313,9 +297,7 @@ class WebUI(object):
 			list_foi = open(f).read().replace(uploads_dir,'/uploads').replace(results_dir,'/results').replace(data_dir,"")
 			with open(f,'wb') as writer:
 				writer.write(list_foi)
-		print "absolute",b
 		b = b.replace(data_dir,'').replace(os.path.split(uploads_dir)[0],"").lstrip("/")
-		print "relative",b
 
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
@@ -642,7 +624,7 @@ class WebUI(object):
 		return open(os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")).read()
 	@cherrypy.expose
 	def get_checkboxtree(self,organism,db_version):
-		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.html")).read()
+		return open(os.path.join(sett["data_dir"][db_version],organism,"treeview.json")).read()
 
 
 	@cherrypy.expose
