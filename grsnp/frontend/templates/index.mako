@@ -43,7 +43,7 @@
 							${paths.org_as_html(id="org")} 
 							<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</div> 
-						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload files with rsIDs or genomic coordinates in BED format of SNPs of interest. At least 5 SNPs per set are required. Multiple file upload supported. Note: Avoid special characters and extra dots in file names. Do not use SNP IDs other than rsIDs." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload file(s) with rsIDs of the SNPs of interest, or their genomic coordinates in BED format . At least 5 SNPs per file are required. Note: Avoid special characters and extra dots in the file names. Do not use SNP IDs other than rsIDs." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
@@ -57,7 +57,7 @@
 							</div>
 						</div>
 						<div id="accfoi" class="accordion" style="padding-bottom: 0em;list-style:none;margin-top: 20px">       
-							<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a><img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
+							<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 							<div>          
 								<table>
 									<tr>
@@ -71,20 +71,20 @@
 						</div>
 					</div>	
 					<div class="well">
-						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'universe' to calculate the probability of SNPs in a set to be enriched with regulatory dataset" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'universe' of all SNPs, used to calculate the probability of the SNPs of interest being enriched in regulatory datasets. The SNPs of interest should be a subset of the background, or the p-values may be incorrect. The default background, all common SNPs from the latest organism-specific database, is suitable when a genome-wide study was performed. When a microarray was used for SNPs profiling, it is advisable to upload all SNPs on that array as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input> -->
 						<b style=" font-size:120%; margin-left: 10px"></b>
 						<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top:2em">        
 							<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background
-								<img class="helptooltip" title="The 'background', or 'universe' of SNPs assessed in a study is critical for the correct p-value calculation. A set of SNPs of interest should be a subset of the background, else the p-values may be wrong.
-								Default background selection &#40;all common SNPs from the latest organism-specific database&#41; is suitable when a genome-wide study was performed. When a microarray was used for SNPs profiling, it is advisable to use all SNPs on that array as a background." width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<img class="helptooltip" title="Upload, or paste a list of rsIDs, or genomic coordinates in BED format, of all SNPs evaluated in a study." width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 							</a></h3>
 							<div style="height=100px">       
-								Bed File:
-								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />		
+								<h4 style="float:left;">File:</h4>
+								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />
+								<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
 								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
-									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data in .BED format</a><img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>							        
+									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a></h3><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>							        
 									<table style="margin-bottom:0px; padding-bottom:0px">
 										<tr>
 											<td>
@@ -98,20 +98,11 @@
 						</div>
 					</div>
 					<div class="well" style="padding-bottom:0em">
-						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory datasets<img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
+						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory datasets<img class="helptooltip" title="Select and/or upload regulatory datasets (aka genome annotations, functional/epigenomic data) used to test for enrichments in the SNPs of interest." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 						${custom_gfs}
 						<br>
-						<div id="accordGFSfile" class="accordion" style="padding-bottom: 0.5em;list-style:none; margin-top: 1em;" ><h3  id="accordionheader"><a id='gffileheader' href="#" style="font-size:120%; height: 100%">Upload regulatory bed files:<img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></a></h3>
-							<ul>
-								<li id="list-bedbackground">					
-									Bed Files (.bed or .gz):
-									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
-									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data  look like?</a>
-								</li>				
-							</ul>
-						</div>
 						<div id="accordGFS" class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 0.5em;" onClick="renderCheckBoxTree()"> 
-							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory datasets</a><img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
+							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory datasets</a><img class="helptooltip" title="Use checkboxes to select any (category of) regulatory datasets from a Databse/Category/Subcategory hierarchy." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 							<div >								
 								<div id="grfdroplist" style="display: table;">	
 									<div id="divCheckBox" style="width: 70%; margin:15px; display: table-cell; verticle-align: top; visibility: hidden">
@@ -124,25 +115,30 @@
 												<a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a>
 											</div>
 										</div>												
-											<label>Search genomic features<img class="helptooltip" title="dummy text" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
+											<label>Search genomic features<img class="helptooltip" title="Use fuzzy search to find genomic annotations of interest; use Select/Unselect buttons to use them for analyses." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
 											<input style="margin-top:1.5em" id="txt_gfs_search" class='input' type="text"></input>
 											<a class="btn" id="treeSelect" onClick="treeviewSelectSearchedClick()">Select</a>
 											<a class="btn" id="treeSelect" onClick="treeviewDeselectSearchedClick()">Unselect</a>
-
-									
 											<div id="jstree_gfs" style="height:200px;overflow:auto"></div>
 									</div>
-									
-								</div>			 
-
+								</div>
 							</div>
+						</div>
+						<div id="accordGFSfile" class="accordion" style="padding-bottom: 0.5em;list-style:none; margin-top: 1em;" ><h3  id="accordionheader"><a id='gffileheader' href="#" style="font-size:120%; height: 100%">Upload genome annotation files:<img class="helptooltip" title="Upload custom genome annotation data in BED format." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></a></h3>
+							<ul>
+								<li id="list-bedbackground">					
+									<h4 style="float:left;">Files:</h4>
+									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
+									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data  look like?</a>
+								</li>				
+							</ul>
 						</div>
 					</div>	
 
 					<div class="well">
 						<div>
 							<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" style="margin:1em">Submit job</button>									
-							<input type="checkbox" id="disclaimer" checked="checked" style="margin:1em">I certify that I understand that GenomeRunner is for research purposes only.</input>
+							<input type="checkbox" id="disclaimer" checked="checked" style="margin:1em">The results of GenomeRunner analyses may be used for research purposes only.</input>
 							<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
 							<br>
 						</div>
@@ -150,8 +146,9 @@
 						<h3 id='lblAdvancedFeatures'><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Advanced Features</a></h3>
 						<div>
 							<label>Percent score threshold: ${pct_scores}</label>
-							<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a score, this setting is ignored" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-							<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set for the number of overlaps with the selected regulatory elements." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+							<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a score, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+							<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set by the number of overlaps with the selected regulatory datasets." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+
 							<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
 							<select name="strand" style="visibility:hidden">
 								<option value="both" selected>Both</option>
@@ -159,10 +156,11 @@
 								<option value="minus">Minus</option>
 							</select>
 							<img class="helptooltip" title="Sets whether or not to use strand-specific regulatory datasets, if available. If a regulatory dataset does not have a strand, this setting is ignored" style="position: relative;top: 6px;visibility:hidden" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+
 						</div>
 						<div class="ui-state-highlight ui-corner-all">
 							<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
-							</span>GenomeRunner works best in Chrome (Windows) or Firefox. Mac users, use Safari.</p>
+							</span>GenomeRunner works best in Chrome (recommended) or Firefox. Mac users, use Safari.</p>
 						</div>
 
 					</div>
