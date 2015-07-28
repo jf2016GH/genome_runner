@@ -163,7 +163,7 @@ def get_road_gf_filepaths(gf_group):
 	links = soup.body.find_all('a', href=True)
 	# exclude header line links (they lack a '.')
 	file_names = [x['href'] for x in links if '.' in x.contents[0]]
-	if gf_group in ["chromStates15","chromStates18", "chromStates25"]:
+	if gf_group in ["chromStates15", "chromStates18", "chromStates25"]:
 		file_names = [x for x in file_names if x.endswith('_dense.bed.gz')]
 	if gf_group.startswith('Histone_'):
 		# filter out the DNase files as these will be processes separately
@@ -341,7 +341,6 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 		dwnl_file = download_roadmap_file(gf_group,	gf_file)
 	f_path = os.path.join(gf_outputdir,base_name(dwnl_file)+".bed.temp")
 	o_dir = os.path.dirname(f_path)
-
 	tmp_gf_file = dwnl_file.replace(".imputed.gappedPeak.bed.gPk.gz",".gPk.gz").replace(".imputed.narrowPeak.bed.nPk.gz",".nPk.gz")
 	# replace all '.' with '_' except for the file extension portion
 	gf_file_ext = '.'.join(tmp_gf_file.split('.')[-2:]) # get file extension i.e. 'bed.gz'
@@ -350,7 +349,6 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	out_gf_file = '.'.join([output_gf_file,gf_file_ext])
 	# get formated file name [cell]-[factor]-[source]
 	form_dwnl_file = _get_formated_file_name(gf_group,os.path.split(dwnl_file)[1])
-
 
 	new_path = os.path.join(o_dir,''.join(e for e in base_name(form_dwnl_file) if e.isalnum() or e=='.' or e=='_' or e=='-')) + ".bed.gz"
 	if os.path.exists(new_path) == True:
@@ -445,6 +443,16 @@ def _get_celltype(f_name, gf_group):
 		return "Clustered"
 	if f_name.startswith(padding[gf_group]):
 		f_name = f_name[len(padding[gf_group]):]
+
+	# these are special cases
+	if "K562b" in f_name:
+			cell_type = "K562"
+			f_name = f_name.replace("K562b","K562")
+			categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
+	elif "K562E":
+		cell_type = "K562"
+		f_name = f_name.replace("K562E","K562")
+		categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])		
 	categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
 	return categories[1]
 
@@ -502,6 +510,14 @@ def _get_formated_file_name(gf_group,gf_name):
 			cell_type = "8988t"
 			gf_name = gf_name.replace("8988t","Abc") # replace with dummy cell_type so splitting by letters works
 			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
+		elif "K562b" in gf_name:
+			cell_type = "K562"
+			gf_name = gf_name.replace("K562b","K562")
+			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
+		elif "K562E":
+			cell_type = "K562"
+			gf_name = gf_name.replace("K562E","K562")
+			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])		
 		# get source
 		source = categories[0] + source
 		# get factor
@@ -547,7 +563,7 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 		if folder == 'tier':
 			gf_directory.append(_get_tier(gf_name,outputdir))
 		elif folder == 'cell':
-			gf_directory.append(_get_celltype(gf_name,gf_group))		
+			gf_directory.append(_get_celltype(gf_name,gf_group))
 		elif folder == 'roadmap_tissue':
 			gf_directory.append(_get_road_tissuegrp(gf_name))
 		elif folder == 'EID':
@@ -580,7 +596,7 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 		elif "html_server" in gf_grp_sett[gf_group].keys():
 			gf_file_paths = get_road_gf_filepaths(gf_group)
 			url = gf_grp_sett[gf_group]['html_server'] +  gf_grp_sett[gf_group]['directory'].format(organism)
-	for gf_file in gf_file_paths:
+	for gf_file in gf_file_paths:		
 		# check if gf_type is supported
 		if gf_file.replace(".gz",'').split(".")[-1] not in preparebed.keys():
 			continue
@@ -768,8 +784,8 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
-		for grp in ["chromStates15"]:
-#		for grp in gf_grp_sett.keys():
+#		for grp in ["wgEncodeSydhHistone"]:
+		for grp in gf_grp_sett.keys():
 			create_feature_set(data_dir,args['organism'],grp,None,6) # Remove ',2' limit to create full database
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
