@@ -154,6 +154,9 @@ class WebUI(object):
 												break
 											out.write(data)			
 										out_fois.write(f+"\n")
+								# use dos2unix to remove \r from end of lines
+								out = subprocess.Popen(['dos2unix {}'.format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+								out.wait()								
 								#script = "sort -k1,1 -k2,2n -k3,3n " + path +" | bgzip -c > " + outpath + ".gz.temp"
 								#out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE)
 								#out.wait()
@@ -169,7 +172,10 @@ class WebUI(object):
 							data = bed_data
 							data = os.linesep.join([s for s in data.splitlines() if s])
 							out.write(data)		
-						out_fois.write(f+"\n")	
+						out_fois.write(f+"\n")
+						# use dos2unix to remove \r from end of lines
+						out = subprocess.Popen(['dos2unix {}'.format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+						out.wait()	
 					else:
 						return "ERROR: Please upload a feature of interest file."
 
@@ -212,6 +218,9 @@ class WebUI(object):
 											break
 										out.write(data)	
 									out_gfs.write(f+"\n")
+									# use dos2unix to remove \r from end of lines
+									out = subprocess.Popen(['dos2unix {}'.format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+									out.wait()
 									list_gfs.append(base_name(f))		
 						else:
 							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
@@ -231,7 +240,6 @@ class WebUI(object):
 						# check if score and/or strand filtered GF data exists
 						g = verify_score_strand(g,kwargs['pct_score'],strand,data_dir)
 						out_gfs.write(g+"\n")
-					print "GFS ",gfs, k
 					list_gfs.append(base_name(g))
 		for k,v in kwargs.items():
 			# organism to use
@@ -277,7 +285,10 @@ class WebUI(object):
 						if extension not in ["gz","bb"]: data = data.replace("\r","")
 						if not data:
 							break
-						out.write(data)			
+						out.write(data)
+				# use dos2unix to remove \r from end of lines
+				out = subprocess.Popen(['dos2unix {}'.format(b)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+				out.wait()	
 			elif background_data != None and background_data != "":
 				b = os.path.join(upload_dir,"custom_background.bed")
 				background_name = "custom.bed"
@@ -285,6 +296,9 @@ class WebUI(object):
 					logger.info('Received raw text background data (id={})'.format(id))
 					data = os.linesep.join([s for s in background_data.split("\n") if s != ""])
 					out.write(data)
+				# use dos2unix to remove \r from end of lines
+				out = subprocess.Popen(['dos2unix {}'.format(b)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+				out.wait()
 			else:				
 				background_name = default_background.split("/")[-1].split(".")[0] 
 				b = default_background

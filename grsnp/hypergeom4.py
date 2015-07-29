@@ -108,8 +108,6 @@ def get_bgobs(bg,gf,root_data_dir,organism):
     # get the grsnp_db_[filt] folder
     filt_grsnp_db = gf.replace(root_data_dir,"").lstrip("/").split("/")[0]
     bkg_overlap_path = os.path.join(root_data_dir,filt_grsnp_db,organism,'bkg_overlaps.gr')
-    # logger.info("bkg_overlaps")
-    # logger.info(bkg_overlap_path + " " + str(os.path.exists(bkg_overlap_path)))
 
     # See if pre-calculated values exist
     if os.path.exists(bkg_overlap_path):       
@@ -203,7 +201,6 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
                 return [1,1,1,False]
-
     if bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
         logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
@@ -215,7 +212,6 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         odds_ratio = sys.float_info.min
     if np.isinf(odds_ratio):
         odds_ratio = sys.float_info.max
-
     # check for zeros and add 0.5 if one of the cells is 0
     if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
         ctable[0][0] += 0.5
@@ -506,7 +502,7 @@ def preprocess_fois(fois,run_files_dir,root_data_dir,organism):
                 out_f = os.path.join(output_dir,out_fname) # the processed foi file
                 if not os.path.exists(output_dir):
                     os.makedirs(output_dir)
-                out = subprocess.Popen(['cp {} {}'.format(unzipped_f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)            
+                out = subprocess.Popen(['cp {} {}'.format(unzipped_f,out_f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                 out.wait()
                 # remove the header from the files
                 grsnp_util.remove_headers(out_f)
@@ -581,7 +577,7 @@ def preprocess_gf_files(file_paths,root_data_dir,organism):
                     out_fname = base_name(out_fname)+".bed"
                 # replace the ".txt" extension with ".bed"
                 output_dir = os.path.split(unzipped_f)[0]
-                out_bed_f = os.path.join(output_dir,out_fname) # the processed foi file
+                out_bed_f = os.path.join(output_dir,out_fname) # the processed file
 
                 grsnp_util.remove_headers(unzipped_f)
                 # perform rsid conversion
@@ -595,6 +591,11 @@ def preprocess_gf_files(file_paths,root_data_dir,organism):
                     # if conversion files found, perform conversion
                     if len(files) > 0:
                         rsid_path = os.path.join(rsid_path,files[0])
+                        # sort the RSID
+                        script = """sort -k1,1 -o {} {}""".format(unzipped_f,unzipped_f)
+                        out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                        out.wait()   
+                        # join the RSID with the SNP data in custom_data
                         script = """join {} {} -1 1 -2 4 -o 2.1 -o 2.2 -o 2.3 -o 2.4 -o 2.5 -o 2.6 | sed 's/\ /\t/g' > {}.temp""".format(unzipped_f,rsid_path,unzipped_f)
                         out = subprocess.Popen([script],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                         out.wait()             
@@ -685,7 +686,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         # pre-process the GFs and the background
         bg_path = preprocess_gf_files([bg_path],root_data_dir,organism)[0]
         gfs = preprocess_gf_files(gfs,root_data_dir,organism)
-
         # Validate FOIs against background. Also get the size of the background (n_bgs)
         foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)

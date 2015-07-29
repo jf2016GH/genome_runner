@@ -2,7 +2,8 @@
 # Installing prerequisites
 sudo apt-get install parallel 
 sudo apt-get -y install r-base-core 
-sudo apt-get install bedtools 
+sudo apt-get install bedtools
+sudo apt-get install dos2unix
 # sudo apt-get install tabix 
 sudo apt-get -y install kyotocabinet-utils 
 sudo apt-get install realpath
