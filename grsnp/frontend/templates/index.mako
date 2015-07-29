@@ -84,7 +84,7 @@
 								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />
 								<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
 								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
-									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a></h3><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>							        
+									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>					        
 									<table style="margin-bottom:0px; padding-bottom:0px">
 										<tr>
 											<td>
@@ -138,8 +138,8 @@
 					<div class="well">
 						<div>
 							<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" style="margin:1em">Submit job</button>									
-							<input type="checkbox" id="disclaimer" checked="checked" style="margin:1em">The results of GenomeRunner analyses may be used for research purposes only.</input>
-							<h3 id="upmessage" style="visibility:hidden;margin-left: -94px;margin-top: 3px;">Uploading files. Please do not refresh the page.</h3>
+							<input type="checkbox" id="disclaimer" checked="checked" style="margin:1em">The results of GenomeRunner analyses may be used for research purposes only.</input><br/>
+							<h3 id="upmessage" style="visibility:visible;">Uploading files. Please do not refresh the page.</h3>
 							<br>
 						</div>
 						<div class="accordion" style="margin-top:-46px;margin-bottom:18px">
