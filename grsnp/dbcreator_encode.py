@@ -449,7 +449,7 @@ def _get_celltype(f_name, gf_group):
 			cell_type = "K562"
 			f_name = f_name.replace("K562b","K562")
 			categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
-	elif "K562E":
+	elif "K562E" in f_name and "K562Ezh2" not in f_name:
 		cell_type = "K562"
 		f_name = f_name.replace("K562E","K562")
 		categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])		
@@ -514,7 +514,7 @@ def _get_formated_file_name(gf_group,gf_name):
 			cell_type = "K562"
 			gf_name = gf_name.replace("K562b","K562")
 			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
-		elif "K562E":
+		elif "K562E" in gf_name and "K562Ezh2" not in gf_name:
 			cell_type = "K562"
 			gf_name = gf_name.replace("K562E","K562")
 			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])		
