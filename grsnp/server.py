@@ -423,11 +423,22 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def results_shiny(self, id):
+		tmpl = lookup.get_template("master.mako")
+		return tmpl.render(body=lookup.get_template("overview.mako").render(),script="")
 		path = os.path.join(results_dir, id)	
 		params = {}	
 		params['run_id'] = id
 		try:
-			rend_template = lookup.get_template("results_shiny.mako").render(script= lookup.get_template("results_shiny.js").render(**params),**params)
+			tmp = lookup.get_template("master.mako")
+			script = lookup.get_template("results_shiny.js").render(run_id=id)
+			rend_template = lookup.get_template("results_shiny.mako").render(run_id=id,script=script)
+
+			#rend_template = lookup.get_template("master.mako").render(body = lookup.get_template("results_shiny.mako").render(), 
+			#	script = lookup.get_template("results_shiny.js").render(run_id=id))
+			#rend_template = lookup.get_template("master.mako").render(body=lookup.get_template("results_shiny.mako").render(run_id=id),script=lookup.get_template("results_shiny.js"))
+			#rend_template = lookup.get_template("results_shiny.mako").render(script= lookup.get_template("results_shiny.js").render(**params),**params)
+			
+
 		except Exception, e:
 			traceback = MakoTraceback()
 			str_error = ""

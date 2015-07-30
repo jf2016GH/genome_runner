@@ -200,7 +200,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         for k in i:
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
-                return [1,1,1,False]
+                return [1,1,1,1,1,1]
     if bg_obs < foi_obs:
         odds_ratio, pval = "nan", 1
         logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
