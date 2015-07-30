@@ -1,6 +1,6 @@
 var refresh_progress = ""
 $(document).ready(function() {	
-	var run_id = ${run_id};
+	var run_id = "${run_id}";
 });
 
 	// generates both of the heatmap graphs

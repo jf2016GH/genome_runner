@@ -423,8 +423,6 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def results_shiny(self, id):
-		tmpl = lookup.get_template("master.mako")
-		return tmpl.render(body=lookup.get_template("overview.mako").render(),script="")
 		path = os.path.join(results_dir, id)	
 		params = {}	
 		params['run_id'] = id
