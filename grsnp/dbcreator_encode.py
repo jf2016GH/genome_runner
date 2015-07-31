@@ -444,15 +444,19 @@ def _get_celltype(f_name, gf_group):
 	if f_name.startswith(padding[gf_group]):
 		f_name = f_name[len(padding[gf_group]):]
 
-	# these are special cases
-	if "K562b" in f_name:
-			cell_type = "K562"
-			f_name = f_name.replace("K562b","K562")
-			categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
-	elif "K562E" in f_name and "K562Ezh2" not in f_name:
-		cell_type = "K562"
-		f_name = f_name.replace("K562E","K562")
-		categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])		
+	# # these are special cases
+	# if "K562b" in f_name:
+	# 		cell_type = "K562"
+	# 		f_name = f_name.replace("K562b","K562")
+	# 		categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
+	# elif "K562E" in f_name and "K562Ezh2" not in f_name and "HaibK562" not in f_name and "SydhK562" not in f_name:
+	# 	cell_type = "K562"
+	# 	f_name = f_name.replace("K562Efos","K562Fos") # Capitalize factor letters
+	# 	f_name = f_name.replace("K562Egata","K562Gata")
+	# 	f_name = f_name.replace("K562Ehdac8","K562Hdac8")
+	# 	f_name = f_name.replace("K562Ejun","K562Jun")
+	# 	pdb.set_trace()
+	# 	categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])		
 	categories = re.findall('[A-Z][^A-Z]*', f_name.split('.')[0])
 	return categories[1]
 
@@ -784,9 +788,9 @@ if __name__ == "__main__":
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
-#		for grp in ["wgEncodeSydhHistone"]:
-		for grp in gf_grp_sett.keys():
-			create_feature_set(data_dir,args['organism'],grp,None,6) # Remove ',2' limit to create full database
+		for grp in ["wgEncodeAwgTfbsUniform"]:
+#		for grp in gf_grp_sett.keys():
+			create_feature_set(data_dir,args['organism'],grp,None) # Remove ',2' limit to create full database
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
