@@ -219,9 +219,9 @@ class WebUI(object):
 										out.write(data)	
 									out_gfs.write(f+"\n")
 									# use dos2unix to remove \r from end of lines
-									out = subprocess.Popen(['dos2unix {}'.format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-									out.wait()
-									list_gfs.append(base_name(f))		
+							out = subprocess.Popen(['dos2unix {}'.format(f)],shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+							out.wait()
+							list_gfs.append(base_name(f))		
 						else:
 							logger.error("id={} Uploaded GF file already exists at {}".format(id,f))
 		except Exception, e:
