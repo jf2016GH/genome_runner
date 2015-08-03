@@ -194,30 +194,39 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-    #pdb.set_trace()         
+    # pdb.set_trace()         
     # Ensure there are no negative values in the ctable
+    do_chi_square = True
     for i in ctable:
         for k in i:
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
                 return [1,1,1,1,1,1]
-    if bg_obs < foi_obs:
-        odds_ratio, pval = "nan", 1
-        logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
-    else:    
-        odds_ratio, pval = scipy.stats.fisher_exact(ctable)
-    if pval == 1.0:
-        odds_ratio = 1
-    if odds_ratio == 0.0:
-        odds_ratio = sys.float_info.min
-    if np.isinf(odds_ratio):
-        odds_ratio = sys.float_info.max
+            if k < 5:
+                do_chi_square = False
     # check for zeros and add 0.5 if one of the cells is 0
     if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
         ctable[0][0] += 0.5
         ctable[0][1] += 0.5
         ctable[1][0] += 0.5
         ctable[1][1] += 0.5
+    # if bg_obs < foi_obs:
+    #     odds_ratio, pval = "nan", 1
+    #     logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
+    # else:  
+    if do_chi_square:
+        chi_result = scipy.stats.chi2_contingency(ctable)
+        pval = chi_result[1]
+        odds_ratio = (ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
+    else:  
+        odds_ratio, pval = scipy.stats.fisher_exact(ctable)
+    # Adjustments of outliers
+    if pval == 1.0:
+        odds_ratio = 1
+    if odds_ratio == 0.0:
+        odds_ratio = sys.float_info.min
+    if np.isinf(odds_ratio):
+        odds_ratio = sys.float_info.max
 
     # calculate the shrunken odds ratio
     log_or = scipy.log(odds_ratio)
@@ -227,6 +236,11 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     # calculate the upper and lower confidence interval
     ci_upper = scipy.exp(log_or + conf_coe * se)
     ci_lower = scipy.exp(log_or - conf_coe * se)
+    # Precaution against CI overflow
+    if np.isinf(ci_upper):
+        ci_upper = sys.float_info.max
+    if ci_lower == 0.0:
+        ci_lower = sys.float_info.min
     # shrunken_or is the ci (either upper or lower) that is closest to 1
     if ci_lower<1 and ci_upper>1:
         shrunken_or,odds_ratio = 1,1
