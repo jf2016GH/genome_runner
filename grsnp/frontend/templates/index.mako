@@ -143,20 +143,21 @@
 							<br>
 						</div>
 						<div class="accordion" style="margin-top:-46px;margin-bottom:18px">
-						<h3 id='lblAdvancedFeatures'><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Advanced Features</a></h3>
-						<div>
-							<label>Percent score threshold: ${pct_scores}</label>
-							<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a score, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-							<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set by the number of overlaps with the selected regulatory datasets." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+							<h3 id='lblAdvancedFeatures'><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Advanced Features</a></h3>
+							<div>
+								<label>Percent score threshold: ${pct_scores}</label>
+								<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a score, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set by the number of overlaps with the selected regulatory datasets." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 
-							<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
-							<select name="strand" style="visibility:hidden">
-								<option value="both" selected>Both</option>
-								<option value="plus">Plus</option>
-								<option value="minus">Minus</option>
-							</select>
-							<img class="helptooltip" title="Sets whether or not to use strand-specific regulatory datasets, if available. If a regulatory dataset does not have a strand, this setting is ignored" style="position: relative;top: 6px;visibility:hidden" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
+								<select name="strand" style="visibility:hidden">
+									<option value="both" selected>Both</option>
+									<option value="plus">Plus</option>
+									<option value="minus">Minus</option>
+								</select>
+								<img class="helptooltip" title="Sets whether or not to use strand-specific regulatory datasets, if available. If a regulatory dataset does not have a strand, this setting is ignored" style="position: relative;top: 6px;visibility:hidden" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 
+							</div>
 						</div>
 						<div class="ui-state-highlight ui-corner-all">
 							<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;">
