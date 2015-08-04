@@ -10,6 +10,24 @@
 # - git
 # - gcc
 
+# install requirements
+which curl || { 
+    apt-get install -y curl
+}
+which parallel || { 
+    apt-get install -y parallel
+}
+which git || { 
+    apt-get install -y git
+}
+which python2.7 || { 
+    apt-get install -y python2.7
+}
+which python2.7-dev || { 
+    apt-get install -y python2.7-dev
+}
+
+
 # GenomeRunner branch
 branch=parallel
 
