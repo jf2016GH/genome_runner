@@ -161,11 +161,12 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
         strpval = "%.2e" % pval if type(pval) != type("") else pval 
         strprnd = "%.2e" % prnd if type(prnd) != type("") else prnd 
 
+   
     write_output("\t".join(map(str, [foi_name.rpartition('/')[-1], foi_obs, n_fois, bg_obs, n_bgs, 
-                "%.2f" % odds_ratio if type(odds_ratio) != type("") else odds_ratio, 
-                "%.2f" % ci_lower if type(ci_lower) != type("") else ci_lower, 
-                "%.2f" % ci_upper if type(ci_upper) != type("") else ci_upper, 
-                "%.2f" % shrunken_or if type(shrunken_or) != type("") else shrunken_or,                 
+                _format_type(odds_ratio), 
+                _format_type(ci_lower), 
+                _format_type(ci_upper), 
+                _format_type(shrunken_or),                 
                 "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
                 strprnd,strpval])) + "\n",detailed_outpath)
 
@@ -173,6 +174,17 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
         # set to value obtained from sys.float_info.min_10_exp
         pval = 1E-306   
     return [sign * pval,shrunken_or]
+
+def _format_type(num):
+    ''' Sets format to be either scientific or float depending on num value
+    '''
+    if type(num) != type(""):
+        if num > 100 or num < 0.01:
+            return "%.2e" % num
+        else:
+            return "%.2f" % num
+    else:
+        return num
 
 def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     ''' Calculated by generating 'num' random feature files and running them against gf_path.
