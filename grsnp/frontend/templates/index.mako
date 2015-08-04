@@ -139,7 +139,7 @@
 						<div>
 							<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" style="margin:1em">Submit job</button>									
 							<input type="checkbox" id="disclaimer" checked="checked" style="margin:1em">The results of GenomeRunner analyses may be used for research purposes only.</input><br/>
-							<h3 id="upmessage" style="margin-left:11em;margin-bottom:3em;">Uploading files. Please do not refresh the page.</h3>
+							<h3 id="upmessage" style="margin-left:11em;margin-bottom:3em;visibility:hidden;">Uploading files. Please do not refresh the page.</h3>
 							<br>
 						</div>
 						<div class="accordion" style="margin-top:-46px;margin-bottom:18px">
