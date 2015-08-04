@@ -770,36 +770,6 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         _write_progress("Run crashed. See end of log for details.")
         raise Exception(e)
 
-if __name__ == "__main__":
-    print_progress = True
-    valid_pv_adjust = ['bonferroni', 'holm', 'hochberg', 'hommel', 'BH', 'BY', 'fdr','None']
-    parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
-    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
-    parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
-    parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
-    parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
-    parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default="")
-    parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
-    parser.add_argument("--pv_adjust", "-v",type=str, help="Which p-value adjustment method to use. Default: 'fdr'. Available (case-sensitive): "+', '.join(valid_pv_adjust), default="fdr")
-    parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
-    parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
-
-        
-    args = vars(parser.parse_args())  
-    if args['pv_adjust'] not in valid_pv_adjust:
-        print "ERROR: {} is not a valid p-value adjustment method.".format(args['pv_adjust'])
-        sys.exit()
-
-    if args["pass_paths"]: 
-        gf = args["gfs"][0].split(",")      
-        foi = args["fois"][0].split(",")        
-        args["gfs"][0],args["fois"][0] = os.path.join(args["run_files_dir"],".gfs"),os.path.join(args["run_files_dir"],".fois")       
-        with open(".gfs",'wb') as writer:       
-            writer.write("\n".join(gf))     
-        with open(".fois","wb") as writer:      
-            writer.write("\n".join(foi))
-    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,padjust=args['pv_adjust'],organism=args['organism'])
-
 class front_appender:
     '''
     Appends content to start of file.
@@ -829,3 +799,39 @@ def _load_minmax(path):
         name,min_max = s.split('\t')
         data[name] = min_max
     return data
+
+def main():
+        global matrix_outpath, detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress, print_progress
+        valid_pv_adjust = ['bonferroni', 'holm', 'hochberg', 'hommel', 'BH', 'BY', 'fdr','None']
+        parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
+        parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
+        parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
+        parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
+        parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
+        parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default="")
+        parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
+        parser.add_argument("--pv_adjust", "-v",type=str, help="Which p-value adjustment method to use. Default: 'fdr'. Available (case-sensitive): "+', '.join(valid_pv_adjust), default="fdr")
+        parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
+        parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
+
+        args = vars(parser.parse_args())  
+        if args['pv_adjust'] not in valid_pv_adjust:
+            print "ERROR: {} is not a valid p-value adjustment method.".format(args['pv_adjust'])
+            sys.exit()
+
+        if args["pass_paths"]: 
+            gf = args["gfs"][0].split(",")      
+            foi = args["fois"][0].split(",")        
+            args["gfs"][0],args["fois"][0] = os.path.join(args["run_files_dir"],".gfs"),os.path.join(args["run_files_dir"],".fois")       
+            with open(".gfs",'wb') as writer:       
+                writer.write("\n".join(gf))     
+            with open(".fois","wb") as writer:      
+                writer.write("\n".join(foi))
+        run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,padjust=args['pv_adjust'],organism=args['organism'])
+
+
+
+
+if __name__ == "__main__":
+    main()
+

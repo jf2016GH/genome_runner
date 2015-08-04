@@ -14,6 +14,25 @@ setup(name='GenomeRunner web',
 	long_description=open('README.md').read(),
 	packages=['grsnp'],
 	package_dir={'grsnp': 'grsnp'},
-	include_package_data=True, # Install data from MANIFEST.in
+	include_package_data=True, # Install data from MANIFEST.in,
+	entry_points={
+		'console_scripts':[
+			'gr = grsnp.hypergeom4:main',
+			'gr-server = grsnp.server:main',
+			'gr-optimizor = grsnp.optimizor:main',
+			'gr-dbcreator = grsnp.dbcreator_encode:main'
+		]
+	},
+	install_requires = [
+		"cherrypy==3.5",
+		"celerly==3.1",
+		"numpy==1.8",
+		"scipy==0.14",
+		"rpy2==2.5",
+		"simplejson==3.6",
+		"mako==1.0",
+		"BeautifulSoup==3.2",
+		"redis==2.10"
+	]
 )
 

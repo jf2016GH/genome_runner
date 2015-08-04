@@ -706,7 +706,8 @@ def verify_score_strand(gf_path,pct_score,strand,data_dir):
     else:
     	return gf_path
 
-if __name__ == "__main__":
+def main():
+	global sett
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
@@ -811,3 +812,7 @@ if __name__ == "__main__":
 
 	else:
 		print "WARNING: No port given. Server not started. Use --port flag to set port."
+
+
+if __name__ == "__main__":	
+	main()

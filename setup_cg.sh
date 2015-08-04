@@ -109,42 +109,15 @@ while read p; do
     }
 done
 
-#################
-# Python packages
-#################
-
-which pip2 || {
-    python2 <(curl https://bootstrap.pypa.io/get-pip.py) --user
-}
-
-which cython2 || {
-    pip2 install --user cython
-}
-
-cat <<'EOF' |
-cherrypy
-numpy
-scipy
-rpy2
-simplejson
-mako
-BeautifulSoup
-celery
-redis
-EOF
-while read r; do
-    python2 -c "import $r" || pip2 install --user -I $r
-done
-
 #######################
 # GRTK and GenomeRunner
 #######################
 
-git clone https://github.com/mdozmorov/genome_runner.git
-git checkout $branch
-cd genome_runner/grtk
-python2 setup.py install --user
-cd ..
-cd genome_runner
-Rscript installer.R
-python2 setup.py install --user
+# git clone https://github.com/mdozmorov/genome_runner.git
+# git checkout $branch
+# cd genome_runner/grtk
+# python setup.py install --user
+# cd ..
+# cd genome_runner
+# Rscript installer.R
+# python setup.py install --user
