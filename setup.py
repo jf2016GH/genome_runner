@@ -19,7 +19,7 @@ setup(name='GenomeRunner web',
 		'console_scripts':[
 			'gr = grsnp.hypergeom4:main',
 			'gr-server = grsnp.server:main',
-			'gr-optimizor = grsnp.optimizor:main',
+			'gr-optimizer = grsnp.optimizer:main',
 			'gr-dbcreator = grsnp.dbcreator_encode:main'
 		]
 	},
