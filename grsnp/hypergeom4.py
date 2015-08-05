@@ -206,7 +206,6 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-    # pdb.set_trace()         
     # Ensure there are no negative values in the ctable
     do_chi_square = True
     for i in ctable:
@@ -658,7 +657,7 @@ def preprocess_gf_files(file_paths,root_data_dir,organism):
 
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,padjust="None",pct_score="",organism = ""):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,pct_score="",organism = ""):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,run_files_dir
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
@@ -697,10 +696,12 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         if len(invalid_names) != 0:
             logger.error("The following file(s) have invalid file names:\n" + "\n".join(invalid_names))
             _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
+            print "ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log."
             return         
         if bg_path.endswith(".tbi"):
             logger.error("Background has invalid extension (.tbi). Terminating run.")
             _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.")
+            print "ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log."
             return
 
         # pre-process the FOIs
@@ -816,32 +817,35 @@ def _load_minmax(path):
 
 def main():
         global matrix_outpath, detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress, print_progress
-        valid_pv_adjust = ['bonferroni', 'holm', 'hochberg', 'hommel', 'BH', 'BY', 'fdr','None']
         parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
         parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
         parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
         parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
         parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
-        parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default="")
+        parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default=os.getcwd())
         parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
-        parser.add_argument("--pv_adjust", "-v",type=str, help="Which p-value adjustment method to use. Default: 'fdr'. Available (case-sensitive): "+', '.join(valid_pv_adjust), default="fdr")
         parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
         parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
 
-        args = vars(parser.parse_args())  
-        if args['pv_adjust'] not in valid_pv_adjust:
-            print "ERROR: {} is not a valid p-value adjustment method.".format(args['pv_adjust'])
-            sys.exit()
-
+        args = vars(parser.parse_args())
+        if args['organism'] is None:
+            print "--organism cannot be blank"
+            return None
+        if args['run_files_dir'] is None:
+            print "--run_files_dir cannot be blank"
+            return None
         if args["pass_paths"]: 
             gf = args["gfs"][0].split(",")      
-            foi = args["fois"][0].split(",")        
+            foi = args["fois"][0].split(",")  
+            if not os.path.exists(args["run_files_dir"]) and args['run_files_dir'] != "":
+                os.mkdir(args['run_files_dir'])
+            # write out the passed gf and foi paths into .gfs and .fois files.
             args["gfs"][0],args["fois"][0] = os.path.join(args["run_files_dir"],".gfs"),os.path.join(args["run_files_dir"],".fois")       
-            with open(".gfs",'wb') as writer:       
+            with open(args["gfs"][0],'wb') as writer:       
                 writer.write("\n".join(gf))     
-            with open(".fois","wb") as writer:      
+            with open(args["fois"][0],"wb") as writer:      
                 writer.write("\n".join(foi))
-        run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,padjust=args['pv_adjust'],organism=args['organism'])
+        run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,organism=args['organism'])
 
 
 
