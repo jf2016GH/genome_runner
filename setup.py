@@ -24,6 +24,7 @@ setup(name='GenomeRunner web',
 		]
 	},
 	install_requires = [
+		"cython == 0.22.1",
 		"cherrypy == 3.8.0",
 		"celery == 3.1.18",
 		"numpy ==1.9.2",
