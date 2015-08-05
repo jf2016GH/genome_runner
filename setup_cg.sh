@@ -30,6 +30,12 @@ sudo apt-get install -y liblzma-dev
 sudo apt-get install -y libbz2-dev
 sudo apt-get install -y libatlas-base-dev
 sudo apt-get install -y gfortran
+sudo apt-get install -y python-dev
+sudo apt-get install -y python-scipy
+sudo apt-get install -y python-rpy2
+sudo apt-get install -y python-beautifulsoup
+sudo apt-get install -y python-mako
+sudo apt-get install -y python-simplejson
 
 # install R version 3.2.1 for Ubuntu 14.04
 which R || {
@@ -143,6 +149,16 @@ if [ $? -gt 0 ]; then
     sudo gdebi -n cython_0.22.1-1_amd64.deb 
 fi
 
+# install scipy
+python -c "import scipy"
+if [ $? -gt 0 ]; then
+    wget http://ftp.us.debian.org/debian/pool/main/p/python-scipy/python-scipy_0.10.1+dfsg2-1_amd64.deb
+    sudo gdebi -n python-scipy_0.10.1+dfsg2-1_amd64.deb 
+fi
+
+
+
+
 # GenomeRunner branch
 branch=shiny
 
@@ -153,4 +169,4 @@ python setup.py install --user
 cd ..
 cd genome_runner
 #Rscript installer.R
-python setup.py install --user
+sudo python setup.py install
