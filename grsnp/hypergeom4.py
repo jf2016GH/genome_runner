@@ -206,7 +206,6 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
-    # pdb.set_trace()         
     # Ensure there are no negative values in the ctable
     do_chi_square = True
     for i in ctable:
@@ -826,8 +825,10 @@ def main():
         parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
         parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
 
-        args = vars(parser.parse_args())  
-
+        args = vars(parser.parse_args())
+        if args['organism'] is None:
+            print "--organism cannot be blank"
+            return None
         if args["pass_paths"]: 
             gf = args["gfs"][0].split(",")      
             foi = args["fois"][0].split(",")  
