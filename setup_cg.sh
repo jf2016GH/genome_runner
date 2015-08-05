@@ -135,12 +135,12 @@ done
 # GRTK and GenomeRunner
 #######################
 
-# install numpy
-python -c "import numpy"
-if [ $? -gt 0 ]; then
-    wget http://ftp.us.debian.org/debian/pool/main/p/python-numpy/python-numpy_1.8.2-2_amd64.deb
-    sudo gdebi -n python-numpy_1.8.2-2_amd64.deb 
-fi
+# # install numpy
+# python -c "import numpy"
+# if [ $? -gt 0 ]; then
+#     wget http://ftp.us.debian.org/debian/pool/main/p/python-numpy/python-numpy_1.8.2-2_amd64.deb
+#     sudo gdebi -n python-numpy_1.8.2-2_amd64.deb 
+# fi
 
 # install Cython
 python -c "import cython"
@@ -149,12 +149,12 @@ if [ $? -gt 0 ]; then
     sudo gdebi -n cython_0.22.1-1_amd64.deb 
 fi
 
-# install scipy
-python -c "import scipy"
-if [ $? -gt 0 ]; then
-    wget http://ftp.us.debian.org/debian/pool/main/p/python-scipy/python-scipy_0.10.1+dfsg2-1_amd64.deb
-    sudo gdebi -n python-scipy_0.10.1+dfsg2-1_amd64.deb 
-fi
+# # install scipy
+# python -c "import scipy"
+# if [ $? -gt 0 ]; then
+#     wget http://ftp.us.debian.org/debian/pool/main/p/python-scipy/python-scipy_0.10.1+dfsg2-1_amd64.deb
+#     sudo gdebi -n python-scipy_0.10.1+dfsg2-1_amd64.deb 
+# fi
 
 
 
