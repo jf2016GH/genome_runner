@@ -10,6 +10,19 @@
 # - git
 # - gcc
 
+# install R version 3.2.1 for Ubuntu 14.04
+which R || {
+    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-base-core_3.2.1-4trusty0_amd64.deb
+    dpkg -i r-base-core_3.2.1-4trusty0_amd64.deb 
+    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-recommended_3.2.1-4trusty0_all.deb
+    dpkg -i r-recommended_3.2.1-4trusty0_all.deb 
+    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-doc-html_3.2.1-4trusty0_all.deb
+    dpkg -i r-doc-html_3.2.1-4trusty0_all.deb 
+    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-base_3.2.1-4trusty0_all.deb
+    dpkg -i r-base_3.2.1-4trusty0_all.deb 
+}
+
+
 # install requirements
 which curl || { 
     apt-get install -y curl
@@ -29,7 +42,7 @@ which python2.7-dev || {
 
 
 # GenomeRunner branch
-branch=parallel
+branch=shiny
 
 # Versions of software to be installed
 declare -A versions
@@ -131,11 +144,18 @@ done
 # GRTK and GenomeRunner
 #######################
 
-# git clone https://github.com/mdozmorov/genome_runner.git
-# git checkout $branch
-# cd genome_runner/grtk
-# python setup.py install --user
-# cd ..
-# cd genome_runner
-# Rscript installer.R
-# python setup.py install --user
+# install numpy
+python -c "import numpy"
+if [ $? -gt 0 ]; then
+    wget http://ftp.us.debian.org/debian/pool/main/p/python-numpy/python-numpy_1.8.2-2_amd64.deb
+    sudo dpkg -i python-numpy_1.8.2-2_amd64.deb 
+fi
+
+git clone https://github.com/mdozmorov/genome_runner.git
+git checkout $branch
+cd genome_runner/grtk
+python setup.py install --user
+cd ..
+cd genome_runner
+#Rscript installer.R
+python setup.py install --user

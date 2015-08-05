@@ -24,14 +24,14 @@ setup(name='GenomeRunner web',
 		]
 	},
 	install_requires = [
-		"cherrypy >=3.5, <= 3.5.0a0",
-		"celerly >=3.1, <= 3.1.18a0",
-		"numpy >=1.8, <= 1.8.2a0",
-		"scipy >=0.14, <= 0.14.1a0",
-		"rpy2 >=2.5, <= 2.5.6a0",
-		"simplejson >=3.6, <= 3.6.5a0",
-		"mako >=1.0, <= 1.0.0a0",
-		"BeautifulSoup >=3.2, <= 3.2.1a0",
-		"redis >=2.10, <= 2.10.1a0"
+		"cherrypy == 3.8.0",
+		"celery == 3.1.18",
+		"numpy ==1.9.2",
+		"scipy == 0.14.1",
+		"rpy2 == 2.5.6",
+		"simplejson == 3.6.5",
+		"mako == 1.0.1",
+		"BeautifulSoup == 3.2.0",
+		"redis == 2.10.0"
 	]
 )
