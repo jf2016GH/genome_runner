@@ -582,7 +582,6 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 	outputdir = os.path.join(data_dir,organism)	
 	added_features = [] 
 	outpath = ""
-	prog, num = 0,len(gfs)
 	summary_path = os.path.join(outputdir,"summary.log")
 	if not os.path.exists(outputdir): os.makedirs(outputdir)
 	open(summary_path,'wb')
@@ -647,10 +646,8 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			exc = trace.format_exc()
 			logger.warning( "Unable to convert {} into bed".format(gf_file))
 			logger.warning(exc)
-			prog += 1
 			continue	
 
-	prog += 1
 	# cleanup the temporary files
 	if os.path.exists(outpath + ".temp"): os.remove(outpath+".temp")
 
@@ -752,7 +749,7 @@ preparebed = {
 }
 
 def main():
-	global username,password, download_dir
+	global username,password, download_dir, gfs
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
