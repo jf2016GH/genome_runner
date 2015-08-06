@@ -103,7 +103,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
-				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",jstree_gfs="",**kwargs):
+				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,jstree_gfs="",**kwargs):
 		global results_dir, uploads_dir, sett
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
@@ -321,7 +321,6 @@ class WebUI(object):
 					"Background:": background_name,
 					"Organism:": organism,
 					"Database version:":db_version,
-					"Multiple test correction:":padjust,
 					"% Score threshold:": str(kwargs['pct_score'])+"%",
 					"Strand:": strand}
 
@@ -356,7 +355,7 @@ class WebUI(object):
 		#														  queue='short_runs')
 		
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,padjust=padjust,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version)
+			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
