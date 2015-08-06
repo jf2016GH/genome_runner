@@ -36,6 +36,9 @@ sudo apt-get install -y python-rpy2
 sudo apt-get install -y python-beautifulsoup
 sudo apt-get install -y python-mako
 sudo apt-get install -y python-simplejson
+sudo apt-get install -y python-cherrypy3
+sudo apt-get install -y python-celery
+sudo apt-get install -y python-redis
 
 # install R version 3.2.1 for Ubuntu 14.04
 which R || {
