@@ -40,6 +40,7 @@ sudo apt-get install -y python-cherrypy3
 sudo apt-get install -y python-celery
 sudo apt-get install -y python-redis
 sudo apt-get install -y python-singledispatch
+sudo apt-get install -y python-bs4
 
 # Required by R packages
 sudo apt-get install -y libcurl4-openssl-dev
@@ -170,7 +171,6 @@ sudo Rscript -e 'devtools::install_github("mdozmorov/d3heatmap")'
 # GenomeRunner branch
 branch=shiny
 
-git clone https://github.com/mdozmorov/genome_runner.git
 git checkout $branch
 cd genome_runner/grtk
 sudo python setup.py install
