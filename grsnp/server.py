@@ -69,7 +69,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def index(self,organism=None,db_version=None):
-		
+		global results_dir, uploads_dir, sett
 		if not organism: organism = sett["default_organism"]
 
 		if DEBUG_MODE or not organism in self._index_html:		
@@ -104,6 +104,7 @@ class WebUI(object):
 	@cherrypy.expose
 	def query(self, bed_file=None,bed_data=None, background_file=None,background_data=None, 
 				genomicfeature_file=None, niter=10, name="", strand="",run_annotation=False, default_background = "",db_version=None,padjust = "None",jstree_gfs="",**kwargs):
+		global results_dir, uploads_dir, sett
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		while (os.path.exists(os.path.join(uploads_dir,id))):
@@ -362,6 +363,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def result(self, id):
+		global results_dir, uploads_dir, sett
 		path = os.path.join(results_dir, id)
 		params = {}
 		params["run_id"] = id
@@ -423,6 +425,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def results_shiny(self, id):
+		global results_dir, uploads_dir, sett
 		path = os.path.join(results_dir, id)	
 		params = {}	
 		params['run_id'] = id
@@ -463,6 +466,7 @@ class WebUI(object):
 		"""	Returns clustered and PCC matrix if they exist.
 		'organism': is used to load detailed labels for the GFs.
 		"""
+		global results_dir, uploads_dir, sett
 		cherrypy.response.headers['Content-Type'] = 'application/json'
 		trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"],organism,"trackDb"))
 		results = {}
@@ -550,6 +554,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_enrichment(self,run_id,foi_name):
+		global results_dir, uploads_dir, sett
 		enrichment_path = os.path.join(results_dir,run_id,"enrichment",foi_name + ".txt")
 		results = []
 		if os.path.exists(enrichment_path):
@@ -567,6 +572,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_gf_descriptions(self,db_version,organism):
+		global results_dir, uploads_dir, sett
 		descriptions_path = os.path.join(sett["data_dir"][db_version],organism,"gf_descriptions.txt")		
 		results = []
 		if os.path.exists(descriptions_path):
@@ -585,6 +591,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_cluster(self,run_id):
+		global results_dir, uploads_dir, sett
 		mat_path = os.path.join(results_dir,run_id,"clustered.json")
 		if os.path.exists(mat_path):
 			with open(mat_path) as f:
@@ -593,6 +600,7 @@ class WebUI(object):
 	
 	@cherrypy.expose
 	def get_pcc(self,run_id):
+		global results_dir, uploads_dir, sett
 		mat_path = os.path.join(results_dir,run_id,"pcc_matrix.json")
 		if os.path.exists(mat_path):
 			with open(mat_path) as f:
@@ -603,6 +611,7 @@ class WebUI(object):
 	def meta(self, tbl,organism,db_version):
 		"""Returns the html description from the trackDb file for the specified organism.
 		"""
+		global results_dir, uploads_dir, sett
 		try:
 			trackdb = uscsreader.load_tabledata_dumpfiles(os.path.join(sett["data_dir"][db_version],organism,"trackDb"))
 			html = trackdb[map(itemgetter('tableName'),trackdb).index(tbl)]['html']
@@ -617,6 +626,7 @@ class WebUI(object):
 	def get_detailed(self,run_id):
 		""" loads results from detailed results file
 		"""
+		global results_dir, uploads_dir, sett
 		detailed_path,results = os.path.join(results_dir, run_id,"detailed.txt"),{"detailed": ""}		 
 		if os.path.exists(detailed_path):
 			with open(detailed_path) as f:
@@ -626,6 +636,7 @@ class WebUI(object):
 	@cherrypy.expose
 	def get_progress(self, run_id):
 		# Loads the progress file if it exists
+		global results_dir, uploads_dir, sett
 		p = {"status":"","curprog":0,"progmax":0}
 		progress_path = os.path.join(os.path.join(results_dir, run_id),".prog")
 		if os.path.exists(progress_path):
@@ -635,6 +646,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def get_log(self,run_id):
+		global results_dir, uploads_dir, sett
 		results = {"log": ""}
 		log_path = os.path.join(os.path.join(results_dir, run_id),"gr_log.txt")
 		if os.path.exists(log_path):
@@ -652,6 +664,7 @@ class WebUI(object):
 
 	@cherrypy.expose
 	def enrichment_log(self, id):
+		global results_dir
 		with open(os.path.join(results_dir,id+".log")) as sr:
 			x = sr.read()
 			return "<p>{}</p>".format(x.replace("\n","<br/>"))
@@ -693,6 +706,7 @@ def verify_score_strand(gf_path,pct_score,strand,data_dir):
     ''' Checks if a score and/or strand filtered version of gf_path exists in the database and
     returns the appropriate path if it does.
     '''
+    global results_dir, uploads_dir, sett
     gf_path = os.path.join(data_dir,gf_path.lstrip("/"))
     gf_score_strand_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}_{}/'.format(pct_score,strand))
     gf_score_path = gf_path.replace('/grsnp_db/','/grsnp_db_{}/'.format(pct_score))
@@ -707,7 +721,7 @@ def verify_score_strand(gf_path,pct_score,strand,data_dir):
     	return gf_path
 
 def main():
-	global sett
+	global sett, results_dir, uploads_dir
 	root_dir = os.path.dirname(os.path.realpath(__file__))
 	static_dir = os.path.abspath(os.path.join(root_dir, "frontend/static"))
 	media = os.path.abspath(os.path.join(".","frontend/media"))
