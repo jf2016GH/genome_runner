@@ -39,6 +39,7 @@ sudo apt-get install -y python-simplejson
 sudo apt-get install -y python-cherrypy3
 sudo apt-get install -y python-celery
 sudo apt-get install -y python-redis
+sudo apt-get install -y python-singledispatch
 
 # install R version 3.2.1 for Ubuntu 14.04
 which R || {
