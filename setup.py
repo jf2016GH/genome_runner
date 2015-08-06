@@ -22,17 +22,18 @@ setup(name='GenomeRunner web',
 			'gr-optimizer = grsnp.optimizer:main',
 			'gr-dbcreator = grsnp.dbcreator_encode:main'
 		]
-	},
-	install_requires = [
-		"cython == 0.22.1",
-		"cherrypy == 3.8.0",
-		"celery == 3.1.18",
-		"numpy ==1.9.2",
-		"scipy == 0.14.1",
-		"rpy2 == 2.5.6",
-		"simplejson == 3.6.5",
-		"mako == 1.0.1",
-		"BeautifulSoup == 3.2.0",
-		"redis == 2.10.0"
-	]
+	}
 )
+# ,
+# 	install_requires = [
+# 		"cython == 0.22.1",
+# 		"cherrypy == 3.8.0",
+# 		"celery == 3.1.18",
+# 		"numpy ==1.9.2",
+# 		"scipy == 0.14.1",
+# 		"rpy2 == 2.5.6",
+# 		"simplejson == 3.6.5",
+# 		"mako == 1.0.1",
+# 		"BeautifulSoup == 3.2.0",
+# 		"redis == 2.10.0"
+# 	]

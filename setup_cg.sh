@@ -41,17 +41,20 @@ sudo apt-get install -y python-celery
 sudo apt-get install -y python-redis
 sudo apt-get install -y python-singledispatch
 
+# Required by R packages
+sudo apt-get install -y libcurl4-openssl-dev
+sudo apt-get install -y libssl-dev
+sudo apt-get install -y libxml2-dev
+
 # install R version 3.2.1 for Ubuntu 14.04
-which R || {
-    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-base-core_3.2.1-4trusty0_amd64.deb
-    sudo gdebi -n r-base-core_3.2.1-4trusty0_amd64.deb 
-    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-recommended_3.2.1-4trusty0_all.deb
-    sudo gdebi -n r-recommended_3.2.1-4trusty0_all.deb 
-    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-doc-html_3.2.1-4trusty0_all.deb
-    sudo gdebi -n r-doc-html_3.2.1-4trusty0_all.deb 
-    wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-base_3.2.1-4trusty0_all.deb
-    sudo gdebi -n r-base_3.2.1-4trusty0_all.deb 
-}
+wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-base-core_3.2.1-4trusty0_amd64.deb
+sudo gdebi -n r-base-core_3.2.1-4trusty0_amd64.deb 
+wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-recommended_3.2.1-4trusty0_all.deb
+sudo gdebi -n r-recommended_3.2.1-4trusty0_all.deb 
+wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-doc-html_3.2.1-4trusty0_all.deb
+sudo gdebi -n r-doc-html_3.2.1-4trusty0_all.deb 
+wget https://cran.rstudio.com/bin/linux/ubuntu/trusty/r-base_3.2.1-4trusty0_all.deb
+sudo gdebi -n r-base_3.2.1-4trusty0_all.deb 
 
 # Versions of software to be installed
 declare -A versions
@@ -79,7 +82,7 @@ which bedtools || {
 which tabix || {
     git clone https://github.com/samtools/tabix.git
     cd tabix
-    make -j
+    make
     cp tabix bgzip $PREFIX/bin
     cd -
 }
@@ -160,8 +163,9 @@ fi
 #     sudo gdebi -n python-scipy_0.10.1+dfsg2-1_amd64.deb 
 # fi
 
-
-
+# Install R packages
+sudo Rscript -e 'install.packages(c("Hmisc", "RColorBrewer", "gplots", "xml2", "curl", "httr", "RCurl", "rversions", "git2r", "devtools", "shiny", "shinyBS", "DT", "dendextendRcpp", "colorRamps", "dplyr", "scales"),repos="http://cran.revolutionanalytics.com")'
+sudo Rscript -e 'devtools::install_github("mdozmorov/d3heatmap")'
 
 # GenomeRunner branch
 branch=shiny
@@ -169,8 +173,7 @@ branch=shiny
 git clone https://github.com/mdozmorov/genome_runner.git
 git checkout $branch
 cd genome_runner/grtk
-python setup.py install --user
-cd ..
-cd genome_runner
-#Rscript installer.R
 sudo python setup.py install
+cd ..
+# Install main GR. Remove 'develop' and after to install as a package
+sudo python setup.py install develop -d $PREFIX/lib/python2.7/dist-packages/
