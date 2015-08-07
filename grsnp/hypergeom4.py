@@ -281,8 +281,28 @@ def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
         paths.append(rnd_snp_path)
     return paths
 
+def _chunks(l, n):
+    n = max(1, n)
+    return [l[i:i + n] for i in range(0, len(l), n)]
 
-def get_annotation(foi,gfs):
+def _clean_header(file_path):
+    ''' Replace the double tab of annotationAnalysis header output
+    '''
+    tmp_file = get_tmp_file()
+    with open(tmpfile,'wb') as writer:
+        with open(file_path) as reader:
+            header = reader.readline()
+            header = header.replace("\t\t","\t")
+            writer.write(header + "\n")
+            while True:
+                line = reader.readline()
+                if not line:
+                    break
+                writer.write(line+"\n")
+    os.remove(file_path)
+    os.rename(tmp_file,file_path)
+
+def get_annotation(foi,gfs,gf_anot_outdir):
     """
     fois: list of FOI filepath
     gfs: filepaths for GF
@@ -290,35 +310,50 @@ def get_annotation(foi,gfs):
     results = []
     out = ""
     # use temporary files instead of piping out to console because large amounts of output to console can cause deadlock
-    # this creates unique random file names
-    tmp_path = get_tmp_file('grsnptmp')
-    tmp_error_path = get_tmp_file('grsnperrortmp')
-    
-    tmp_file = open(tmp_path,'wb')
-    tmp_error_file = open(tmp_error_path,'wb')
-    try:
-        out = subprocess.Popen(["annotationAnalysis"] + [foi] + gfs,stdout=tmp_file,stderr=tmp_error_file) # TODO enable ["--print-region-name"]
-        out.wait()
-        tmp_file.close()
-        tmp_error_file.close()
-        tmp = open(tmp_path).read()
-        tmp_er = open(tmp_error_path).read()
-        if tmp_er != "": logger.error(tmp_er)
-        if tmp[:6] == "ERROR:": 
-            logger.error(tmp[7:])
-            raise Exception(tmp)
-        # remove the temporary output files
-        if os.path.exists(tmp_path): os.remove(tmp_path)
-        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
+    tmp_anot_paths = []
+    for g in _chunks(gfs,50):
+        # this creates unique random file names and stores the file paths in a list
+        tmp_anot_paths.append(get_tmp_file('grsnptmp'))
+        tmp_path = tmp_anot_paths[-1] # tmp_anot_paths[-1] is the latest temp annotation file
+        tmp_file = open(tmp_path,'wb') 
+        tmp_error_path = get_tmp_file('grsnperrortmp')
+        tmp_error = open(tmp_error_path ,'wb')
+        try:
+            pdb.set_trace()
+            out = subprocess.Popen(["annotationAnalysis"] + [foi] + [g],stdout=tmp_file,stderr=tmp_error) # TODO enable ["--print-region-name"]
+            out.wait()
+            tmp_error.close()
+            tmp_file.close()
+            tmp_er = open(tmp_error_path).read()
+            tmp = open(tmp_path).readline()
+            if tmp_er != "": logger.error(tmp_er)
+            if tmp[:6] == "ERROR:": 
+                logger.error(tmp[7:])
+                raise Exception(tmp)
+            _clean_header(tmp_path)
 
-    except Exception, e:
-        if not tmp_file.closed: tmp_file.close()
-        if not tmp_error_file.closed: tmp_error_file.close()
-        # remove the temporary output files
-        if os.path.exists(tmp_path): os.remove(tmp_path)
-        if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
-        logger.error(traceback.format_exc())
-        raise e
+        except Exception, e:
+            if not tmp_file.closed: tmp_file.close()
+            if not tmp_error.closed: tmp_error.close()
+            # remove the temporary output files
+            if os.path.exists(tmp_path): os.remove(tmp_path)
+            if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
+            logger.error(traceback.format_exc())
+            raise e
+    # combine annotation files
+    if len(tmp_anot_paths) >1:
+        with open(os.path.join(gf_anot_outdir,foi+".txt"),'wb') as writer:
+            with open(tmp_anot_paths[0]) as main_anot:
+                for anot in tmp_anot_paths[1:]:
+                    with open(anot) as tmp_anot: # annotation results to combine with main_anot
+                        while True:
+                            writer.write()
+                
+
+    pdb.set_trace()
+    # remove the temporary output files
+   # if os.path.exists(tmp_path): os.remove(tmp_path)
+   # if os.path.exists(tmp_error_path): os.remove(tmp_error_path)
     return tmp
 
 # Writes the output to the file specified.  Also prints to console if console_output is set to true
@@ -765,8 +800,9 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                 _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
                 logger.info("Running annotation analysis for {}".format(base_name(f)))
                 with open(os.path.join(annot_outdir,base_name(f) + ".txt"),"wb") as wr:
-                    anot = get_annotation(f,gfs).split("\n")
+                    anot = get_annotation(f,gfs,annot_outdir)
                     anot[0] = anot[0].replace("Region\t\t","Region\t")
+                    # TODO
                     wr.write("Region"+"\t"+"\t".join(base_name(x) for x in reversed(anot[0].split("\t")[1:])) + "\tTotal") # annotationAnalysis column order is reverse of input order
                     for ind, a in enumerate(anot[1:]):
                         if a.strip() != "":
