@@ -4,9 +4,6 @@ $(document).ready(function() {
 						value: ${curprog},
 						max:  ${progmax}
 					});
-	$("#btnheatmaps1").click(function(){
-		add_heatmaps();
-	});
 	update_progress();
 	refresh_progress = setInterval(update_progress, 10000);	
 	$(".helptooltip").tooltip();	
@@ -23,16 +20,16 @@ function update_progress(){
 						max:  data['progmax']});
 		if (data['status'] != "") $("#status").html(data['status']);
 		if (data['status'] == "Analysis Completed" || data['status'].substring(0,18) == "Running Annotation"){ 
-			// draw the heatmaps		
-			$(".lblMat").remove()
-			add_heatmaps();			
+						
 			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>")
 		}
-		if(data['status'] == "Analysis Completed"  || data['status'] == "Run crashed. See end of log for details."){
+		if(data['status'] == "Run crashed. See end of log for details."){
 			$("#progressbar").progressbar({
 						value: 1,
 						max:  1});
 			clearInterval(refresh_progress);
+		} else if (data['status'] == "Analysis Completed"){
+			window.location.replace("http://" + window.location.host + "/results_shiny?id=${run_id}");
 		}
 	});
 	get_log();
