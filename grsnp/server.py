@@ -120,7 +120,7 @@ class WebUI(object):
 		os.mkdir(res_dir)
 		if sett['group'] != "":
 			gid = grp.getgrnam(sett['group']).gr_gid
-			os.chown(res_dir, group = gid)
+			os.chown(res_dir, -1,gid)
 		
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
