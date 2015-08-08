@@ -95,7 +95,7 @@
 		</div>
 	</div>
 
-<iframe id="example1" style="border: none;height: 1000px; width: 100%" src="http://10.0.2.15:4494?id=${run_id}"frameborder="0"></iframe>
+<iframe id="example1" style="border: none;height: 1000px; width: 100%" src="http://162.216.114.51/shiny-gr?id=${run_id}"frameborder="0"></iframe>
 
 </body>
 </html>
