@@ -24,7 +24,7 @@ Get the inet addr (i.e http://162.216.114.51/). We will use this address in the 
 
     ifconfig
 
-Create grsnp.d config and add the contents of grsnp.d included in this email. Please read it and note the comments. Edit 'access_log' and 'error_log' paths in this file. Create corresponding folders, e.g., '/home/ubuntu/logs/'. Then softlink with the sites-enabled directory.
+Create grsnp.d config file, please read it and note the comments. Edit 'access_log' and 'error_log' paths in this file. Create corresponding folders, e.g., '/home/ubuntu/logs/'. Then softlink with the sites-enabled directory.
 
     sudo vim /etc/nginx/sites-available/grsnp.d
     ln -s /etc/nginx/sites-available/grsnp.d /etc/nginx/sites-enabled/grsnp.d
@@ -60,7 +60,7 @@ With:
                         "tools.proxy.on": True,
                         "tools.proxy.base": 'http://162.216.114.51'})
 
-Note that http://162.216.114.51 is the web address 10.0.2.15. May not be critical step.
+Note that http://162.216.114.51 is the web address. May not be critical step.
 
 Then do in the genome_runner folder. 
 
@@ -75,6 +75,8 @@ Next, we need to install R.genomerunner into the /srv/shiny-server folder. All f
 Open genome_runner/grsnp/frontend/templates/results_shiny.mako and edit line 98 to be:
 
     <iframe id="example1" style="border: none;height: 1000px; width: 100%" src="http://162.216.114.51:shiny-gr?id=${run_id}"frameborder="0"></iframe>
+
+Critical part is to replace 'src="http://10.0.2.15:4494?id=${run_id}' by 'src="http://162.216.114.51:shiny-gr?id=${run_id}"'. 
 
 IMPORTANT Be sure to change the file folder permission for the database. Otherwise, shiny will crash when trying to create the heatmap as it needs access to the rds file generated in the results folder.
 
@@ -91,6 +93,7 @@ If we need to start/stop the server.
 
     sudo start shiny-server
     sudo stop shiny-server
+    sudo restart shiny-server
 
 Note that you need to do reload if you want to re-read config file for shiny-server. Restart will NOT reload the config file
 
