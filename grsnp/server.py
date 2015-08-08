@@ -28,6 +28,8 @@ import shutil
 import subprocess
 import celeryconfiguration
 from celery import Celery
+import grp
+import pwd
 
 os.environ['GR_COMPATIBILITY_MODE'] = 'y'
 
@@ -116,7 +118,10 @@ class WebUI(object):
 		os.mkdir(os.path.join(upload_dir,"gfs"))
 		res_dir = os.path.join(results_dir,str(id))
 		os.mkdir(res_dir)
-		os.chmod(res_dir,0x777)
+		if sett['group'] != "":
+			gid = grp.getgrnam(sett['group']).gr_gid
+			os.chown(res_dir, group = gid)
+		
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
 		list_gfs = []
@@ -730,7 +735,9 @@ def main():
 	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", required=True)
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8000) 
-	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)	
+	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)
+	parser.add_argument("--group", "-z", type=str, help="The group to change results folder permission to", default="")	
+
 	args = vars(parser.parse_args())
 	port = args["port"]
 	list_data_dir = args["data_dir"].split(",")
