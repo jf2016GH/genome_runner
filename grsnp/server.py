@@ -110,6 +110,7 @@ class WebUI(object):
 		while (os.path.exists(os.path.join(uploads_dir,id))):
 			id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
 		res_dir = os.path.join(results_dir,str(id))
+		os.chmod(res_dir,0x777)
 		upload_dir = os.path.join(uploads_dir,str(id))
 		os.mkdir(upload_dir)
 		os.mkdir(os.path.join(upload_dir,"fois"))
