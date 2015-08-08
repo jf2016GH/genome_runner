@@ -118,9 +118,10 @@ class WebUI(object):
 		os.mkdir(os.path.join(upload_dir,"gfs"))
 		res_dir = os.path.join(results_dir,str(id))
 		os.mkdir(res_dir)
-		if sett['group'] != "":
-			gid = grp.getgrnam(sett['group']).gr_gid
-			os.chown(res_dir, -1,gid)
+		#if sett['group'] != "":
+		#	gid = grp.getgrnam(sett['group']).gr_gid
+		#	#os.chown(res_dir, -1,gid)
+		#os.chmod(res_dir,0x777)
 		
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
 		gfs = os.path.join(upload_dir,".gfs") # contains a list of the paths to the gfs to run the fois against
@@ -838,3 +839,4 @@ def main():
 
 if __name__ == "__main__":	
 	main()
+
