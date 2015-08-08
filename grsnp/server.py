@@ -768,7 +768,8 @@ def main():
 	# global settings used by GR
 	sett = {"data_dir":data_dir,
 				"run_files_dir": args["run_files_dir"],
-				"default_organism":args["organism"]			
+				"default_organism":args["organism"],
+				"group": args['group']	
 				}
 
 	
