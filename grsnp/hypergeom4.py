@@ -767,7 +767,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             for f in fois:                
                 _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
                 logger.info("Running annotation analysis for {}".format(base_name(f)))
-                for i, g in enumerate(_chunks(gfs,3)):
+                for i, g in enumerate(_chunks(gfs,100)):
                     with open(os.path.join(annot_outdir,base_name(f) + str(i) + ".txt"),"wb") as wr:
                         anot = get_annotation(f,g).split("\n")
                         anot[0] = anot[0].replace("Region\t\t","Region\t")
