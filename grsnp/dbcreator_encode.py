@@ -575,25 +575,25 @@ def _get_formated_file_name(gf_group,gf_name):
 		
 		# get gf_source
 		gf_source = categories[0] + gf_source
-		if gf_group in  ['wgEncodeUwDnase', 'wgEncodeUwDgf','wgEncodePsuDnase']:
+		if organism == 'mm9':
 			gf_source = source[gf_group]
 		# get factor
 		if gf_group in ["wgEncodeUwDnase","wgEncodecAwgDnaseUniform","wgEncodePsuDnase"]:
 			factor = 'DNase'
+			if gf_group in ["wgEncodeUwDnase"]:
+				# appends the 'Rep' portion of the file name to the factor
+				if "Rep" in gf_name:
+					factor = 'DNase' + '_Rep'+gf_name.split(".")[0].split("Rep")[1]
 		elif gf_group in ["wgEncodeUwDgf"]:
 			factor = "Dgf"
 		else:
 			if gf_group in ["wgEncodePsuHistone","wgEncodeCaltechTfbs" ,"wgEncodePsuTfbs"]:
 				if 'PeaksRep1' in gf_name or 'PkRep1' in gf_name:
-					factor = categories[2] + "-rep1"
+					factor = categories[2] + "_rep1"
 				elif 'PeaksRep2' in gf_name or 'PkRep2' in gf_name:
-					factor = categories[2] + '-rep2'
+					factor = categories[2] + '_rep2'
 				else:
-					factor = categories[2]
-			elif gf_group in ["wgEncodeUwDnase"]:
-				# appends the 'Rep' portion of the file name to the factor
-				if "Rep" in gf_name:
-					factor = categories[2] + gf_name.split(".")[0].split("Rep")[1]
+					factor = categories[2]			
 			else:
 				factor = categories[2]
 		return "-".join([cell_type, factor, gf_source])
