@@ -42,6 +42,7 @@ gf_description_colnames = ["file_name","full_path", "URL", "full_description", "
 GF_description = namedtuple("gf_description",gf_description_colnames)
 
 gf_descriptions = {}
+organism = ""
 
 
 # downloads the specified file from ucsc.  Saves it with a .temp extension untill the download is complete.
@@ -51,7 +52,6 @@ def download_encode_file(organism,gf_group,gf_file):
 	'''
 	global download_dir
 	outputpath = ''
-	
 	try:
 		if os.path.exists(download_dir) == False and download_dir != '':
 			logger.info( "creating directory {}".format(download_dir))
@@ -145,7 +145,15 @@ def get_gf_filepaths(organism,gf_group):
 	# for chromstats in Roadmap we only want certain files
 	if gf_group.startswith('chromStates_'):
 		gf_paths = [x for x in gf_paths if x.endswith("_dense.bed.gz")]
+	# Do some filtering as to which files are included 
+	if gf_group in ["wgEncodeCaltechHist","wgEncodeCaltechTfbs","wgEncodeSydhTfbs","wgEncodePsuDnase"]:
+		gf_paths = [x for x in gf_paths if x.endswith(".narrowPeak.gz")]
+	if gf_group in ["wgEncodeLicrHistone", "wgEncodePsuHistone", "wgEncodeLicrTfbs", "wgEncodePsuTfbs", "wgEncodeUwDnase", "wgEncodeUwDgf"]:
+		gf_paths = [x for x in gf_paths  if x.endswith(".broadPeak.gz")]
+	if gf_group == "wgEncodePsuHistone":
+		gf_paths = [x for x in gf_paths if "InputPk" not in x]
 	return gf_paths
+	
 
 def get_road_gf_filepaths(gf_group):
 	'''Returns the list of the files on the roadmap server for the 'gf_group'.
@@ -290,7 +298,7 @@ def preparebed_splitby(gf_outputdir,organism,gf_group, gf_file):
 		line = infile.readline().rstrip('\n')
 		if line == "":
 			break
-		cur_gf = preparebed[out_gf_file.replace(".gz",'').split(".")[-1]](line)
+		cur_gf = preparebed_line[out_gf_file.replace(".gz",'').split(".")[-1]](line)
 		cur_split_value = cur_gf[3]
 		# check if current TFBS already has a file writer
 		if cur_split_value not in file_writers:
@@ -364,7 +372,7 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 			line = infile.readline().rstrip('\n')
 			if line == "":
 				break
-			cur_gf = preparebed[gf_file.replace(".gz",'').split(".")[-1]](line)
+			cur_gf = preparebed_line[gf_file.replace(".gz",'').split(".")[-1]](line)
 			writer.write("\t".join(cur_gf)+"\n")
 	# convert all created files into gzip
 	sort_convert_to_bgzip(f_path,new_path)
@@ -375,6 +383,8 @@ def preparebed(gf_outputdir, organism, gf_group, gf_file):
 	
 
 # Dictates how much of the filename to strip off before searching for cell type etc.
+# Leave one word in front of cell name.  I.E. for  wgEncodeLicrHistoneBatH3k04me1MAdult24wksC57bl6StdAlnRep1
+# padding should be 'wgEncodeLicr' in order to extract 'Bat' as cell type
 padding = {
  "wgEncodeAwgTfbsUniform": "wgEncodeAwgTfbs",
  "wgEncodeRegTfbsClustered": "wgEncode",
@@ -383,7 +393,18 @@ padding = {
  "wgEncodeUwHistone": "wgEncode",
  "wgEncodeSydhHistone": "wgEncode",
  "wgEncodeAwgDnaseUniform": "wgEncodeAwgDnase",
- "Encode_chromeStates": "wgEncodeAwgSegmentation"
+ "Encode_chromeStates": "wgEncodeAwgSegmentation",
+ # mouse
+ "wgEncodeCaltechHist": 'wgEncodeCaltech',
+ "wgEncodeLicrHistone": 'wgEncodeLicr',
+ "wgEncodePsuHistone": 'wgEncodePsu',
+ "wgEncodeCaltechTfbs": 'wgEncodeCaltech',
+ "wgEncodeLicrTfbs": 'wgEncodeLicr',
+ "wgEncodePsuTfbs": 'wgEncodePsu',
+ "wgEncodeSydhTfbs": 'wgEncodeSydh',
+ "wgEncodeUwDnase": 'wgEncodeUw',
+ "wgEncodeUwDgf": 'wgEncode',
+ "wgEncodePsuDnase": 'wgEncodePsu' 
 }
 
 source = {
@@ -406,7 +427,18 @@ source = {
  "DNase_processed_narrowPeak": "processed",
  "DNase_processed_gappedPeak": "processed",
  "DNase_imputed_narrowPeak": "imputed",
- "DNase_imputed_gappedPeak": "imputed"
+ "DNase_imputed_gappedPeak": "imputed",
+ # mouse
+ "wgEncodeCaltechHist": 'Caltech',
+ "wgEncodeLicrHistone": 'Licr',
+ "wgEncodePsuHistone": 'Psu',
+ "wgEncodeCaltechTfbs": 'Caltech',
+ "wgEncodeLicrTfbs": 'Licr',
+ "wgEncodePsuTfbs": 'Psu',
+ "wgEncodeSydhTfbs": 'Sydh',
+ "wgEncodeUwDnase": 'Uwdnase',
+ "wgEncodeUwDgf": 'Uwdgf',
+ "wgEncodePsuDnase": 'Psu'
 }
 
 
@@ -431,18 +463,30 @@ root_folder = {
  "DNase_processed_gappedPeak": "ROADMAP/DNase_gPk-processed",
  "DNase_imputed_narrowPeak": "ROADMAP/DNase_nPk-imputed",
  "DNase_imputed_gappedPeak": "ROADMAP/DNase_gPk-imputed",
- "Encode_chromeStates": "ENCODE/chromStates"
+ "Encode_chromeStates": "ENCODE/chromStates",
+ # mouse
+ "wgEncodeCaltechHist": "ENCODE/Histone",
+ "wgEncodeLicrHistone": "ENCODE/Histone",
+ "wgEncodePsuHistone": "ENCODE/Histone",
+ "wgEncodeCaltechTfbs": "ENCODE/TFBS",
+ "wgEncodeLicrTfbs": "ENCODE/TFBS",
+ "wgEncodePsuTfbs": "ENCODE/TFBS",
+ "wgEncodeSydhTfbs": "ENCODE/TFBS" ,
+ "wgEncodeUwDnase": "ENCODE/DNase",
+ "wgEncodeUwDgf": "ENCODE/DNase",
+ "wgEncodePsuDnase": "ENCODE/DNase" 
 }
 
 def _get_celltype(f_name, gf_group):
 	''' Extracts the cell type from the ENCODE genomic feature file name
+	Note that for the filepath, this function is NOT used (see _get_formated_file_name function)
 	'''
 	if f_name == "wgEncodeAwgDnaseDuke8988tUniPk":
 		return "8988t" # special case since cell name starts with a number
 	if gf_group == "wgEncodeRegTfbsClustered":
 		return "Clustered"
 	if f_name.startswith(padding[gf_group]):
-		f_name = f_name[len(padding[gf_group]):]
+		f_name = f_name[len(padding[gf_group]):]	
 
 	# # these are special cases
 	# if "K562b" in f_name:
@@ -486,6 +530,7 @@ def _get_source(gf_name,gf_group):
 		return source[gf_group]
 
 def _get_formated_file_name(gf_group,gf_name):
+	global organism
 	rfold = root_folder[gf_group].split("/")[0] # 'ENCODE' or 'ROADMAP'
 	peak_to_p = {'broadPeak': 'bPk', 'narrowPeak': 'nPk', 'gappedPeak': 'gPk'}
 	if rfold == "ROADMAP":
@@ -498,18 +543,23 @@ def _get_formated_file_name(gf_group,gf_name):
 		if peak in peak_to_p.keys():
 			factor = factor + "_" + peak_to_p[peak]
 		return "-".join([eid, factor, _get_source(gf_name,gf_group)])
-	elif rfold == "ENCODE":	
+	elif rfold == "ENCODE":			
 		if gf_name.startswith(padding[gf_group]):
 			gf_name = gf_name[len(padding[gf_group]):]
-		# Histone is special case, we append this to the source later
-		if "Histone" in gf_name:
+		# Histone is special case in hg19 only, we append this to the gf_source later
+		if "Histone" in gf_name and organism == "hg19":
 			gf_name = gf_name.replace("Histone","")
-			source = "Histone"
-		else: source = ""
+			gf_source = "Histone"
+		else: gf_source = ""
 		# split filename by capital letters
 		categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
 		# get the cell type
 		cell_type = categories[1]
+		# special cell types
+		if gf_group in ['wgEncodeUwDnase', 'wgEncodeUwDgf']:
+			cell_type =  gf_name.split('Hotspot')[0].replace("Dnase",'').replace("Dgf","").replace("Uw",'')
+		if gf_group in ['wgEncodePsuDnase']:
+			cell_type =  gf_name.split('Pk')[0].replace('Dnase','').replace("Dgf","")
 		if "8988t" in gf_name: # cell name that doesn't start with capital letter
 			cell_type = "8988t"
 			gf_name = gf_name.replace("8988t","Abc") # replace with dummy cell_type so splitting by letters works
@@ -521,15 +571,33 @@ def _get_formated_file_name(gf_group,gf_name):
 		elif "K562E" in gf_name and "K562Ezh2" not in gf_name:
 			cell_type = "K562"
 			gf_name = gf_name.replace("K562E","K562")
-			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])		
-		# get source
-		source = categories[0] + source
+			categories = re.findall('[A-Z][^A-Z]*', gf_name.split('.')[0])
+		
+		# get gf_source
+		gf_source = categories[0] + gf_source
+		if gf_group in  ['wgEncodeUwDnase', 'wgEncodeUwDgf','wgEncodePsuDnase']:
+			gf_source = source[gf_group]
 		# get factor
-		if gf_group == "wgEncodeAwgDnaseUniform":
+		if gf_group in ["wgEncodeUwDnase","wgEncodecAwgDnaseUniform","wgEncodePsuDnase"]:
 			factor = 'DNase'
+		elif gf_group in ["wgEncodeUwDgf"]:
+			factor = "Dgf"
 		else:
-			factor = categories[2]
-		return "-".join([cell_type, factor, source])
+			if gf_group in ["wgEncodePsuHistone","wgEncodeCaltechTfbs" ,"wgEncodePsuTfbs"]:
+				if 'PeaksRep1' in gf_name or 'PkRep1' in gf_name:
+					factor = categories[2] + "-rep1"
+				elif 'PeaksRep2' in gf_name or 'PkRep2' in gf_name:
+					factor = categories[2] + '-rep2'
+				else:
+					factor = categories[2]
+			elif gf_group in ["wgEncodeUwDnase"]:
+				# appends the 'Rep' portion of the file name to the factor
+				if "Rep" in gf_name:
+					factor = categories[2] + gf_name.split(".")[0].split("Rep")[1]
+			else:
+				factor = categories[2]
+		return "-".join([cell_type, factor, gf_source])
+
 
 
 def _get_gf_directory(outputdir,gf_group,gf_name):
@@ -558,8 +626,20 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 	 "DNase_processed_gappedPeak": ['roadmap_tissue','EID'],
 	 "DNase_imputed_narrowPeak": ['roadmap_tissue','EID'],
 	 "DNase_imputed_gappedPeak": ['roadmap_tissue','EID'],
-	 "Encode_chromeStates": ['source','cell']
+	 "Encode_chromeStates": ['source','cell'],
+	 # mouse
+	 "wgEncodeCaltechHist": ['source'],
+	 "wgEncodeLicrHistone": ['source'],
+	 "wgEncodePsuHistone": ['source'],
+	 "wgEncodeCaltechTfbs": ['source'],
+	 "wgEncodeLicrTfbs": ['source'],
+	 "wgEncodePsuTfbs": ['source'],
+	 "wgEncodeSydhTfbs": ['source'],
+	 "wgEncodeUwDnase": ['source'],
+	 "wgEncodeUwDgf": ['source'],
+	 "wgEncodePsuDnase": ['source']
 	}
+
 	gf_name = gf_name.replace("Histone","")
 	dir_structure = dirstruture[gf_group]
 	gf_directory = [root_folder[gf_group]]
@@ -574,11 +654,10 @@ def _get_gf_directory(outputdir,gf_group,gf_name):
 			gf_directory.append(_get_EID(gf_name,gf_group))
 		elif folder == 'source':
 			gf_directory.append(_get_source(gf_name,gf_group))
-
 	gf_directory = "/".join(gf_directory)
 	return os.path.join(outputdir,gf_directory)
 
-def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = None):
+def create_feature_set(data_dir,organism,gf_group,max_install = None):
 	outputdir = os.path.join(data_dir,organism)	
 	added_features = [] 
 	outpath = ""
@@ -601,7 +680,7 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			url = gf_grp_sett[gf_group]['html_server'] +  gf_grp_sett[gf_group]['directory'].format(organism)
 	for gf_file in gf_file_paths:		
 		# check if gf_type is supported
-		if gf_file.replace(".gz",'').split(".")[-1] not in preparebed.keys():
+		if gf_file.replace(".gz",'').split(".")[-1] not in preparebed_line.keys():
 			continue
 		# limit the number of GFs to install per group	
 		if max_install != None and grp_count >= max_install:
@@ -616,7 +695,7 @@ def create_feature_set(data_dir,organism,gf_group,pct_score=None,max_install = N
 			if os.path.exists(outpath+".temp"):
 				os.remove(outpath+".temp")
 			try:
-				# converts the ucsc data into proper bed format			
+				# converts the ucsc data into proper bed format		
 				gf_paths = gf_grp_sett[gf_group]["prep_method"](gf_outputdir,organism,gf_group,gf_file)
 				# output description
 				for f in gf_paths:
@@ -689,6 +768,7 @@ def update_progress(progress):
 # 'ftp_server' and 'directory' are used to download files from the database. 
 # '{}' in 'directory' is filled in with the organism name when present
 gf_grp_sett = {
+	# human
 	"wgEncodeAwgTfbsUniform": {'prep_method': preparebed,
 				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': '/goldenPath/{}/encodeDCC/wgEncodeAwgTfbsUniform'},
 	"wgEncodeRegTfbsClustered": {"prep_method":  preparebed_splitby, "gf_files": ["wgEncodeRegTfbsClusteredV3.bed.gz"],
@@ -730,12 +810,73 @@ gf_grp_sett = {
 	"DNase_imputed_gappedPeak": {'prep_method': preparebed,
 	 			"html_server": 'http://egg2.wustl.edu', 'directory': "/roadmap/data/byFileType/peaks/consolidatedImputed/gappedPeak"},
 	"Encode_chromeStates": {'prep_method': preparebed_splitby,
-				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': "/goldenPath/{}/encodeDCC/wgEncodeAwgSegmentation"}
+				'ftp_server': 'hgdownload.cse.ucsc.edu', 'directory': "/goldenPath/{}/encodeDCC/wgEncodeAwgSegmentation"},
+	# mouse
+	"wgEncodeCaltechHist": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeCaltechHist"},
+	"wgEncodeLicrHistone": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeLicrHistone"},
+	"wgEncodePsuHistone": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodePsuHistone"},
+	"wgEncodeCaltechTfbs": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeCaltechTfbs"},
+	"wgEncodeLicrTfbs": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeLicrTfbs"},
+	"wgEncodePsuTfbs": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodePsuTfbs"},
+	"wgEncodeSydhTfbs": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeSydhTfbs"},
+	"wgEncodeUwDnase": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeUwDnase"},
+	"wgEncodeUwDgf": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodeUwDgf"},
+	"wgEncodePsuDnase": {'prep_method': preparebed,
+				'ftp_server': "hgdownload.cse.ucsc.edu", 'directory': "/goldenPath/mm9/encodeDCC/wgEncodePsuDnase"},
+
+
+
 }
 
+org_gfgroup = {
+	'hg19': [
+		"wgEncodeAwgTfbsUniform",
+		"wgEncodeRegTfbsClustered",
+		"wgEncodeBroadHmm",
+		"wgEncodeBroadHistone",
+		"wgEncodeUwHistone",
+		"wgEncodeSydhHistone",
+		"wgEncodeAwgDnaseUniform",
+		"chromStates15",
+		"chromStates18",
+		"chromStates25",
+		"Histone_processed_broadPeak",
+		"Histone_processed_narrowPeak",
+		"Histone_processed_gappedPeak",
+		"Histone_imputed_narrowPeak",
+		"Histone_imputed_gappedPeak",
+		"DNase_processed_broadPeak",
+		"DNase_processed_narrowPeak",
+		"DNase_processed_gappedPeak",
+		"DNase_imputed_narrowPeak",
+		"DNase_imputed_gappedPeak",
+		"Encode_chromeStates",
+	],
+	'mm9':[
+		"wgEncodeCaltechHist",
+		"wgEncodeLicrHistone",
+		"wgEncodePsuHistone",
+		"wgEncodeCaltechTfbs",
+		"wgEncodeLicrTfbs",
+		"wgEncodePsuTfbs",
+		"wgEncodeSydhTfbs",
+		"wgEncodeUwDnase",
+		"wgEncodeUwDgf",
+		"wgEncodePsuDnase"
+	]
+}
 
 # Dictionary of supported file type mapped to function used to convert to proper bed format
-preparebed = {
+preparebed_line = {
 	"bed":_format_bed,
 	"bed9":_format_bed,
 	"bedRrbs":_format_bed,
@@ -748,8 +889,10 @@ preparebed = {
 	"gPk": _format_bed
 }
 
+
+
 def main():
-	global username,password, download_dir, gfs
+	global username,password, download_dir, gfs, organism
 	parser = argparse.ArgumentParser(prog="python -m grsnp.dbcreator", description='Creates the GenomeRunner SNP Database. Example: python -m grsnp.dbcreator -d /home/username/grsnp_db/ -g mm9', epilog='IMPORTANT: Execute DBCreator from the database folder, e.g., /home/username/grsnp_db/. Downloaded files from UCSC are placed in ./downloads database created in ./grsnp_db.')
 	parser.add_argument("--data_dir" , "-d", nargs="?", help="Set the directory where the database to be created. Use absolute path. Example: /home/username/grsnp_db/. Required", required=True)
 	parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use for the database creation. Default: hg19 (human). Required", default="hg19")
@@ -757,7 +900,7 @@ def main():
 	parser.add_argument('--galaxy', help="Create the xml files needed for Galaxy. Outputted to the current working directory.", action="store_true")
 	parser.add_argument('--quantiles', '-s', help="Commas separated list of score quantiles.", nargs='?',default="")
 	#parser.add_argument('--filteronly','-o', help="Only filter by score and strand. Skips downloading and installing new GFs.", action="store_true")
-	parser.add_argument('--max','-m', nargs="?", help="Limit the number of features to be created within each group.",type=int, default=None)
+	parser.add_argument('--max','-m',help="Limit the number of features to be created within each group.",type=int, default=None)
 
 
 
@@ -783,12 +926,12 @@ def main():
 
 	if args['organism'] is not None: # Only organism is specified. Download all organism-specific features
 		global download_dir, gf_grp_sett
+		organism = args['organism']
 		download_dir = os.path.join(args["data_dir"],"downloads",args['organism'])
 		gfs = args["featuregroups"].split(",")
 		gf_descriptions = _read_description_file(data_dir,args["organism"])
-		for grp in ["wgEncodeAwgTfbsUniform"]:
-#		for grp in gf_grp_sett.keys():
-			create_feature_set(data_dir,args['organism'],grp,None) # Remove ',2' limit to create full database
+		for grp in org_gfgroup[args["organism"]]:
+			create_feature_set(data_dir,args['organism'],grp,args['max'])
 	else:
 		print "ERROR: Requires UCSC organism code.  Use --help for more information"
 		sys.exit()
