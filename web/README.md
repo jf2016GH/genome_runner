@@ -29,9 +29,11 @@ Create grsnp.d config file, please read it and note the comments. Edit 'access_l
     sudo vim /etc/nginx/sites-available/grsnp.d
     ln -s /etc/nginx/sites-available/grsnp.d /etc/nginx/sites-enabled/grsnp.d
 
-Another configuration file: /etc/nginx/nginx.conf
+Another configuration file: /etc/nginx/nginx.conf. You can use 
 
-You can use "sudo nginx -t"  to check for syntax errors in the config files
+    sudo nginx -t
+
+to check for syntax errors in the config files
 
     sudo service nginx start
     sudo service nginx status
@@ -39,32 +41,6 @@ You can use "sudo nginx -t"  to check for syntax errors in the config files
 Check errors
 
     sudo tail /var/log/nginx/error.log
-
-Configure server.py
-===
-
-First be sure to run to remove old version of grsnp if it exists.: 
-
-    sudo rm -r /usr/local/lib/python2.7/dist-packages/GenomeRunner_web-0.1.0-py2.7.egg/
-
-Then open server.py and go to line 787 and lock for cherrypy.config.update. Replace: 
-
-      cherrypy.config.update({
-            "server.socket_port": int(port),
-             "server.socket_host":"0.0.0.0"})
-
-With:
-
-      cherrypy.config.update({
-                        "server.socket_port": int(port),
-                        "tools.proxy.on": True,
-                        "tools.proxy.base": 'http://162.216.114.51'})
-
-Note that http://162.216.114.51 is the web address. May not be critical step.
-
-Then do in the genome_runner folder. 
-
-sudo python setup.py install
 
 Configuring R.Genomerunner
 ===
@@ -164,3 +140,5 @@ Check what listens
 Dealing with encoding issues
 
     iconv -t UTF-8 -c gf_descriptions.test > gf_descriptions.test.utf8
+
+413 Request Entity Too Large - [check this link](http://cnedelcu.blogspot.com/2013/09/nginx-error-413-request-entity-too-large.html) and add 'client_max_body_size 10M;' to the nginx config file
