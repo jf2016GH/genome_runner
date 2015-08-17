@@ -1,6 +1,8 @@
 --------------------------------
   GenomeRunner web Readme
-  --------------------------------
+--------------------------------
+
+GenomeRunner is currently developed in [shiny branch](https://github.com/mdozmorov/genome_runner/tree/shiny)
 
 See the main documentation on
 [https://mdozmorov.github.io/grdocs/index.html](https://mdozmorov.github.io/grdocs/index.html)
