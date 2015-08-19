@@ -1,13 +1,18 @@
-        <h3>
-            <span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
+            <h3><span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
+        <p>
+            <span style="font-family:arial,helvetica,sans-serif;">06/10/2015: The development of GenomeRunner continues focusing on better organization of the ENCODE and Roadmap Epigenomics data, development of new analysis methods, and interactive visualization of the results. See (and use) <a href="http://integrativegenomics.org/" target="_blank">http://integrativegenomics.org/</a> for more detalis, any feedback is appreciated.</span></p>
+        <p>
+            <span style="font-family:arial,helvetica,sans-serif;">04/03/2015: Hardware upgrade, to accomodate the Roadmap Epigenomics data</span></p>
+        <p>
+            <span style="font-family:arial,helvetica,sans-serif;">02/02/2015: Starting addition of the Roadmap Epigenomics data. The detailed information about the processed data can be found at <a href="https://sites.google.com/site/anshulkundaje/projects/epigenomeroadmap" target="_blank">(2014) Roadmap Epigenomics Project: Chromatin States across 100s of human cell/tissue types</a>. The cell/tissue type labels can be looked up in the above link, or by clicking the &quot;Track Descriptions&quot; button in &quot;Choose genome annotation features&quot; step.</span></p>
+        <p>
+            <span style="font-family:arial,helvetica,sans-serif;">01/20/2015: Adding cell type-specific enhancers data from an excellent paper by <a href="http://www.nature.com/nature/journal/vaop/ncurrent/full/nature13835.html" target="_blank">KKH Farh et. al. &quot;</a></span><span style="font-family: arial, helvetica, sans-serif;"><a href="http://www.nature.com/nature/journal/vaop/ncurrent/full/nature13835.html" target="_blank">Genetic and epigenetic fine mapping of causal autoimmune disease variants&quot;</a>. Human hg19 data, <a href="https://www.broadinstitute.org/pubs/finemapping/?q=data-portal" target="_blank">data source.</a></span></p>
         <p>
             <span style="font-family:arial,helvetica,sans-serif;">12/15/2014: Design updates</span></p>
         <p>
+            <span style="font-family: arial, helvetica, sans-serif;">12/01/2014: Database update for hg19 and mm9. Note that snp141 database is now used as a background.</span></p>
         <p>
-            <span style="font-family:arial,helvetica,sans-serif;">12/01/2014: Database update for hg19 and mm9. Note that snp141 database is now used as a background.</span></p>
-        <p>
-        <p>
-            <span style="font-family:arial,helvetica,sans-serif;">11/19/2014: Bug fixes, interface updates.</span></p>
+            <span style="font-family: arial, helvetica, sans-serif;">11/19/2014: Bug fixes, interface updates.</span></p>
         <p>
             <span style="font-family:arial,helvetica,sans-serif;">08/14/2014: Full databases for hg18, hg38, mm9 and mm10 are online. Filtering by score and strand is available.</span></p>
         <p>
