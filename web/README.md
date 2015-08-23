@@ -142,3 +142,10 @@ Dealing with encoding issues
     iconv -t UTF-8 -c gf_descriptions.test > gf_descriptions.test.utf8
 
 413 Request Entity Too Large - [check this link](http://cnedelcu.blogspot.com/2013/09/nginx-error-413-request-entity-too-large.html) and add 'client_max_body_size 10M;' to the nginx config file
+
+ERROR parallel: Warning: No more processes: Decreasing number of running jobs to 1. Raising ulimit -u or /etc/security/limits.conf may help.
+
+    ulimit -u # Check the allowed limit of concurrent processes
+    ps -u <username> # Count the number of running processes
+
+
