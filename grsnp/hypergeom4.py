@@ -257,7 +257,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         shrunken_or,odds_ratio = 1,1
     else:
         # find which value is closer to 1
-        ci_index = scipy.array([[abs(ci_lower-1),abs(ci_upper-1)]]).argmin()
+        ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
         shrunken_or = [ci_lower,ci_upper][ci_index]
 
     sign = -1 if (odds_ratio < 1) else 1
