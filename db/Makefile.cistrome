@@ -19,7 +19,12 @@ Motif.wget:	Motif.html
 
 CistromeNR:	Cistrome.wget Epigenome.wget Motif.wget
 	DIR="Cistrome" ; \
+	mkdir -p $$DIR; \
+	mkdir -p $$DIR/hg19; \
+	mkdir -p $$DIR/mm9; \
 	for file in $^; do \
+		mkdir -p $$DIR/hg19/$${file%.wget}; \
+		mkdir -p $$DIR/mm9/$${file%.wget}; \
 		for file2 in `cat $$file`; do \
 			wget $$file2 && \
 			f2name=`basename $$file2` ; \
@@ -45,6 +50,9 @@ CistromeNR:	Cistrome.wget Epigenome.wget Motif.wget
 		done ; \
 	done ; \
 	for file in `find $$DIR/ -type f -name "*.bed"`; do \
-		sed '1d' $$file > $${file%.bed}".f.bed" && \
-		rm $$file ; \
+		echo "Processing file "$$file; \
+		sed '1d' $$file | bedtools sort -i - > tmp.bed && \
+		mv tmp.bed $$file ; \
+		bgzip $$file; \
+		tabix $$file; \
 	done
