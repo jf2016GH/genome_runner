@@ -54,5 +54,5 @@ CistromeNR:	Cistrome.wget Epigenome.wget Motif.wget
 		sed '1d' $$file | bedtools sort -i - > tmp.bed && \
 		mv tmp.bed $$file ; \
 		bgzip $$file; \
-		tabix $$file; \
+		tabix $$file.gz; \
 	done
