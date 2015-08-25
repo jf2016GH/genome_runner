@@ -9,11 +9,11 @@
 				<ul class="pull-right">
 					<li><a href="./overview">Overview</a></li>
 					<li><a href="./news">News</a></li>
-					<li><a href="./demo">Demo</a></li>
+					<li><a href="./demo">Quick start</a></li>
 					<!-- <li><a href="./cite">How to Cite</a></li>
 					<li><a href="http://sourceforge.net/projects/genomerunner/">GenomeRunner on SourceForge</a></li>
 					<li><a href="./roadmap">Roadmap</a></li> -->
-					<li><a href="https://mdozmorov.github.io/grdocs/" target="_blank">Help</a></li>
+					<li><a href="https://github.com/mdozmorov/genomerunner_web/wiki" target="_blank">Help</a></li>
 <!-- <div>
 					<li><a href="./google">Google Group</a></li>
 					<li><img width="30px" src="static/new-icon.jpg" alt="New: GenomeRunnerSNP Google Groups" /></li>
@@ -51,7 +51,7 @@
 							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
 						</div>
 						<div id="div_demo_fois">
-							<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNPs file sets: </h4>
+							<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNPs sets: </h4>
 							<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
 								<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
 								${demo_snps}
@@ -72,7 +72,7 @@
 						</div>
 					</div>	
 					<div class="well">
-						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'universe' of all SNPs, used to calculate the probability of the SNPs of interest being enriched in regulatory datasets. The SNPs of interest should be a subset of the background, or the p-values may be incorrect. The default background, all common SNPs from the latest organism-specific database, is suitable when a genome-wide study was performed. When a microarray was used for SNPs profiling, it is advisable to upload all SNPs on that array as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+						<h3 style="float:left">2. Define the background: ${default_background}<img class="helptooltip" title="By default, all common SNPs are used as a 'background' of all SNPs, used to calculate the probability of the SNPs of interest being enriched in regulatory datasets. The SNPs of interest should be a subset of the background, or the p-values may be incorrect. The default background, all common SNPs from the latest organism-specific database, is suitable when a genome-wide study was performed. When a microarray was used for SNPs profiling, it is advisable to upload all SNPs on that array as a background." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
 						<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input> -->
 						<b style=" font-size:120%; margin-left: 10px"></b>
@@ -147,7 +147,7 @@
 							<h3 id='lblAdvancedFeatures'><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Advanced Features</a></h3>
 							<div>
 								<label>Percent score threshold: ${pct_scores}</label>
-								<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a score, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a signal value, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set by the number of overlaps with the selected regulatory datasets." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 
 								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>

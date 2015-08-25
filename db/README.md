@@ -14,5 +14,5 @@ Misc. scripts and files for the dbCreator module
 -   ucscFilesLarge.txt - largest genome annotation files, to be
     downloaded like
     `` for file in `cat ucscFilesLarge.txt`; do rsync -avzP $file .; done ``
-- Makefile.cistrome, Cistrome.*, Epigenome.*, MOtif.* - Makefile and prerequisites to download and create Cistrome database for GenomeRunner
+- Makefile.cistrome, Cistrome.*, Epigenome.*, Motif.* - Makefile and prerequisites to download and create Cistrome database for GenomeRunner
 - fois* - lists of SNP sets for specific tasks

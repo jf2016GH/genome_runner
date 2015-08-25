@@ -1,6 +1,9 @@
         <h3>
             <span style="font-family:arial,helvetica,sans-serif;">News</span></h3>
         <p>
+            <span style="font-family:arial,helvetica,sans-serif;">Summer 2015: The development of GenomeRunner continues with focusing on downstream analyses. Backed by systematically structured epigenomic data from the ENCODE, Roadmap Epigenomics and other projects, the enrichment, differential regulation-, cell type-specific and annotation analyses are aimed to maximize understanding of the potential regulatory impact of SNP sets.</span></p>
+        <p>
+        <p>
             <span style="font-family:arial,helvetica,sans-serif;">12/15/2014: Design updates</span></p>
         <p>
         <p>
