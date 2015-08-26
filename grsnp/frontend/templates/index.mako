@@ -28,15 +28,14 @@
 		<div class="well" style="margin-top: -15px; padding: 0px">			
 			<h3>Select Database Version:</h3>
 			${database_versions}		
-			<h3>GenomeRunner: Functional interpretation of SNPs within regulatory context</h3>
+			<h3>GenomeRunner: Functional interpretation of SNPs within regulatory/epigenomic context</h3>
 			<p>
-				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for annotation and enrichment analysis of the SNP sets by considering SNPs co-localization with functional/regulatory genome annotation data. GenomeRunner is particularly useful for interpretation of the collective regulatory impact of SNPs in non-protein coding regions. An example of GenomeRunner&#39;s results can be found in the analysis of Sjogren&#39;s syndrome GWAS (<em><a href="http://www.nature.com/ng/journal/v45/n11/full/ng.2792.html" target="_blank">Nature Genetics</a></em>) where it identified RFX5 transcription factor binding site as strongly enriched with the disease-associated SNPs.</span></p>
+				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for functional enrichment analysis of SNP sets within regulatory/epigenomic context. The philosophy behind GenomeRunner is that SNPs are not acting in isolation and may collectively alter regulatory/epigenomic features. Finding which regulatory features are affected may help to understand  mechanisms of complex diseases from a holistic perspective.</span></p>
 				<p>
-					<br />
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner calculates <a href="http://mdozmorov.github.io/grdocs/hypergeom4/enrichment.html">enrichment p-values</a> by evaluating whether a SNP set co-localizes with regulatory datasets more often that could happen by chance. For three or more SNP sets, GenomeRunner performs <a href="https://mdozmorov.github.io/grdocs/hypergeom4/episimilarity.html">regulatory similarity analysis</a> by correlating SNP set-specific regulatory enrichment profiles. The downloadable results are visualized as interactive heatmaps and tables <a href="result?id=example">(Example)</a>.</span></span></p>
+				<br />
+				<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable results are visualized as interactive heatmaps and tables <a href="results_shiny?id=example1">(Example 1, single SNP set analysis)</a>, <a href="rresults_shiny?id=example2">(Example 2, multiple SNP sets analysis)</a>.</span></span></p>
 					<p>
 					</p>
-					<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">This beta version includes fully reorganized regulatory database with data from the ENCODE and Roadmap Epigenomics projects. The downstream analysis is focused on maximizing interpretation of the regulatory associations using interactive visualization, differential regulatory analysis, and cell type-specific enrichment analysis.</span></span></p>
 					</div>
 					<div class="well">
 						<div style="float:right;margin-top: 10px;">
@@ -48,10 +47,10 @@
 						</h3>
 						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
 							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
-							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
+							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should data in BED format look like?</a>
 						</div>
 						<div id="div_demo_fois">
-							<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNPs sets: </h4>
+							<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNP sets: </h4>
 							<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
 								<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
 								${demo_snps}
@@ -77,13 +76,13 @@
 						<!-- <input type="checkbox" style="font-size:120%;margin-top:1em" name="run_random">Run randomization test</input> -->
 						<b style=" font-size:120%; margin-left: 10px"></b>
 						<div class="accordion" style="padding-bottom: 1em;list-style:none;margin-top:2em">        
-							<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload custom background
+							<h3  id="accordionheader"><a href="#" style="font-size:120%">Upload/paste custom background
 								<img class="helptooltip" title="Upload, or paste a list of rsIDs, or genomic coordinates in BED format, of all SNPs evaluated in a study." width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 							</a></h3>
 							<div style="height=100px">       
 								<h4 style="float:left;">File:</h4>
 								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />
-								<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data look like?</a>
+								<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should data in BED format look like?</a>
 								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
 									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>					        
 									<table style="margin-bottom:0px; padding-bottom:0px">
@@ -99,11 +98,11 @@
 						</div>
 					</div>
 					<div class="well" style="padding-bottom:0em">
-						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory datasets<img class="helptooltip" title="Select and/or upload regulatory datasets (aka genome annotations, functional/epigenomic data) used to test for enrichments in the SNPs of interest." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
+						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory/epigenomic datasets<img class="helptooltip" title="Select and/or upload regulatory datasets (aka genome annotations, functional/epigenomic data) used to test for enrichments in the SNPs of interest." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 						${custom_gfs}
 						<br>
 						<div id="accordGFS" class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 0.5em;" onClick="renderCheckBoxTree()"> 
-							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory datasets</a><img class="helptooltip" title="Use checkboxes to select any (category of) regulatory datasets from a Databse/Category/Subcategory hierarchy." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
+							<h3  id="accordionheader"><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Choose regulatory/epigenomic datasets</a><img class="helptooltip" title="Use checkboxes to select any (category of) regulatory/epigenomic datasets from a Database/Category/Subcategory hierarchy." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 							<div >								
 								<div id="grfdroplist" style="display: table;">	
 									<div id="divCheckBox" style="width: 70%; margin:15px; display: table-cell; verticle-align: top; visibility: hidden">
@@ -113,10 +112,10 @@
 												<a class="btn" style="margin-top: 9px;" onClick="$('#jstree_gfs').jstree('close_all');">Collapse All</a>
 												<a class="btn" style="margin-top: 9px;" onClick="$('#jstree_gfs').jstree('check_all');">Select All</a>
 												<a class="btn" style="margin-top: 9px" onClick="$('#jstree_gfs').jstree('uncheck_all');">Deselect all</a>
-												<a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a>
+												<!-- <a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a> -->
 											</div>
 										</div>												
-											<label>Search genomic features<img class="helptooltip" title="Use fuzzy search to find genomic annotations of interest; use Select/Unselect buttons to use them for analyses." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
+											<label>Search regulatory/epigenomic features<img class="helptooltip" title="Use fuzzy search to find genomic annotations of interest; use Select/Unselect buttons to use them for analyses." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
 											<input style="margin-top:1.5em" id="txt_gfs_search" class='input' type="text"></input>
 											<a class="btn" id="treeSelect" onClick="treeviewSelectSearchedClick()">Select</a>
 											<a class="btn" id="treeSelect" onClick="treeviewDeselectSearchedClick()">Unselect</a>
@@ -130,7 +129,7 @@
 								<li id="list-bedbackground">					
 									<h4 style="float:left;">Files:</h4>
 									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
-									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should my data  look like?</a>
+									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should data in BED format look like?</a>
 								</li>				
 							</ul>
 						</div>
