@@ -5,6 +5,7 @@
 ##     Create 'Cistrome' folder, 'hg19' and 'mm9' subfolders, and 'Cistrome', 'Epigenome' and 'Motif' subsubfolders
 ##
 ## Note: Scripts are still not automatic, due to non-standard .zip files
+## Note: Cistrome has comma in file name "uman_MDA-MB-231-Cells_ESR1,-DBDmut_E2-45min_Katzenellenbogen.bed". Correct manually
 
 all:	CistromeNR
 
