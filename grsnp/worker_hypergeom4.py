@@ -42,6 +42,7 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 			bg_path = os.path.join(sett['root_data_dir'][db_version],bg_path.lstrip("/"))
 		else:
 			bg_path = os.path.join(sett['run_files_dir'],bg_path.lstrip("/"))
+		print "Worker starting job for {}".format(id)
 		grsnp.hypergeom4.run_hypergeom(fois+"_full", gfs+"_full", bg_path,outdir,job_name,zip_run_files,bkg_overlaps_path,sett['root_data_dir'][db_version],run_annotation,run_randomization_test,pct_score,organism)
 	except Exception, e:
 		print traceback.print_exc()
