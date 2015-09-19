@@ -821,6 +821,7 @@ def _load_minmax(path):
 
 def main():
         global matrix_outpath, detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress, print_progress
+        print_progress = True     
         parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
         parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
         parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
@@ -830,7 +831,6 @@ def main():
         parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
         parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
         parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
-
         args = vars(parser.parse_args())
         if args['organism'] is None:
             print "--organism cannot be blank"
