@@ -1,3 +1,9 @@
+Important configuration files
+===
+- `/etc/nginx/nginx.conf` - global nginx configuration file
+- `/etc/nginx/sites-available/grsnp.d` - local nginx configuration
+- `/etc/shiny-server/shiny-server.conf` - shiny server configuration
+
 Configure nginx
 ===
 
@@ -24,7 +30,7 @@ Get the inet addr (i.e http://162.216.114.51/). We will use this address in the 
 
     ifconfig
 
-Create grsnp.d config file, please read it and note the comments. Edit 'access_log' and 'error_log' paths in this file. Create corresponding folders, e.g., '/home/ubuntu/logs/'. Then softlink with the sites-enabled directory.
+Create `grsnp.d` config file, please read it and note the comments. Edit 'access_log' and 'error_log' paths in this file. Create corresponding folders, e.g., '/home/ubuntu/logs/'. Then softlink with the sites-enabled directory.
 
     sudo vim /etc/nginx/sites-available/grsnp.d
     ln -s /etc/nginx/sites-available/grsnp.d /etc/nginx/sites-enabled/grsnp.d
@@ -58,7 +64,7 @@ IMPORTANT Be sure to change the file folder permission for the database. Otherwi
 
     chown -R username:shiny-apps /home/mdozmorov/db_5.00_07-22-2015/
 
-Also, be sure to change the nginx config file as well so that it re-routs requests correctly to the shiny-server. i.e do: location ^~ /shiny-gr
+Also, be sure to change the `grsnp.d` config file as well so that it re-routs requests correctly to the shiny-server. i.e do: location ^~ /shiny-gr
 
 Configure shiny-server
 ===
@@ -81,7 +87,7 @@ Config file for shiny is located at
     sudo vim /etc/shiny-server/shiny-server.conf
 
 Read it and look for the port number located on line 5 (i.e. ‘listen 3838’)
-This needs to be put into our nginx config file created earlier.
+This needs to be put into our `grsnp.d` config file created earlier.
 
 Log file information for shiny app can be found by going to /var/log/shiny-server/. This will refresh automatically when the log file changes
 
@@ -109,7 +115,7 @@ To fix:
 Shortcuts
 ===
 
-Start the server
+Start the server (note the port number should correspond to the `grsnp.d` settings)
 
     gr-server -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ -g hg19 -p 8080
 
