@@ -84,8 +84,9 @@ sudo rm -r downloads
 sudo chmod a+x $PREFIX/bin/*
 
 # Install R packages
-sudo Rscript -e 'install.packages(c("Hmisc", "RColorBrewer", "gplots", "xml2", "curl", "httr", "RCurl", "rversions", "git2r", "devtools", "shiny", "shinyBS", "DT", "dendextendRcpp", "colorRamps", "dplyr", "scales"),repos="http://cran.revolutionanalytics.com")'
+sudo Rscript -e 'install.packages(c("Hmisc", "RColorBrewer", "gplots", "xml2", "curl", "httr", "RCurl", "rversions", "git2r", "devtools", "shiny", "shinyBS", "DT", "dendextendRcpp", "colorRamps", "dplyr", "scales"), repos="http://cran.revolutionanalytics.com")'
 sudo Rscript -e 'devtools::install_github("mdozmorov/d3heatmap")'
+sudo Rscript -e 'devtools::install_github("mdozmorov/MDmisc")'
 # Check if all installed correctly, in R
 # require("Hmisc"); require("RColorBrewer"); require("gplots"); require("xml2"); require("curl"); require("httr"); require("RCurl"); require("rversions"); require("git2r"); require("devtools"); require("shiny"); require("shinyBS"); require("DT"); require("dendextendRcpp"); require("colorRamps"); require("dplyr"); require("scales"); require("d3heatmap")
 
