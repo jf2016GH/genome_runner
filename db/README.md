@@ -15,4 +15,5 @@ Misc. scripts and files for the dbCreator module
     downloaded like
     `` for file in `cat ucscFilesLarge.txt`; do rsync -avzP $file .; done ``
 - Makefile.cistrome, Cistrome.*, Epigenome.*, Motif.* - Makefile and prerequisites to download and create Cistrome database for GenomeRunner
+- Makefile.CpG - Makefile for creating hg19 and mm9 CpG BED files, from [http://rafalab.jhsph.edu/CGI/](http://rafalab.jhsph.edu/CGI/)
 - fois* - lists of SNP sets for specific tasks
