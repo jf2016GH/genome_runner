@@ -1,6 +1,0 @@
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyRipSeq/Tier1/Gm12878/wgEncodeSunyRipSeqGm12878Pabpc1Pk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyRipSeq/Tier1/Gm12878/wgEncodeSunyRipSeqGm12878Elavl1Pk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyRipSeq/Tier1/Gm12878/wgEncodeSunyRipSeqGm12878RipinputPk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyRipSeq/Tier1/K562/wgEncodeSunyRipSeqK562Pabpc1Pk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyRipSeq/Tier1/K562/wgEncodeSunyRipSeqK562RipinputPk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/SunyRipSeq/Tier1/K562/wgEncodeSunyRipSeqK562Elavl1Pk.bed.gz

@@ -1,9 +1,0 @@
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier2/Huvec/wgEncodeBroadHmmHuvecHMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier2/Hepg2/wgEncodeBroadHmmHepg2HMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier3/Nhek/wgEncodeBroadHmmNhekHMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier3/Nhlf/wgEncodeBroadHmmNhlfHMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier3/Hsmm/wgEncodeBroadHmmHsmmHMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier3/Hmec/wgEncodeBroadHmmHmecHMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier1/Gm12878/wgEncodeBroadHmmGm12878HMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier1/H1hesc/wgEncodeBroadHmmH1hescHMM.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/BroadHmm/Tier1/K562/wgEncodeBroadHmmK562HMM.bed.gz

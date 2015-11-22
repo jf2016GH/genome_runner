@@ -1,8 +1,0 @@
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier2/Helas3/wgEncodeUmassDekker5CHelas3Pk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier2/Helas3/wgEncodeUmassDekker5CHelas3PkV2.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier1/Gm12878/wgEncodeUmassDekker5CGm12878PkV2.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier1/Gm12878/wgEncodeUmassDekker5CGm12878Pk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier1/H1hesc/wgEncodeUmassDekker5CH1hescPk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier1/H1hesc/wgEncodeUmassDekker5CH1hescPkV2.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier1/K562/wgEncodeUmassDekker5CK562Pk.bed.gz
-/home/mikhail/test_db/grsnp_db/hg19/ENCODE/UmassDekker5C/Tier1/K562/wgEncodeUmassDekker5CK562PkV2.bed.gz

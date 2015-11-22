@@ -1,6 +1,0 @@
-crohns_disease.bed
-graves_disease.bed
-psoriasis.bed
-systemic_lupus_erythematosus_and_systemic_sclerosis.bed
-systemic_sclerosis.bed
-venous_thromboembolism.bed
