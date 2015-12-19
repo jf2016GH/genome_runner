@@ -36,7 +36,7 @@ hg19.GERP_elements.tar.gz:
 
 GERP_hg19:	hg19.GERP_elements.tar.gz
 	tar -zxvf $<;
-	for file in hg19*.txt; do chr=`echo $file | sed 's/hg19_//' | sed 's/_elems.txt//'`; awk -v chr=$chr '{FS="\t"} {OFS="\t"} {print chr,$1,$2,$3,$4}' $file; done | bedtools sort -i  > $@.bed;
+	for file in hg19*.txt; do chr=`echo $$file | sed 's/hg19_//' | sed 's/_elems.txt//'`; awk -v chr=$$chr '{FS="\t"} {OFS="\t"} {print chr,$$1,$$2,$$3,$$4}' $$file; done | bedtools sort -i  > $@.bed;
 	bgzip $@.bed;
 	tabix $@.bed.gz
 
@@ -45,6 +45,6 @@ mm9.GERP_elements.tar.gz:
 
 GERP_mm9:	mm9.GERP_elements.tar.gz
 	tar -zxvf $<;
-	for file in mm9*.txt; do chr=`echo $file | sed 's/mm9_//' | sed 's/_elems.txt//'`; awk -v chr=$chr '{FS="\t"} {OFS="\t"} {print chr,$1,$2,$3,$4}' $file; done | bedtools sort -i  > $@.bed;
+	for file in mm9*.txt; do chr=`echo $$file | sed 's/mm9_//' | sed 's/_elems.txt//'`; awk -v chr=$$chr '{FS="\t"} {OFS="\t"} {print chr,$$1,$$2,$$3,$$4}' $$file; done | bedtools sort -i  > $@.bed;
 	bgzip $@.bed;
 	tabix $@.bed.gz
