@@ -264,7 +264,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
     ## If a different stat_test is selected, perform that test now, and replace the p-value
     ## note we will still use the odds ratio calculated by the chi-square test
     if stat_test == "binomial":
-        pval = scipy.stats.binom_test(foi_obs, n_fois, bg_obs/n_bgs)
+        pval = scipy.stats.binom_test(foi_obs, n_fois, float(bg_obs)/n_bgs)
 
     sign = -1 if (odds_ratio < 1) else 1
     return [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
