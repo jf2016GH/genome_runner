@@ -131,14 +131,14 @@ def get_bgobs(bg,gf,root_data_dir,organism):
         logger.error(traceback.format_exc())
     return result
 
-def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randomization_test=False):    
+def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randomization_test=False, stat_test=None):    
     """Return the shrunken odds-ratio and signed p-value of all FOIs against the GF so they can be written to
     matrix files. Outputs stats to the detailed results file.
     """
     global logger_path
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
-    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path)
+    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test)
 
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
@@ -151,7 +151,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     else:
         if run_randomization_test: 
             _write_progress("Running randomization test on {}".format(foi_name))
-            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)  
+            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path,stat_test=stat_test)  
     
     pval_unmod = pval
     pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
@@ -186,7 +186,7 @@ def _format_type(num):
     else:
         return num
 
-def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
+def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path,stat_test=None):
     ''' Calculated by generating 'num' random feature files and running them against gf_path.
     Calculates the mean of the p_values for the overrepresented and underrepresented random features separately.
     '''
@@ -195,14 +195,16 @@ def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     rnd_stats = get_overlap_statistics(gf_path,rnds_paths)
     p_rand = [1]
     for r in rnd_stats:
-        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path)
+        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path,stat_test=stat_test)
         p_rand.append(pval)
     return np.min(p_rand)
 
-def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
+def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=None):
     """Calculates the p-value,confidence intervals and the shrunken odds ratio.
     Returns [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
     """
+
+    ## Perform the chisquare test regardless of what stat_test is selected, we need the odds ratio
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
               [bg_obs-foi_obs,n_bgs-n_fois-(bg_obs-foi_obs)]]
@@ -213,6 +215,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
                 return [1,1,1,1,1,1]
+            # ??? if sample too small, then perform fisher exact test
             if k < 5:
                 do_chi_square = False
     # check for zeros and add 0.5 if one of the cells is 0
@@ -221,10 +224,8 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         ctable[0][1] += 0.5
         ctable[1][0] += 0.5
         ctable[1][1] += 0.5
-    # if bg_obs < foi_obs:
-    #     odds_ratio, pval = "nan", 1
-    #     logger.warning("P-value cannot be calculated for {} and {} (pvalue = 1.0, odds_ratio = 'nan'). Number of SNPs overlapping with GF > number of background SNPs overlapping with GF. foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(gf_name,foi_name,foi_obs,n_fois,bg_obs,n_bgs))
-    # else:  
+
+
     if do_chi_square:
         chi_result = scipy.stats.chi2_contingency(ctable)
         pval = chi_result[1]
@@ -259,6 +260,11 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         # find which value is closer to 1
         ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
         shrunken_or = [ci_lower,ci_upper][ci_index]
+
+    ## If a different stat_test is selected, perform that test now, and replace the p-value
+    ## note we will still use the odds ratio calculated by the chi-square test
+    if stat_test == "binomial":
+        pval = scipy.stats.binom_test(foi_obs, n_fois, bg_obs/n_bgs)
 
     sign = -1 if (odds_ratio < 1) else 1
     return [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
@@ -660,9 +666,10 @@ def preprocess_gf_files(file_paths,root_data_dir,organism):
 
 
 
-def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,pct_score="",organism = ""):
+def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,pct_score="",organism = "",stat_test=None):
     global formatter
     global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,run_files_dir
+    valid_stat_tests = ["chisquare","binomial"]
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
     fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
     fh.setFormatter(formatter)
@@ -707,12 +714,19 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             print "ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log."
             return
 
+        if stat_test not in valid_stat_tests:
+            logger.error("Valid p-value test not selected. Terminating run.")
+            _write_progress("ERROR: Valid p-value test not selected. Terminating run. See Analysis Log.")
+            print "ERROR: Valid p-value test not selected. Terminating run. See Analysis Log."
+            return
+
         # pre-process the FOIs
         fois = preprocess_fois(fois,run_files_dir,root_data_dir,organism)
         if len(fois) == 0:
             logger.error('No valid FOIs to supplied')
             _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
             return
+
         # pre-process the GFs and the background
         bg_path = preprocess_gf_files([bg_path],root_data_dir,organism)[0]
         gfs = preprocess_gf_files(gfs,root_data_dir,organism)
@@ -720,7 +734,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_sor_outpath)
-        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio',"ci_lower","ci_upper", 'shrunken_odds_ratio', 'p_val','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
+        write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio',"ci_lower","ci_upper", 'shrunken_odds_ratio', str(stat_test) + '_ p_val','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
         curprog,progmax = 0,len(gfs)
         # check if any good fois exist after background filtering
         if len(good_fois) == 0:
@@ -750,7 +764,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             # calculate the pvalues and output the matrix line for the current gf
             pvals,sors = [],[] # sors = shrunken odds-ratios
             for i in range(len(good_fois)):
-                [pvalue,shrunken_or] = output_p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test)
+                [pvalue,shrunken_or] = output_p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test,stat_test = stat_test)
                 pvals.append(str(pvalue))
                 sors.append(str(shrunken_or))
 
@@ -820,7 +834,7 @@ def _load_minmax(path):
     return data
 
 def main():
-        global matrix_outpath, detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress, print_progress
+        global matrix_outpath, detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress
         print_progress = True     
         parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
         parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
@@ -831,6 +845,8 @@ def main():
         parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
         parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
         parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
+        default_test = "chisquare"
+        parser.add_argument('--stat_test', '-s', nargs="?", help ="Select the statistical test to use for calculating P-values. Default: {}. Available: chisquare, binomial".format(default_test), default=default_test)
         args = vars(parser.parse_args())
         if args['organism'] is None:
             print "--organism cannot be blank"
@@ -849,7 +865,7 @@ def main():
                 writer.write("\n".join(gf))     
             with open(args["fois"][0],"wb") as writer:      
                 writer.write("\n".join(foi))
-        run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,organism=args['organism'])
+        run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,organism=args['organism'],stat_test=args['stat_test'])
 
 
 

@@ -148,6 +148,12 @@
 								<label>Percent score threshold: ${pct_scores}</label>
 								<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a signal value, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set by the number of overlaps with the selected regulatory datasets." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<br>
+								<label style="margin-left:10px;">Statistical test selection: </label>
+								<select name="stat_test">
+									<option value="chisquare"selected>Chi-squared</option>
+									<option value="binomial">Binomial</option>
+								</select>
 
 								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
 								<select name="strand" style="visibility:hidden">
@@ -155,7 +161,7 @@
 									<option value="plus">Plus</option>
 									<option value="minus">Minus</option>
 								</select>
-								<img class="helptooltip" title="Sets whether or not to use strand-specific regulatory datasets, if available. If a regulatory dataset does not have a strand, this setting is ignored" style="position: relative;top: 6px;visibility:hidden" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<img class="helptooltip" title="Sets whether or not to use strand-specific regulatory datasets, if available. If a regulatory dataset does not have a strand, this setting is ignored" style="position: relative;top: 6px;visibility:hidden" width=25 height=25 src="static/images/help-icon.png" alt="help"/>								
 
 							</div>
 						</div>
