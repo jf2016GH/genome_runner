@@ -138,7 +138,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     global logger_path
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
-    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test)
+    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test,background_path = background_path)
 
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
@@ -151,7 +151,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     else:
         if run_randomization_test: 
             _write_progress("Running randomization test on {}".format(foi_name))
-            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path,stat_test=stat_test)  
+            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)  
     
     pval_unmod = pval
     pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
@@ -186,20 +186,20 @@ def _format_type(num):
     else:
         return num
 
-def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path,stat_test=None):
+def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     ''' Calculated by generating 'num' random feature files and running them against gf_path.
     Calculates the mean of the p_values for the overrepresented and underrepresented random features separately.
     '''
     num = 10
-    rnds_paths = generate_randomsnps(foi_path,background_path,n_fois,gf_path,num)
+    rnds_paths = generate_randomsnps(foi_path,background_path,n_fois,num)
     rnd_stats = get_overlap_statistics(gf_path,rnds_paths)
     p_rand = [1]
     for r in rnd_stats:
-        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path,stat_test=stat_test)
+        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path,stat_test='chisquare')
         p_rand.append(pval)
     return np.min(p_rand)
 
-def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=None):
+def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=None,background_path=None):
     """Calculates the p-value,confidence intervals and the shrunken odds ratio.
     Returns [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
     """
@@ -264,18 +264,44 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
     ## If a different stat_test is selected, perform that test now, and replace the p-value
     ## note we will still use the odds ratio calculated by the chi-square test
     if stat_test == "binomial":
-        pval = scipy.stats.binom_test(foi_obs, n_fois, bg_obs/n_bgs)
+        pval = scipy.stats.binom_test(foi_obs, n_fois, float(bg_obs)/n_bgs)
+
+    # monte carlo is passed as 'montecarlo_[number_of_simulations]'
+    elif stat_test.startswith("montecarlo"):
+        global run_files_dir        
+        num_mc = stat_test.split("_")[1]
+        rndfoipath = os.path.join(run_files_dir,'mc.bed')
+
+        rnd_fois_paths = generate_randomsnps(rndfoipath,background_path,n_fois,num_mc)
+        chunks = 100
+        num_rnd_obs = [] # stores the number of rnd_snps that overlap for each mc
+        # run the rnd_fois in groups against the GF (allows us to handle calse of 10,000 MC simulations)
+        for i_chunk,r_paths in enumerate([rnd_fois_paths[i:i+chunks] for i in xrange(0, len(rnd_fois_paths), chunks)]):
+            _write_progress("Performing Monte Carlo {} of {} for {}".format(i_chunk*chunks,len(rnd_fois_paths),foi_name))
+            for res in get_overlap_statistics(gf_path, r_paths):
+                # get the rnd_obs
+                num_rnd_obs.append(float(res["intersectregions"]))
+        # Count how many random snp sets have more observed than foi_obs
+        num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
+        pval = (float(num_over) + 1)/(float(num_mc) + 1)
+        for f in rnd_fois_paths:
+            os.remove(f)
+        
+
 
     sign = -1 if (odds_ratio < 1) else 1
     return [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
 
 
 
-def generate_randomsnps(foi_path,background,n_fois,gf_path,num):
+def generate_randomsnps(foi_path,background,n_fois,num):
+    ''' Generates random SNP files in the same directory as 'foi_path' by sampling n snps randomly from the 'background'.
+    'foi_paths' is used to name the randomly created snp files and where to save the newly created files
+    '''
     paths = []
-    out_dir = os.path.join(os.path.dirname(foi_path),"random")
+    out_dir = os.path.dirname(foi_path)
     if not os.path.exists(out_dir): os.mkdir(out_dir)
-    for n in range(num):        
+    for n in range(int(num)):        
         rnd_snp_path = os.path.join(out_dir,"random{}_".format(n)+base_name(foi_path)+".bed")
         # generate random snps from background
         if background.endswith('.gz'):
@@ -359,7 +385,7 @@ def _write_progress(line):
         progress = {"status": line, "curprog": curprog,"progmax": progmax}
         with open(progress_outpath,"wb") as progfile:
             progfile.write(json.dumps(progress))
-    if print_progress:
+    if print_progress: 
         print line
 
 
@@ -714,7 +740,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             print "ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log."
             return
 
-        if stat_test not in valid_stat_tests:
+        if stat_test not in valid_stat_tests and not stat_test.startswith("montecarlo_"):
             logger.error("Valid p-value test not selected. Terminating run.")
             _write_progress("ERROR: Valid p-value test not selected. Terminating run. See Analysis Log.")
             print "ERROR: Valid p-value test not selected. Terminating run. See Analysis Log."
@@ -846,7 +872,7 @@ def main():
         parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
         parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
         default_test = "chisquare"
-        parser.add_argument('--stat_test', '-s', nargs="?", help ="Select the statistical test to use for calculating P-values. Default: {}. Available: chisquare, binomial".format(default_test), default=default_test)
+        parser.add_argument('--stat_test', '-s', nargs="?", help ="Select the statistical test to use for calculating P-values. Default: {}. Available: chisquare, binomial, montecarlo_[# of simulations]".format(default_test), default=default_test)
         args = vars(parser.parse_args())
         if args['organism'] is None:
             print "--organism cannot be blank"

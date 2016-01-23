@@ -151,9 +151,14 @@
 								<br>
 								<label style="margin-left:10px;">Statistical test selection: </label>
 								<select name="stat_test">
-									<option value="chisquare"selected>Chi-squared</option>
+									<option value="chisquare" selected>Chi-squared</option>
 									<option value="binomial">Binomial</option>
+									<option value="montecarlo">Monte Carlo</option>
+
 								</select>
+								<label style="margin-left:10px;visibility:hidden" id="lbl_num_mc">Number of Monte Carlo simulations: </label>
+								<input style="visibility:hidden" type="number" name="num_mc"
+								   min="100" max="10000" step="100" value="100">
 
 								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
 								<select name="strand" style="visibility:hidden">
