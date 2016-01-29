@@ -40,14 +40,8 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 logger.propagate = 0
 
 # This line outputs logging info to the console
-matrix_outpath = None
-detailed_outpath = None
-progress_outpath = None
-run_files_dir = None
 console_output = False 
 print_progress = False
-
-
 
 
 def get_overlap_statistics(gf,fois):
@@ -101,7 +95,7 @@ def get_tmp_file(prefix):
         tmp_path = prefix + "_" + ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))+'.tmp'
     return tmp_path
 
-def get_bgobs(bg,gf,root_data_dir,organism): 
+def get_bgobs(bg,gf,root_data_dir,organism,progress = None): 
     ''' Check if pre-calculated GF and background overlap data exist.
     If they do not, it manually calculates them.
     '''
@@ -122,7 +116,8 @@ def get_bgobs(bg,gf,root_data_dir,organism):
                 return bg_obs[0]
     # manually get overlap values
     logger.info("Calculating overlap stats on background and {}".format(base_name(gf)))
-    _write_progress("Calculating overlap stats on background and {}".format(base_name(gf)))
+    if progress:
+        _write_progress("Calculating overlap stats on background and {}".format(base_name(gf)),progress)
     result = get_overlap_statistics(gf,[bg])
     try:
         result = int(result[0]["intersectregions"])
@@ -131,14 +126,13 @@ def get_bgobs(bg,gf,root_data_dir,organism):
         logger.error(traceback.format_exc())
     return result
 
-def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,run_randomization_test=False, stat_test=None):    
+def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,detailed_outpath,run_randomization_test=False, stat_test=None,progress = None):    
     """Return the shrunken odds-ratio and signed p-value of all FOIs against the GF so they can be written to
     matrix files. Outputs stats to the detailed results file.
     """
-    global logger_path
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
-    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test,background_path = background_path)
+    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test,background_path = background_path, run_files_dir = run_files_dir)
 
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
@@ -150,8 +144,8 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
         direction = "nonsignificant"
     else:
         if run_randomization_test: 
-            _write_progress("Running randomization test on {}".format(foi_name))
-            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path)  
+            _write_progress("Running randomization test on {}".format(foi_name),progress=progress)
+            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path, progress = progress, run_files_dir = os.path.split(detailed_outpath)[0])  
     
     pval_unmod = pval
     pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
@@ -168,7 +162,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
                 _format_type(ci_upper), 
                 _format_type(shrunken_or),                 
                 "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
-                strprnd,strpval])) + "\n",detailed_outpath)
+                strprnd,strpval])) + "\n")
 
     if pval < 1E-307:
         # set to value obtained from sys.float_info.min_10_exp
@@ -186,7 +180,7 @@ def _format_type(num):
     else:
         return num
 
-def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
+def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path, progress = None, run_files_dir = None):
     ''' Calculated by generating 'num' random feature files and running them against gf_path.
     Calculates the mean of the p_values for the overrepresented and underrepresented random features separately.
     '''
@@ -195,11 +189,11 @@ def p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path):
     rnd_stats = get_overlap_statistics(gf_path,rnds_paths)
     p_rand = [1]
     for r in rnd_stats:
-        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path,stat_test='chisquare')
+        sign,pval,odds_ratio,_,_,_ = calculate_p_value_odds_ratio(r["intersectregions"],r["queryregions"],bg_obs,n_bgs,base_name(foi_path),gf_path,stat_test='chisquare', progress = None,run_files_dir = None)
         p_rand.append(pval)
     return np.min(p_rand)
 
-def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=None,background_path=None):
+def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=None,background_path=None, progress = None,run_files_dir = None):
     """Calculates the p-value,confidence intervals and the shrunken odds ratio.
     Returns [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
     """
@@ -268,7 +262,6 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
 
     # monte carlo is passed as 'montecarlo_[number_of_simulations]'
     elif stat_test.startswith("montecarlo"):
-        global run_files_dir        
         num_mc = stat_test.split("_")[1]
         rndfoipath = os.path.join(run_files_dir,'mc.bed')
 
@@ -277,7 +270,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         num_rnd_obs = [] # stores the number of rnd_snps that overlap for each mc
         # run the rnd_fois in groups against the GF (allows us to handle calse of 10,000 MC simulations)
         for i_chunk,r_paths in enumerate([rnd_fois_paths[i:i+chunks] for i in xrange(0, len(rnd_fois_paths), chunks)]):
-            _write_progress("Performing Monte Carlo {} of {} for {}".format(i_chunk*chunks,len(rnd_fois_paths),foi_name))
+            _write_progress("Performing Monte Carlo {} of {} for {}".format(i_chunk*chunks,len(rnd_fois_paths),foi_name), progress)
             for res in get_overlap_statistics(gf_path, r_paths):
                 # get the rnd_obs
                 num_rnd_obs.append(float(res["intersectregions"]))
@@ -377,15 +370,14 @@ def read_lines(path):
 def base_name(k):
     return os.path.basename(k).split(".")[0]
 
-def _write_progress(line):
+def _write_progress(line,progress):
     """Saves the current progress to the progress file
+    progress: is a Project object which contains outpath, current value, and maximum value
     """
-    global progress_outpath
-    if progress_outpath:
-        global curprog, progmax
-        progress = {"status": line, "curprog": curprog,"progmax": progmax}
-        with open(progress_outpath,"wb") as progfile:
-            progfile.write(json.dumps(progress))
+    if progress.outpath:
+        dict_progress = {"status": line, "curprog": progress.current,"progmax": progress.max}
+        with open(progress.outpath,"wb") as progfile:
+            progfile.write(json.dumps(dict_progress))
     if print_progress: 
         print line
 
@@ -396,11 +388,12 @@ def _write_head(content,outpath):
     f.close()
 
 
-def check_background_foi_overlap(bg,fois):
+def check_background_foi_overlap(bg,fois,progress=None):
     """ Calculates the overlap of the FOIs with the background.
     Removes FOIs that are poorly formed with the background.
     """
-    _write_progress("Validating FOIs against background")
+    if progress:
+        _write_progress("Validating FOIs against background",progress)
     good_fois = []
     if len(fois) == 0:
         return [[],[]]
@@ -695,7 +688,7 @@ def preprocess_gf_files(file_paths,root_data_dir,organism):
 
 def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_overlaps_path="",root_data_dir = "" ,run_annotation=True,run_randomization_test=False,pct_score="",organism = "",stat_test=None):
     global formatter
-    global detailed_outpath,matrix_outpath, progress_outpath, curprog, progmax,run_files_dir
+    global run_files_dir
     valid_stat_tests = ["chisquare","binomial"]
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
     fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
@@ -703,9 +696,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     logger.addHandler(fh)
     logger.setLevel(logging.INFO)
     run_files_dir = outdir
-    curprog,progmax = 0,1
     logger.propagate = False
-
     try:
         track_descriptions = []
         logger.info("Enrichment analysis started")
@@ -717,7 +708,8 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         matrix_outpath = os.path.join(outdir,"matrix_PVAL.txt")
         matrix_sor_outpath = os.path.join(outdir,"matrix_OR.txt")
         progress_outpath = os.path.join(outdir,".prog")
-        _write_progress("Starting analysis.")
+        curr_prog = Progress(progress_outpath,0,1) # stores the current progress
+        _write_progress("Starting analysis.", curr_prog)
         f = open(matrix_outpath,'wb') 
         f.close()
         f = open(matrix_sor_outpath,'wb')
@@ -732,18 +724,18 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         invalid_names = validate_filenames(fois + gfs + [bg_path])
         if len(invalid_names) != 0:
             logger.error("The following file(s) have invalid file names:\n" + "\n".join(invalid_names))
-            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
+            _write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.", curr_prog)
             print "ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log."
             return         
         if bg_path.endswith(".tbi"):
             logger.error("Background has invalid extension (.tbi). Terminating run.")
-            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.")
+            _write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.", curr_prog)
             print "ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log."
             return
 
         if stat_test not in valid_stat_tests and not stat_test.startswith("montecarlo_"):
             logger.error("Valid p-value test not selected. Terminating run.")
-            _write_progress("ERROR: Valid p-value test not selected. Terminating run. See Analysis Log.")
+            _write_progress("ERROR: Valid p-value test not selected. Terminating run. See Analysis Log.", curr_prog)
             print "ERROR: Valid p-value test not selected. Terminating run. See Analysis Log."
             return
 
@@ -751,37 +743,37 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         fois = preprocess_fois(fois,run_files_dir,root_data_dir,organism)
         if len(fois) == 0:
             logger.error('No valid FOIs to supplied')
-            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
+            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.", curr_prog)
             return
 
         # pre-process the GFs and the background
         bg_path = preprocess_gf_files([bg_path],root_data_dir,organism)[0]
         gfs = preprocess_gf_files(gfs,root_data_dir,organism)
         # Validate FOIs against background. Also get the size of the background (n_bgs)
-        foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois)   
+        foi_bg,good_fois  = check_background_foi_overlap(bg_path,fois, progress = curr_prog)   
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_outpath)
         write_output("\t".join(map(base_name,good_fois))+"\n", matrix_sor_outpath)
         write_output("\t".join(['foi_name', 'foi_obs', 'n_fois', 'bg_obs', 'n_bgs', 'odds_ratio',"ci_lower","ci_upper", 'shrunken_odds_ratio', str(stat_test) + '_ p_val','p_rand' if run_randomization_test else "",'p_mod' if run_randomization_test else ""]) + "\n",detailed_outpath)
-        curprog,progmax = 0,len(gfs)
+        curr_prog.current, curr_prog.max = 0,len(gfs)
         # check if any good fois exist after background filtering
         if len(good_fois) == 0:
             logger.error('No valid FOIs to supplied')
-            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
+            _write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.", curr_prog)
             return
         # remove old detailed enrichment result files if they exit
         enr_path =  os.path.join(run_files_dir,"enrichment")
         for f in good_fois:
             f_path = os.path.join(enr_path, base_name(f)+'.txt')
             if os.path.exists(f_path): os.remove(f_path)
-        _write_progress("Performing calculations on the background.")
+        _write_progress("Performing calculations on the background.", curr_prog)
         for gf in gfs: 
             current_gf = base_name(gf)    
-            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)))
+            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)),curr_prog)
             write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),track_descriptions)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,good_fois) 
 
             # calculate bg_obs
-            bg_obs = get_bgobs(bg_path,gf,root_data_dir,organism)
+            bg_obs = get_bgobs(bg_path,gf,root_data_dir,organism, progress = curr_prog)
             if bg_obs == None: 
                 logger.error("Skipping {}".format(gf))
                 continue
@@ -791,7 +783,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             # calculate the pvalues and output the matrix line for the current gf
             pvals,sors = [],[] # sors = shrunken odds-ratios
             for i in range(len(good_fois)):
-                [pvalue,shrunken_or] = output_p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,run_randomization_test,stat_test = stat_test)
+                [pvalue,shrunken_or] = output_p_value(res[i]["intersectregions"],res[i]["queryregions"],bg_obs,n_bgs ,good_fois[i],gf,bg_path,detailed_outpath,run_randomization_test,stat_test = stat_test,progress = curr_prog)
                 pvals.append(str(pvalue))
                 sors.append(str(shrunken_or))
 
@@ -799,14 +791,14 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
             write_output("\t".join([base_name(gf)] + pvals)+"\n",matrix_outpath)
             write_output("\t".join([base_name(gf)] + sors)+"\n",matrix_sor_outpath)
 
-            curprog += 1
+            curr_prog.current += 1
         if run_annotation:
             logger.info("Annotation started")
             annot_outdir = os.path.join(outdir,"annotations")
             if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
-            curprog,progmax = 0,len(fois)
+            curr_prog.current, curr_prog.max = 0,len(fois)
             for f in fois:                
-                _write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
+                _write_progress("Running Annotation Analysis for {}.".format(base_name(f)),curr_prog)
                 logger.info("Running annotation analysis for {}".format(base_name(f)))
                 for i, g in enumerate(_chunks(gfs,100)):
                     with open(os.path.join(annot_outdir,base_name(f) + str(i) + ".txt"),"wb") as wr:
@@ -817,17 +809,17 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
                             if a.strip() != "":
                                 cur_row = a.split("\t")
                                 wr.write("\n" + str(ind) + "|"+"\t".join(cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))                            
-                curprog += 1
+                curr_prog.current += 1
             logger.info("Annotation finished")
         if zip_run_files:
-            _write_progress("Preparing run files for download")
+            _write_progress("Preparing run files for download",curr_prog)
             _zip_run_files(fois,gfs,bg_path,outdir,job_name)
-        curprog,progmax = 1,1
-        _write_progress("Analysis Completed")
+        curr_prog.current, curr_prog.max = 1,1
+        _write_progress("Analysis Completed",curr_prog)
         logger.info("Analysis Completed")       
     except Exception, e: 
         logger.error( traceback.print_exc())
-        _write_progress("Run crashed. See end of log for details.")
+        _write_progress("Run crashed. See end of log for details.",curr_prog)
         raise Exception(e)
 
 class front_appender:
@@ -860,42 +852,48 @@ def _load_minmax(path):
         data[name] = min_max
     return data
 
-def main():
-        global matrix_outpath, detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress
-        print_progress = True     
-        parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
-        parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
-        parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
-        parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
-        parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
-        parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default=os.getcwd())
-        parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
-        parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
-        parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
-        default_test = "chisquare"
-        parser.add_argument('--stat_test', '-s', nargs="?", help ="Select the statistical test to use for calculating P-values. Default: {}. Available: chisquare, binomial, montecarlo_[# of simulations]".format(default_test), default=default_test)
-        args = vars(parser.parse_args())
-        if args['organism'] is None:
-            print "--organism cannot be blank"
-            return None
-        if args['run_files_dir'] is None:
-            print "--run_files_dir cannot be blank"
-            return None
-        if args["pass_paths"]: 
-            gf = args["gfs"][0].split(",")      
-            foi = args["fois"][0].split(",")  
-            if not os.path.exists(args["run_files_dir"]) and args['run_files_dir'] != "":
-                os.mkdir(args['run_files_dir'])
-            # write out the passed gf and foi paths into .gfs and .fois files.
-            args["gfs"][0],args["fois"][0] = os.path.join(args["run_files_dir"],".gfs"),os.path.join(args["run_files_dir"],".fois")       
-            with open(args["gfs"][0],'wb') as writer:       
-                writer.write("\n".join(gf))     
-            with open(args["fois"][0],"wb") as writer:      
-                writer.write("\n".join(foi))
-        run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,organism=args['organism'],stat_test=args['stat_test'])
+def main():        
+    global detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress
+    print_progress = True     
+    parser = argparse.ArgumentParser(description="Enrichment analysis of several sets of SNPs (FOIs) files against several genomic features (GFs). Example: python hypergeom4.py foi_full_names.txt gf_full_names.txt /path_to_background/snp137.bed.gz")
+    parser.add_argument("fois", nargs=1, help="Text file with paths to FOI files (unless -p used). Required") 
+    parser.add_argument("gfs" ,nargs=1, help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
+    parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
+    parser.add_argument("--run_annotation" , "-a", help="Run annotation analysis", action="store_true" )
+    parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.", default=os.getcwd())
+    parser.add_argument("--pass_paths", "-p", help="Pass fois and gfs as comma separated paths. Paths are saved in .fois and .gfs file.", action="store_true")
+    parser.add_argument("--data_dir" , "-d", nargs="?",type=str, help="Set the directory containing the database. Required for rsID conversion. Use absolute path. Example: /home/username/db_#.##_#.##.####/.", default="")
+    parser.add_argument('--organism','-g', nargs="?", help="The UCSC code of the organism to use. Required for rsID conversion. Default: hg19 (human).", default="hg19")
+    default_test = "chisquare"
+    parser.add_argument('--stat_test', '-s', nargs="?", help ="Select the statistical test to use for calculating P-values. Default: {}. Available: chisquare, binomial, montecarlo_[# of simulations]".format(default_test), default=default_test)
+    args = vars(parser.parse_args())
+    if args['organism'] is None:
+        print "--organism cannot be blank"
+        return None
+    if args['run_files_dir'] is None:
+        print "--run_files_dir cannot be blank"
+        return None
+    if args["pass_paths"]: 
+        gf = args["gfs"][0].split(",")      
+        foi = args["fois"][0].split(",")  
+        if not os.path.exists(args["run_files_dir"]) and args['run_files_dir'] != "":
+            os.mkdir(args['run_files_dir'])
+        # write out the passed gf and foi paths into .gfs and .fois files.
+        args["gfs"][0],args["fois"][0] = os.path.join(args["run_files_dir"],".gfs"),os.path.join(args["run_files_dir"],".fois")       
+        with open(args["gfs"][0],'wb') as writer:       
+            writer.write("\n".join(gf))     
+        with open(args["fois"][0],"wb") as writer:      
+            writer.write("\n".join(foi))
+    run_hypergeom(args["fois"][0],args["gfs"][0],args["bg_path"][0],args["run_files_dir"],"",False,"",args['data_dir'],args["run_annotation"],run_randomization_test=False,organism=args['organism'],stat_test=args['stat_test'])
 
 
 
 
 if __name__ == "__main__":
     main()
+
+class Progress():
+    def __init__(self, outpath, current, max):        
+        self.outpath = outpath
+        self.current = current
+        self.max = max
