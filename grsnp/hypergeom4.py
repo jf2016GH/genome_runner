@@ -276,10 +276,13 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
                 num_rnd_obs.append(float(res["intersectregions"]))
         # Count how many random snp sets have more observed than foi_obs
         num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
+        # calculate pvalue
         pval = (float(num_over) + 1)/(float(num_mc) + 1)
+        # Calculate depletion p-values, if necessary
+        if odds_ratio < 1:
+            pval = 1 - pval
         for f in rnd_fois_paths:
-            os.remove(f)
-        
+            os.remove(f)      
 
 
 
