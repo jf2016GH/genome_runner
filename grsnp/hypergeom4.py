@@ -132,7 +132,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     """
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
-    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test,background_path = background_path, run_files_dir = run_files_dir)
+    sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test,background_path = background_path, run_files_dir = run_files_dir,progress = progress)
 
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
@@ -262,18 +262,45 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
 
     # monte carlo is passed as 'montecarlo_[number_of_simulations]'
     elif stat_test.startswith("montecarlo"):
-        num_mc = stat_test.split("_")[1]
+        num_mc = int(stat_test.split("_")[1])
         rndfoipath = os.path.join(run_files_dir,'mc.bed')
-
-        rnd_fois_paths = generate_randomsnps(rndfoipath,background_path,n_fois,num_mc)
-        chunks = 100
+        # pow_mc states what starting power of 10 to check pvalue
+        chunk_size, pow_mc, not_significant = 100, 1, False
         num_rnd_obs = [] # stores the number of rnd_snps that overlap for each mc
-        # run the rnd_fois in groups against the GF (allows us to handle calse of 10,000 MC simulations)
-        for i_chunk,r_paths in enumerate([rnd_fois_paths[i:i+chunks] for i in xrange(0, len(rnd_fois_paths), chunks)]):
-            _write_progress("Performing Monte Carlo {} of {} for {}".format(i_chunk*chunks,len(rnd_fois_paths),foi_name), progress)
-            for res in get_overlap_statistics(gf_path, r_paths):
+
+        # run the rnd_fois in groups against the GF (allows us to handle case of >10,000 MC simulations)       
+        for i_chunk in xrange(1, num_mc, chunk_size):
+            if not_significant == True: break
+            # only create the number of rnd_snps files needed (i.e for 14 mc with chunk of 10 we only want to create 4 files for last chunk)
+            rnd_count = chunk_size if i_chunk + chunk_size < num_mc else num_mc - i_chunk + 1
+            # Generate the random fois
+            rnd_fois_paths = generate_randomsnps(rndfoipath,background_path,n_fois,rnd_count)
+            _write_progress("Performing Monte Carlo {} of {} for {}".format(i_chunk,num_mc,foi_name), progress)
+            # get overlap stats for random_features against the GF
+            overlapstats = get_overlap_statistics(gf_path, rnd_fois_paths)
+            for i_res,res in enumerate(overlapstats):
+                if not_significant == True: break
                 # get the rnd_obs
                 num_rnd_obs.append(float(res["intersectregions"]))
+                # check if we are at 10^(pow_mc)th result
+                if i_chunk + i_res == pow(10,pow_mc):                  
+                    # Count how many random snp sets have more observed than foi_obs
+                    num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
+                    # calculate pvalue
+                    pval = (float(num_over) + 1)/(float(len(num_rnd_obs)) + 1)
+                    _write_progress("Pval at {} runs calculated as {}. Numerator: {} Denominator: {}".format(i_chunk+i_res,pval,float(num_over) + 1,float(len(num_rnd_obs)) + 1),progress)
+                    # Calculate depletion p-values, if necessary
+                    if odds_ratio < 1:
+                        pval = 1 - pval
+                    if pval >= 1/float(pow(10,pow_mc)):
+                        # pval will never be significant stop doing Monte Carlo
+                        not_significant = True
+                        _write_progress("Not significant. Stopping Monte carlo (P-value = {}".format(pval),progress)
+                    pow_mc += 1
+            for f in rnd_fois_paths:
+                os.remove(f)     
+
+        # Calculate Monte carlo p-value
         # Count how many random snp sets have more observed than foi_obs
         num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
         # calculate pvalue
@@ -281,9 +308,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         # Calculate depletion p-values, if necessary
         if odds_ratio < 1:
             pval = 1 - pval
-        for f in rnd_fois_paths:
-            os.remove(f)      
-
+        
 
 
     sign = -1 if (odds_ratio < 1) else 1
