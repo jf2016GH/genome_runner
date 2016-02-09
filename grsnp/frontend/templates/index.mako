@@ -38,24 +38,32 @@
 					</p>
 					</div>
 					<div class="well">
-						<div style="float:right;margin-top: 10px;">
-							<b style="font-size:150%;">Organism:</b>
-							${paths.org_as_html(id="org")} 
-							<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-						</div> 
 						<h3>1. Select sets of SNPs of interest <img class="helptooltip" title="Upload file(s) with rsIDs of the SNPs of interest, or their genomic coordinates in BED format . At least 5 SNPs per file are required. Note: Avoid special characters and extra dots in the file names. Do not use SNP IDs other than rsIDs." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 						</h3>
-						<div id="div_upload_fois"	style="float: left;margin-right: 13px;margin-top: 14px;"	>
-							<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
-							<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should data in BED format look like?</a>
-						</div>
-						<div id="div_demo_fois">
-							<h4 style="font-size: 110%;float: left;margin-top: 15px;margin-right: 9px;;">Demo SNP sets (click to select): </h4>
-							<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
-								<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
-								${demo_snps}
-							</div>
-						</div>
+						
+<table border="0">
+	<tr>
+		<td>
+				<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
+				<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should the data in BED format look like?</a>
+		</td>
+		<td>
+				<h4 style="float: left;margin-top: 4px;margin-right: 9px;">Organism:</h4>
+				${paths.org_as_html(id="org")} 
+				<img class="helptooltip" title="Select organism-specific genome assembly" style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/> 
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<h4 style="float: left;margin-top: 10px;margin-right: 9px;">Demo SNP sets (click to select): </h4>
+			<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
+				<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
+				${demo_snps}
+			</div>
+		<td>
+	</tr>
+</table>
+
 						<div id="accfoi" class="accordion" style="padding-bottom: 0em;list-style:none;margin-top: 20px">       
 							<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 							<div>          
