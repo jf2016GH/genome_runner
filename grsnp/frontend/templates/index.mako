@@ -106,7 +106,7 @@
 						</div>
 					</div>
 					<div class="well" style="padding-bottom:0em">
-						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory/epigenomic datasets<img class="helptooltip" title="Select and/or upload regulatory datasets (aka genome annotations, functional/epigenomic data) used to test for enrichments in the SNPs of interest." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
+						<h3 style="margin-right: 10px;margin-top: 1px;">3. Select regulatory/epigenomic datasets<img class="helptooltip" title="Select and/or upload regulatory/epigenomic datasets (aka functional annotations) used to test for enrichments in the SNPs of interest. Each regulatory/epigenomic dataset contains genomic coordinates (BED format) of regions annotated as carrying functional/regulatory potential or having a biological property." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>
 						${custom_gfs}
 						<br>
 						<div id="accordGFS" class="accordion" style="padding-bottom: 1em;list-style:none; margin-top: 0.5em;" onClick="renderCheckBoxTree()"> 
@@ -123,7 +123,7 @@
 												<!-- <a class="btn" style="margin-top: 9px;" id="descriptions">Track Descriptions</a> -->
 											</div>
 										</div>												
-											<label>Search regulatory/epigenomic features<img class="helptooltip" title="Use fuzzy search to find genomic annotations of interest; use Select/Unselect buttons to use them for analyses." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
+											<label>Search regulatory/epigenomic datasets<img class="helptooltip" title="Use fuzzy search to find regulatory/epigenomic datasets; use Select/Unselect buttons to mark them for the analysis." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></label>
 											<input style="margin-top:1.5em" id="txt_gfs_search" class='input' type="text"></input>
 											<a class="btn" id="treeSelect" onClick="treeviewSelectSearchedClick()">Select</a>
 											<a class="btn" id="treeSelect" onClick="treeviewDeselectSearchedClick()">Unselect</a>
@@ -131,15 +131,6 @@
 									</div>
 								</div>
 							</div>
-						</div>
-						<div id="accordGFSfile" class="accordion" style="padding-bottom: 0.5em;list-style:none; margin-top: 1em;" ><h3  id="accordionheader"><a id='gffileheader' href="#" style="font-size:120%; height: 100%">Upload genome annotation files:<img class="helptooltip" title="Upload custom genome annotation data in BED format." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></a></h3>
-							<ul>
-								<li id="list-bedbackground">					
-									<h4 style="float:left;">Files:</h4>
-									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
-									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should data in BED format look like?</a>
-								</li>				
-							</ul>
 						</div>
 					</div>	
 
@@ -152,21 +143,32 @@
 						</div>
 						<div class="accordion" style="margin-top:-46px;margin-bottom:18px">
 							<h3 id='lblAdvancedFeatures'><a id='gfselheader' href="#" style="font-size:120%; height: 100%">Advanced Features</a></h3>
+
 							<div>
+								<div id="accordGFSfile" class="accordion" style="padding-bottom: 0.5em;list-style:none; margin-top: 1em;" ><h3  id="accordionheader"><a id='gffileheader' href="#" style="font-size:120%; height: 100%">Upload custom regulatory/epigenomic datasets:<img class="helptooltip" title="If needed, provide custom regulatory/epigenomic datasets, to be used for the analysis. Each custom regulatory/epigenomic dataset should contains genomic coordinates (BED format) of regulatory regions of interest." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></a></h3>
+							<ul>
+								<li id="list-bedbackground">					
+									<h4 style="float:left;">Files:</h4>
+									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
+									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should the data in BED format look like?</a>
+								</li>				
+							</ul>
+						</div>
+
 								<label>Percent score threshold: ${pct_scores}</label>
 								<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a signal value, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
-								<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each set by the number of overlaps with the selected regulatory datasets. Increases run time." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
+								<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each file by the number of overlaps with the selected regulatory datasets. Increases run time." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<br>
-								<label style="margin-left:10px;">Statistical test selection: </label>
+								<!--<label style="margin-left:10px;">Statistical test selection: </label>
 								<select name="stat_test">
 									<option value="chisquare" selected>Fisher's exact</option>
 									<option value="binomial">Binomial</option>
-									<!--<option value="montecarlo">Monte Carlo</option>-->
+									<option value="montecarlo">Monte Carlo</option>
 								</select>
 								<img class="helptooltip" title="Select test to obtain enrichment p-values. Fisher's exact recommended." style="position: relative;top: 6px" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<label style="margin-left:10px;visibility:hidden" id="lbl_num_mc">Number of Monte Carlo simulations: </label>
 								<input style="visibility:hidden" type="number" name="num_mc"
-								   min="100" max="10000" step="100" value="100">
+								   min="100" max="10000" step="100" value="100">-->
 
 								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
 								<select name="strand" style="visibility:hidden">
