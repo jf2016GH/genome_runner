@@ -288,7 +288,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
                     num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
                     # calculate pvalue
                     pval = (float(num_over) + 1)/(float(len(num_rnd_obs)) + 1)
-                    _write_progress("Pval at {} runs calculated as {}. Numerator: {} Denominator: {}".format(i_chunk+i_res,pval,float(num_over) + 1,float(len(num_rnd_obs)) + 1),progress)
+                    _write_progress("Pval at {} runs calculated as {}. Numerator: {} Denominator: {} OR: {}".format(i_chunk+i_res,pval,float(num_over) + 1,float(len(num_rnd_obs)) + 1,odds_ratio),progress)
                     # Calculate depletion p-values, if necessary
                     if odds_ratio < 1:
                         pval = 1 - pval
