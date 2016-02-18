@@ -232,12 +232,17 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     else:  
         odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     # Adjustments of outliers
-    if pval == 1.0:
-        odds_ratio = 1
     if odds_ratio == 0.0:
         odds_ratio = sys.float_info.min
     if np.isinf(odds_ratio):
         odds_ratio = sys.float_info.max
+    # Keep over/underrepresented information
+    underrepresented = False
+    if odds_ratio < 1:
+        underrepresented = True
+    # If p-value is insignificant, so is odds ratio
+    if pval == 1.0:
+        odds_ratio = 1
 
     # calculate the shrunken odds ratio
     log_or = scipy.log(odds_ratio)
@@ -260,7 +265,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
         ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
         shrunken_or = [ci_lower,ci_upper][ci_index]
 
-    sign = -1 if (odds_ratio < 1) else 1
+    sign = -1 if underrepresented else 1
     return [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
 
 
