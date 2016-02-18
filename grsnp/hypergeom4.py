@@ -228,7 +228,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     if do_chi_square:
         chi_result = scipy.stats.chi2_contingency(ctable)
         pval = chi_result[1]
-        odds_ratio = (ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
+        odds_ratio = float(ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
     else:  
         odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     # Adjustments of outliers
@@ -243,7 +243,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path):
     log_or = scipy.log(odds_ratio)
     conf_coe = 1.96 # the confidence coefficient of a standard norm dist
     # calculate the standard error
-    se = math.sqrt(1/ctable[0][0] + 1/ctable[1][0] + 1/ctable[0][1] + 1/ctable[1][1])
+    se = math.sqrt(1.0/ctable[0][0] + 1.0/ctable[1][0] + 1.0/ctable[0][1] + 1.0/ctable[1][1])
     # calculate the upper and lower confidence interval
     ci_upper = scipy.exp(log_or + conf_coe * se)
     ci_lower = scipy.exp(log_or - conf_coe * se)
