@@ -138,17 +138,17 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
         direction  = "overrepresented" 
     else: direction =  "underrepresented"
 
-    # calculate the p_rand
-    prnd = 1 # default prnd for non-significant results
-    if pval > 0.05:
-        direction = "nonsignificant"
-    else:
-        if run_randomization_test: 
-            _write_progress("Running randomization test on {}".format(foi_name),progress=progress)
-            prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path, progress = progress, run_files_dir = os.path.split(detailed_outpath)[0])  
+    # # calculate the p_rand
+    # prnd = 1 # default prnd for non-significant results
+    # if pval > 0.05:
+    #     direction = "nonsignificant"
+    # else:
+    #     if run_randomization_test: 
+    #         _write_progress("Running randomization test on {}".format(foi_name),progress=progress)
+    #         prnd = p_rand(foi_path,n_fois,background_path,bg_obs,n_bgs,gf_path, progress = progress, run_files_dir = os.path.split(detailed_outpath)[0])  
     
-    pval_unmod = pval
-    pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
+    # pval_unmod = pval
+    # pval = np.power(10,-(np.log10(prnd)- np.log10(pval))) # adjust p_value using randomization test
     # write out to the detailed results file
     strpval,strprnd = "","" 
     if run_randomization_test:
@@ -161,7 +161,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
                 _format_type(ci_lower), 
                 _format_type(ci_upper), 
                 _format_type(shrunken_or),                 
-                "%.2e" % pval_unmod if type(pval_unmod) != type("") else pval_unmod,
+                "%.2e" % pval if type(pval) != type("") else pval,
                 strprnd,strpval])) + "\n")
 
     if pval < 1E-307:
@@ -197,7 +197,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
     """Calculates the p-value,confidence intervals and the shrunken odds ratio.
     Returns [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
     """
-
+    _write_progress("Testing {}".format(foi_name), progress)
     ## Perform the chisquare test regardless of what stat_test is selected, we need the odds ratio
     bg_obs,n_bgs = int(bg_obs),int(n_bgs)
     ctable = [[foi_obs, n_fois-foi_obs],
@@ -209,9 +209,9 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
             if k < 0:
                 logger.warning("Cannot calculate p-value for {} and {}. Is the background too small? foi_obs {}, n_fois {}, bg_obs {}, n_bgs {}".format(base_name(gf_path),foi_name,foi_obs,n_fois,bg_obs,n_bgs))
                 return [1,1,1,1,1,1]
-            # ??? if sample too small, then perform fisher exact test
-            if k < 5:
-                do_chi_square = False
+    #        # ??? if sample too small, then perform fisher exact test
+    #        if k < 5:
+    #            do_chi_square = False
     # check for zeros and add 0.5 if one of the cells is 0
     if ctable[0][0] == 0 or ctable[0][1] == 0 or ctable[1][0] == 0 or ctable[1][1] == 0:
         ctable[0][0] += 0.5
@@ -223,22 +223,23 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
     if do_chi_square:
         chi_result = scipy.stats.chi2_contingency(ctable)
         pval = chi_result[1]
-        odds_ratio = (ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
+        odds_ratio = float(ctable[0][0]*ctable[1][1])/(ctable[0][1]*ctable[1][0])
     else:  
         odds_ratio, pval = scipy.stats.fisher_exact(ctable)
     # Adjustments of outliers
-    if pval == 1.0:
-        odds_ratio = 1
     if odds_ratio == 0.0:
         odds_ratio = sys.float_info.min
     if np.isinf(odds_ratio):
         odds_ratio = sys.float_info.max
+#    # If p-value is insignificant, so is odds ratio
+#    if pval == 1.0:
+#        odds_ratio = 1
 
     # calculate the shrunken odds ratio
     log_or = scipy.log(odds_ratio)
     conf_coe = 1.96 # the confidence coefficient of a standard norm dist
     # calculate the standard error
-    se = math.sqrt(1/ctable[0][0] + 1/ctable[1][0] + 1/ctable[0][1] + 1/ctable[1][1])
+    se = math.sqrt(1.0/ctable[0][0] + 1.0/ctable[1][0] + 1.0/ctable[0][1] + 1.0/ctable[1][1])
     # calculate the upper and lower confidence interval
     ci_upper = scipy.exp(log_or + conf_coe * se)
     ci_lower = scipy.exp(log_or - conf_coe * se)
@@ -247,13 +248,13 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         ci_upper = sys.float_info.max
     if ci_lower == 0.0:
         ci_lower = sys.float_info.min
-    # shrunken_or is the ci (either upper or lower) that is closest to 1
-    if ci_lower<1 and ci_upper>1:
-        shrunken_or,odds_ratio = 1,1
-    else:
-        # find which value is closer to 1
-        ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
-        shrunken_or = [ci_lower,ci_upper][ci_index]
+    # # shrunken_or is the ci (either upper or lower) that is closest to 1
+    # if ci_lower<1 and ci_upper>1:
+    #     shrunken_or,odds_ratio = 1,1
+    # else:
+    # find which value is closer to 1
+    ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
+    shrunken_or = [ci_lower,ci_upper][ci_index]
 
     ## If a different stat_test is selected, perform that test now, and replace the p-value
     ## note we will still use the odds ratio calculated by the chi-square test
@@ -265,7 +266,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         num_mc = int(stat_test.split("_")[1])
         rndfoipath = os.path.join(run_files_dir,'mc.bed')
         # pow_mc states what starting power of 10 to check pvalue
-        chunk_size, pow_mc, not_significant = 100, 1, False
+        chunk_size, pow_mc, not_significant = 100, 2, False
         num_rnd_obs = [] # stores the number of rnd_snps that overlap for each mc
 
         # run the rnd_fois in groups against the GF (allows us to handle case of >10,000 MC simulations)       
@@ -275,7 +276,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
             rnd_count = chunk_size if i_chunk + chunk_size < num_mc else num_mc - i_chunk + 1
             # Generate the random fois
             rnd_fois_paths = generate_randomsnps(rndfoipath,background_path,n_fois,rnd_count)
-            _write_progress("Performing Monte Carlo {} of {} for {}".format(i_chunk,num_mc,foi_name), progress)
+        #    _write_progress("Performing Monte Carlo {} of {}".format(i_chunk,num_mc), progress)
             # get overlap stats for random_features against the GF
             overlapstats = get_overlap_statistics(gf_path, rnd_fois_paths)
             for i_res,res in enumerate(overlapstats):
@@ -285,13 +286,14 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
                 # check if we are at 10^(pow_mc)th result
                 if i_chunk + i_res == pow(10,pow_mc):                  
                     # Count how many random snp sets have more observed than foi_obs
-                    num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
+                    num_over = sum([1 for rnd_i in num_rnd_obs if rnd_i >= foi_obs])
                     # calculate pvalue
                     pval = (float(num_over) + 1)/(float(len(num_rnd_obs)) + 1)
-                    _write_progress("Pval at {} runs calculated as {}. Numerator: {} Denominator: {} OR: {}".format(i_chunk+i_res,pval,float(num_over) + 1,float(len(num_rnd_obs)) + 1,odds_ratio),progress)
                     # Calculate depletion p-values, if necessary
                     if odds_ratio < 1:
                         pval = 1 - pval
+                    #pval = (1/float(pow(10,pow_mc)) - sys.float_info.min) if pval == 0 else pval
+                    _write_progress("Pval at {} runs calculated as {}. Numerator: {} Denominator: {}".format(i_chunk+i_res,pval,float(num_over) + 1,float(len(num_rnd_obs)) + 1),progress)
                     if pval >= 1/float(pow(10,pow_mc)):
                         # pval will never be significant stop doing Monte Carlo
                         not_significant = True
@@ -302,16 +304,19 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
 
         # Calculate Monte carlo p-value
         # Count how many random snp sets have more observed than foi_obs
-        num_over = sum([1 for rnd_i in num_rnd_obs if abs(rnd_i) > abs(foi_obs)])
+        num_over = sum([1 for rnd_i in num_rnd_obs if rnd_i >= foi_obs])
         # calculate pvalue
-        pval = (float(num_over) + 1)/(float(num_mc) + 1)
+        pval = (float(num_over) + 1)/(float(len(num_rnd_obs)) + 1)
         # Calculate depletion p-values, if necessary
         if odds_ratio < 1:
             pval = 1 - pval
-        
+        pval = 1/float(pow(10,pow_mc)) if pval == 0 else pval
 
+    print("OR, CI_LO, CI_UP, SH_OR: ", [odds_ratio, ci_lower, ci_upper, shrunken_or])
+    print("CTABLE: ", ctable)
+    print("PVAL FINAL:", pval)
 
-    sign = -1 if (odds_ratio < 1) else 1
+    sign = -1 if odds_ratio < 1 else 1
     return [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
 
 
@@ -796,7 +801,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
         _write_progress("Performing calculations on the background.", curr_prog)
         for gf in gfs: 
             current_gf = base_name(gf)    
-            _write_progress("Performing Hypergeometric analysis for {}".format(base_name(gf)),curr_prog)
+            _write_progress("Performing {} analysis for {}".format(stat_test,base_name(gf)),curr_prog)
             write_output("###"+base_name(gf)+"\t"+get_score_strand_settings(gf)+"\t"+get_description(base_name(gf),track_descriptions)+"###"+"\n",detailed_outpath)
             res = get_overlap_statistics(gf,good_fois) 
 
