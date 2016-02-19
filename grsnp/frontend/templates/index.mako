@@ -159,7 +159,7 @@
 								<img class="helptooltip" title="Increasing this number filters out more low-level signal in the regulatory datasets. If a regulatory dataset does not have a signal value, this setting is ignored." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<input type="checkbox" style="font-size:120%;margin-top:1em;margin-left:3em" name="run_annot">Run annotation analysis</input><img class="helptooltip" title="Annotate each SNP in each file by the number of overlaps with the selected regulatory datasets. Increases run time." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<br>
-								<!--<label style="margin-left:10px;">Statistical test selection: </label>
+								<label style="margin-left:10px;">Statistical test selection: </label>
 								<select name="stat_test">
 									<option value="chisquare" selected>Fisher's exact</option>
 									<option value="binomial">Binomial</option>
@@ -168,7 +168,7 @@
 								<img class="helptooltip" title="Select test to obtain enrichment p-values. Fisher's exact recommended." style="position: relative;top: 6px" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<label style="margin-left:10px;visibility:hidden" id="lbl_num_mc">Number of Monte Carlo simulations: </label>
 								<input style="visibility:hidden" type="number" name="num_mc"
-								   min="100" max="10000" step="100" value="100">-->
+								   min="100" max="10000" step="100" value="100">
 
 								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
 								<select name="strand" style="visibility:hidden">
