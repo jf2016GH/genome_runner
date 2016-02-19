@@ -162,7 +162,7 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
                 _format_type(ci_upper), 
                 _format_type(shrunken_or),                 
                 "%.2e" % pval if type(pval) != type("") else pval,
-                strprnd,strpval])) + "\n")
+                strprnd,strpval])) + "\n",detailed_outpath)
 
     if pval < 1E-307:
         # set to value obtained from sys.float_info.min_10_exp
