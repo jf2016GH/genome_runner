@@ -60,7 +60,7 @@ Open genome_runner/grsnp/frontend/templates/results_shiny.mako and edit line 98 
 
 Critical part is to replace 'src="http://10.0.2.15:4494?id=${run_id}' by 'src="http://162.216.114.51:shiny-gr?id=${run_id}"'. 
 
-IMPORTANT Be sure to change the file folder permission for the database. Otherwise, shiny will crash when trying to create the heatmap as it needs access to the rds file generated in the results folder.
+IMPORTANT Be sure to change the file folder permission for the database. Otherwise, shiny will crash when trying to create the heatmap as it needs access to the rds file generated in the results folder. See the [good overview](http://deanattali.com/2015/05/09/setup-rstudio-shiny-server-digital-ocean/#install-shiny) how to setup groups and adjust permissions.
 
     chown -R username:shiny-apps /home/mdozmorov/db_5.00_07-22-2015/
 
@@ -71,16 +71,16 @@ Configure shiny-server
 
 [Good overview](http://deanattali.com/2015/05/09/setup-rstudio-shiny-server-digital-ocean/#install-shiny) of installing shiny-server and user permissions.
 
-If we need to start/stop the server.
+If we need to start/stop the server. From Ubuntu 15.04, we need to use `systemctl` prefix:
 
-    sudo start shiny-server
-    sudo stop shiny-server
-    sudo restart shiny-server
+    sudo systemctl start shiny-server
+    sudo systemctl stop shiny-server
+    sudo systemctl restart shiny-server
 
 Note that you need to do reload if you want to re-read config file for shiny-server. Restart will NOT reload the config file
 
-    sudo reload shiny-server
-    sudo status shiny-server
+    sudo systemctl reload shiny-server
+    sudo systemctl status shiny-server
 
 Config file for shiny is located at 
 
@@ -91,7 +91,7 @@ This needs to be put into our `grsnp.d` config file created earlier.
 
 Log file information for shiny app can be found by going to /var/log/shiny-server/. This will refresh automatically when the log file changes
 
-    sudo tail -f shiny-gr-shiny-####-####-####.log
+    sudo tail -f /var/log/shiny-server/shiny-gr-shiny-####-####-####.log
 
 Other notes
 ===

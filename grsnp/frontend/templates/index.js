@@ -31,6 +31,17 @@ function page_reload(){
 
 $(document).ready(function() {	
 
+	$("[name='stat_test']").on('change', function() {	 
+	  if (this.value == "montecarlo"){
+	  	alert( "Text: " + this.value ); // Popup
+	  	$("#lbl_num_mc").css("visibility", "visible");
+	  	$("[name='num_mc']").css("visibility", "visible");
+	  }
+	  else {
+	  	$("[name='num_mc']").css("visibility", "hidden");
+	  	$("#lbl_num_mc").css("visibility", "hidden");
+	  }
+	});
 
 	$("#descriptions").click(function(){
 		var organism = $("#org").val().split(":")[1];
