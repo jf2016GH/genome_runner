@@ -248,13 +248,23 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         ci_upper = sys.float_info.max
     if ci_lower == 0.0:
         ci_lower = sys.float_info.min
-    # # shrunken_or is the ci (either upper or lower) that is closest to 1
+    # shrunken_or is the ci (either upper or lower) that is closest to 1
+    if odds_ratio < 1:
+        ci_array = [odds_ratio, ci_upper if ci_upper < 1 else odds_ratio]
+        ci_index = scipy.array(ci_array).argmax()
+        shrunken_or = ci_array[ci_index]
+    elif odds_ratio > 1:
+        ci_array = [ci_lower if ci_lower > 1 else odds_ratio, odds_ratio]
+        ci_index = scipy.array(ci_array).argmin()
+        shrunken_or = ci_array[ci_index]
+    else:
+        shrunken_or = 1
     # if ci_lower<1 and ci_upper>1:
     #     shrunken_or,odds_ratio = 1,1
     # else:
     # find which value is closer to 1
-    ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
-    shrunken_or = [ci_lower,ci_upper][ci_index]
+    # ci_index = scipy.array([[abs(math.log(ci_lower)),abs(math.log(ci_upper))]]).argmin()
+    # shrunken_or = [ci_lower,ci_upper][ci_index]
 
     ## If a different stat_test is selected, perform that test now, and replace the p-value
     ## note we will still use the odds ratio calculated by the chi-square test
