@@ -103,10 +103,10 @@ $(document).ready(function() {
   
 		var demo_foi_count = $('#btngroup_demo_fois .btn.active').attr('title').split("\n").length - 1;
 		var total_foi_count = $("#inputbedfile")[0].files.length + demo_foi_count;
-		var max_gf_montecarlo = 10;
-		var max_foi_montecarlo = 2;
-		var max_gf_other = 20;
-		var max_foi_other = 4;
+		var max_gf_montecarlo = 200;
+		var max_foi_montecarlo = 5;
+		var max_gf_other = 1000;
+		var max_foi_other = 5;
 
 		//console.log("total_gf_count: " + total_gf_count.toString())
 		//console.log("checkboxtree_count: " + checkboxtree_gf_count.toString())
