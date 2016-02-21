@@ -136,7 +136,7 @@
 
 					<div class="well">
 						<div>
-							<button id="btnSubmit" class="btn btn-primary" onclick="submit_job()" type="submit" style="margin:1em">Submit job</button>									
+							<button id="btnSubmit" class="btn btn-primary" type="submit" style="margin:1em">Submit job</button>									
 							<input type="checkbox" id="disclaimer" checked="checked" style="margin:1em">The results of GenomeRunner analyses may be used for research purposes only.</input><br/>
 							<h3 id="upmessage" style="margin-left:11em;margin-bottom:3em;visibility:hidden;">Uploading files. Please do not refresh the page.</h3>
 							<br>
@@ -161,14 +161,17 @@
 								<br>
 								<label style="margin-left:10px;">Statistical test selection: </label>
 								<select name="stat_test">
-									<option value="chisquare" selected>Fisher's exact</option>
+									<option value="chisquare" selected>Chi-square</option>
 									<option value="binomial">Binomial</option>
 									<option value="montecarlo">Monte Carlo</option>
 								</select>
 								<img class="helptooltip" title="Select test to obtain enrichment p-values. Fisher's exact recommended." style="position: relative;top: 6px" width=25 height=25 src="static/images/help-icon.png" alt="help"/>
 								<label style="margin-left:10px;visibility:hidden" id="lbl_num_mc">Number of Monte Carlo simulations: </label>
-								<input style="visibility:hidden" type="number" name="num_mc"
-								   min="100" max="10000" step="100" value="100">
+								<select style="visibility:hidden" name="num_mc">
+									<option value="100" selected>100</option>
+									<option value="1000">1000</option>
+									<option value="10000">10000</option>
+								</select>
 
 								<label style="margin-left:10px;visibility:hidden">Strand selection: </label>
 								<select name="strand" style="visibility:hidden">
@@ -191,5 +194,5 @@
 			<p style="text-align: center;">
 				<span style="font-family:arial,helvetica,sans-serif;">You are the&nbsp;<img alt="stats counter" border="0" src="http://www.easycounter.com/counter.php?mdozmorov" />&nbsp;visitor</span>
 			</p>
-		</div>		
+		</div>
 	</body>
