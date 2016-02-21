@@ -82,15 +82,25 @@ $(document).ready(function() {
 			}).length;
 
 		// Check if GF uploaded/selected
+		var checked_gfs = $("[name^='grouprun:']:checked");
+		var checked_gf_tt_names = []
+		for (var i = checked_gfs.length - 1; i >= 0; i--) {
+			checked_gf_tt_names.push($(checked_gfs[i]).attr('id'))
+		};
+		var checked_gf_count = 0;
+		for (var i = checked_gf_tt_names.length - 1; i >= 0; i--) {
+			checked_gf_count += $("#grouprun_" + checked_gf_tt_names[i]).attr('title').split('\n').length - 1;
+		};
+			
 		var gf_file_count = $("#inputgenomicfeaturefile")[0].files.length;
-		if (gf_file_count == 0 && checkbox_gf_count == 0){
+		var total_gf_count = gf_file_count + checkbox_gf_count + checked_gf_count;
+		if (total_gf_count == 0){
 			alert("No regulatory datasets were uploaded/selected. Please upload/select regulatory datasets")
 			return false;
 		}
-
+  
 		var demo_foi_count = $('#btngroup_demo_fois .btn.active').attr('title').split("\n").length - 1;
 		var total_foi_count = $("#inputbedfile")[0].files.length + demo_foi_count;
-		var total_gf_count = gf_file_count + checkbox_gf_count;
 		var max_gf_montecarlo = 10;
 		var max_foi_montecarlo = 2;
 		var max_gf_other = 20;
