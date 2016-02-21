@@ -77,23 +77,25 @@ $(document).ready(function() {
 		$('#frmQuery').append($(checkbox_input));
 		$("#upmessage").css("visibility","visible");		
 		// count the number of GFs selected in the checkboxtree
-		var checkbox_gf_count = jQuery.grep(checkbox_input.val().split(","), function( n, i ) {
+		var checkboxtree_gf_count = jQuery.grep(checkbox_input.val().split(","), function( n, i ) {
 			  return (n.startsWith("file:") );
 			}).length;
 
 		// Check if GF uploaded/selected
-		var checked_gfs = $("[name^='grouprun:']:checked");
-		var checked_gf_tt_names = []
-		for (var i = checked_gfs.length - 1; i >= 0; i--) {
-			checked_gf_tt_names.push($(checked_gfs[i]).attr('id'))
+		// Get all checked custom GF groups are checked
+		var checked_custom_gfs = $("[name^='grouprun:']:checked");
+		var checked_custom_gf_id = []
+		for (var i = checked_custom_gfs.length - 1; i >= 0; i--) {
+			checked_custom_gf_id.push($(checked_custom_gfs[i]).attr('id'))
 		};
-		var checked_gf_count = 0;
-		for (var i = checked_gf_tt_names.length - 1; i >= 0; i--) {
-			checked_gf_count += $("#grouprun_" + checked_gf_tt_names[i]).attr('title').split('\n').length - 1;
+		var checked_custom_gf_count = 0;
+		// count number of GF in each checked custom GF group
+		for (var i = checked_custom_gf_id.length - 1; i >= 0; i--) {
+			checked_custom_gf_count += $("#grouprun_" + checked_custom_gf_id[i]).attr('title').split('\n').length - 1;
 		};
-			
+		// Count number of uploaded GF files
 		var gf_file_count = $("#inputgenomicfeaturefile")[0].files.length;
-		var total_gf_count = gf_file_count + checkbox_gf_count + checked_gf_count;
+		var total_gf_count = gf_file_count + checkboxtree_gf_count + checked_custom_gf_count;
 		if (total_gf_count == 0){
 			alert("No regulatory datasets were uploaded/selected. Please upload/select regulatory datasets")
 			return false;
@@ -105,6 +107,13 @@ $(document).ready(function() {
 		var max_foi_montecarlo = 2;
 		var max_gf_other = 20;
 		var max_foi_other = 4;
+
+		//console.log("total_gf_count: " + total_gf_count.toString())
+		//console.log("checkboxtree_count: " + checkboxtree_gf_count.toString())
+		//console.log("uploaded GF: " + gf_file_count.toString())
+		//console.log("custom GF: " + checked_custom_gf_count.toString())
+		//return false;
+
 		// check if monte carlo is selected
 		if ($("[name=stat_test] option:selected").val() == "montecarlo") {
 			// Check number of FOI uploaded/selected
