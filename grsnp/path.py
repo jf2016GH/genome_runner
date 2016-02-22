@@ -142,8 +142,10 @@ class PathNode(defaultdict):
 			for s in [os.path.join(gfs_dir,f) for f in os.listdir(gfs_dir) if os.path.isfile(os.path.join(gfs_dir,f)) and not f.endswith(".tbi")]:
 				tooltip += "\t"+base_name(s) + "\n" 
 			rel_gfs_dir = os.path.join(demo_dir,os.path.split(gfs_dir)[1])
-			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" style="margin: 10px">{}</input>
-						<img class="helptooltip" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(rel_gfs_dir,base_name(gfs_dir),tooltip)
+			tooltip = tooltip.rstrip("\n")
+			clean_gf_dir = base_name(gfs_dir).replace(".","_").replace(" ","_")
+			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" id="{}" style="margin: 10px">{}</input>
+						<img class="helptooltip" id="grouprun_{}" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(rel_gfs_dir,clean_gf_dir,base_name(gfs_dir),clean_gf_dir,tooltip)
 		return html
 
 	def get_scores(self,data_dir):
