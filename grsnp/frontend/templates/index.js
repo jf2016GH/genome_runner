@@ -35,10 +35,12 @@ $(document).ready(function() {
 	  if (this.value == "montecarlo"){
 	  	$("#lbl_num_mc").css("visibility", "visible");
 	  	$("[name='num_mc']").css("visibility", "visible");
+		$("#tooltip_mc").css("visibility", "visible");
 	  }
 	  else {
 	  	$("[name='num_mc']").css("visibility", "hidden");
 	  	$("#lbl_num_mc").css("visibility", "hidden");
+		$("#tooltip_mc").css("visibility", "hidden");
 	  }
 	});
 
