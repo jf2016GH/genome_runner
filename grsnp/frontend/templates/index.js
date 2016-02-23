@@ -108,7 +108,7 @@ $(document).ready(function() {
 		var max_gf_montecarlo = 200;
 		var max_foi_montecarlo = 5;
 		var max_gf_other = 1000;
-		var max_foi_other = 5;
+		var max_foi_other = 50;
 
 		//console.log("total_gf_count: " + total_gf_count.toString())
 		//console.log("checkboxtree_count: " + checkboxtree_gf_count.toString())
