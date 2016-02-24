@@ -10,6 +10,6 @@ Misc. scripts and files for working with database of genome annotation files
 
 - `extract_UCSC.py` - split multiple-feature genome annotation supertracks into separate feature-specific features
 
-- `Makefile` - Makefile for creating hg19 and mm9 custom genomic features. Currently supported: CpG BED files, from [http://rafalab.jhsph.edu/CGI/](http://rafalab.jhsph.edu/CGI/); Cytobands
+- `Makefile` - Makefile for creating hg19 and mm9 custom genomic features. Currently supported: CpG BED files (`make cpg_hg19` and `make cpg_mm9`), from [http://rafalab.jhsph.edu/CGI/](http://rafalab.jhsph.edu/CGI/); Cytobands (`make cytoband_hg19`), Genomic Evolutionary Rate Profiling (GERP) elements (`make GERP_hg19` and `make GERP_mm9`), CpGs and regions variably methylated across 54 normal human cell types (See [Gu J, et. al. "Mapping of Variable DNA Methylation across Multiple Cell Types Defines a Dynamic Regulatory Landscape of the Human Genome. G3 (Bethesda). 2016 Feb 17. PMID: 26888867](https://www.ncbi.nlm.nih.gov/pubmed/26888867) for more details, `make VMC_hg19` and `make VMR_hg19`)
 
 - `Makefile.parallel`, `make-matrix.py` - using an example of parallel processing from [BedTools tutorial](https://github.com/arq5x/tutorials/blob/master/bedtools.md) to get Jaccard statistics for overlaps among multiple BED files.

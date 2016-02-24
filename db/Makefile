@@ -1,5 +1,6 @@
 # all:	cpg_hg19 cpg_mm9 cytoband_hg19
-all:	GERP_hg19 GERP_mm9
+# all:	GERP_hg19 GERP_mm9
+all:	VMC_hg19 VMR_hg19
 
 # Create CpG BED files, from http://rafalab.jhsph.edu/CGI/
 
@@ -46,5 +47,23 @@ mm9.GERP_elements.tar.gz:
 GERP_mm9:	mm9.GERP_elements.tar.gz
 	tar -zxvf $<;
 	for file in mm9*.txt; do chr=`echo $$file | sed 's/mm9_//' | sed 's/_elems.txt//'`; awk -v chr=$$chr '{FS="\t"} {OFS="\t"} {print chr,$$1,$$2,$$3,$$4}' $$file; done | bedtools sort -i  > $@.bed;
+	bgzip $@.bed;
+	tabix $@.bed.gz
+
+# Variably methylated regions
+vmc.txt.gz:
+	wget http://epigenome.wustl.edu/methylomes/download/vmc.txt.gz
+
+VMC_hg19:	vmc.txt.gz
+	zcat $< | bedtools sort -i - > $@.bed;
+	bgzip $@.bed;
+	tabix $@.bed.gz
+
+# Variably methylated CpG sites
+vmr.txt.gz:
+	wget http://epigenome.wustl.edu/methylomes/download/vmr.txt.gz
+
+VMR_hg19:	vmr.txt.gz
+	zcat $< | cut -f1-3 | bedtools sort -i - > $@.bed;
 	bgzip $@.bed;
 	tabix $@.bed.gz
