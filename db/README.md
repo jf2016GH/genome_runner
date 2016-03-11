@@ -12,4 +12,13 @@ Misc. scripts and files for working with database of genome annotation files
 
 - `Makefile` - Makefile for creating hg19 and mm9 custom genomic features. Currently supported: CpG BED files (`make cpg_hg19` and `make cpg_mm9`), from [http://rafalab.jhsph.edu/CGI/](http://rafalab.jhsph.edu/CGI/); Cytobands (`make cytoband_hg19`), Genomic Evolutionary Rate Profiling (GERP) elements (`make GERP_hg19` and `make GERP_mm9`), CpGs and regions variably methylated across 54 normal human cell types (See [Gu J, et. al. "Mapping of Variable DNA Methylation across Multiple Cell Types Defines a Dynamic Regulatory Landscape of the Human Genome. G3 (Bethesda). 2016 Feb 17. PMID: 26888867](https://www.ncbi.nlm.nih.gov/pubmed/26888867) for more details, `make VMC_hg19` and `make VMR_hg19`)
 
-- `Makefile.parallel`, `make-matrix.py` - using an example of parallel processing from [BedTools tutorial](https://github.com/arq5x/tutorials/blob/master/bedtools.md) to get Jaccard statistics for overlaps among multiple BED files.
+- `Makefile.parallel`, `make-matrix.py` - using an example of parallel processing from [BedTools tutorial](https://github.com/arq5x/tutorials/blob/master/bedtools.md) to get Jaccard statistics for overlaps among multiple BED files.make_gfs.sh
+
+- `make_gfs.sh` - script to make GF files, containing lists of categories of GFs
+
+- `make_gr_misc.sh` - script to run GR analysis on miscellaneous categories of GFs and custom data
+
+- `make_gr_enc.sh` - script to run GR analysis on the ENCODE categories of GFs
+
+- `make_gr_rdm.sh` - script to run GR analysis on the Roadmap categories of GFs
+
