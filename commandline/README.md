@@ -2,6 +2,8 @@
 
 `make_download_LD.sh` - Download LD scores for EUR population from [https://data.broadinstitute.org/srlab/BEAGLE/1kG-beagle-release3/pairwise_ld/r2_ge_0.8/](https://data.broadinstitute.org/srlab/BEAGLE/1kG-beagle-release3/pairwise_ld/r2_ge_0.8/)
 
+LD data from 1000K Phase 3 genome data is available at Google Genomics, [https://googlegenomics.readthedocs.org/en/latest/use_cases/linkage_disequilibrium/public_ld_datasets.html](https://googlegenomics.readthedocs.org/en/latest/use_cases/linkage_disequilibrium/public_ld_datasets.html)
+
 # How to calculate % of genome coverage for a BED file
 
 1. Get some BED files:
