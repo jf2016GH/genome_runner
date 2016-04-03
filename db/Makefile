@@ -1,6 +1,7 @@
 # all:	cpg_hg19 cpg_mm9 cytoband_hg19
 # all:	GERP_hg19 GERP_mm9
-all:	VMC_hg19 VMR_hg19
+# all:	VMC_hg19 VMR_hg19
+all:	UCNE.bed
 
 # Create CpG BED files, from http://rafalab.jhsph.edu/CGI/
 
@@ -67,3 +68,12 @@ VMR_hg19:	vmr.txt.gz
 	zcat $< | cut -f1-3 | bedtools sort -i - > $@.bed;
 	bgzip $@.bed;
 	tabix $@.bed.gz
+
+# UltraConserved Noncoding elements
+UCNE.bed:
+	wget http://ccg.vital-it.ch/UCNEbase/data/download/ucnes/hg19_UCNE_coord.bed
+	bedtools sort -i hg19_UCNE_coord.bed > $@
+# wget http://ccg.vital-it.ch/UCNEbase/data/download/ucnes/UCNE_paralog_regions.txt
+# sed '1d' UCNE_paralog_regions.txt | cut -f3-5 | grep -v "_" | bedtools sort -i - | uniq > UCNE_paralog_regions.bed
+
+
