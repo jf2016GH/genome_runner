@@ -15,6 +15,8 @@ find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/H3K4me3/ -type f -n
 find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/nestedRepeats/ -type f -name "*.bed.gz" | sort > gfs_nestedRepeats.txt
 find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/VMRs/ -type f -name "*.bed.gz" | sort > gfs_VMRs.txt
 find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/super_enhancers/ -type f -name "*.bed" | sort > gfs_super_enhancers.txt
+find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/UCNEs/ -type f -name "*.bed.gz" | sort > gfs_UCNEs.txt
+find /home/mdozmorov/db_5.00_07-22-2015/grsnp_db/hg19/FANTOM/ -type f -name "*.bed.gz" | sort >> gfs_FANTOM.txt
 
 # ENCODE GFs
 find /home/mdozmorov/db_5.00_07-22-2015/grsnp_db/hg19/ENCODE/TFBS_clustered/ -type f -name "*.bed.gz" | sort > gfs_encTFBS_clustered.txt
