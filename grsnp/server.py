@@ -356,15 +356,18 @@ class WebUI(object):
 
 		# run using celery queues.  Uncomment to use.  Also uncomment in celeryconfiguration.
 		# TODO find out why all jobs are getting sent to one worker.
-		#if gfs_count > 10:
-		#	print "LONG RUN STARTED"
-		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
-		#														  queue='long_runs')
-		#else:
-		#	print "SHORT RUN STARTED"
-		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
-		#														  queue='short_runs')
-		
+		#try:
+		#	if gfs_count > 3:
+		#		print "LONG RUN STARTED"
+		#		grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
+		#														  queue='long_runs',routing_key='grsnp')
+		#	else:
+		#		print "SHORT RUN STARTED"
+		#		grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
+																  queue='short_runs',routing_key='grsnp')
+		#except Exception, e:
+		#	print "WORKER ERRROR"
+
 		try:
 			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version,stat_test = stat_test)
 		except Exception, e:
@@ -813,10 +816,11 @@ def main():
 							{"tools.staticdir.on": True,
 							"tools.staticdir.dir": v}}) 
 		
-		# start redis server
-		script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
-		fh = open(os.path.join(sett["run_files_dir"],"redis.log"),"w")
-		out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		### start redis server
+		#script = ["redis-server", "--port", str(celeryconfiguration.redis_port)]
+		#fh = open(os.path.join(sett["run_files_dir"],"redis.log"),"w")
+		#out = subprocess.Popen(script,stdout=fh,stderr=fh)
+		
 		#script = "ps auxww | grep  -E 'worker.*grsnp_LOCAL' | awk '{print $2}' | xargs kill -9"
 		#out = subprocess.Popen(script,shell=True)
 		#out.wait()
