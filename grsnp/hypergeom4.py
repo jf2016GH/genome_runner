@@ -133,7 +133,6 @@ def output_p_value(foi_obs,n_fois,bg_obs,n_bgs,foi_path,gf_path,background_path,
     foi_name = base_name(foi_path)
     gf_name = base_name(gf_path)
     sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper = calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,stat_test=stat_test,background_path = background_path, run_files_dir = run_files_dir,progress = progress)
-
     if sign == 1 or str(odds_ratio) == "inf":
         direction  = "overrepresented" 
     else: direction =  "underrepresented"
@@ -248,7 +247,7 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         ci_upper = sys.float_info.max
     if ci_lower == 0.0:
         ci_lower = sys.float_info.min
-    # shrunken_or is the ci (either upper or lower) that is closest to 1
+    # shrunken_or is the ci (either upper or lower) that is closest to 
     if odds_ratio < 1:
         ci_array = [odds_ratio, ci_upper if ci_upper < 1 else odds_ratio]
         ci_index = scipy.array(ci_array).argmax()
@@ -257,6 +256,8 @@ def calculate_p_value_odds_ratio(foi_obs,n_fois,bg_obs,n_bgs,foi_name,gf_path,st
         ci_array = [ci_lower if ci_lower > 1 else odds_ratio, odds_ratio]
         ci_index = scipy.array(ci_array).argmin()
         shrunken_or = ci_array[ci_index]
+    else:
+        shrunken_or = 1
     # if ci_lower<1 and ci_upper>1:
     #     shrunken_or,odds_ratio = 1,1
     # else:
