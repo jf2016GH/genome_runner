@@ -354,21 +354,25 @@ class WebUI(object):
 		#		args=(fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random))				
 		#p.start()
 
-		# run using celery queues.  Uncomment to use.  Also uncomment in celeryconfiguration.
-		# TODO find out why all jobs are getting sent to one worker.
-		#if gfs_count > 10:
-		#	print "LONG RUN STARTED"
-		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
-		#														  queue='long_runs')
-		#else:
-		#	print "SHORT RUN STARTED"
-		#	grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=[fois,gfs,b,res_dir,id,True,os.path.join(sett["data_dir"],organism,"bkg_overlaps.gr"),sett["data_dir"],run_annotation,run_random],
-		#														  queue='short_runs')
-		#
+		#run using celery queues.  Uncomment to use.  Also uncomment in celeryconfiguration.
+		#TODO find out why all jobs are getting sent to one worker.
+		run_args = [fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random]
+		run_kwargs = { "pct_score": kwargs['pct_score'],"organism": organism,"id": id,"db_version": db_version,"stat_test": stat_test }
+		if gfs_count > 3:
+			print "LONG RUN STARTED"
+			run_queue = 'long_runs'
+		else:
+			print "SHORT RUN STARTED"
+			run_queue = 'short_runs'
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version,stat_test = stat_test)
+			grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue,retry=False)
 		except Exception, e:
 			print "WORKER ERROR"
+		
+		#try:
+		#	grsnp.worker_hypergeom4.run_hypergeom.delay(fois,gfs,b,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,run_random,pct_score=kwargs['pct_score'],organism=organism,id=id,db_version=db_version,stat_test = stat_test)
+		#except Exception, e:
+		#	print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
 
 	@cherrypy.expose
@@ -740,7 +744,7 @@ def main():
 	parser.add_argument("--run_files_dir" , "-r", nargs="?", help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/.", required=True)
 	parser.add_argument("--organism" , "-g", nargs="?", help="The UCSC code for the organism to use. Default: hg19 (human). Data for the organism must exist in the database directory. Use dbcreator to make the database, if needed.", default="hg19")
 	parser.add_argument("--port","-p", nargs="?", help="Socket port to start server on. Default: 8000", default=8080) 
-	parser.add_argument("--num_workers", "-w", type=int, help="The number of celery workers to start. Default: 1", default=1)
+	parser.add_argument("--num_workers", "-w", type=int, help="The number of worker processes to start. If celery worker already exists, this is ignored. Default: 1", default=1)
 	parser.add_argument("--group", "-z", type=str, help="The group to change results folder permission to", default="")	
 
 	args = vars(parser.parse_args())
@@ -824,16 +828,15 @@ def main():
 		app.config_from_object('grsnp.celeryconfiguration')
 		print "Checking for existing celery workers..."
 		if app.control.inspect().ping() == None:
-			for i in range(args["num_workers"]):
+			if int(args['num_workers']) > 0:
 				print "Starting Celery worker[s]..."
-				fh = open("worker{}.log".format(i),"w")
-				script = ["celery","worker", "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCAL{}.%h".format(i),'-r',sett['run_files_dir'],'-d',args["data_dir"]]
+				fh = open("worker.log","w")
+				script = ["celery","worker","-Q","long_runs,short_runs", '-c', str(args['num_workers']), "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCA1.%h",'-r',sett['run_files_dir'],'-d',args["data_dir"]]
 				out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		else:
 			workers = app.control.inspect().ping()
 			pids = [str(app.control.inspect().stats()[j]['pid']) for j in workers.keys()]
 			print "Celery workers already running. Pids:" + ",".join(pids) 
-		print "Redis backend URL: ", celeryconfiguration.CELERY_RESULT_BACKEND
 		cherrypy.config.update({'tools.sessions.timeout': 60})
 		cherrypy.quickstart(WebUI(), "/", config=conf)
 
