@@ -44,7 +44,7 @@
 <table border="0">
 	<tr>
 		<td>
-				<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bed_file" multiple="multiple"/>
+				<h4 style="float:left;">Files:</h4><input type="file" id="inputbedfile" style="margin:5px" name="bedfile:fois" multiple="multiple"/>
 				<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should the data in BED format look like?</a>
 		</td>
 		<td>
@@ -56,8 +56,8 @@
 	<tr>
 		<td>
 			<h4 style="float: left;margin-top: 10px;margin-right: 9px;">Demo SNP sets (click to select): </h4>
-			<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="demo_fois">
-				<input type="hidden" style="margin-top: -3px;" name="demo_fois"/>
+			<div class="btn-group" id="btngroup_demo_fois" data-toggle="buttons-radio" data-toggle-name="bedcustom:fois">
+				<input type="hidden" style="margin-top: -3px;" name="bedcustom:fois"/>
 				${demo_snps}
 			</div>
 		<td>
@@ -70,7 +70,7 @@
 								<table>
 									<tr>
 										<td>
-											<textarea id="inputbeddata" rows=10 cols=95 style="margin:10px;margin-bottom:0px;" name="bed_data" wrap="off" disabled>
+											<textarea id="inputbeddata" rows=10 cols=95 style="margin:10px;margin-bottom:0px;" name="bedtext:fois" wrap="off" disabled>
 											</textarea>
 										</td>
 									</tr>
@@ -89,14 +89,14 @@
 							</a></h3>
 							<div style="height=100px">       
 								<h4 style="float:left;">File:</h4>
-								<input type="file" id="inputbackgroundfile" style="margin:5px" name="background_file" />
+								<input type="file" id="inputbackgroundfile" style="margin:5px" name="bedfile:background" />
 								<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should data in BED format look like?</a>
 								<div id="accback" class="accordion" style="padding-bottom: 1em;list-style:none;margin-top: 20px">        
 									<h3  id="accordionheader"><a href="#" style="font-size:120%">Paste data</a><img class="helptooltip" title="Paste a list of rsIDs of SNPs of interest, or tab-separated genomic coordinates (recommended) in .BED format (no headers)." style="position: relative;top: 6px;" width=25 height=25 src="static/images/help-icon.png" alt="help"/></h3>					        
 									<table style="margin-bottom:0px; padding-bottom:0px">
 										<tr>
 											<td>
-												<textarea id="inputbackgrounddata" rows=5 cols=95 style="margin:10px" name="background_data" wrap="off" disabled>
+												<textarea id="inputbackgrounddata" rows=5 cols=95 style="margin:10px" name="bedtext:background" wrap="off" disabled>
 												</textarea>
 											</td>
 										</tr>
@@ -149,7 +149,7 @@
 							<ul>
 								<li id="list-bedbackground">					
 									<h4 style="float:left;">Files:</h4>
-									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="genomicfeature_file" multiple="multiple"/>
+									<input type="file" id="inputgenomicfeaturefile" style="margin:5px" name="bedfile:gfs" multiple="multiple"/>
 									<a href="http://genome.ucsc.edu/FAQ/FAQformat.html#format1">What should the data in BED format look like?</a>
 								</li>				
 							</ul>

@@ -114,7 +114,7 @@ class PathNode(defaultdict):
 			tooltip = "Includes the following files:\n"
 			for s in [os.path.join(snp_dir,f) for f in os.listdir(snp_dir) if os.path.isfile(os.path.join(snp_dir,f)) and not f.endswith(".tbi")]:
 				tooltip += "\t"+base_name(s) + "\n" 
-			html = html + """<button type="button" onclick="clear_foi_uploads()" style="margin-top: 12px"  class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,base_name(snp_dir))
+			html = html + """<button type="button" onclick="clear_foi_uploads()" style="margin-top: 12px" class="btn btn-primary" data-toggle-value="{}" title="{}" >{}</button>\n""".format(snp_dir,tooltip,base_name(snp_dir))
 		return html
 
 	def get_backgrounds_combo(self,organism,custom_dir):
@@ -122,7 +122,7 @@ class PathNode(defaultdict):
 			default organism backgrounds.
 		'''
 
-		html = """<select name="default_background" style="margin-left: 5px; margin-top: 9px" id="default_background">"""
+		html = """<select name="bedpath:background" style="margin-left: 5px; margin-top: 9px" id="default_background">"""
 		background_dir = os.path.join(custom_dir,"backgrounds",organism)
 		if not os.path.exists(background_dir):
 			return html + "</select>"
@@ -144,7 +144,7 @@ class PathNode(defaultdict):
 			rel_gfs_dir = os.path.join(demo_dir,os.path.split(gfs_dir)[1])
 			tooltip = tooltip.rstrip("\n")
 			clean_gf_dir = base_name(gfs_dir).replace(".","_").replace(" ","_")
-			html += """<input type="checkbox" style="font-size:120%;"  name="grouprun:{}" id="{}" style="margin: 10px">{}</input>
+			html += """<input type="checkbox" style="font-size:120%;"  name="bedcustom:gfs:{}" id="{}" style="margin: 10px">{}</input>
 						<img class="helptooltip" id="grouprun_{}" title="{}" style="position: relative;top: 6px;" width="25" height="25" src="static/images/help-icon.png" alt="help">""".format(rel_gfs_dir,clean_gf_dir,base_name(gfs_dir),clean_gf_dir,tooltip)
 		return html
 

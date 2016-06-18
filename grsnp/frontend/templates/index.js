@@ -68,7 +68,7 @@ $(document).ready(function() {
 			return false;
 		} 
 
-		// remove old attached checkboxtree results if they exist
+		// remove old attached checkboxtree results if they exist due to using browser back button
 	     $("#frmQuery").children().remove("[name='jstree_gfs']");
 		// Gather the checkbox tree results and attach to the submitted form
 		var checkbox_input = $("<input>")
