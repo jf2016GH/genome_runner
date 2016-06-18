@@ -96,7 +96,7 @@ class WebUI(object):
 		return organisms	
 
 	@cherrypy.expose
-	def query(self, strand="",run_annotation=False, default_background = "",db_version=None,jstree_gfs="",stat_test=None,num_mc = None,**kwargs):
+	def query(self, strand="",run_annotation=False,db_version=None,jstree_gfs="",stat_test=None,num_mc = None,**kwargs):
 		global results_dir, uploads_dir, sett
 		# Assign a random id
 		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
@@ -130,7 +130,7 @@ class WebUI(object):
 		list_fois_paths = list_fois_paths + utils.retrieve_group(kwargs["bedcustom:fois"])
 		# only use the textbox if nothing been uploaded
 		if len(list_fois_paths) == 0:
-			list_fois_paths = list_fois_paths + utils.retrieve_text(kwargs["bedtext:fois"],os.path.join(fois_outdir,"custom.bed"),id)
+			list_fois_paths = list_fois_paths + utils.retrieve_text(kwargs["bedtext:fois"],os.path.join(fois_outdir,"custom_foi.bed"),id)
 		# remove fois with the same base_name
 		purged_fois_paths = utils.purge_duplicate_features(list_fois_paths)
 		# write foi paths to .fois file
@@ -145,7 +145,11 @@ class WebUI(object):
 		gfs_outdir = os.path.join(upload_dir, "gfs")
 		# Create annotation folder, used by the server to check if annotation is going to be run
 		list_gfs_paths = list_gfs_paths + utils.retrieve_files(kwargs["bedfile:gfs"],gfs_outdir,id)
-		list_gfs_paths = list_gfs_paths + utils.retrieve_group(kwargs["bedcustom:gfs"])
+		# collect the gfs for all groups that were checked by the user
+		checked_custom_gfs = { k: kwargs[k] for k in kwargs.keys() if k.startswith("bedcustom:gfs") and kwargs[k] == "on"}
+		for k,v in checked_custom_gfs.iteritems():
+			gp_gfs_dir = k.split(":")[-1]
+			list_gfs_paths = list_gfs_paths + utils.retrieve_group(gp_gfs_dir)
 
 		# add genomic feature tracks loaded via the JStree control
 		for k in jstree_gfs.split(','):
@@ -154,7 +158,7 @@ class WebUI(object):
 				list_gfs_paths.append(g)
 		# only use the textbox if nothing been uploaded
 		if len(list_gfs_paths) == 0:
-			list_gfs_paths.append(utils.retrieve_text(kwargs["bedtext:gfs"], os.path.join(gfs_outdir,"custom.bed"), id))
+			list_gfs_paths = list_gfs_paths + utils.retrieve_text(kwargs["bedtext:gfs"], os.path.join(gfs_outdir,"custom_gf.bed"), id)
 		# remove gfs with the same base_name
 		purged_gfs_paths = utils.purge_duplicate_features(list_gfs_paths)
 		# write all gfs paths to .gfs file
@@ -169,14 +173,12 @@ class WebUI(object):
 
 
 		# load the background data if uploaded.
-		background_name = ""
 		background_path = utils.retrieve_files(kwargs["bedfile:background"], upload_dir,id)
 		if len(background_path) == 0:
-			background = utils.retrieve_text(kwargs["bedtext:background"], os.path.join(upload_dir,"custom.background.bed"), id)
-		if len(background_path) == 0:
-			background_path = kwargs["bedpath:background"]
+			background_path = utils.retrieve_text(kwargs["bedtext:background"], os.path.join(upload_dir,"custom.background.bed"), id)
+		if len(background_path) !=0: background_path = background_path[0]
 		else:
-			background_path = background_path[0]
+			background_path = kwargs["bedpath:background"] # returns a string
 
 		# make paths relative, needed for remote celery workers to function correctly
 		for f in [fois,gfs]:
@@ -197,7 +199,7 @@ class WebUI(object):
 		path = os.path.join(res_dir, ".settings")
 		set_info = {"Jobname:": str(id),
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
-					"Background:": background_name,
+					"Background:": os.path.split(background_path)[-1],
 					"Organism:": organism,
 					"Database version:":db_version,
 					"% Score threshold:": str(kwargs['pct_score'])+"%",

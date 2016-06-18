@@ -57,6 +57,7 @@ def retrieve_text(up_text, out_file_path, id):
 	:param id: the id of the grsnp job
 	:return: path to the bed file on the server in list form [path]
 	"""
+	uploaded_t_p = []
 	try:
 		if up_text != None and up_text != "":
 			with open(out_file_path, "wb") as out:
@@ -67,11 +68,12 @@ def retrieve_text(up_text, out_file_path, id):
 			out = subprocess.Popen(['dos2unix {}'.format(out_file_path)], shell=True, stdout=subprocess.PIPE,
 								   stderr=subprocess.PIPE)
 			out.wait()
+			uploaded_t_p = [out_file_path]
 
 	except Exception, e:
 		logger.error("id={}".format(id) + str(e))
 		return "ERROR: Unable to process custom bed file"
-	return [out_file_path]
+	return uploaded_t_p
 
 def retrieve_group(up_group_folder):
 	ls_grp = []

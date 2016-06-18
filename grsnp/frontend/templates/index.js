@@ -85,7 +85,7 @@ $(document).ready(function() {
 
 		// Check if GF uploaded/selected
 		// Get all checked custom GF groups are checked
-		var checked_custom_gfs = $("[name^='grouprun:']:checked");
+		var checked_custom_gfs = $("[name^='bedcustom:gfs:']:checked");
 		var checked_custom_gf_id = []
 		for (var i = checked_custom_gfs.length - 1; i >= 0; i--) {
 			checked_custom_gf_id.push($(checked_custom_gfs[i]).attr('id'))
