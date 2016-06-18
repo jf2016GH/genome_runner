@@ -128,6 +128,15 @@ Use celery to check active/manually start workers
     celery inspect active --broker redis://localhost:7775/0
     celery worker --app=grsnp.worker_hypergeom4 -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ --loglevel INFO -E
 
+RabbitMQ
+===
+
+`rabbitmq-server — start` - Starting rabbitMQ
+
+`rabbitmqctl list_queues name consumers` - This command can be used to see all queues on RabbitMQ
+
+
+
 Troubleshooting
 ===
 Check if something is running on port 80
