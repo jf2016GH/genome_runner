@@ -18,7 +18,7 @@ app.user_options['preload'].add(
     Option('-r', '--run_files_dir', default='',
            help="Set the directory where the server should save results. Required. Use absolute path. Example: /home/username/run_files/."),
 )
-
+app.select_queues(["long_runs","short_runs"])
 sett = {}
 
 @app.task(ignore_result=False)
@@ -30,8 +30,11 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 		outdir=os.path.join(sett['run_files_dir'],'results',str(id))
 		result_files = [x for x in os.listdir(outdir) if not x.startswith('.')] # gets all file that do not start with '.' (i.e. '.settings')
 		# check if the folder already contains results
-		if result_files != []:
-			raise Exception("ERROR: Results folder for {} is not empty. Run Canceled.".format(str(id)))
+		log_path = os.path.join(outdir,"gr_log.txt")
+		if os.path.exists(log_path):
+			if "Enrichment analysis started" in open(log_path).read():
+				print "ERROR: Results folder for {} is not empty. Run Canceled.".format(id)
+				return
 		# write out absolute gfs and fois file paths and pass these to the worker	
 		for f_path in [fois, gfs]:
 			list_f = [x for x in open(f_path).read().split("\n") if x!= ""]
