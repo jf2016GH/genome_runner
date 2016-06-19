@@ -729,6 +729,7 @@ def run_hypergeom(fois, gfs, bg_path,outdir,job_name="",zip_run_files=False,bkg_
     global run_files_dir
     valid_stat_tests = ["chisquare","binomial"]
     if not os.path.exists(os.path.normpath(outdir)): os.mkdir(os.path.normpath(outdir))
+    logging.handlers = []
     fh = logging.FileHandler(os.path.join(outdir,'gr_log.txt'))
     fh.setFormatter(formatter)
     logger.addHandler(fh)
