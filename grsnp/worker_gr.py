@@ -6,6 +6,8 @@ from celery.exceptions import MaxRetriesExceededError #,Reject
 import os
 import traceback
 import json
+import GRAnalysis
+import analysis_util as utils
 
 # import the Celery log getter
 from celery.utils.log import get_task_logger
@@ -56,9 +58,24 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 		else:
 			bg_path = os.path.join(sett['run_files_dir'],bg_path.lstrip("/"))
 		logger.info("Worker starting job for {}".format(id))
-		grsnp.analysis.run_hypergeom(fois + "_full", gfs + "_full", bg_path, outdir, job_name, zip_run_files, bkg_overlaps_path, sett['root_data_dir'][db_version], run_annotation, run_randomization_test, pct_score, organism, stat_test=stat_test)
+		fois_full, gfs_full = fois + "_full", gfs + "_full"
+		root_data_dir = sett['root_data_dir'][db_version]
+		# run the enrichment analysis
+		grenrichment = GRAnalysis.GREnrichment(fois_full, gfs_full, bg_path,outdir,job_name,root_data_dir,organism)
+		if stat_test == "chisquare":
+			grenrichment.run_chisquare()
+		elif stat_test == 'binomial':
+			grenrichment.run_binomial()
+		elif stat_test.startswith('montecarlo'):
+			num_mc = stat_test.split("_")[1]
+			grenrichment.run_montecarlo(num_mc)
+		# run annotation analysis
+		if run_annotation:
+			grannotation = GRAnalysis.GRAnnotation(fois_full,gfs_full,bg_path,outdir,job_name,root_data_dir,organism)
+			grannotation.run_annotation()
+		# zip up result files
+		utils._zip_run_files(outdir,id)
 	except Exception, e:
-		logger.error(traceback.print_exc())
 		_write_progress("ERROR: Run crashed. Celery worker threw an error.",id,1,1)
 		raise e
 

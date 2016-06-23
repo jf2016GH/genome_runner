@@ -9,7 +9,7 @@ import logging
 from logging import FileHandler,StreamHandler
 import json
 import pdb
-import grsnp.worker_analysis
+import grsnp.worker_gr
 from time import gmtime, strftime
 import simplejson
 import string
@@ -229,7 +229,7 @@ class WebUI(object):
 			print "SHORT RUN STARTED"
 			run_queue = 'short_runs'
 		try:
-			grsnp.worker_analysis.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue, retry=False)
+			grsnp.worker_gr.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue, retry=False)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
@@ -514,7 +514,7 @@ def main():
 			if int(args['num_workers']) > 0:
 				print "Starting Celery worker[s]..."
 				fh = open("worker.log","w")
-				script = ["celery","worker","-Q","long_runs,short_runs", '-c', str(args['num_workers']), "--app", "grsnp.worker_hypergeom4", "--loglevel", "INFO", "-n", "grsnp_LOCA1.%h",'-r',sett['run_files_dir'],'-d',args["data_dir"]]
+				script = ["celery","worker","-Q","long_runs,short_runs", '-c', str(args['num_workers']), "--app", "grsnp.worker_gr", "--loglevel", "INFO", "-n", "grsnp_LOCA1.%h",'-r',sett['run_files_dir'],'-d',args["data_dir"]]
 				out = subprocess.Popen(script,stdout=fh,stderr=fh)
 		else:
 			workers = app.control.inspect().ping()

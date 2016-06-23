@@ -8,11 +8,8 @@ import subprocess
 import tarfile
 import traceback
 import zipfile
-
-from grsnp import dbcreator_util as grsnp_util
-from grsnp.analysis import logger
 import datetime
-
+DEBUG = False
 
 
 def base_name(k):
@@ -94,25 +91,6 @@ def _zip_run_files(outdir, id=""):
 	if os.path.exists(tar_path): os.remove(tar_path)
 
 
-def validate_filenames(file_paths):
-	''' Checks if there are spaces before or after the file extension.
-	EX. 'dir1/dir2/test .bed' is not valid. 'dir1/dir2/test.bed is valid.
-	'dir1/dir2/test.bed .gz' is not valid.
-	'''
-	invalid = []
-	for file in file_paths:
-		for t in os.path.basename(file).split("."):
-			if len(t.strip()) != len(t):
-				# there are spaces before or after the '.'. Add the file to the list of invalids.
-				logger.error("Cannot have space before/in file extension: {}".format(file))
-				invalid.append(os.path.basename(file))
-	files_wo_ext = [base_name(x) for x in file_paths]
-	file_duplicates = [x for x, y in collections.Counter(files_wo_ext).items() if y > 1]
-	for f in file_duplicates:
-		logger.error("{} exists multiple times. (i.e. 'foi.txt.gz' has same basename as 'foi.txt')".format(f))
-		invalid.append(f)
-	return invalid
-
 
 def generate_randomsnps(foi_path, background, n_fois, num):
 	''' Generates random SNP files in the same directory as 'foi_path' by sampling n snps randomly from the 'background'.
@@ -134,7 +112,7 @@ def generate_randomsnps(foi_path, background, n_fois, num):
 	return paths
 
 
-def validate_rsids(self, foi_path):
+def validate_rsids(foi_path):
 	''' Checks if the first line is contains an rsIDs. If it does, the file is sorted
 	'''
 	if foi_path.endswith('.gz'):
@@ -151,7 +129,6 @@ def validate_rsids(self, foi_path):
 		tmp = out.stdout.read()
 		tmp_er = out.stderr.read()
 		if tmp_er != "":
-			logger.error(tmp_er)
 			raise Exception(tmp_er)
 		return True
 	else:
@@ -169,3 +146,82 @@ def write_debug(fun_name,header = False,**kwargs):
 				w.write("Variable values for\t %s \n" % fun_name)
 				for key, value in kwargs.iteritems():
 					w.write("%s =\t %s\n" % (key,value))
+
+
+def _write_head(content, outpath):
+	f = front_appender(outpath)
+	f.write(content)
+	f.close()
+
+class front_appender:
+	'''
+	Appends content to start of file.
+	'''
+
+	def __init__(self, fname, mode='a'):
+		self.__write_queue = []
+		self.__old_content = ""
+		if mode == 'a':
+			self.__old_content = open(fname).read()
+		self.__f = open(fname, 'w')
+
+	def write(self, s):
+		self.__write_queue.append(s)
+
+	def close(self):
+		self.__f.writelines(self.__write_queue + [self.__old_content])
+		self.__f.close()
+
+
+
+
+
+def _chunks(l, n):
+	n = max(1, n)
+	return [l[i:i + n] for i in range(0, len(l), n)]
+
+
+def get_score_strand_settings(gf_path):
+	''' Parses the gf_path and determines if gf is filtered by score and/or strand.
+	'''
+	str_strand, str_scorethresh = "Strand: Both", "Score threshold: NA"
+	gfsplit = gf_path.split("/grsnp_db_")
+	if len(gfsplit) == 2:
+		str_score_strand = gfsplit[-1].split("/")[0].split("_")
+		for s in str_score_strand:
+			if s.isdigit():
+				str_scorethresh = "Score threshold: " + s
+			else:
+				str_strand = "Strand: " + s
+	return str_strand + "\t" + str_scorethresh
+
+
+class front_appender:
+	'''
+	Appends content to start of file.
+	'''
+
+	def __init__(self, fname, mode='a'):
+		self.__write_queue = []
+		self.__old_content = ""
+		if mode == 'a':
+			self.__old_content = open(fname).read()
+		self.__f = open(fname, 'w')
+
+	def write(self, s):
+		self.__write_queue.append(s)
+
+	def close(self):
+		self.__f.writelines(self.__write_queue + [self.__old_content])
+		self.__f.close()
+
+
+def _load_minmax(path):
+	data = {}
+	if not os.path.exists(path):
+		return data
+	score = [x for x in open(path).read().split("\n") if x != ""]
+	for s in score:
+		name, min_max = s.split('\t')
+		data[name] = min_max
+	return data
