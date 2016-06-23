@@ -1,6 +1,6 @@
 from celery import Celery
 from celery import signals
-import grsnp.hypergeom4 as hpgm
+import grsnp.analysis as hpgm
 from celery.bin import Option
 from celery.exceptions import Reject, MaxRetriesExceededError
 import os

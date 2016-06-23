@@ -1,1 +1,1 @@
-import hypergeom4, grsnp, path
+import analysis, grsnp, path

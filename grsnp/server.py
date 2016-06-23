@@ -9,7 +9,7 @@ import logging
 from logging import FileHandler,StreamHandler
 import json
 import pdb
-import grsnp.worker_hypergeom4
+import grsnp.worker_analysis
 from time import gmtime, strftime
 import simplejson
 import string
@@ -229,7 +229,7 @@ class WebUI(object):
 			print "SHORT RUN STARTED"
 			run_queue = 'short_runs'
 		try:
-			grsnp.worker_hypergeom4.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue,retry=False)
+			grsnp.worker_analysis.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue, retry=False)
 		except Exception, e:
 			print "WORKER ERROR"
 		raise cherrypy.HTTPRedirect("result?id=%s" % id)
