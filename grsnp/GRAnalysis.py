@@ -240,8 +240,6 @@ class GRAnalysis:
 					# replace the ".txt" extension with ".bed"
 					output_dir = os.path.split(unzipped_f)[0]
 					out_bed_f = os.path.join(output_dir, out_fname)  # the processed file
-					print files_paths
-					print unzipped_f
 					db_utils.remove_headers(unzipped_f)
 					# perform rsid conversion
 					if utils.validate_rsids(unzipped_f):
@@ -311,10 +309,10 @@ class GRAnnotation(GRAnalysis):
 			annot_outdir = os.path.join(self.outdir, "annotations")
 			if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
 			self.cur_prog, self.max_prog = 0, len(self.fois)
-			for f in len(self.fois):
+			for f in self.fois:
 				self._write_progress("Running Annotation Analysis for {}.".format(base_name(f)), self.cur_prog)
 				self.logger.info("Running annotation analysis for {}".format(base_name(f)))
-				for i, g in enumerate(self._chunks(self.gfs, 100)):
+				for i, g in enumerate(utils._chunks(self.gfs, 100)):
 					with open(os.path.join(annot_outdir, base_name(f) + str(i) + ".txt"), "wb") as wr:
 						anot = self._get_annotation(f, g).split("\n")
 						anot[0] = anot[0].replace("Region\t\t", "Region\t")

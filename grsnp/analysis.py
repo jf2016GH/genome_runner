@@ -3,8 +3,8 @@ from __future__ import division
 
 import argparse
 import os
-
-
+import GRAnalysis
+import analysis_util as utils
 
 def main():
 	global detailed_outpath, progress_outpath, run_files_dir, console_output, print_progress
@@ -16,7 +16,7 @@ def main():
 						help="Text file with pathrs to GF files (unless -p used). GF files may be gzipped. Required")
 	parser.add_argument("bg_path", nargs=1, help="Path to background, or population of all SNPs. Required")
 	parser.add_argument("--run_annotation", "-a", help="Run annotation analysis", action="store_true")
-	parser.add_argument("--run_files_dir", "-r", nargs="?",
+	parser.add_argument("--outdir", "-r", nargs="?",
 						help="Set the directory where the results should be saved. Use absolute path. Example: /home/username/run_files/.",
 						default=os.getcwd())
 	parser.add_argument("--pass_paths", "-p",
@@ -36,24 +36,41 @@ def main():
 	if args['organism'] is None:
 		print "--organism cannot be blank"
 		return None
-	if args['run_files_dir'] is None:
-		print "--run_files_dir cannot be blank"
+	if args['outdir'] is None:
+		print "--outdir cannot be blank"
 		return None
+	else:
+		if not os.path.exists(args['outdir']):
+			os.makedirs(args['outdir'])
 	if args["pass_paths"]:
 		gf = args["gfs"][0].split(",")
 		foi = args["fois"][0].split(",")
-		if not os.path.exists(args["run_files_dir"]) and args['run_files_dir'] != "":
-			os.mkdir(args['run_files_dir'])
+		if not os.path.exists(args["outdir"]) and args['outdir'] != "":
+			os.mkdir(args['outdir'])
 		# write out the passed gf and foi paths into .gfs and .fois files.
-		args["gfs"][0], args["fois"][0] = os.path.join(args["run_files_dir"], ".gfs"), os.path.join(
-			args["run_files_dir"], ".fois")
+		args["gfs"][0], args["fois"][0] = os.path.join(args["outdir"], ".gfs"), os.path.join(
+			args["outdir"], ".fois")
 		with open(args["gfs"][0], 'wb') as writer:
 			writer.write("\n".join(gf))
 		with open(args["fois"][0], "wb") as writer:
 			writer.write("\n".join(foi))
-	run_hypergeom(args["fois"][0], args["gfs"][0], args["bg_path"][0], args["run_files_dir"], "", False, "",
-				  args['data_dir'], args["run_annotation"], run_randomization_test=False, organism=args['organism'],
-				  stat_test=args['stat_test'])
+			writer.write("\n".join(foi))
+
+	grenrichment = GRAnalysis.GREnrichment(args["fois"][0], args["gfs"][0], args["bg_path"][0],
+										   args["outdir"],"", "", args["organism"])
+	if args['stat_test'] == "chisquare":
+		grenrichment.run_chisquare()
+	elif args['stat_test'] == 'binomial':
+		grenrichment.run_binomial()
+	elif args['stat_test'].startswith('montecarlo'):
+		num_mc = args['stat_test'].split("_")[1]
+		grenrichment.run_montecarlo(num_mc)
+	# run annotation analysis
+	if args["run_annotation"]:
+		grannotation = GRAnalysis.GRAnnotation(args["fois"][0], args["gfs"][0], args["bg_path"][0], args["outdir"], "", "", args["organism"])
+		grannotation.run_annotation()
+	# zip up result files
+	utils._zip_run_files(args['outdir'], id)
 
 
 if __name__ == "__main__":

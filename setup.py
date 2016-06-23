@@ -17,7 +17,7 @@ setup(name='GenomeRunner web',
 	include_package_data=True, # Install data from MANIFEST.in,
 	entry_points={
 		'console_scripts':[
-			'gr = grsnp.hypergeom4:main',
+			'gr = grsnp.analysis:main',
 			'gr-server = grsnp.server:main',
 			'gr-optimizer = grsnp.optimizer:main',
 			'gr-dbcreator = grsnp.dbcreator_encode:main'
