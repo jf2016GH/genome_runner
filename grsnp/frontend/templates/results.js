@@ -12,7 +12,7 @@ $(document).ready(function() {
 
 
 function update_progress(){
-	$.post('/get_progress?run_id=${run_id}',function(data){
+	$.post('/get_progress?job_id=${job_id}',function(data){
 		data = jQuery.parseJSON( data );
 		// update progress bar
 		$("#progressbar").progressbar({
@@ -29,7 +29,7 @@ function update_progress(){
 						max:  1});
 			clearInterval(refresh_progress);
 		} else if (data['status'] == "Analysis Completed"){
-			window.location.replace("http://" + window.location.host + "/results_shiny?id=${run_id}");
+			window.location.replace("http://" + window.location.host + "/results_shiny?job_id=${job_id}");
 		}
 	});
 	get_log();
@@ -37,14 +37,14 @@ function update_progress(){
 }
 
 function get_log(){
-	$.post('/get_log?run_id=${run_id}',function(data){
+	$.post('/get_log?job_id=${job_id}',function(data){
 		data = jQuery.parseJSON( data );
 		$("#txtLog").html(data['log']);
 	});
 }
 
 function get_detailed(){
-	$.post('/get_detailed?run_id=${run_id}',function(data){
+	$.post('/get_detailed?job_id=${job_id}',function(data){
 		data = jQuery.parseJSON( data );
 		$("#txtDetailed").html(data['detailed']);
 	});
@@ -81,7 +81,7 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 } );
 
 function get_annotation(foi_name){
-	$.post("/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
+	$.post("/get_annotation?job_id=${job_id}&foi_name="+foi_name, function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// clear old data tables.
@@ -133,7 +133,7 @@ function get_annotation(foi_name){
 }
 
 function get_enrichment(foi_name){
-	$.post("/get_enrichment?run_id=${run_id}&foi_name="+foi_name, function(data){
+	$.post("/get_enrichment?job_id=${job_id}&foi_name="+foi_name, function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// clear old data tables.												

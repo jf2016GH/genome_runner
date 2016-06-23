@@ -70,7 +70,7 @@ def main():
 		grannotation = GRAnalysis.GRAnnotation(args["fois"][0], args["gfs"][0], args["bg_path"][0], args["outdir"], "", "", args["organism"])
 		grannotation.run_annotation()
 	# zip up result files
-	utils._zip_run_files(args['outdir'], id)
+	utils._zip_run_files(args['outdir'], "console")
 
 
 if __name__ == "__main__":

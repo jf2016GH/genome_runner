@@ -1,6 +1,6 @@
 var refresh_progress = ""
 $(document).ready(function() {	
-	var run_id = "${run_id}";
+	var job_id = "${job_id}";
 });
 
 	// generates both of the heatmap graphs
@@ -9,12 +9,12 @@ function add_heatmaps(){
 
 	/*
 	$("#heatmap").heatmap({
-		ajaxuri: "/get_cluster?run_id=${run_id}",
+		ajaxuri: "/get_cluster?job_id=${job_id}",
 		dwnl_link_id: "heatmap_download"		
 	});
 	
 	$("#heatmap_cor").heatmap({
-		ajaxuri: "/get_pcc?run_id=${run_id}",
+		ajaxuri: "/get_pcc?job_id=${job_id}",
 		dwnl_link_id: "heatmap_cor_download"		
 	});
 
@@ -53,7 +53,7 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 } );
 
 function get_annotation(foi_name){
-	$.post("/get_annotation?run_id=${run_id}&foi_name="+foi_name, function(data){
+	$.post("/get_annotation?job_id=${job_id}&foi_name="+foi_name, function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// clear old data tables.
@@ -105,7 +105,7 @@ function get_annotation(foi_name){
 }
 
 function get_enrichment(foi_name){
-	$.post("/get_enrichment?run_id=${run_id}&foi_name="+foi_name, function(data){
+	$.post("/get_enrichment?job_id=${job_id}&foi_name="+foi_name, function(data){
 		data = jQuery.parseJSON(data);
 		if (data.length != 0) {
 			// clear old data tables.												

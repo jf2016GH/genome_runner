@@ -33,7 +33,7 @@
 				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for functional enrichment analysis of SNP sets within regulatory/epigenomic context. The philosophy behind GenomeRunner is that SNPs are not acting in isolation and may collectively alter regulatory/epigenomic features. Finding which regulatory features are affected may help to understand  mechanisms of complex diseases from a holistic perspective.</span></p>
 				<p>
 				<br />
-				<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable results are visualized as interactive heatmaps and tables <a href="results_shiny?id=example1">(Example 1, single SNP set analysis)</a>, <a href="results_shiny?id=example2">(Example 2, multiple SNP sets analysis)</a>.</span></span></p>
+				<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable results are visualized as interactive heatmaps and tables <a href="results_shiny?job_id=example1">(Example 1, single SNP set analysis)</a>, <a href="results_shiny?job_id=example2">(Example 2, multiple SNP sets analysis)</a>.</span></span></p>
 					<p>
 					</p>
 					</div>

@@ -98,16 +98,16 @@ class WebUI(object):
 	@cherrypy.expose
 	def query(self, strand="",run_annotation=False,db_version=None,jstree_gfs="",stat_test=None,num_mc = None,**kwargs):
 		global results_dir, uploads_dir, sett
-		# Assign a random id
-		id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
-		while (os.path.exists(os.path.join(uploads_dir,id))):
-			id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
-		res_dir = os.path.join(results_dir,str(id))
-		upload_dir = os.path.join(uploads_dir,str(id))
+		# Assign a random job_id
+		job_id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
+		while (os.path.exists(os.path.join(uploads_dir,job_id))):
+			job_id = ''.join(random.choice(string.lowercase+string.digits) for _ in range(32))
+		res_dir = os.path.join(results_dir,str(job_id))
+		upload_dir = os.path.join(uploads_dir,str(job_id))
 		os.mkdir(upload_dir)
 		os.mkdir(os.path.join(upload_dir,"fois"))
 		os.mkdir(os.path.join(upload_dir,"gfs"))
-		res_dir = os.path.join(results_dir,str(id))
+		res_dir = os.path.join(results_dir,str(job_id))
 		os.mkdir(res_dir)
 
 		fois = os.path.join(upload_dir,".fois") # contains a list of the paths to fois to run through the analysis
@@ -126,11 +126,11 @@ class WebUI(object):
 		# get the FOI files, group box selection, and text that are uploaded by the user
 		list_fois_paths = []  # contains paths to all uploaded foi data
 		fois_outdir = os.path.join(upload_dir,"fois")
-		list_fois_paths = list_fois_paths + utils.retrieve_files(kwargs["bedfile:fois"],fois_outdir,id)
+		list_fois_paths = list_fois_paths + utils.retrieve_files(kwargs["bedfile:fois"],fois_outdir,job_id)
 		list_fois_paths = list_fois_paths + utils.retrieve_group(kwargs["bedcustom:fois"])
 		# only use the textbox if nothing been uploaded
 		if len(list_fois_paths) == 0:
-			list_fois_paths = list_fois_paths + utils.retrieve_text(kwargs["bedtext:fois"],os.path.join(fois_outdir,"custom_foi.bed"),id)
+			list_fois_paths = list_fois_paths + utils.retrieve_text(kwargs["bedtext:fois"],os.path.join(fois_outdir,"custom_foi.bed"),job_id)
 		# remove fois with the same base_name
 		purged_fois_paths = utils.purge_duplicate_features(list_fois_paths)
 		# write foi paths to .fois file
@@ -144,7 +144,7 @@ class WebUI(object):
 		list_gfs_paths = []
 		gfs_outdir = os.path.join(upload_dir, "gfs")
 		# Create annotation folder, used by the server to check if annotation is going to be run
-		list_gfs_paths = list_gfs_paths + utils.retrieve_files(kwargs["bedfile:gfs"],gfs_outdir,id)
+		list_gfs_paths = list_gfs_paths + utils.retrieve_files(kwargs["bedfile:gfs"],gfs_outdir,job_id)
 		# collect the gfs for all groups that were checked by the user
 		checked_custom_gfs = { k: kwargs[k] for k in kwargs.keys() if k.startswith("bedcustom:gfs") and kwargs[k] == "on"}
 		for k,v in checked_custom_gfs.iteritems():
@@ -158,7 +158,7 @@ class WebUI(object):
 				list_gfs_paths.append(g)
 		# only use the textbox if nothing been uploaded
 		if len(list_gfs_paths) == 0:
-			list_gfs_paths = list_gfs_paths + utils.retrieve_text(kwargs["bedtext:gfs"], os.path.join(gfs_outdir,"custom_gf.bed"), id)
+			list_gfs_paths = list_gfs_paths + utils.retrieve_text(kwargs["bedtext:gfs"], os.path.join(gfs_outdir,"custom_gf.bed"), job_id)
 		# remove gfs with the same base_name
 		purged_gfs_paths = utils.purge_duplicate_features(list_gfs_paths)
 		# write all gfs paths to .gfs file
@@ -173,9 +173,9 @@ class WebUI(object):
 
 
 		# load the background data if uploaded.
-		background_path = utils.retrieve_files(kwargs["bedfile:background"], upload_dir,id)
+		background_path = utils.retrieve_files(kwargs["bedfile:background"], upload_dir,job_id)
 		if len(background_path) == 0:
-			background_path = utils.retrieve_text(kwargs["bedtext:background"], os.path.join(upload_dir,"custom.background.bed"), id)
+			background_path = utils.retrieve_text(kwargs["bedtext:background"], os.path.join(upload_dir,"custom.background.bed"), job_id)
 		if len(background_path) !=0: background_path = background_path[0]
 		else:
 			background_path = kwargs["bedpath:background"] # returns a string
@@ -197,7 +197,7 @@ class WebUI(object):
 			if k.startswith("run_annot") and v == "on": run_annotation = True
 		# write the enrichment settings.
 		path = os.path.join(res_dir, ".settings")
-		set_info = {"Jobname:": str(id),
+		set_info = {"Jobname:": str(job_id),
 					"Time:": strftime("%Y-%m-%d %H:%M:%S", gmtime()),
 					"Background:": os.path.split(background_path)[-1],
 					"Organism:": organism,
@@ -220,8 +220,8 @@ class WebUI(object):
 		shutil.copy(fois,os.path.join(res_dir,".fois"))
 
 		# run using celery queues.
-		run_args = [fois,gfs,background_path,id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,False]
-		run_kwargs = { "pct_score": kwargs['pct_score'],"organism": organism,"id": id,"db_version": db_version,"stat_test": stat_test }
+		run_args = [fois,gfs,background_path,job_id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,False]
+		run_kwargs = { "pct_score": kwargs['pct_score'],"organism": organism,"job_id": job_id,"db_version": db_version,"stat_test": stat_test }
 		if gfs_count > 3:
 			print "LONG RUN STARTED"
 			run_queue = 'long_runs'
@@ -232,14 +232,14 @@ class WebUI(object):
 			grsnp.worker_gr.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue, retry=False)
 		except Exception, e:
 			print "WORKER ERROR"
-		raise cherrypy.HTTPRedirect("result?id=%s" % id)
+		raise cherrypy.HTTPRedirect("result?job_id=%s" % job_id)
 
 	@cherrypy.expose
-	def result(self, id):
+	def result(self, job_id):
 		global results_dir, uploads_dir, sett
-		path = os.path.join(results_dir, id)
+		path = os.path.join(results_dir, job_id)
 		params = {}
-		params["run_id"] = id
+		params["job_id"] = job_id
 		params["detailed"] = "Results not yet available"
 		params["matrix"] = "Results not yet available"		
 		tmpl = lookup.get_template("master.mako")
@@ -271,15 +271,15 @@ class WebUI(object):
 			with open(detailed_path) as f:
 				params["detailed"] = f.read()
 		
-		foi_names_path = os.path.join(os.path.join(results_dir, id),".fois")
+		foi_names_path = os.path.join(os.path.join(results_dir, job_id),".fois")
 		if os.path.exists(foi_names_path):
 			with open(foi_names_path) as f:
 				params["fois"] = [basename(x).split(".")[0] for x in f.read().split("\n") if x != ""]
 		else:
 			params["fois"] = ""
 
-		params["zipfile"] = os.path.join("results",id,"GR_{}.tar.gz").format(id)
-		params["run_annotation"] = True if os.path.exists(os.path.join(results_dir,id,"annotations")) else  False
+		params["zipfile"] = os.path.join("results",job_id,"GR_{}.tar.gz").format(job_id)
+		params["run_annotation"] = True if os.path.exists(os.path.join(results_dir,job_id,"annotations")) else  False
 		params.update(p)
 		try:
 			rend_template = tmpl.render(body=lookup.get_template("results.mako").render(**params),script= lookup.get_template("results.js").render(**params))
@@ -297,15 +297,15 @@ class WebUI(object):
 		return rend_template
 
 	@cherrypy.expose
-	def results_shiny(self, id):
+	def results_shiny(self, job_id):
 		global results_dir, uploads_dir, sett
-		path = os.path.join(results_dir, id)	
+		path = os.path.join(results_dir, job_id)	
 		params = {}	
-		params['run_id'] = id
+		params['job_id'] = job_id
 		try:
 			tmp = lookup.get_template("master.mako")
-			script = lookup.get_template("results_shiny.js").render(run_id=id)
-			rend_template = lookup.get_template("results_shiny.mako").render(run_id=id,script=script)
+			script = lookup.get_template("results_shiny.js").render(job_id=job_id)
+			rend_template = lookup.get_template("results_shiny.mako").render(job_id=job_id,script=script)
 
 		except Exception, e:
 			traceback = MakoTraceback()
@@ -328,32 +328,32 @@ class WebUI(object):
 		return tmpl.render(body=body,script=script)
 
 	@cherrypy.expose
-	def get_detailed(self,run_id):
+	def get_detailed(self,job_id):
 		""" loads results from detailed results file
 		"""
 		global results_dir, uploads_dir, sett
-		detailed_path,results = os.path.join(results_dir, run_id,"detailed.txt"),{"detailed": ""}		 
+		detailed_path,results = os.path.join(results_dir, job_id,"detailed.txt"),{"detailed": ""}		 
 		if os.path.exists(detailed_path):
 			with open(detailed_path) as f:
 				results["detailed"] = f.read()
 		return simplejson.dumps(results)
 
 	@cherrypy.expose
-	def get_progress(self, run_id):
+	def get_progress(self, job_id):
 		# Loads the progress file if it exists
 		global results_dir, uploads_dir, sett
 		p = {"status":"","curprog":0,"progmax":0}
-		progress_path = os.path.join(os.path.join(results_dir, run_id),".prog")
+		progress_path = os.path.join(os.path.join(results_dir, job_id),".prog")
 		if os.path.exists(progress_path):
 			with open(progress_path) as f:
 				p = json.loads(f.read())
 		return simplejson.dumps(p)
 
 	@cherrypy.expose
-	def get_log(self,run_id):
+	def get_log(self,job_id):
 		global results_dir, uploads_dir, sett
 		results = {"log": ""}
-		log_path = os.path.join(os.path.join(results_dir, run_id),"gr_log.txt")
+		log_path = os.path.join(os.path.join(results_dir, job_id),"gr_log.txt")
 		if os.path.exists(log_path):
 			with open(log_path) as f:
 				results["log"] = f.read()
@@ -368,9 +368,9 @@ class WebUI(object):
 
 
 	@cherrypy.expose
-	def enrichment_log(self, id):
+	def enrichment_log(self, job_id):
 		global results_dir
-		with open(os.path.join(results_dir,id+".log")) as sr:
+		with open(os.path.join(results_dir,job_id+".log")) as sr:
 			x = sr.read()
 			return "<p>{}</p>".format(x.replace("\n","<br/>"))
 

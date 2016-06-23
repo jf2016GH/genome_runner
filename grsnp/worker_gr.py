@@ -30,18 +30,18 @@ app.select_queues(["long_runs","short_runs"])
 sett = {}
 
 @app.task(ignore_result=False)
-def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlaps_path="",run_annotation=False,run_randomization_test=False,pct_score="",organism="",id="",db_version=None,stat_test=None):
+def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlaps_path="",run_annotation=False,run_randomization_test=False,pct_score="",organism="",job_id="",db_version=None,stat_test=None):
 	global sett
 	try:
 		if db_version not in sett['root_data_dir'].keys():
 			raise Exception("{} does not exist in the worker's database. Databases available: {}".format(db_version,",".join(sett['root_data_dir'].keys())))
-		outdir=os.path.join(sett['run_files_dir'],'results',str(id))
+		outdir=os.path.join(sett['run_files_dir'],'results',str(job_id))
 		result_files = [x for x in os.listdir(outdir) if not x.startswith('.')] # gets all file that do not start with '.' (i.e. '.settings')
 		# check if the folder already contains results
 		log_path = os.path.join(outdir,"gr_log.txt")
 		if os.path.exists(log_path):
 			if "Enrichment analysis started" in open(log_path).read():
-				print "ERROR: Results folder for {} is not empty. Run Canceled.".format(id)
+				print "ERROR: Results folder for {} is not empty. Run Canceled.".format(job_id)
 				return
 		# write out absolute gfs and fois file paths and pass these to the worker	
 		for f_path in [fois, gfs]:
@@ -57,7 +57,7 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 			bg_path = os.path.join(sett['root_data_dir'][db_version],bg_path.lstrip("/"))
 		else:
 			bg_path = os.path.join(sett['run_files_dir'],bg_path.lstrip("/"))
-		logger.info("Worker starting job for {}".format(id))
+		logger.info("Worker starting job for {}".format(job_id))
 		fois_full, gfs_full = fois + "_full", gfs + "_full"
 		root_data_dir = sett['root_data_dir'][db_version]
 		# run the enrichment analysis
@@ -74,9 +74,9 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 			grannotation = GRAnalysis.GRAnnotation(fois_full,gfs_full,bg_path,outdir,job_name,root_data_dir,organism)
 			grannotation.run_annotation()
 		# zip up result files
-		utils._zip_run_files(outdir,id)
+		utils._zip_run_files(outdir,job_id)
 	except Exception, e:
-		_write_progress("ERROR: Run crashed. Celery worker threw an error.",id,1,1)
+		_write_progress("ERROR: Run crashed. Celery worker threw an error.",job_id,1,1)
 		raise e
 
 
@@ -108,11 +108,11 @@ def cmd_options(options,**kwargs):
 	sett["run_files_dir"] = options["run_files_dir"].rstrip("/")
 	sett["root_data_dir"] = root_data_dir
 
-def _write_progress(line,id,curprog,progmax):
+def _write_progress(line,job_id,curprog,progmax):
     """Saves the current progress to the progress file
     """
     global sett
-    progress_outpath = os.path.join(sett['run_files_dir'],'results',id,".prog")
+    progress_outpath = os.path.join(sett['run_files_dir'],'results',job_id,".prog")
     if progress_outpath:
         progress = {"status": line, "curprog": curprog,"progmax": progmax}
         with open(progress_outpath,"wb") as progfile:

@@ -17,12 +17,13 @@ import numpy as np
 
 class GRAnalysis:
 
-	def __init__(self, fois_path, gfs_path, bg_path, outdir, job_name="", root_data_dir="", organism="",id="default",
+	def __init__(self, fois_path, gfs_path, bg_path, outdir, job_name="", root_data_dir="", organism="",job_id="default",
 				 console_output=False, cur_progress = None, print_progress = False):
 		try:
 			# setup logging
 			self.logger = logging.getLogger()
 			outpath = os.path.join(outdir, 'gr_log.txt')
+			print "logpath ", outpath
 			formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 			fh = logging.FileHandler(outpath)
 			fh.setFormatter(formatter)
@@ -34,7 +35,7 @@ class GRAnalysis:
 			self.job_name = job_name
 			self.root_data_dir = root_data_dir
 			self.organism = organism
-			self.id = id
+			self.job_id = job_id
 			self.console_output = console_output
 			self.cur_prog = 0 # int of the current progress
 			self.max_prog = 0
@@ -325,6 +326,7 @@ class GRAnnotation(GRAnalysis):
 									cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))
 				self.cur_prog += 1
 			self.cur_prog, self.max_prog = 1, 1
+			self._write_progress("Anotation finished", self.cur_prog)
 			self.logger.info("Annotation finished")
 		except Exception, e:
 			self.logger.error(traceback.format_exc())

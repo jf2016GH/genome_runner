@@ -43,15 +43,17 @@ def get_tmp_file(prefix):
 	return tmp_path
 
 
-def _zip_run_files(outdir, id=""):
+def _zip_run_files(outdir, job_id=""):
 	'''
 	File paths of FOIs and GFs as a list. Gathers all the files together in one zipped file
 	'''
-
 	# zip annotation result folder if it exists
 	anno_dir = os.path.join(outdir, 'annotations')
 	if os.path.exists(anno_dir):
-		z_ano = zipfile.ZipFile(os.path.join(outdir, 'annotations.zip'), 'a')
+		anno_zip_path = os.path.join(outdir, 'annotations.zip')
+		if os.path.exists(anno_zip_path):
+			os.remove(anno_zip_path)
+		z_ano = zipfile.ZipFile(anno_zip_path, 'a')
 		for f in os.listdir(anno_dir):
 			z_ano.write(os.path.join(anno_dir, f), f)
 		z_ano.close()
@@ -76,7 +78,7 @@ def _zip_run_files(outdir, id=""):
 	new_log = open(new_log_path, 'wb')
 	new_log.write(f_sett + f_log)
 	new_log.close()
-	tar_path = os.path.join(outdir, 'GR_{}.tar'.format(id))
+	tar_path = os.path.join(outdir, 'GR_{}.tar'.format(job_id))
 	tar = tarfile.TarFile(tar_path, "a")
 	output_files = [os.path.join(outdir, x) for x in os.listdir(outdir) if
 					x.endswith(".txt") or x.endswith(".pdf") or x.endswith('.zip')]

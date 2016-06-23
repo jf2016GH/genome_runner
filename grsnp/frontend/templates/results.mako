@@ -30,7 +30,7 @@
 		</div>
 		<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>Please bookmark this page to return to your results. The results will be deleted after three days.</p>
 	</div>
-	<!--<a href="./results_shiny?id=${run_id}" class="btn btn-info" role="button">Shiny Analysis</a>-->
+	<!--<a href="./results_shiny?job_id=${job_id}" class="btn btn-info" role="button">Shiny Analysis</a>-->
 </div>
 </div>
 <ul class="tabs" id="resultstab" data-tabs="tabs">
