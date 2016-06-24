@@ -79,7 +79,7 @@ def retrieve_group(up_group_folder):
 	ls_grp = []
 	if up_group_folder and up_group_folder != "":
 		ls_grp = [os.path.join(up_group_folder, f) for f in os.listdir(up_group_folder) if
-				  os.path.isfile(os.path.join(up_group_folder, f))]
+				  os.path.isfile(os.path.join(up_group_folder, f)) and not f.endswith(".tbi")]
 	return ls_grp
 
 
