@@ -61,7 +61,8 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 		fois_full, gfs_full = fois + "_full", gfs + "_full"
 		root_data_dir = sett['root_data_dir'][db_version]
 		# run the enrichment analysis
-		grenrichment = GRAnalysis.GREnrichment(fois_full, gfs_full, bg_path,outdir,job_name,root_data_dir,organism)
+		grenrichment = GRAnalysis.GREnrichment(fois_full, gfs_full, bg_path,outdir,
+											   job_name=job_name,root_data_dir=root_data_dir,organism=organism,job_id=job_id)
 		if stat_test == "chisquare":
 			grenrichment.run_chisquare()
 		elif stat_test == 'binomial':
@@ -71,7 +72,8 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 			grenrichment.run_montecarlo(num_mc)
 		# run annotation analysis
 		if run_annotation:
-			grannotation = GRAnalysis.GRAnnotation(fois_full,gfs_full,bg_path,outdir,job_name,root_data_dir,organism)
+			grannotation = GRAnalysis.GRAnnotation(fois_full,gfs_full,bg_path,outdir,
+												   job_name=job_name,root_data_dir=root_data_dir,organism=organism,job_id=job_id)
 			grannotation.run_annotation()
 		# zip up result files
 		utils._zip_run_files(outdir,job_id)

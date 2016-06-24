@@ -18,15 +18,15 @@ import numpy as np
 class GRAnalysis:
 
 	def __init__(self, fois_path, gfs_path, bg_path, outdir, job_name="", root_data_dir="", organism="",job_id="default",
-				 console_output=False, cur_progress = None, print_progress = False):
+				 console_output=False, print_progress = False):
 		try:
 			# setup logging
-			self.logger = logging.getLogger()
+			self.logger = logging.getLogger(__name__)
 			outpath = os.path.join(outdir, 'gr_log.txt')
-			print "logpath ", outpath
 			formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 			fh = logging.FileHandler(outpath)
 			fh.setFormatter(formatter)
+			self.logger.handlers = [] # remove filehandler for previous runs if they exist
 			self.logger.addHandler(fh)
 			self.logger.setLevel(logging.INFO)
 			self.progress_outpath = os.path.join(outdir,".prog")
@@ -301,12 +301,14 @@ class GRAnalysis:
 
 
 class GRAnnotation(GRAnalysis):
-	def __init__(self,fois, gfs, bg_path, outdir, job_name="", root_data_dir="", organism=""):
-		GRAnalysis.__init__(self,fois, gfs, bg_path, outdir, job_name="", root_data_dir="", organism="")
+	def __init__(self,fois, gfs, bg_path, outdir, job_name="", root_data_dir="", organism="",job_id="default",
+				 console_output = False,print_progress = False):
+		GRAnalysis.__init__(self,fois, gfs, bg_path, outdir, job_name=job_name, root_data_dir=root_data_dir,
+							organism=organism,job_id=job_id, console_output = console_output, pring_progress=print_progress)
 
 	def run_annotation(self):
 		try:
-			self.logger.info("Annotation started")
+			self.logger.info("Annotation started{}".format(self.job_id))
 			annot_outdir = os.path.join(self.outdir, "annotations")
 			if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
 			self.cur_prog, self.max_prog = 0, len(self.fois)
@@ -327,7 +329,7 @@ class GRAnnotation(GRAnalysis):
 				self.cur_prog += 1
 			self.cur_prog, self.max_prog = 1, 1
 			self._write_progress("Anotation finished", self.cur_prog)
-			self.logger.info("Annotation finished")
+			self.logger.info("Annotation finished for {}".format(self.job_id))
 		except Exception, e:
 			self.logger.error(traceback.format_exc())
 			raise e
@@ -372,8 +374,8 @@ class GRAnnotation(GRAnalysis):
 
 
 class GREnrichment(GRAnalysis):
-	def __init__(self,fois, gfs, bg_path, outdir, job_name="", root_data_dir="", organism=""):
-		GRAnalysis.__init__(self, fois, gfs, bg_path, outdir, job_name, root_data_dir, organism)
+	def __init__(self,fois, gfs, bg_path, outdir, job_name="", root_data_dir="", organism="",job_id="default",console_output = False,print_progress = False):
+		GRAnalysis.__init__(self, fois, gfs, bg_path, outdir, job_name, root_data_dir, organism,job_id=job_id,console_output=console_output,print_progress=print_progress)
 		self.detailed_outpath = os.path.join(outdir,"detailed.txt")
 		self.matrix_outpath =  os.path.join(outdir, "matrix_PVAL.txt")
 		self.matrix_sor_outpath = os.path.join(outdir, "matrix_OR.txt")
@@ -406,7 +408,7 @@ class GREnrichment(GRAnalysis):
 		if os.path.exists(decriptions_path):
 			track_descriptions = [x.split("\t") for x in open(decriptions_path).read().split("\n") if x != ""]
 
-		self.logger.info("Enrichment analysis started")
+		self.logger.info("Enrichment analysis started for {}".format(self.job_id))
 		# Validate FOIs against background. Also get the size of the background (n_bgs)
 		foi_bg, good_fois = self._check_background_foi_overlap(self.bg_path, self.fois, progress=self.cur_prog)
 		self.write_output("\t".join(map(base_name, good_fois)) + "\n", self.matrix_outpath)
@@ -459,7 +461,7 @@ class GREnrichment(GRAnalysis):
 
 		self.cur_prog, self.max_prog = 1, 1
 		self._write_progress("Analysis Completed", self.cur_prog)
-		self.logger.info("Analysis Completed")
+		self.logger.info("Analysis Completed {}".format(self.job_id))
 
 	def _get_score_strand_settings(self, gf_path):
 		''' Parses the gf_path and determines if gf is filtered by score and/or strand.
