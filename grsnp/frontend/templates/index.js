@@ -92,6 +92,7 @@ $(document).ready(function() {
 		};
 		var checked_custom_gf_count = 0;
 		// count number of GF in each checked custom GF group
+		debugger;
 		for (var i = checked_custom_gf_id.length - 1; i >= 0; i--) {
 			checked_custom_gf_count += $("#grouprun_" + checked_custom_gf_id[i]).attr('title').split('\n').length - 1;
 		};

@@ -1,6 +1,4 @@
 import collections
-import gzip
-import string
 import os
 import logging
 import subprocess
@@ -304,7 +302,7 @@ class GRAnnotation(GRAnalysis):
 	def __init__(self,fois, gfs, bg_path, outdir, job_name="", root_data_dir="", organism="",job_id="default",
 				 console_output = False,print_progress = False):
 		GRAnalysis.__init__(self,fois, gfs, bg_path, outdir, job_name=job_name, root_data_dir=root_data_dir,
-							organism=organism,job_id=job_id, console_output = console_output, pring_progress=print_progress)
+							organism=organism,job_id=job_id, console_output = console_output, print_progress=print_progress)
 
 	def run_annotation(self):
 		try:
