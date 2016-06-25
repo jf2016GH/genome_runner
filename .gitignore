@@ -28,6 +28,7 @@ download
 downloads
 *.sql
 *.gz
+.idea
 *.temp
 *tags
 genome_runner_live

@@ -37,11 +37,11 @@ def retrieve_files(up_files, outputdir, id):
 							out.write(data)
 
 
-						if extension not in ["gz", "bb"]:
-							# use dos2unix to remove \r from end of lines
-							out = subprocess.Popen(['dos2unix {}'.format(f_outpath)], shell=True, stdout=subprocess.PIPE,
-												   stderr=subprocess.PIPE)
-							out.wait()
+				if extension not in ["gz", "bb"]:
+					# use dos2unix to remove \r from end of lines
+					out = subprocess.Popen(['dos2unix {}'.format(f_outpath)], shell=True, stdout=subprocess.PIPE,
+										   stderr=subprocess.PIPE)
+					out.wait()
 			else:
 				logger.error("id={} Upload file already exists at {}".format(id, f_outpath))
 				print "id={} Upload file already exists at {}".format(id, f_outpath)
