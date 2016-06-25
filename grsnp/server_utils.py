@@ -26,7 +26,6 @@ def retrieve_files(up_files, outputdir, id):
 			if not os.path.exists(f_outpath):
 				with open(f_outpath,'wb') as out:
 					if f != None and f.filename != "":
-						logger.info("Received uploaded file (name={}, id={})".format(f.filename,id))
 						while True:
 							data = f.file.read(8192)
 							# TODO find empty lines
@@ -44,7 +43,6 @@ def retrieve_files(up_files, outputdir, id):
 					out.wait()
 			else:
 				logger.error("id={} Upload file already exists at {}".format(id, f_outpath))
-				print "id={} Upload file already exists at {}".format(id, f_outpath)
 			uploaded_files.append((f_outpath))
 	return uploaded_files
 
@@ -61,7 +59,6 @@ def retrieve_text(up_text, out_file_path, id):
 	try:
 		if up_text != None and up_text != "":
 			with open(out_file_path, "wb") as out:
-				logger.info('Received raw text data (name = {}, id={})'.format(os.path.split(out_file_path)[-1], id))
 				data = os.linesep.join([s for s in up_text.split("\n") if s != ""])
 				out.write(data)
 			# use dos2unix to remove \r from end of lines
