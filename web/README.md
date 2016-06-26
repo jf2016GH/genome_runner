@@ -133,6 +133,11 @@ RabbitMQ
 
 `sudo apt install rabbitmq-server` - install RabbitMQ server, if not installed
 
+"Segmentation fault" when starting celery worker solved by [SO "Celery Segmentation Fault"](https://stackoverflow.com/questions/10847620/celery-segmentation-fault)
+
+    sudo pip install -U librabbitmq
+    sudo apt-get remove python-librabbitmq
+
 `sudo rabbitmq-server start` - Starting rabbitMQ
 
 `rabbitmqctl list_queues name consumers` - This command can be used to see all queues on RabbitMQ
