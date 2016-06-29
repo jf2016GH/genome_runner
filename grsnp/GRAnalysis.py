@@ -83,7 +83,7 @@ class GRAnalysis:
 			with open(self.progress_outpath, "wb") as progfile:
 				progfile.write(json.dumps(dict_progress))
 		if self.print_prog:
-			sys.stdout.write('\x1b[2K') # VT100 escape codes for new line
+			sys.stdout.write('\x1b[2K') # VT100 escape codes to erase old line
 			utils.console_progress(self.cur_prog,self.max_prog,line)
 
 	def get_progress(self):
