@@ -458,8 +458,8 @@ class GREnrichment(GRAnalysis):
 			self.cur_prog += 1
 
 		self.cur_prog, self.max_prog = 1, 1
-		self._write_progress("Analysis Completed")
-		self.logger.info("Analysis Completed {}".format(self.job_id))
+		self._write_progress("Enrichment analysis finished")
+		self.logger.info("Enrichment analysis finished {}".format(self.job_id))
 
 	def _get_score_strand_settings(self, gf_path):
 		''' Parses the gf_path and determines if gf is filtered by score and/or strand.

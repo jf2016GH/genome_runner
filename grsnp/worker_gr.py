@@ -77,6 +77,7 @@ def run_hypergeom(fois, gfs, bg_path,job_name="",zip_run_files=False,bkg_overlap
 			grannotation.run_annotation()
 		# zip up result files
 		utils._zip_run_files(outdir,job_id)
+		grenrichment._write_progress("Analysis Completed")
 	except Exception, e:
 		_write_progress("ERROR: Run crashed. Celery worker threw an error.",job_id,1,1)
 		raise e
