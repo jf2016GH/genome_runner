@@ -561,7 +561,7 @@ class GREnrichment(GRAnalysis):
 																							n_bgs, foi_name, gf_path)
 		if stat_test == "binomial":
 			pval = self._calc_binom_pval(foi_obs, n_fois, bg_obs, n_bgs)
-		elif stat_test.startswith("motecarlo"):
+		elif stat_test.startswith("montecarlo"):
 			num_mc = stat_test.split("_")[1]
 			pval = self._calc_mc_pval(foi_obs, n_fois, gf_path, num_mc, odds_ratio)
 
@@ -647,7 +647,7 @@ class GREnrichment(GRAnalysis):
 		# pow_mc states what starting power of 10 to check pvalue
 		chunk_size, pow_mc, not_significant = 100, 2, False
 		num_rnd_obs = []  # stores the number of rnd_snps that overlap for each mc
-
+		num_mc = int(num_mc)
 		# run the rnd_fois in groups against the GF (allows us to handle case of >10,000 MC simulations)
 		for i_chunk in xrange(1, num_mc, chunk_size):
 			if not_significant == True: break
