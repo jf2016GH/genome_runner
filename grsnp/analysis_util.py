@@ -10,7 +10,7 @@ import traceback
 import zipfile
 import datetime
 DEBUG = False
-
+import sys
 
 def base_name(k):
 	return os.path.basename(k).split(".")[0]
@@ -227,3 +227,15 @@ def _load_minmax(path):
 		name, min_max = s.split('\t')
 		data[name] = min_max
 	return data
+
+def console_progress(count, total, status=''):
+	# The MIT License (MIT)
+	# Copyright (c) 2016 Vladimir Ignatev
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.flush()

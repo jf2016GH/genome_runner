@@ -71,6 +71,7 @@ def main():
 		grannotation.run_annotation()
 	# zip up result files
 	utils._zip_run_files(args['outdir'], "console")
+	print "\n\r"
 
 
 if __name__ == "__main__":

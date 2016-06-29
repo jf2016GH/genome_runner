@@ -26,9 +26,6 @@ class GRAnalysis:
 			fh.setFormatter(formatter)
 			self.logger.handlers = [] # remove filehandler for previous runs if they exist
 			self.logger.addHandler(fh)
-			if print_progress == True:
-				ch = logging.StreamHandler()
-				self.logger.addHandler(ch)
 			self.logger.setLevel(logging.INFO)
 			self.progress_outpath = os.path.join(outdir,".prog")
 			self.outdir = outdir
@@ -46,13 +43,13 @@ class GRAnalysis:
 			# check if there are spaces in invalid parts of the file name
 			invalid_names = self.validate_filenames(fois + gfs + [bg_path])
 			if len(invalid_names) != 0:
-				self._write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.",
-									 0)
+				self._write_progress(
+					"ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.")
 				raise IOError("Invalid file names")
 			if bg_path.endswith(".tbi"):
 				self.logger.error("Background has invalid extension (.tbi). Terminating run.")
-				self._write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.",
-									 0)
+				self._write_progress(
+					"ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.")
 				raise IOError("Invalid file names")
 
 			# pre-process the GFs and the background
@@ -63,7 +60,7 @@ class GRAnalysis:
 			fois = self.preprocess_fois(fois)
 			if len(fois) == 0:
 				self.logger.error('No valid FOIs to supplied')
-				self._write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.", 0)
+				self._write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
 				raise IOError("'No valid FOIs to supplied'")
 
 			# initialize class variables
@@ -75,7 +72,7 @@ class GRAnalysis:
 		except Exception, e:
 			self.logger.error(traceback.print_exc())
 			raise e
-	def _write_progress(self, line, progress):
+	def _write_progress(self, line):
 		"""Saves the current progress to the progress file
 		progress: is a Project object which contains outpath, current value, and maximum value
 		"""
@@ -86,7 +83,8 @@ class GRAnalysis:
 			with open(self.progress_outpath, "wb") as progfile:
 				progfile.write(json.dumps(dict_progress))
 		if self.print_prog:
-			print line
+			sys.stdout.write('\x1b[2K') # VT100 escape codes for new line
+			utils.console_progress(self.cur_prog,self.max_prog,line)
 
 	def get_progress(self):
 		"""returns the progress from the progress file
@@ -313,7 +311,7 @@ class GRAnnotation(GRAnalysis):
 			if not os.path.exists(annot_outdir): os.mkdir(annot_outdir)
 			self.cur_prog, self.max_prog = 0, len(self.fois)
 			for f in self.fois:
-				self._write_progress("Running Annotation Analysis for {}.".format(base_name(f)), self.cur_prog)
+				self._write_progress("Running Annotation Analysis for {}.".format(base_name(f)))
 				self.logger.info("Running annotation analysis for {}".format(base_name(f)))
 				for i, g in enumerate(utils._chunks(self.gfs, 100)):
 					with open(os.path.join(annot_outdir, base_name(f) + str(i) + ".txt"), "wb") as wr:
@@ -328,7 +326,7 @@ class GRAnnotation(GRAnalysis):
 									cur_row + [str(sum([int(x) for x in cur_row[1:] if x != ""]))]))
 				self.cur_prog += 1
 			self.cur_prog, self.max_prog = 1, 1
-			self._write_progress("Anotation finished", self.cur_prog)
+			self._write_progress("Anotation finished")
 			self.logger.info("Annotation finished for {}".format(self.job_id))
 		except Exception, e:
 			self.logger.error(traceback.format_exc())
@@ -421,16 +419,16 @@ class GREnrichment(GRAnalysis):
 		# check if any good fois exist after background filtering
 		if len(good_fois) == 0:
 			self.logger.error('No valid FOIs to supplied')
-			self._write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.", self.cur_prog)
+			self._write_progress("ERROR: No valid FOI files supplied. Terminating run. See Analysis Log.")
 			return
 		# remove old detailed enrichment result files if they exit
 		enr_path = os.path.join(self.outdir, "enrichment")
 		for f in good_fois:
 			f_path = os.path.join(enr_path, base_name(f) + '.txt')
 			if os.path.exists(f_path): os.remove(f_path)
-		self._write_progress("Performing calculations on the background.", self.cur_prog)
+		self._write_progress("Performing calculations on the background.")
 		for gf in self.gfs:
-			self._write_progress("Performing {} analysis for {}".format(stat_test, base_name(gf)), self.cur_prog)
+			self._write_progress("Performing {} analysis for {}".format(stat_test, base_name(gf)))
 			self.write_output(
 				"###" + base_name(gf) + "\t" + self._get_score_strand_settings(gf) + "\t" + self._get_description(base_name(gf),
 																												  track_descriptions) + "###" + "\n",
@@ -460,7 +458,7 @@ class GREnrichment(GRAnalysis):
 			self.cur_prog += 1
 
 		self.cur_prog, self.max_prog = 1, 1
-		self._write_progress("Analysis Completed", self.cur_prog)
+		self._write_progress("Analysis Completed")
 		self.logger.info("Analysis Completed {}".format(self.job_id))
 
 	def _get_score_strand_settings(self, gf_path):
@@ -544,7 +542,7 @@ class GREnrichment(GRAnalysis):
 					return bg_obs[0]
 		# manually get overlap values
 		self.logger.info("Calculating overlap stats on background and {}".format(base_name(gf)))
-		self._write_progress("Calculating overlap stats on background and {}".format(base_name(gf)), self.cur_prog)
+		self._write_progress("Calculating overlap stats on background and {}".format(base_name(gf)))
 		result = self.get_overlap_statistics(gf, [self.bg_path])
 		try:
 			result = int(result[0]["intersectregions"])
@@ -592,7 +590,7 @@ class GREnrichment(GRAnalysis):
 		Returns [sign,pval,odds_ratio,shrunken_or,ci_lower,ci_upper]
 		"""
 		do_chi_square = True
-		self._write_progress("Testing {}".format(foi_name), self.cur_prog)
+		self._write_progress("Testing {}".format(foi_name))
 		# Perform the chisquare test regardless of what stat_test is selected, we need the odds ratio
 		bg_obs, n_bgs = int(bg_obs), int(n_bgs)
 		ctable = [[foi_obs, n_fois - foi_obs],
@@ -678,12 +676,11 @@ class GREnrichment(GRAnalysis):
 						"Pval at {} runs calculated as {}. Numerator: {} Denominator: {}".format(i_chunk + i_res, pval,
 																								 float(num_over) + 1,
 																								 float(len(
-																									 num_rnd_obs)) + 1),
-						self.cur_prog)
+																									 num_rnd_obs)) + 1))
 					if pval >= 1 / float(pow(10, pow_mc)):
 						# pval will never be significant stop doing Monte Carlo
 						not_significant = True
-						self._write_progress("Not significant. Stopping Monte carlo (P-value = {}".format(pval), self.cur_prog)
+						self._write_progress("Not significant. Stopping Monte carlo (P-value = {}".format(pval))
 					pow_mc += 1
 			for f in rnd_fois_paths:
 				os.remove(f)
@@ -744,7 +741,7 @@ class GREnrichment(GRAnalysis):
 		Removes FOIs that are poorly formed with the background.
 		"""
 		if progress:
-			self._write_progress("Validating FOIs against background", progress)
+			self._write_progress("Validating FOIs against background")
 		good_fois = []
 		if len(fois) == 0:
 			return [[], []]
