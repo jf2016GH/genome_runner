@@ -1,8 +1,17 @@
+Shortcuts
+===
+
+Start the server (note the port number should correspond to the `grsnp.d` settings)
+
+    gr-server -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ -g hg19 -p 8080 -w 5
+
+
 Important configuration files
 ===
 - `/etc/nginx/nginx.conf` - global nginx configuration file
 - `/etc/nginx/sites-available/grsnp.d` - local nginx configuration
 - `/etc/shiny-server/shiny-server.conf` - shiny server configuration
+
 
 Configure nginx
 ===
@@ -48,8 +57,10 @@ Check errors
 
     sudo tail /var/log/nginx/error.log
 
-Configuring R.Genomerunner
+
+Configure R.Genomerunner
 ===
+
 Next, we need to install R.genomerunner into the /srv/shiny-server folder. All folders in this /srv/shiny-server/ folder are treated as apps. Here we soft link “R.genomeruner” as “shiny-gr”. IMPORTANT the folder given to R.genomerunner in /srv/shiny-server is important. This is the name we will use for the url in results_shiny.mako.
 
     ln -s /home/mdozmorov/R.genomerunner/ /srv/shiny-server/shiny-gr
@@ -93,6 +104,45 @@ Log file information for shiny app can be found by going to /var/log/shiny-serve
 
     sudo tail -f /var/log/shiny-server/shiny-gr-shiny-####-####-####.log
 
+
+Celery
+===
+
+Install celery
+
+    sudo apt-get install python-celery-common
+    sudo apt-get install celery
+
+Manually start a worker
+
+    celery worker --app grsnp.worker_gr -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ -c 2
+
+
+Use celery to check active/manually start workers
+
+    celery inspect active --broker redis://localhost:7775/0
+    celery worker --app=grsnp.worker_hypergeom4 -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ --loglevel INFO -E
+
+Stop all workers
+
+    ps aux | grep "celery worker" | awk '{print $2}' | xargs kill -9
+
+
+RabbitMQ
+===
+
+`sudo apt install rabbitmq-server` - install RabbitMQ server, if not installed
+
+"Segmentation fault" when starting celery worker solved by [SO "Celery Segmentation Fault"](https://stackoverflow.com/questions/10847620/celery-segmentation-fault)
+
+    sudo pip install -U librabbitmq
+    sudo apt-get remove python-librabbitmq
+
+`sudo rabbitmq-server start` - Starting rabbitMQ
+
+`rabbitmqctl list_queues name consumers` - This command can be used to see all queues on RabbitMQ
+
+
 Other notes
 ===
 
@@ -111,30 +161,6 @@ To fix:
     })
 
 [https://github.com/rstudio/shiny-server/issues/96](https://github.com/rstudio/shiny-server/issues/96)
-
-Shortcuts
-===
-
-Start the server (note the port number should correspond to the `grsnp.d` settings)
-
-    gr-server -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ -g hg19 -p 8080
-
-Stop all workers
-
-    ps aux | grep "celery worker" | awk '{print $2}' | xargs kill -9
-
-Use celery to check active/manually start workers
-
-    celery inspect active --broker redis://localhost:7775/0
-    celery worker --app=grsnp.worker_hypergeom4 -d /home/mdozmorov/db_5.00_07-22-2015/ -r /home/mdozmorov/db_5.00_07-22-2015/ --loglevel INFO -E
-
-RabbitMQ
-===
-
-`rabbitmq-server — start` - Starting rabbitMQ
-
-`rabbitmqctl list_queues name consumers` - This command can be used to see all queues on RabbitMQ
-
 
 
 Troubleshooting
