@@ -57,7 +57,7 @@ def main():
 			writer.write("\n".join(foi))
 
 	grenrichment = GRAnalysis.GREnrichment(args["fois"][0], args["gfs"][0], args["bg_path"][0],
-										   args["outdir"],"", "", args["organism"])
+										   args["outdir"],"", "", args["organism"],print_progress=True)
 	if args['stat_test'] == "chisquare":
 		grenrichment.run_chisquare()
 	elif args['stat_test'] == 'binomial':
@@ -67,7 +67,7 @@ def main():
 		grenrichment.run_montecarlo(num_mc)
 	# run annotation analysis
 	if args["run_annotation"]:
-		grannotation = GRAnalysis.GRAnnotation(args["fois"][0], args["gfs"][0], args["bg_path"][0], args["outdir"], "", "", args["organism"])
+		grannotation = GRAnalysis.GRAnnotation(args["fois"][0], args["gfs"][0], args["bg_path"][0], args["outdir"], "", "", args["organism"],print_progress=True)
 		grannotation.run_annotation()
 	# zip up result files
 	utils._zip_run_files(args['outdir'], "console")

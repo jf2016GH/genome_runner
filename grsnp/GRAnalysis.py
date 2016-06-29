@@ -26,9 +26,11 @@ class GRAnalysis:
 			fh.setFormatter(formatter)
 			self.logger.handlers = [] # remove filehandler for previous runs if they exist
 			self.logger.addHandler(fh)
+			if print_progress == True:
+				ch = logging.StreamHandler()
+				self.logger.addHandler(ch)
 			self.logger.setLevel(logging.INFO)
 			self.progress_outpath = os.path.join(outdir,".prog")
-
 			self.outdir = outdir
 			self.job_name = job_name
 			self.root_data_dir = root_data_dir
@@ -45,12 +47,12 @@ class GRAnalysis:
 			invalid_names = self.validate_filenames(fois + gfs + [bg_path])
 			if len(invalid_names) != 0:
 				self._write_progress("ERROR: Files have invalid filenames. See log file. Terminating run. See Analysis Log.",
-								0)
+									 0)
 				raise IOError("Invalid file names")
 			if bg_path.endswith(".tbi"):
 				self.logger.error("Background has invalid extension (.tbi). Terminating run.")
 				self._write_progress("ERROR: Background has invalid extension (.tbi). Terminating run. See Analysis Log.",
-								0)
+									 0)
 				raise IOError("Invalid file names")
 
 			# pre-process the GFs and the background
