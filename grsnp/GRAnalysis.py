@@ -37,6 +37,7 @@ class GRAnalysis:
 			self.cur_prog = 0 # int of the current progress
 			self.max_prog = 0
 			self.print_prog = print_progress
+			self._write_progress("Analysis started")
 			# Read in the paths
 			fois = [line for line in utils.read_lines(fois_path) if not line.endswith(".tbi")]
 			gfs = [line for line in utils.read_lines(gfs_path) if not line.endswith(".tbi")]

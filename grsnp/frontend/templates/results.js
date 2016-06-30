@@ -29,7 +29,10 @@ function update_progress(){
 						max:  1});
 			clearInterval(refresh_progress);
 		} else if (data['status'] == "Analysis Completed"){
-			window.location.replace("http://" + window.location.host + "/results_shiny?job_id=${job_id}");
+		    $('#btnResults').removeClass('disabled');
+		    // $('#btnResults').attr("href","http://127.0.0.1:4729?job_id=${job_id}")
+		     $('#btnResults').attr("href","http://" + window.location.host + "/results_shiny?job_id=${job_id}")
+			//window.location.replace("http://" + window.location.host + "/results_shiny?job_id=${job_id}");
 		}
 	});
 	get_log();

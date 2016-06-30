@@ -1,6 +1,13 @@
 var refresh_progress = ""
-$(document).ready(function() {	
+
+$(window).load(function() {
+	$(".loader").fadeOut("slow");
+	//setTimeout(function(){ $(".loader").fadeOut("slow"); }, 3000);
+})
+
+$(document).ready(function() {
 	var job_id = "${job_id}";
+
 });
 
 	// generates both of the heatmap graphs

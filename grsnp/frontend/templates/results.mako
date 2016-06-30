@@ -22,7 +22,10 @@
 		</div>
 	</div>
 <div class="well">
-	<div style="margin: 10px;margin-top:70px;">
+	<div style="margin: 10px;margin-top:17px;">
+    <div style="text-align: center">
+        <a class="btn btn-primary disabled" style="text-align-last: center;margin-bottom: 2em;" type="button" id="btnResults">Results can be viewed after analysis is completed</a>
+    </div>
 	<div id="progressbar" ></div>
 	<div class="ui-widget" style="">
 		<div class="ui-state-highlight ui-corner-all">

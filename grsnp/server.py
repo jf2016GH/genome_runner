@@ -223,10 +223,8 @@ class WebUI(object):
 		run_args = [fois,gfs,background_path,job_id,True,os.path.join(sett["data_dir"][db_version],organism,"bkg_overlaps.gr"),run_annotation,False]
 		run_kwargs = { "pct_score": kwargs['pct_score'],"organism": organism,"job_id": job_id,"db_version": db_version,"stat_test": stat_test }
 		if gfs_count > 3:
-			print "LONG RUN STARTED"
 			run_queue = 'long_runs'
 		else:
-			print "SHORT RUN STARTED"
 			run_queue = 'short_runs'
 		try:
 			grsnp.worker_gr.run_hypergeom.apply_async(args=run_args, kwargs = run_kwargs, queue=run_queue, retry=False)
@@ -283,7 +281,6 @@ class WebUI(object):
 		params.update(p)
 		try:
 			rend_template = tmpl.render(body=lookup.get_template("results.mako").render(**params),script= lookup.get_template("results.js").render(**params))
-			print "LOADED TEMPLATE"
 		except Exception, e:
 			traceback = MakoTraceback()
 			str_error = ""
@@ -303,7 +300,6 @@ class WebUI(object):
 		params = {}	
 		params['job_id'] = job_id
 		try:
-			tmp = lookup.get_template("master.mako")
 			script = lookup.get_template("results_shiny.js").render(job_id=job_id)
 			rend_template = lookup.get_template("results_shiny.mako").render(job_id=job_id,script=script)
 
