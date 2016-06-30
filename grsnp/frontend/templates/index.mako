@@ -30,10 +30,18 @@
 			${database_versions}		
 			<h3>GenomeRunner: Functional interpretation of SNPs within regulatory/epigenomic context</h3>
 			<p>
-				<span style="font-size: 16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner is a tool for functional enrichment analysis of SNP sets within regulatory/epigenomic context. The philosophy behind GenomeRunner is that SNPs are not acting in isolation and may collectively alter regulatory/epigenomic features. Finding which regulatory features are affected may help to understand  mechanisms of complex diseases from a holistic perspective.</span></p>
+				<span style="font-family:arial,helvetica,sans-serif;font-size: 16px;">GenomeRunner is a tool for functional enrichment analysis of SNP sets within regulatory/epigenomic context. The philosophy behind GenomeRunner is that SNPs are not acting in isolation and may collectively alter regulatory/epigenomic features. Finding which regulatory features are affected may help to understand  mechanisms of complex diseases from a holistic perspective.</span>
+			</p>
 				<p>
 				<br />
-				<span style="font-size:16px;"><span style="font-family:arial,helvetica,sans-serif;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable results are visualized as interactive heatmaps and tables <a href="results_shiny?job_id=example1">(Example 1, single SNP set analysis)</a>, <a href="results_shiny?job_id=example2">(Example 2, multiple SNP sets analysis)</a>.</span></span></p>
+					<span style="font-family:arial,helvetica,sans-serif;font-size:16px;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable
+               <div>
+                       <em>Reference</em></div>
+               <div>
+                       <strong>GenomeRunner web server: regulatory similarity and differences define the functional impact of SNP sets</strong>. (<a href="http://bioinformatics.oxfordjournals.org/content/early/2016/04/15/bioinformatics.btw169" target="_blank">PDF</a>)&nbsp;
+               <div>
+                       Dozmorov MG, Cara LR, Giles CB, Wren JD</div>
+               <div>
 					<p>
 					</p>
 					</div>
