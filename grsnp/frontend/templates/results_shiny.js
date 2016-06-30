@@ -1,7 +1,7 @@
 var refresh_progress = ""
 
 $(window).load(function() {
-	$(".loader").fadeOut("slow");
+	//$(".loader").fadeOut("slow");
 	//setTimeout(function(){ $(".loader").fadeOut("slow"); }, 3000);
 })
 
