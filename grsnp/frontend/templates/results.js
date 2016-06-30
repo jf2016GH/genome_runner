@@ -23,7 +23,7 @@ function update_progress(){
 						
 			$("#divDownload").html("<a class='btn btn-primary' style='margin-left: 230px;'  type='button' href='${zipfile}'>Download All Run Files</a>")
 		}
-		if(data['status'] == "Run crashed. See end of log for details."){
+		if(data['status'] == "Run crashed. See end of log for details." || data['status'].startsWith("ERROR") == true){
 			$("#progressbar").progressbar({
 						value: 1,
 						max:  1});
@@ -33,6 +33,7 @@ function update_progress(){
 		    // $('#btnResults').attr("href","http://127.0.0.1:4729?job_id=${job_id}")
 		     $('#btnResults').attr("href","http://" + window.location.host + "/results_shiny?job_id=${job_id}")
 			//window.location.replace("http://" + window.location.host + "/results_shiny?job_id=${job_id}");
+			clearInterval(refresh_progress);
 		}
 	});
 	get_log();
