@@ -100,7 +100,6 @@ def filter_by_strand(data_dir,gf_path):
 	final_plus_path = os.path.join(os.path.split(plus_path)[0],base_name(plus_path)+'.bed.gz')
 	final_minus_path = os.path.join(os.path.split(minus_path)[0],base_name(minus_path)+'.bed.gz')
 	if os.path.exists(final_plus_path) and os.path.exists(final_minus_path):
-		pdb.set_trace()
 		return [final_plus_path,final_minus_path]
 	plus_file,minus_file = open(plus_path,'wb'),open(minus_path,'wb')
 	strand_file = {"+":plus_file,'-':minus_file}
