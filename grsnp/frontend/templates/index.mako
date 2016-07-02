@@ -34,7 +34,9 @@
 			</p>
 				<p>
 				<br />
-					<span style="font-family:arial,helvetica,sans-serif;font-size:16px;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable
+					<span style="font-family:arial,helvetica,sans-serif;font-size:16px;">GenomeRunner performs regulatory enrichment/annotation analyses, differential regulatory analysis, and cell type-specific enrichment analysis. The downloadable results are visualized as interactive heatmaps, barplots, and tables <a href="results_shiny?job_id=example1">(Example 1, single SNP set analysis)</a>, <a href="results_shiny?job_id=example2">(Example 2, multiple SNP sets analysis)</a>.</span></span></p>
+					<p>
+					</p>
                <div>
                        <em>Reference</em></div>
                <div>

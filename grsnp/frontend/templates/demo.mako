@@ -10,7 +10,7 @@
 			<li style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
 				<span style="font-family:arial,helvetica,sans-serif;"><span style="white-space: pre-wrap;">In step 3, expand "Choose regulatory datasets" field, expand "ENCODE" category and select "Histone" subcategory.</span></span></li>
 			<li style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
-				<span style="font-family:arial,helvetica,sans-serif;"><span style="white-space: pre-wrap; line-height: 1.15;">Hit &quot;Submit job&quot; - the analysis should take a minute. The results should look like <a href="http://www.integrativegenomics.org/results_shiny?id=example1">http://www.integrativegenomics.org/results_shiny?id=example1</a></span></span></li>
+				<span style="font-family:arial,helvetica,sans-serif;"><span style="white-space: pre-wrap; line-height: 1.15;">Hit &quot;Submit job&quot; - the analysis should take a minute. The results should look like <a href="http://www.integrativegenomics.org/results_shiny?job_id=example1">http://www.integrativegenomics.org/results_shiny?job_id=example1</a></span></span></li>
 		</ol>
 
 		<h4 dir="ltr" style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
@@ -23,7 +23,7 @@
 			<li style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
 				<span style="font-family:arial,helvetica,sans-serif;"><span style="white-space: pre-wrap;">In step 3, expand "Choose regulatory datasets" field, expand "ROADMAP" category and select "Histone_bPk" subcategory.</span></span></li>
 			<li style="line-height: 1.15; margin-top: 0pt; margin-bottom: 0pt;">
-				<span style="font-family:arial,helvetica,sans-serif;"><span style="white-space: pre-wrap; line-height: 1.15;">Hit &quot;Submit job&quot; - the analysis should take a minute. The results should look like <a href="http://www.integrativegenomics.org/results_shiny?id=example2">http://www.integrativegenomics.org/results_shiny?id=example2</a></span></span></li>
+				<span style="font-family:arial,helvetica,sans-serif;"><span style="white-space: pre-wrap; line-height: 1.15;">Hit &quot;Submit job&quot; - the analysis should take a minute. The results should look like <a href="http://www.integrativegenomics.org/results_shiny?job_id=example2">http://www.integrativegenomics.org/results_shiny?job_id=example2</a></span></span></li>
 		</ol>
         <br>
                 <span style="font-family:arial,helvetica,sans-serif;">To get more individual disease- or trait-specific sets of SNPs, to be uploaded in Step 1, explore <a href="https://github.com/mdozmorov/gwas2bed" target="_blank">https://github.com/mdozmorov/gwas2bed</a> repository. See BED file example <a href="https://github.com/mdozmorov/gwas2bed/blob/master/gwasCatalog/bed/more15/systemic_lupus_erythematosus.bed" target="_blank">systemic_lupus_erythematosus.bed</a></span></p>
