@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Create a list of GFs
+find /home/mdozmorov/db_5.00_07-22-2015/grsnp_db/hg19/genes/chromosomes/ -type f -name "*.bed.gz" | sort > gfs_chromosomes.txt
 find /home/mdozmorov/db_5.00_07-22-2015/grsnp_db/hg19/genes/cytobands/ -type f -name "*.bed.gz" | sort > gfs_cytobands.txt
 find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/GERP/ -type f -name "*.bed.gz" | sort > gfs_GERP.txt
 find /home/mdozmorov/db_5.00_07-22-2015/custom_data/gfs/hg19/CpG/ -type f -name "*.bed.gz" | sort > gfs_CpG.txt
